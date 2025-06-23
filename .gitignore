@@ -32,3 +32,15 @@ dist-ssr
 .env.production
 .env.local
 .env.*.local
+
+#json
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+lerna-debug.log
+# Coverage
+coverage
+# Temporary files
+temp
+tmp
+    
