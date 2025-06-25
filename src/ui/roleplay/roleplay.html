@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI创作平台 - 角色扮演工坊UI设计</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            background: #F5F5F7;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* 设计系统颜色 */
+        :root {
+            --primary-900: #111827;
+            --primary-800: #1F2937;
+            --primary-700: #374151;
+            --primary-600: #4B5563;
+            --primary-500: #6B7280;
+            --primary-400: #9CA3AF;
+            --primary-300: #D1D5DB;
+            --primary-200: #E5E7EB;
+            --primary-100: #F3F4F6;
+            --primary-50: #F9FAFB;
+            
+            --accent-green: #10B981;
+            --accent-blue: #3B82F6;
+            --accent-red: #EF4444;
+            
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 0 0 1px rgba(0, 0, 0, 0.03), 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .design-frame {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        }
+        
+        .page-separator {
+            padding: 40px 0;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: #9CA3AF;
+            user-select: none;
+        }
+
+        .roleplay-chat-bubble-ai {
+            background-color: #F3F4F6;
+            border-radius: 12px 12px 12px 4px;
+        }
+
+        .roleplay-chat-bubble-user {
+            background-color: #4B5563;
+            color: white;
+            border-radius: 12px 12px 4px 12px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="min-h-screen p-8">
+        <!-- 设计头部 -->
+        <div class="max-w-[1800px] mx-auto mb-12">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl font-light text-gray-800 mb-2">角色扮演工坊 - UI Design</h1>
+                    <p class="text-gray-500">独立、纯粹的创意探索工具 / 2025</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-400">Version 2.1</span>
+                    <div class="w-px h-6 bg-gray-300"></div>
+                    <span class="text-sm text-gray-400">Desktop 1440px</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 角色扮演工坊 - 页面容器 -->
+        <div class="max-w-[1800px] mx-auto space-y-16">
+
+            <!-- ================================================================= -->
+            <!-- 1. 角色库与会话管理页 (/roleplay) -->
+            <!-- ================================================================= -->
+            <div class="design-frame">
+                <!-- 标题栏 -->
+                <div class="h-10 px-5 flex items-center border-b border-gray-100 bg-gray-50">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-[#FF5F57]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#FFBD2E]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#28CA42]"></div>
+                    </div>
+                    <div class="mx-auto text-sm text-gray-500">/roleplay</div>
+                </div>
+                
+                <!-- 内容区 -->
+                <div class="h-[800px] flex">
+                    <!-- 角色扮演模块侧边栏 -->
+                    <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col">
+                        <div class="p-4 space-y-4 border-b border-gray-100">
+                            <div class="flex items-center gap-3 px-2">
+                                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium text-[#374151] text-sm">角色扮演</h3>
+                                    <p class="text-xs text-[#9CA3AF]">工坊</p>
+                                </div>
+                            </div>
+                        </div>
+                        <nav class="flex-1 px-4 py-6">
+                            <div class="space-y-1">
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                                    <span>角色库与会话</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l-1-1a2 2 0 010-2.828l1.172-1.172a2 2 0 012.828 0L20 12m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    <span>场景模板库</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                    <span>多人会话房间</span>
+                                </a>
+                            </div>
+                        </nav>
+                        <div class="p-4 border-t border-gray-100">
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                <span>返回主工作台</span>
+                            </a>
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors mt-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1V6M12 18V23M4.22 4.22L7.76 7.76M16.24 16.24L19.78 19.78M1 12H6M18 12H23M4.22 19.78L7.76 16.24M16.24 7.76L19.78 4.22"/></svg>
+                                <span>设置</span>
+                            </a>
+                        </div>
+                    </aside>
+                    <!-- 主内容区 -->
+                    <main class="flex-1 bg-white flex flex-col">
+                        <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+                            <h1 class="text-lg font-medium text-[#374151]">角色库与会话管理</h1>
+                            <div class="flex items-center gap-4">
+                                <div class="relative w-64">
+                                    <svg class="w-5 h-5 text-gray-400 absolute top-1/2 -translate-y-1/2 left-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                    <input type="text" placeholder="搜索角色或会话..." class="w-full pl-10 pr-4 py-2 bg-[#F9FAFB] border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors">
+                                </div>
+                                <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                    创建新角色
+                                </button>
+                            </div>
+                        </header>
+                        <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
+                            <div class="mb-8">
+                                <h3 class="text-base font-medium text-[#374151] mb-4">我的角色</h3>
+                                <div class="grid grid-cols-4 gap-6">
+                                    <div class="bg-white rounded-xl p-5 border border-gray-100 text-center flex flex-col items-center justify-center hover:shadow-md hover:border-blue-300 transition-all cursor-pointer">
+                                        <div class="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center mb-3">
+                                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                        </div>
+                                        <p class="font-medium text-sm text-[#374151]">创建角色</p>
+                                    </div>
+                                    <div class="bg-white rounded-xl p-5 border border-gray-100 text-center flex flex-col items-center">
+                                        <img src="https://i.pravatar.cc/150?img=1" alt="Character" class="w-16 h-16 rounded-full mb-3 object-cover">
+                                        <p class="font-medium text-sm text-[#374151]">福尔摩斯</p>
+                                        <p class="text-xs text-[#9CA3AF] mt-1 mb-3">传奇侦探</p>
+                                        <div class="flex gap-2 w-full">
+                                            <button class="flex-1 py-1.5 bg-[#4B5563] text-white text-xs rounded-md hover:bg-[#374151]">会话</button>
+                                            <button class="py-1.5 px-3 bg-gray-100 text-gray-600 text-xs rounded-md hover:bg-gray-200">编辑</button>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white rounded-xl p-5 border border-gray-100 text-center flex flex-col items-center">
+                                        <img src="https://i.pravatar.cc/150?img=2" alt="Character" class="w-16 h-16 rounded-full mb-3 object-cover">
+                                        <p class="font-medium text-sm text-[#374151]">爱因斯坦</p>
+                                        <p class="text-xs text-[#9CA3AF] mt-1 mb-3">物理学家</p>
+                                         <div class="flex gap-2 w-full">
+                                            <button class="flex-1 py-1.5 bg-[#4B5563] text-white text-xs rounded-md hover:bg-[#374151]">会话</button>
+                                            <button class="py-1.5 px-3 bg-gray-100 text-gray-600 text-xs rounded-md hover:bg-gray-200">编辑</button>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white rounded-xl p-5 border border-gray-100 text-center flex flex-col items-center">
+                                        <img src="https://i.pravatar.cc/150?img=3" alt="Character" class="w-16 h-16 rounded-full mb-3 object-cover">
+                                        <p class="font-medium text-sm text-[#374151]">苏格拉底</p>
+                                        <p class="text-xs text-[#9CA3AF] mt-1 mb-3">古希腊哲学家</p>
+                                         <div class="flex gap-2 w-full">
+                                            <button class="flex-1 py-1.5 bg-[#4B5563] text-white text-xs rounded-md hover:bg-[#374151]">会话</button>
+                                            <button class="py-1.5 px-3 bg-gray-100 text-gray-600 text-xs rounded-md hover:bg-gray-200">编辑</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                             <div>
+                                <h3 class="text-base font-medium text-[#374151] mb-4">最近会话</h3>
+                                <div class="space-y-3">
+                                    <div class="bg-white rounded-xl p-4 border border-gray-100 hover:shadow-sm transition-all flex items-center gap-4">
+                                        <img src="https://i.pravatar.cc/150?img=1" class="w-10 h-10 rounded-full flex-shrink-0 object-cover">
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-sm text-[#374151]">与福尔摩斯的对话</h4>
+                                            <p class="text-xs text-[#9CA3AF] mt-1 truncate">好的，华生，让我们从头梳理案情...</p>
+                                        </div>
+                                        <div class="text-xs text-[#9CA3AF] w-32 text-right">2小时前</div>
+                                        <div class="flex items-center gap-2">
+                                            <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#374151] hover:bg-gray-50">继续</button>
+                                            <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#374151] hover:bg-gray-50">复盘</button>
+                                        </div>
+                                    </div>
+                                     <div class="bg-white rounded-xl p-4 border border-gray-100 hover:shadow-sm transition-all flex items-center gap-4">
+                                        <img src="https://i.pravatar.cc/150?img=3" class="w-10 h-10 rounded-full flex-shrink-0 object-cover">
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-sm text-[#374151]">探讨“认识你自己”</h4>
+                                            <p class="text-xs text-[#9CA3AF] mt-1 truncate">告诉我，年轻人，未经审视的人生...</p>
+                                        </div>
+                                        <div class="text-xs text-[#9CA3AF] w-32 text-right">昨天 14:30</div>
+                                         <div class="flex items-center gap-2">
+                                            <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#374151] hover:bg-gray-50">继续</button>
+                                            <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#374151] hover:bg-gray-50">复盘</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+            
+            <!-- ================================================================= -->
+            <!-- 2. 角色创建/编辑页 (/roleplay/character/edit/:charId) -->
+            <!-- ================================================================= -->
+            <div class="design-frame">
+                <div class="h-10 px-5 flex items-center border-b border-gray-100 bg-gray-50">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-[#FF5F57]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#FFBD2E]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#28CA42]"></div>
+                    </div>
+                    <div class="mx-auto text-sm text-gray-500">/roleplay/character/edit/1</div>
+                </div>
+                <div class="h-[800px] flex">
+                    <!-- 角色扮演模块侧边栏 -->
+                     <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col">
+                        <div class="p-4 space-y-4 border-b border-gray-100">
+                            <div class="flex items-center gap-3 px-2">
+                                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium text-[#374151] text-sm">角色扮演</h3>
+                                    <p class="text-xs text-[#9CA3AF]">工坊</p>
+                                </div>
+                            </div>
+                        </div>
+                        <nav class="flex-1 px-4 py-6">
+                            <div class="space-y-1">
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                                    <span>角色库与会话</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l-1-1a2 2 0 010-2.828l1.172-1.172a2 2 0 012.828 0L20 12m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    <span>场景模板库</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                    <span>多人会话房间</span>
+                                </a>
+                            </div>
+                        </nav>
+                        <div class="p-4 border-t border-gray-100">
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                <span>返回主工作台</span>
+                            </a>
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors mt-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1V6M12 18V23M4.22 4.22L7.76 7.76M16.24 16.24L19.78 19.78M1 12H6M18 12H23M4.22 19.78L7.76 16.24M16.24 7.76L19.78 4.22"/></svg>
+                                <span>设置</span>
+                            </a>
+                        </div>
+                    </aside>
+                    <!-- 主内容区 -->
+                    <main class="flex-1 bg-white flex flex-col">
+                        <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+                            <h1 class="text-lg font-medium text-[#374151]">编辑角色：福尔摩斯</h1>
+                            <div class="flex items-center gap-3">
+                                <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">取消</button>
+                                <button class="px-4 py-2 bg-[#10B981] text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    保存更改
+                                </button>
+                            </div>
+                        </header>
+                        <div class="flex-1 flex overflow-hidden">
+                            <div class="flex-1 p-8 overflow-y-auto bg-[#FCFCFC] space-y-6">
+                                <div>
+                                    <label class="text-sm font-medium text-[#374151] mb-2 block">角色头像</label>
+                                    <div class="flex items-center gap-4">
+                                        <img src="https://i.pravatar.cc/150?img=1" class="w-20 h-20 rounded-full object-cover">
+                                        <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50">上传新头像</button>
+                                        <button class="text-sm text-gray-500 hover:text-red-500">移除</button>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="char-name" class="text-sm font-medium text-[#374151] mb-2 block">角色名称</label>
+                                        <input type="text" id="char-name" value="福尔摩斯" class="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors">
+                                    </div>
+                                    <div>
+                                        <label for="char-tagline" class="text-sm font-medium text-[#374151] mb-2 block">简短描述</label>
+                                        <input type="text" id="char-tagline" value="传奇侦探" class="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="char-greeting" class="text-sm font-medium text-[#374151] mb-2 block">开场白</label>
+                                    <textarea id="char-greeting" rows="3" class="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors" placeholder="例如：你好，我是...">“排除一切不可能的，剩下的即使再不可能，那也是真相。”</textarea>
+                                </div>
+                                <div>
+                                    <label for="char-personality" class="text-sm font-medium text-[#374151] mb-2 block">性格与背景设定 (支持Markdown)</label>
+                                    <textarea id="char-personality" rows="12" class="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors" placeholder="详细描述角色的性格、背景、知识领域、说话风格等..."># 性格
+- **观察力敏锐**: 对细节有超乎常人的洞察力。
+- **逻辑严谨**: 善于使用演绎法进行推理。
+- **性格孤僻**: 不善交际，但内心珍视与华生的友谊。
+
+# 背景
+居住在伦敦贝克街221B，是一位顾问侦探。精通化学、解剖学，擅长小提琴。
+                                    </textarea>
+                                </div>
+                            </div>
+                            <div class="w-80 border-l border-gray-100 bg-white p-6 flex flex-col">
+                                <h3 class="text-base font-medium text-[#374151] mb-4">效果预览</h3>
+                                <div class="bg-white rounded-xl p-5 border border-gray-100 text-center flex flex-col items-center mb-6">
+                                    <img src="https://i.pravatar.cc/150?img=1" alt="Character" class="w-16 h-16 rounded-full mb-3 object-cover">
+                                    <p class="font-medium text-sm text-[#374151]">福尔摩斯</p>
+                                    <p class="text-xs text-[#9CA3AF] mt-1">传奇侦探</p>
+                                </div>
+                                <h4 class="text-sm font-medium text-[#374151] mb-3">会话开场预览</h4>
+                                <div class="space-y-3">
+                                    <div class="flex items-start gap-3">
+                                        <img src="https://i.pravatar.cc/150?img=1" class="w-8 h-8 rounded-full object-cover">
+                                        <div class="flex-1 p-3 text-sm roleplay-chat-bubble-ai">
+                                            “排除一切不可能的，剩下的即使再不可能，那也是真相。”
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+
+            <!-- ================================================================= -->
+            <!-- 3. 会话界面 (/roleplay/chat/:sessionId) -->
+            <!-- ================================================================= -->
+            <div class="design-frame">
+                <div class="h-10 px-5 flex items-center border-b border-gray-100 bg-gray-50">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-[#FF5F57]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#FFBD2E]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#28CA42]"></div>
+                    </div>
+                     <div class="mx-auto text-sm text-gray-500">/roleplay/chat/123</div>
+                </div>
+                <div class="h-[800px] flex">
+                    <!-- 角色扮演模块侧边栏 -->
+                     <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col">
+                        <div class="p-4 space-y-4 border-b border-gray-100">
+                            <div class="flex items-center gap-3 px-2">
+                                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium text-[#374151] text-sm">角色扮演</h3>
+                                    <p class="text-xs text-[#9CA3AF]">工坊</p>
+                                </div>
+                            </div>
+                        </div>
+                        <nav class="flex-1 px-4 py-6">
+                            <div class="space-y-1">
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                                    <span>角色库与会话</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l-1-1a2 2 0 010-2.828l1.172-1.172a2 2 0 012.828 0L20 12m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    <span>场景模板库</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                    <span>多人会话房间</span>
+                                </a>
+                            </div>
+                        </nav>
+                        <div class="p-4 border-t border-gray-100">
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                <span>返回主工作台</span>
+                            </a>
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors mt-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1V6M12 18V23M4.22 4.22L7.76 7.76M16.24 16.24L19.78 19.78M1 12H6M18 12H23M4.22 19.78L7.76 16.24M16.24 7.76L19.78 4.22"/></svg>
+                                <span>设置</span>
+                            </a>
+                        </div>
+                    </aside>
+                    <!-- 主内容区 -->
+                    <main class="flex-1 bg-white flex flex-col">
+                        <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+                            <div class="flex items-center gap-4">
+                                <img src="https://i.pravatar.cc/150?img=1" class="w-10 h-10 rounded-full object-cover">
+                                <div>
+                                    <h1 class="text-base font-medium text-[#374151]">福尔摩斯</h1>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="w-2 h-2 rounded-full bg-[#10B981]"></span>
+                                        <p class="text-xs text-[#6B7280]">在线</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                </button>
+                                <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        </header>
+                        <div class="flex-1 px-8 pt-6 pb-4 overflow-y-auto bg-[#FCFCFC] flex flex-col">
+                            <div class="flex-1 space-y-6">
+                                <!-- AI Message -->
+                                <div class="flex items-start gap-3 max-w-2xl">
+                                    <img src="https://i.pravatar.cc/150?img=1" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                                    <div class="p-4 text-sm roleplay-chat-bubble-ai">
+                                        “排除一切不可能的，剩下的即使再不可能，那也是真相。”
+                                    </div>
+                                </div>
+                                <!-- User Message -->
+                                <div class="flex items-start gap-3 max-w-2xl ml-auto flex-row-reverse">
+                                    <div class="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0"></div>
+                                    <div class="p-4 text-sm roleplay-chat-bubble-user">
+                                        你好，福尔摩斯先生。我遇到了一个棘手的案子，想请您指点。
+                                    </div>
+                                </div>
+                                <!-- AI Message -->
+                                <div class="flex items-start gap-3 max-w-2xl">
+                                    <img src="https://i.pravatar.cc/150?img=1" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                                    <div class="p-4 text-sm roleplay-chat-bubble-ai">
+                                        请讲，我的朋友。把所有细节都告诉我，不要遗漏任何看似无关紧要的东西。数据，数据，数据！没有黏土，我无法做砖。
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 flex-shrink-0">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <button class="px-3 py-1 bg-white border border-gray-200 text-xs text-gray-600 rounded-full hover:bg-gray-50 flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M4 12h16M20 20v-5h-5"></path></svg>
+                                        重新生成
+                                    </button>
+                                </div>
+                                <div class="relative">
+                                    <textarea rows="3" placeholder="输入你的消息..." class="w-full p-4 pr-24 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors resize-none"></textarea>
+                                    <button class="absolute right-4 top-1/2 -translate-y-1/2 px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors">发送</button>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+
+            <!-- ================================================================= -->
+            <!-- 4. 场景模板库 (/roleplay/scenarios) -->
+            <!-- ================================================================= -->
+            <div class="design-frame">
+                <div class="h-10 px-5 flex items-center border-b border-gray-100 bg-gray-50">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-[#FF5F57]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#FFBD2E]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#28CA42]"></div>
+                    </div>
+                    <div class="mx-auto text-sm text-gray-500">/roleplay/scenarios</div>
+                </div>
+                <div class="h-[800px] flex">
+                    <!-- 角色扮演模块侧边栏 -->
+                     <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col">
+                        <div class="p-4 space-y-4 border-b border-gray-100">
+                            <div class="flex items-center gap-3 px-2">
+                                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium text-[#374151] text-sm">角色扮演</h3>
+                                    <p class="text-xs text-[#9CA3AF]">工坊</p>
+                                </div>
+                            </div>
+                        </div>
+                        <nav class="flex-1 px-4 py-6">
+                            <div class="space-y-1">
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                                    <span>角色库与会话</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l-1-1a2 2 0 010-2.828l1.172-1.172a2 2 0 012.828 0L20 12m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    <span>场景模板库</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                    <span>多人会话房间</span>
+                                </a>
+                            </div>
+                        </nav>
+                        <div class="p-4 border-t border-gray-100">
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                <span>返回主工作台</span>
+                            </a>
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors mt-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1V6M12 18V23M4.22 4.22L7.76 7.76M16.24 16.24L19.78 19.78M1 12H6M18 12H23M4.22 19.78L7.76 16.24M16.24 7.76L19.78 4.22"/></svg>
+                                <span>设置</span>
+                            </a>
+                        </div>
+                    </aside>
+                    <!-- 主内容区 -->
+                    <main class="flex-1 bg-white flex flex-col">
+                        <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+                            <div class="flex-1">
+                                <h1 class="text-lg font-medium text-[#374151]">场景模板库</h1>
+                                <p class="text-sm text-gray-500 mt-1">选择一个场景，快速开始你的角色扮演冒险</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm font-medium">全部</button>
+                                <button class="px-4 py-2 bg-white text-gray-500 rounded-lg text-sm font-medium hover:bg-gray-100">幻想</button>
+                                <button class="px-4 py-2 bg-white text-gray-500 rounded-lg text-sm font-medium hover:bg-gray-100">历史</button>
+                                <button class="px-4 py-2 bg-white text-gray-500 rounded-lg text-sm font-medium hover:bg-gray-100">科幻</button>
+                                <button class="px-4 py-2 bg-white text-gray-500 rounded-lg text-sm font-medium hover:bg-gray-100">日常</button>
+                            </div>
+                        </header>
+                        <div class="flex-1 px-8 py-6 overflow-y-auto bg-[#FCFCFC]">
+                            <div class="grid grid-cols-3 gap-6">
+                                <div class="bg-white rounded-xl border border-gray-100 overflow-hidden group">
+                                    <div class="h-32 bg-gradient-to-br from-purple-200 to-indigo-200"></div>
+                                    <div class="p-5">
+                                        <h3 class="font-medium text-[#374151]">中世纪酒馆</h3>
+                                        <p class="text-sm text-[#9CA3AF] mt-1 h-10">你走进一家昏暗的酒馆，空气中弥漫着麦酒和烤肉的香气。一个神秘的陌生人向你招手...</p>
+                                        <button class="mt-4 w-full py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors opacity-0 group-hover:opacity-100">使用此模板</button>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl border border-gray-100 overflow-hidden group">
+                                    <div class="h-32 bg-gradient-to-br from-sky-200 to-blue-200"></div>
+                                    <div class="p-5">
+                                        <h3 class="font-medium text-[#374151]">赛博朋克都市</h3>
+                                        <p class="text-sm text-[#9CA3AF] mt-1 h-10">霓虹灯在雨夜的街道上闪烁，你是一名义体改造过的侦探，接到了一个来自巨型企业的秘密委托。</p>
+                                        <button class="mt-4 w-full py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors opacity-0 group-hover:opacity-100">使用此模板</button>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl border border-gray-100 overflow-hidden group">
+                                    <div class="h-32 bg-gradient-to-br from-amber-200 to-orange-200"></div>
+                                    <div class="p-5">
+                                        <h3 class="font-medium text-[#374151]">古埃及陵墓探险</h3>
+                                        <p class="text-sm text-[#9CA3AF] mt-1 h-10">手持火把，你和你的考古队踏入了尘封千年的法老陵墓，墙壁上的象形文字似乎在低语。</p>
+                                        <button class="mt-4 w-full py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors opacity-0 group-hover:opacity-100">使用此模板</button>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl border border-gray-100 overflow-hidden group">
+                                    <div class="h-32 bg-gradient-to-br from-rose-200 to-pink-200"></div>
+                                    <div class="p-5">
+                                        <h3 class="font-medium text-[#374151]">浪漫咖啡馆邂逅</h3>
+                                        <p class="text-sm text-[#9CA3AF] mt-1 h-10">在一个下着小雨的午后，你推开了一家转角咖啡馆的门，一位迷人的陌生人正坐在窗边看书。</p>
+                                        <button class="mt-4 w-full py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors opacity-0 group-hover:opacity-100">使用此模板</button>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl border border-gray-100 overflow-hidden group">
+                                    <div class="h-32 bg-gradient-to-br from-teal-200 to-cyan-200"></div>
+                                    <div class="p-5">
+                                        <h3 class="font-medium text-[#374151]">星际飞船舰桥</h3>
+                                        <p class="text-sm text-[#9CA3AF] mt-1 h-10">警报声响彻舰桥，舷窗外是未知的星云。作为舰长，你必须做出决定，带领船员脱离险境。</p>
+                                        <button class="mt-4 w-full py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors opacity-0 group-hover:opacity-100">使用此模板</button>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-center hover:border-blue-300 transition-colors cursor-pointer">
+                                    <div>
+                                        <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                        </div>
+                                        <p class="font-medium text-sm text-[#374151]">创建自定义场景</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+
+            <!-- ================================================================= -->
+            <!-- 5. 多人会话房间 (/roleplay/multi-chat/:roomId) -->
+            <!-- ================================================================= -->
+            <div class="design-frame">
+                <div class="h-10 px-5 flex items-center border-b border-gray-100 bg-gray-50">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-[#FF5F57]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#FFBD2E]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#28CA42]"></div>
+                    </div>
+                     <div class="mx-auto text-sm text-gray-500">/roleplay/multi-chat/456</div>
+                </div>
+                <div class="h-[800px] flex">
+                    <!-- 角色扮演模块侧边栏 -->
+                     <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col">
+                        <div class="p-4 space-y-4 border-b border-gray-100">
+                            <div class="flex items-center gap-3 px-2">
+                                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium text-[#374151] text-sm">角色扮演</h3>
+                                    <p class="text-xs text-[#9CA3AF]">工坊</p>
+                                </div>
+                            </div>
+                        </div>
+                        <nav class="flex-1 px-4 py-6">
+                            <div class="space-y-1">
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                                    <span>角色库与会话</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l-1-1a2 2 0 010-2.828l1.172-1.172a2 2 0 012.828 0L20 12m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    <span>场景模板库</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                    <span>多人会话房间</span>
+                                </a>
+                            </div>
+                        </nav>
+                        <div class="p-4 border-t border-gray-100">
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                <span>返回主工作台</span>
+                            </a>
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors mt-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1V6M12 18V23M4.22 4.22L7.76 7.76M16.24 16.24L19.78 19.78M1 12H6M18 12H23M4.22 19.78L7.76 16.24M16.24 7.76L19.78 4.22"/></svg>
+                                <span>设置</span>
+                            </a>
+                        </div>
+                    </aside>
+                    <!-- 主内容区 -->
+                    <main class="flex-1 bg-white flex">
+                        <div class="flex-1 flex flex-col">
+                            <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+                                <h1 class="text-lg font-medium text-[#374151]">贝克街的神秘案件</h1>
+                                <div class="flex items-center gap-2">
+                                   <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50 flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                        邀请
+                                    </button>
+                                </div>
+                            </header>
+                            <div class="flex-1 px-8 pt-6 pb-4 overflow-y-auto bg-[#FCFCFC] flex flex-col">
+                                <div class="flex-1 space-y-6">
+                                    <div class="text-center text-xs text-gray-400 py-2">--- 场景：福尔摩斯的书房，壁炉里的火噼啪作响 ---</div>
+                                    <!-- AI Holmes Message -->
+                                    <div class="flex items-start gap-3 max-w-2xl">
+                                        <img src="https://i.pravatar.cc/150?img=1" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                                        <div class="p-4 text-sm roleplay-chat-bubble-ai">
+                                            <p class="font-bold text-xs text-indigo-600 mb-1">福尔摩斯</p>
+                                            华生，请坐。外面天气很糟，来杯热茶暖暖身子。你看起来心事重重。
+                                        </div>
+                                    </div>
+                                    <!-- AI Watson Message -->
+                                    <div class="flex items-start gap-3 max-w-2xl">
+                                        <img src="https://i.pravatar.cc/150?img=5" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                                        <div class="p-4 text-sm roleplay-chat-bubble-ai">
+                                            <p class="font-bold text-xs text-teal-600 mb-1">华生</p>
+                                            谢谢你，福尔摩斯。确实，我刚从一位老友那里过来，他遇到了一件离奇的事，苏格兰场也束手无策。
+                                        </div>
+                                    </div>
+                                    <!-- User Message -->
+                                    <div class="flex items-start gap-3 max-w-2xl ml-auto flex-row-reverse">
+                                        <div class="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-sm font-bold text-gray-600">我</div>
+                                        <div class="p-4 text-sm roleplay-chat-bubble-user">
+                                            (作为雷斯垂德探长) 两位好，我正好也为这事而来。一件密封房间里的失窃案，没有门窗被破坏的痕迹。
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-6 flex-shrink-0">
+                                    <div class="relative">
+                                        <textarea rows="3" placeholder="以“我”的身份发言..." class="w-full p-4 pr-24 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors resize-none"></textarea>
+                                        <button class="absolute right-4 top-1/2 -translate-y-1/2 px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors">发送</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <aside class="w-64 border-l border-gray-100 bg-white p-6 flex flex-col">
+                            <h3 class="text-base font-medium text-[#374151] mb-4 flex-shrink-0">房间成员 (3)</h3>
+                            <div class="flex-1 space-y-4 overflow-y-auto">
+                                <div class="flex items-center gap-3">
+                                    <div class="relative">
+                                        <img src="https://i.pravatar.cc/150?img=1" class="w-10 h-10 rounded-full object-cover">
+                                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-[#10B981] rounded-full border-2 border-white"></span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-[#374151]">福尔摩斯</p>
+                                        <p class="text-xs text-[#9CA3AF]">AI 角色</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="relative">
+                                        <img src="https://i.pravatar.cc/150?img=5" class="w-10 h-10 rounded-full object-cover">
+                                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-[#10B981] rounded-full border-2 border-white"></span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-[#374151]">华生</p>
+                                        <p class="text-xs text-[#9CA3AF]">AI 角色</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3 bg-blue-50 p-2 rounded-lg">
+                                    <div class="relative">
+                                        <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-lg font-bold text-gray-600">我</div>
+                                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-[#10B981] rounded-full border-2 border-white"></span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-[#374151]">我 (玩家)</p>
+                                        <p class="text-xs text-[#9CA3AF]">人类玩家</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </aside>
+                    </main>
+                </div>
+            </div>
+
+            <!-- ================================================================= -->
+            <!-- 6. 会话复盘与导出页 (/roleplay/review/:sessionId) -->
+            <!-- ================================================================= -->
+             <div class="design-frame">
+                <div class="h-10 px-5 flex items-center border-b border-gray-100 bg-gray-50">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-[#FF5F57]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#FFBD2E]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#28CA42]"></div>
+                    </div>
+                     <div class="mx-auto text-sm text-gray-500">/roleplay/review/123</div>
+                </div>
+                <div class="h-[800px] flex">
+                    <!-- 角色扮演模块侧边栏 -->
+                     <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col">
+                        <div class="p-4 space-y-4 border-b border-gray-100">
+                            <div class="flex items-center gap-3 px-2">
+                                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium text-[#374151] text-sm">角色扮演</h3>
+                                    <p class="text-xs text-[#9CA3AF]">工坊</p>
+                                </div>
+                            </div>
+                        </div>
+                        <nav class="flex-1 px-4 py-6">
+                            <div class="space-y-1">
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                                    <span>角色库与会话</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l-1-1a2 2 0 010-2.828l1.172-1.172a2 2 0 012.828 0L20 12m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    <span>场景模板库</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                    <span>多人会话房间</span>
+                                </a>
+                            </div>
+                        </nav>
+                        <div class="p-4 border-t border-gray-100">
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                <span>返回主工作台</span>
+                            </a>
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors mt-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1V6M12 18V23M4.22 4.22L7.76 7.76M16.24 16.24L19.78 19.78M1 12H6M18 12H23M4.22 19.78L7.76 16.24M16.24 7.76L19.78 4.22"/></svg>
+                                <span>设置</span>
+                            </a>
+                        </div>
+                    </aside>
+                    <!-- 主内容区 -->
+                    <main class="flex-1 bg-white flex flex-col">
+                        <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+                            <div>
+                                <h1 class="text-lg font-medium text-[#374151]">会话复盘</h1>
+                                <p class="text-sm text-gray-500 mt-1">与福尔摩斯的对话 - 2024/05/20</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50">导出为 Markdown</button>
+                                <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151]">导出为 PDF</button>
+                            </div>
+                        </header>
+                        <div class="flex-1 flex overflow-hidden">
+                            <div class="flex-1 p-8 overflow-y-auto bg-[#FCFCFC] space-y-6">
+                                <h3 class="text-base font-medium text-[#374151]">会话记录</h3>
+                                <div class="bg-white p-6 rounded-xl border border-gray-100 space-y-6">
+                                     <!-- AI Message -->
+                                    <div class="flex items-start gap-3 max-w-2xl">
+                                        <img src="https://i.pravatar.cc/150?img=1" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                                        <div class="flex-1">
+                                            <p class="text-sm text-gray-800">“排除一切不可能的，剩下的即使再不可能，那也是真相。”</p>
+                                            <p class="text-xs text-gray-400 mt-1">14:30:15</p>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-px bg-gray-100"></div>
+                                    <!-- User Message -->
+                                    <div class="flex items-start gap-3 max-w-2xl ml-auto flex-row-reverse text-right">
+                                        <div class="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0"></div>
+                                        <div class="flex-1">
+                                            <p class="text-sm text-gray-800">你好，福尔摩斯先生。我遇到了一个棘手的案子，想请您指点。</p>
+                                            <p class="text-xs text-gray-400 mt-1">14:30:48</p>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-px bg-gray-100"></div>
+                                    <!-- AI Message -->
+                                    <div class="flex items-start gap-3 max-w-2xl">
+                                        <img src="https://i.pravatar.cc/150?img=1" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                                        <div class="flex-1">
+                                            <p class="text-sm text-gray-800">请讲，我的朋友。把所有细节都告诉我，不要遗漏任何看似无关紧要的东西。数据，数据，数据！没有黏土，我无法做砖。</p>
+                                            <p class="text-xs text-gray-400 mt-1">14:31:02</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <aside class="w-80 border-l border-gray-100 bg-white p-6 flex flex-col space-y-6">
+                                <h3 class="text-base font-medium text-[#374151]">会话分析</h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <p class="text-xs text-gray-500">总时长</p>
+                                        <p class="text-lg font-medium text-gray-800 mt-1">38分钟</p>
+                                    </div>
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <p class="text-xs text-gray-500">总轮次</p>
+                                        <p class="text-lg font-medium text-gray-800 mt-1">52</p>
+                                    </div>
+                                    <div class="bg-gray-50 p-4 rounded-lg col-span-2">
+                                        <p class="text-xs text-gray-500">总字数</p>
+                                        <p class="text-lg font-medium text-gray-800 mt-1">3,480 字</p>
+                                    </div>
+                                </div>
+                                
+                                <h3 class="text-base font-medium text-[#374151]">我的笔记</h3>
+                                <div>
+                                    <textarea rows="8" placeholder="在此添加你的复盘笔记..." class="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors"></textarea>
+                                    <button class="mt-3 w-full py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">保存笔记</button>
+                                </div>
+                            </aside>
+                        </div>
+                    </main>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</body>
+</html>

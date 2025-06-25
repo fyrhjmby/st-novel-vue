@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小说创作工作室 - 6. 主编辑视图</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        body { background-color: #F5F5F7; }
+        .design-frame { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08); }
+        .page-title { font-size: 2rem; font-weight: 300; color: #374151; margin-bottom: 1rem; padding-left: 0.5rem; border-left: 4px solid #3B82F6; }
+        .page-container { max-width: 1600px; margin: 2rem auto; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #f1f1f1; } ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; } ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        .editor-content h1 { font-size: 1.875rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .editor-content p { font-size: 1rem; line-height: 1.75; color: #374151; margin-bottom: 1rem; }
+        .annotation { background: #FFFBEB; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; color: #B45309; border: 1px solid #FDE68A; position: absolute; white-space: nowrap; z-index: 50; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+    </style>
+</head>
+<body class="p-8">
+
+    <div id="page-6" class="page-container">
+        <h2 class="page-title">6. 主编辑视图</h2>
+        <div class="design-frame relative">
+            <div class="annotation" style="top: 100px; left: -10px; transform: rotate(-90deg); transform-origin: 0 0;">左栏: 大纲树 & 批量任务</div>
+            <div class="annotation" style="top: 250px; left: 50%; transform: translateX(-50%);">中栏: 内容编辑区 & 单个任务</div>
+            <div class="annotation" style="top: 100px; right: -10px; transform: rotate(90deg); transform-origin: 100% 0;">右栏: AI任务监控</div>
+            
+            <div class="h-[800px] flex">
+                <aside class="w-80 bg-[#FAFAFA] border-r border-gray-100 flex flex-col p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-medium text-sm text-gray-700">大纲</h3>
+                        <div class="flex items-center gap-1">
+                            <button class="w-7 h-7 rounded-md flex items-center justify-center text-gray-500 hover:bg-gray-200"><i class="fa-solid fa-plus"></i></button>
+                            <button class="w-7 h-7 rounded-md flex items-center justify-center text-gray-500 hover:bg-gray-200"><i class="fa-solid fa-folder-tree"></i></button>
+                        </div>
+                    </div>
+                    <nav class="flex-1 space-y-1 text-sm overflow-auto pr-2">
+                        <ul>
+                            <li class="relative">
+                                <a href="#" class="flex items-center gap-2 p-2 rounded-md hover:bg-gray-200">
+                                    <i class="fa-solid fa-chevron-down w-4 text-gray-400"></i>
+                                    <i class="fa-solid fa-book-open text-orange-500 w-4"></i>
+                                    <span class="font-semibold text-gray-800">第一卷：星尘之始</span>
+                                </a>
+                                <div class="absolute left-8 top-10 w-64 bg-white rounded-xl shadow-2xl p-2 z-20">
+                                    <div class="annotation" style="top: -25px; left: 10px;">右键点击父节点</div>
+                                    <p class="px-3 py-1.5 text-xs text-gray-400">批量任务</p>
+                                    <a href="#" class="flex items-center justify-between px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100"><span>对下一级“部” (2个) 执行...</span> <i class="fa-solid fa-chevron-right text-xs"></i></a>
+                                    <a href="#" class="flex items-center justify-between px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100"><span>对所有“章” (5个) 执行...</span> <i class="fa-solid fa-chevron-right text-xs"></i></a>
+                                    <div class="h-px bg-gray-100 my-1"></div>
+                                    <a href="#" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100"><i class="fa-solid fa-plus w-4 text-center"></i><span>添加新“部”</span></a>
+                                </div>
+                                <ul class="pl-5 border-l ml-3.5 border-gray-200">
+                                    <li>
+                                        <a href="#" class="flex items-center gap-2 p-2 rounded-md hover:bg-gray-200">
+                                            <i class="fa-solid fa-chevron-right w-4 text-gray-400"></i>
+                                            <i class="fa-solid fa-book text-sky-500 w-4"></i>
+                                            <span>上部：觉醒</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" class="flex items-center gap-2 p-2 rounded-md bg-blue-100 border border-blue-200">
+                                            <i class="fa-solid fa-chevron-down w-4 text-gray-400"></i>
+                                            <i class="fa-solid fa-book text-sky-500 w-4"></i>
+                                            <span class="font-medium">下部：远航</span>
+                                        </a>
+                                        <ul class="pl-5 border-l ml-3.5 border-gray-200">
+                                            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md hover:bg-gray-200"><i class="fa-regular fa-file-lines w-4 text-gray-400"></i><span>第三章: 意外的信号</span></a></li>
+                                            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-blue-600 font-medium bg-blue-50"><i class="fa-regular fa-file-lines w-4"></i><span>第四章: 跃迁点</span></a></li>
+                                            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md hover:bg-gray-200"><i class="fa-regular fa-file-lines w-4 text-gray-400"></i><span>第五章: 新的黎明</span></a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </nav>
+                </aside>
+
+                <main class="flex-1 flex flex-col bg-white">
+                    <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-lg font-medium text-[#374151]">第四章: 跃迁点</h1>
+                            <span class="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">已保存</span>
+                        </div>
+                        <div class="flex items-center gap-4 text-sm">
+                            <span class="text-gray-500">字数: 2,415</span>
+                            <div class="w-px h-5 bg-gray-200"></div>
+                            <a href="#" class="text-gray-600 hover:text-blue-600"><i class="fa-solid fa-book-open-reader mr-1"></i> 阅读模式</a>
+                            <a href="#" class="text-gray-600 hover:text-blue-600"><i class="fa-solid fa-clock-rotate-left mr-1"></i> 历史版本</a>
+                        </div>
+                    </header>
+                    <div class="flex-1 p-8 md:p-12 lg:p-16 overflow-y-auto">
+                        <div class="max-w-3xl mx-auto editor-content">
+                            <h1>第四章: 跃迁点</h1>
+                            <p>控制台的警报声将卡尔文从浅眠中惊醒。他猛地坐直，眼前的屏幕上一片红色闪烁。“发现引力异常，”艾拉的声音冷静得不带一丝情感，“正在接近理论中的跃迁点。<span class="bg-blue-100 rounded">这是我们唯一的回家机会。</span>”</p>
+                            <p>卡尔文的心跳漏了一拍。回家。这个词既熟悉又陌生，像一颗深埋的种子，在这一刻突然破土而出，疯狂生长。他深吸一口气，双手稳稳地放在控制杆上。“艾拉，计算跃迁参数，准备进入。”</p>
+                            <p><br/></p>
+                            <div class="relative h-10">
+                                <div class="absolute left-0 top-0 w-52 bg-white rounded-xl shadow-2xl p-2 z-10">
+                                    <div class="annotation" style="top: -25px; left: 10px;">右键单击空白行</div>
+                                    <a href="#" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100"><i class="fa-solid fa-lightbulb w-4 text-center text-yellow-500"></i><span>续写</span></a>
+                                    <a href="#" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100"><i class="fa-solid fa-arrows-turn-to-dots w-4 text-center text-purple-500"></i><span>构思情节</span></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+
+                <aside class="w-96 bg-[#FAFAFA] border-l border-gray-100 flex flex-col">
+                    <div class="h-1/3 p-4 border-b border-gray-100 flex flex-col">
+                        <h3 class="font-medium text-sm text-gray-700 mb-3 flex-shrink-0">任务队列 (3)</h3>
+                        <div class="flex-grow space-y-2 overflow-y-auto text-sm pr-1">
+                            <div class="p-3 bg-white rounded-lg border-l-4 border-blue-500 shadow-sm">
+                                <div class="flex justify-between items-center mb-1">
+                                    <p class="font-medium text-gray-800">润色“第四章”</p>
+                                    <span class="text-xs text-blue-600 font-semibold">进行中...</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-1.5"><div class="bg-blue-500 h-1.5 rounded-full" style="width: 45%"></div></div>
+                            </div>
+                            <div class="p-3 bg-white rounded-lg border hover:border-gray-300">
+                                <div class="flex justify-between items-center"><p class="font-medium text-gray-500">扩写“第五章”大纲</p><span class="text-xs text-gray-400">排队中</span></div>
+                            </div>
+                             <div class="p-3 bg-white rounded-lg border border-green-200 bg-green-50">
+                                <div class="flex justify-between items-center"><p class="font-medium text-gray-800">角色“艾拉”对话风格分析</p><span class="text-xs text-green-600 font-semibold">已完成</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h-2/3 p-4 flex flex-col">
+                        <h3 class="font-medium text-sm text-gray-700 mb-3 flex-shrink-0">生成内容 (润色“第四章”)</h3>
+                        <div class="flex-grow bg-white rounded-lg border border-gray-100 p-4 overflow-y-auto text-sm leading-relaxed text-gray-800">
+                            <p>警报的尖啸<span class="bg-green-100 rounded">犹如一把利刃</span>，划破了卡尔文短暂的假寐。他猛然挺直身躯，猩红的警示灯在他眼中投下不祥的光晕。“侦测到剧烈引力波动，”艾拉的合成音毫无波澜，却字字千钧，“我们正迫近一个理论中的时空奇点——跃迁点。根据数据库推演，这或许是返回太阳系的唯一路径。”</p>
+                            <p>“回家”……这两个字像一枚遗忘已久的密钥，瞬间开启了他记忆的闸门，乡愁如潮水般汹涌而至。那颗蔚蓝的星球，那些模糊的笑脸，此刻都变得无比清晰。卡尔文压下心头的悸动，指尖微凉，却坚定地覆上控制杆。“艾拉，全功率计算跃迁参数，我们准备进入。” <span class="opacity-50 animate-pulse">▍</span></p>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

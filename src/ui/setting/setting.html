@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI平台 - 设置中心 (增强版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: #F5F5F7;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* 设计系统颜色 */
+        :root {
+            --primary-900: #111827;
+            --primary-800: #1F2937;
+            --primary-700: #374151;
+            --primary-600: #4B5563;
+            --primary-500: #6B7280;
+            --primary-400: #9CA3AF;
+            --primary-300: #D1D5DB;
+            --primary-200: #E5E7EB;
+            --primary-100: #F3F4F6;
+            --primary-50: #F9FAFB;
+            
+            --accent-green: #10B981;
+            --accent-blue: #3B82F6;
+            --accent-red: #EF4444;
+            --accent-yellow: #F59E0B;
+            
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 0 0 1px rgba(0, 0, 0, 0.03), 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D1D5DB;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9CA3AF;
+        }
+        
+        .design-frame {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        }
+        
+        .toggle-switch {
+            width: 44px;
+            height: 24px;
+            background: #D1D5DB;
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .toggle-switch:focus-visible {
+            outline: 2px solid #4B5563;
+            outline-offset: 2px;
+        }
+        
+        .toggle-switch.active {
+            background: #10B981;
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 10px;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(20px);
+        }
+
+        .copy-button {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .code-container:hover .copy-button {
+            opacity: 1;
+        }
+        
+        .slider-track {
+            height: 4px;
+            background: #E5E7EB;
+            border-radius: 2px;
+            position: relative;
+        }
+        
+        .slider-fill {
+            height: 100%;
+            background: #3B82F6;
+            border-radius: 2px;
+        }
+        
+        .slider-thumb {
+            width: 16px;
+            height: 16px;
+            background: white;
+            border: 2px solid #3B82F6;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: 251.2;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen p-8">
+        <!-- 设计头部 -->
+        <div class="max-w-[1800px] mx-auto mb-12">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl font-light text-gray-800 mb-2">AI Platform - Settings UI Design (Enhanced)</h1>
+                    <p class="text-gray-500">增强版设置中心 / 2025</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-400">Version 3.0</span>
+                    <div class="w-px h-6 bg-gray-300"></div>
+                    <span class="text-sm text-gray-400">Desktop 1440px</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页面1: 设置总览 -->
+        <div id="section1" class="max-w-[1800px] mx-auto mb-16">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700">1. 设置总览 (Settings Overview)</h2>
+            <div class="design-frame">
+                <div class="h-[800px] flex">
+                    <!-- 侧边栏 -->
+                    <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col">
+                        <div class="p-4 space-y-4 border-b border-gray-100 h-20 flex items-center">
+                            <div class="flex items-center gap-3 px-2">
+                                <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium text-[#374151] text-sm">设置中心</h3>
+                                    <p class="text-xs text-[#9CA3AF]">Settings</p>
+                                </div>
+                            </div>
+                        </div>
+                        <nav class="flex-1 px-4 py-6">
+                            <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">主要功能</p>
+                            <div class="space-y-1">
+                                <a href="#section1" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                                    <span>设置总览</span>
+                                </a>
+                                <a href="#section4" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 7C16 9.21 14.21 11 12 11C9.79 11 8 9.21 8 7C8 4.79 9.79 3 12 3C14.21 3 16 4.79 16 7Z"/><path d="M12 14C7.29 14 3 16.29 3 21V22H21V21C21 16.29 16.71 14 12 14Z"/></svg>
+                                    <span>账户与API</span>
+                                </a>
+                                <a href="#section5" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 19V13M15 19V8M21 19V3M3 19L3 16"/></svg>
+                                    <span>用量与日志</span>
+                                </a>
+                                <a href="#section6" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                    <span>偏好设置</span>
+                                </a>
+                                <a href="#section7" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 15V3m0 0l-4 4m4-4l4 4M2 17l.621 2.485A2 2 0 001.94 19.658 2 2 0 002 21h11.5c7 0 7-2 7-7V7c0-5 0-7-7-7H11"/></svg>
+                                    <span>集成与插件</span>
+                                </a>
+                            </div>
+                            <p class="text-xs font-medium text-[#9CA3AF] px-3 mt-8 mb-3 uppercase tracking-wider">高级设置</p>
+                            <div class="space-y-1">
+                                <a href="#section2" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                                    <span>AI模型配置</span>
+                                </a>
+                                <a href="#section8" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 1v6m0 0l-3-3m3 3l3-3m3 5.5A6.5 6.5 0 115.5 9.5a6.5 6.5 0 0113 0z"/></svg>
+                                    <span>数据与隐私</span>
+                                </a>
+                            </div>
+                        </nav>
+                        <div class="p-4 border-t border-gray-100">
+                            <a href="#section3" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9C9.3 8.33 9.75 7.76 10.35 7.41C10.95 7.05 11.65 6.93 12.33 7.07C13.01 7.21 13.61 7.59 14.02 8.14C14.43 8.69 14.61 9.37 14.53 10.04C14.45 10.71 14.11 11.32 13.58 11.73C13.3 11.95 13.02 12.14 12.74 12.31C12.46 12.48 12.2 12.65 11.98 12.85C11.76 13.04 11.59 13.27 11.48 13.53C11.36 13.79 11.31 14.08 11.31 14.39"/><circle cx="12" cy="17" r="0.5"/></svg>
+                                <span>帮助中心</span>
+                            </a>
+                        </div>
+                    </aside>
+                    <!-- 主内容区 -->
+                    <main class="flex-1 bg-white flex flex-col">
+                        <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100">
+                            <h1 class="text-lg font-medium text-[#374151]">设置总览</h1>
+                            <div class="flex items-center gap-3">
+                                <button class="px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-medium flex items-center gap-1">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    所有系统正常
+                                </button>
+                                <div class="w-px h-6 bg-gray-200"></div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">张</div>
+                                    <div>
+                                        <p class="text-sm font-medium text-[#374151]">张小明</p>
+                                        <p class="text-xs text-[#9CA3AF]">免费版</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </header>
+                        <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
+                            <div class="mb-8">
+                                <h2 class="text-2xl font-light text-[#374151] mb-2">欢迎来到设置中心</h2>
+                                <p class="text-[#6B7280]">管理您的账户、API和偏好设置</p>
+                            </div>
+                            
+                            <!-- 快速统计 -->
+                            <div class="grid grid-cols-4 gap-4 mb-8">
+                                <div class="bg-white rounded-xl p-4 border border-gray-100">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <p class="text-xs text-[#9CA3AF]">本月API调用</p>
+                                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                                    </div>
+                                    <p class="text-2xl font-semibold text-[#374151]">856</p>
+                                    <p class="text-xs text-green-600">+12% 较上月</p>
+                                </div>
+                                <div class="bg-white rounded-xl p-4 border border-gray-100">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <p class="text-xs text-[#9CA3AF]">活跃集成</p>
+                                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    </div>
+                                    <p class="text-2xl font-semibold text-[#374151]">3</p>
+                                    <p class="text-xs text-[#6B7280]">共5个可用</p>
+                                </div>
+                                <div class="bg-white rounded-xl p-4 border border-gray-100">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <p class="text-xs text-[#9CA3AF]">存储使用</p>
+                                        <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+                                    </div>
+                                    <p class="text-2xl font-semibold text-[#374151]">2.1GB</p>
+                                    <p class="text-xs text-[#6B7280]">共5GB</p>
+                                </div>
+                                <div class="bg-white rounded-xl p-4 border border-gray-100">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <p class="text-xs text-[#9CA3AF]">团队成员</p>
+                                        <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                    </div>
+                                    <p class="text-2xl font-semibold text-[#374151]">1</p>
+                                    <p class="text-xs text-[#6B7280]">仅自己</p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-3 gap-6 mb-8">
+                                <a href="#section4" class="bg-white rounded-xl p-6 border border-gray-100 hover:border-gray-200 transition-all hover:shadow-sm cursor-pointer block">
+                                    <div class="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center mb-4"><svg class="w-5 h-5 text-[#4B5563]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 7C16 9.21 14.21 11 12 11C9.79 11 8 9.21 8 7C8 4.79 9.79 3 12 3C14.21 3 16 4.79 16 7Z"/><path d="M12 14C7.29 14 3 16.29 3 21V22H21V21C21 16.29 16.71 14 12 14Z"/></svg></div>
+                                    <h3 class="font-medium text-[#374151] mb-1">账户与API</h3>
+                                    <p class="text-sm text-[#9CA3AF]">管理个人资料和API密钥</p>
+                                </a>
+                                <a href="#section5" class="bg-white rounded-xl p-6 border border-gray-100 hover:border-gray-200 transition-all hover:shadow-sm cursor-pointer block">
+                                    <div class="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center mb-4"><svg class="w-5 h-5 text-[#4B5563]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 19V13M15 19V8M21 19V3M3 19L3 16"/></svg></div>
+                                    <h3 class="font-medium text-[#374151] mb-1">用量与日志</h3>
+                                    <p class="text-sm text-[#9CA3AF]">查看API用量和调用记录</p>
+                                </a>
+                                <a href="#section6" class="bg-white rounded-xl p-6 border border-gray-100 hover:border-gray-200 transition-all hover:shadow-sm cursor-pointer block">
+                                    <div class="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center mb-4"><svg class="w-5 h-5 text-[#4B5563]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg></div>
+                                    <h3 class="font-medium text-[#374151] mb-1">偏好设置</h3>
+                                    <p class="text-sm text-[#9CA3AF]">个性化您的使用体验</p>
+                                </a>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-6">
+                                <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                    <h3 class="text-base font-medium text-[#374151] mb-4">快速设置</h3>
+                                    <div class="space-y-4 divide-y divide-gray-100">
+                                        <div class="flex items-center justify-between pt-4 first:pt-0">
+                                            <div class="flex-1">
+                                                <p class="text-sm text-[#374151]">双重验证</p>
+                                                <p class="text-xs text-[#9CA3AF] mt-0.5">提高账户安全性</p>
+                                            </div>
+                                            <div class="toggle-switch" tabindex="0" onclick="this.classList.toggle('active')"></div>
+                                        </div>
+                                        <div class="flex items-center justify-between pt-4">
+                                            <div class="flex-1">
+                                                <p class="text-sm text-[#374151]">邮件通知</p>
+                                                <p class="text-xs text-[#9CA3AF] mt-0.5">接收重要更新</p>
+                                            </div>
+                                            <div class="toggle-switch active" tabindex="0" onclick="this.classList.toggle('active')"></div>
+                                        </div>
+                                        <div class="flex items-center justify-between pt-4">
+                                            <div class="flex-1">
+                                                <p class="text-sm text-[#374151]">自动保存</p>
+                                                <p class="text-xs text-[#9CA3AF] mt-0.5">防止数据丢失</p>
+                                            </div>
+                                            <div class="toggle-switch active" tabindex="0" onclick="this.classList.toggle('active')"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                    <h3 class="text-base font-medium text-[#374151] mb-4">近期活动</h3>
+                                    <div class="space-y-3">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-6 6m0 0v5m0-5H9m6 0a6 6 0 01-6-6 6 6 0 016-6h1.5"/></svg>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="text-sm font-medium text-[#374151]">API密钥已更新</p>
+                                                <p class="text-xs text-[#9CA3AF]">2小时前</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="text-sm font-medium text-[#374151]">集成测试成功</p>
+                                                <p class="text-xs text-[#9CA3AF]">昨天</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-8 h-8 bg-purple-50 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="text-sm font-medium text-[#374151]">新功能已启用</p>
+                                                <p class="text-xs text-[#9CA3AF]">3天前</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页面4: 账户与API -->
+        <div id="section4" class="max-w-[1800px] mx-auto mb-16">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700">2. 账户与API (Account & API)</h2>
+            <div class="design-frame">
+                <div class="h-[800px] flex">
+                    <!-- 侧边栏 -->
+                    <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col">
+                        <div class="p-4 space-y-4 border-b border-gray-100 h-20 flex items-center">
+                            <div class="flex items-center gap-3 px-2">
+                                <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0"><svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+                                <div><h3 class="font-medium text-[#374151] text-sm">设置中心</h3><p class="text-xs text-[#9CA3AF]">Settings</p></div>
+                            </div>
+                        </div>
+                        <nav class="flex-1 px-4 py-6">
+                            <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">主要功能</p>
+                            <div class="space-y-1">
+                                <a href="#section1" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>设置总览</span></a>
+                                <a href="#section4" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 7C16 9.21 14.21 11 12 11C9.79 11 8 9.21 8 7C8 4.79 9.79 3 12 3C14.21 3 16 4.79 16 7Z"/><path d="M12 14C7.29 14 3 16.29 3 21V22H21V21C21 16.29 16.71 14 12 14Z"/></svg><span>账户与API</span></a>
+                                <a href="#section5" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 19V13M15 19V8M21 19V3M3 19L3 16"/></svg><span>用量与日志</span></a>
+                                <a href="#section6" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg><span>偏好设置</span></a>
+                                <a href="#section7" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 15V3m0 0l-4 4m4-4l4 4M2 17l.621 2.485A2 2 0 001.94 19.658 2 2 0 002 21h11.5c7 0 7-2 7-7V7c0-5 0-7-7-7H11"/></svg>
+                                    <span>集成与插件</span>
+                                </a>
+                            </div>
+                            <p class="text-xs font-medium text-[#9CA3AF] px-3 mt-8 mb-3 uppercase tracking-wider">高级设置</p>
+                            <div class="space-y-1">
+                                <a href="#section2" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg><span>AI模型配置</span></a>
+                                <a href="#section8" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 1v6m0 0l-3-3m3 3l3-3m3 5.5A6.5 6.5 0 115.5 9.5a6.5 6.5 0 0113 0z"/></svg>
+                                    <span>数据与隐私</span>
+                                </a>
+                            </div>
+                        </nav>
+                        <div class="p-4 border-t border-gray-100">
+                            <a href="#section3" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9C9.3 8.33 9.75 7.76 10.35 7.41C10.95 7.05 11.65 6.93 12.33 7.07C13.01 7.21 13.61 7.59 14.02 8.14C14.43 8.69 14.61 9.37 14.53 10.04C14.45 10.71 14.11 11.32 13.58 11.73C13.3 11.95 13.02 12.14 12.74 12.31C12.46 12.48 12.2 12.65 11.98 12.85C11.76 13.04 11.59 13.27 11.48 13.53C11.36 13.79 11.31 14.08 11.31 14.39"/><circle cx="12" cy="17" r="0.5"/></svg><span>帮助中心</span></a>
+                        </div>
+                    </aside>
+                    <!-- 主内容区 -->
+                    <main class="flex-1 bg-white flex flex-col">
+                        <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100">
+                            <h1 class="text-lg font-medium text-[#374151]">账户与API</h1>
+                            <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151]">保存更改</button>
+                        </header>
+                        <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] space-y-6">
+                            <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                <h3 class="text-base font-medium text-[#374151] mb-6">个人资料</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-start gap-6">
+                                        <div class="flex-shrink-0">
+                                            <div class="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-2xl font-medium">张</div>
+                                            <button class="mt-3 text-xs text-[#3B82F6] hover:underline">更换头像</button>
+                                        </div>
+                                        <div class="flex-1 grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="text-sm font-medium text-[#374151] mb-2 block">昵称</label>
+                                                <input type="text" value="张小明" class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563]">
+                                            </div>
+                                            <div>
+                                                <label class="text-sm font-medium text-[#374151] mb-2 block">电子邮箱</label>
+                                                <input type="email" value="xiaoming@example.com" readonly class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed">
+                                            </div>
+                                            <div>
+                                                <label class="text-sm font-medium text-[#374151] mb-2 block">手机号码</label>
+                                                <input type="tel" value="+86 138****8888" class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563]">
+                                            </div>
+                                            <div>
+                                                <label class="text-sm font-medium text-[#374151] mb-2 block">时区</label>
+                                                <select class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563]">
+                                                    <option>UTC+8 北京时间</option>
+                                                    <option>UTC+0 格林威治时间</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-base font-medium text-[#374151]">安全设置</h3>
+                                    <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">安全级别: 中等</span>
+                                </div>
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <h4 class="text-sm font-medium text-[#374151]">双重验证 (2FA)</h4>
+                                            <p class="text-xs text-[#9CA3AF] mt-1">使用验证器应用程序进行额外验证</p>
+                                        </div>
+                                        <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50">设置</button>
+                                    </div>
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <h4 class="text-sm font-medium text-[#374151]">登录历史</h4>
+                                            <p class="text-xs text-[#9CA3AF] mt-1">查看最近的登录活动</p>
+                                        </div>
+                                        <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50">查看</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-base font-medium text-[#374151]">API 密钥管理</h3>
+                                    <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151]">创建新密钥</button>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm text-left">
+                                        <thead class="bg-gray-50"><tr class="border-b border-gray-100 text-xs text-[#6B7280]"><th class="py-3 px-4 font-medium">名称</th><th class="py-3 px-4 font-medium">密钥 (部分)</th><th class="py-3 px-4 font-medium">权限</th><th class="py-3 px-4 font-medium">最后使用</th><th class="py-3 px-4 font-medium">创建时间</th><th class="py-3 px-4 font-medium text-right">操作</th></tr></thead>
+                                        <tbody>
+                                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                                <td class="py-3 px-4 text-[#374151]">生产环境密钥</td>
+                                                <td class="py-3 px-4 text-[#6B7280] font-mono">sk-••••1a2b</td>
+                                                <td class="py-3 px-4"><span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">完全访问</span></td>
+                                                <td class="py-3 px-4 text-[#6B7280]">2小时前</td>
+                                                <td class="py-3 px-4 text-[#6B7280]">2024-03-01</td>
+                                                <td class="py-3 px-4 flex items-center justify-end gap-3"><a href="#" class="text-[#3B82F6] hover:underline">复制</a><a href="#" class="text-[#EF4444] hover:underline">删除</a></td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                                <td class="py-3 px-4 text-[#374151]">测试环境密钥</td>
+                                                <td class="py-3 px-4 text-[#6B7280] font-mono">sk-••••3c4d</td>
+                                                <td class="py-3 px-4"><span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded">只读</span></td>
+                                                <td class="py-3 px-4 text-[#6B7280]">1天前</td>
+                                                <td class="py-3 px-4 text-[#6B7280]">2024-05-15</td>
+                                                <td class="py-3 px-4 flex items-center justify-end gap-3"><a href="#" class="text-[#3B82F6] hover:underline">复制</a><a href="#" class="text-[#EF4444] hover:underline">删除</a></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                <h3 class="text-base font-medium text-[#374151] mb-6">团队管理</h3>
+                                <div class="bg-gray-50 rounded-lg p-8 text-center">
+                                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                    <p class="text-[#6B7280] mb-4">升级到专业版以创建团队</p>
+                                    <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151]">了解更多</button>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页面5: 用量与日志 -->
+        <div id="section5" class="max-w-[1800px] mx-auto mb-16">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700">3. 用量与日志 (Usage & Logs)</h2>
+            <div class="design-frame">
+                <div class="h-[800px] flex">
+                    <!-- 侧边栏 -->
+                    <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col">
+                        <div class="p-4 space-y-4 border-b border-gray-100 h-20 flex items-center">
+                            <div class="flex items-center gap-3 px-2">
+                                <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0"><svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+                                <div><h3 class="font-medium text-[#374151] text-sm">设置中心</h3><p class="text-xs text-[#9CA3AF]">Settings</p></div>
+                            </div>
+                        </div>
+                        <nav class="flex-1 px-4 py-6">
+                            <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">主要功能</p>
+                            <div class="space-y-1">
+                                <a href="#section1" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>设置总览</span></a>
+                                <a href="#section4" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 7C16 9.21 14.21 11 12 11C9.79 11 8 9.21 8 7C8 4.79 9.79 3 12 3C14.21 3 16 4.79 16 7Z"/><path d="M12 14C7.29 14 3 16.29 3 21V22H21V21C21 16.29 16.71 14 12 14Z"/></svg><span>账户与API</span></a>
+                                <a href="#section5" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 19V13M15 19V8M21 19V3M3 19L3 16"/></svg><span>用量与日志</span></a>
+                                <a href="#section6" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg><span>偏好设置</span></a>
+                                <a href="#section7" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 15V3m0 0l-4 4m4-4l4 4M2 17l.621 2.485A2 2 0 001.94 19.658 2 2 0 002 21h11.5c7 0 7-2 7-7V7c0-5 0-7-7-7H11"/></svg>
+                                    <span>集成与插件</span>
+                                </a>
+                            </div>
+                             <p class="text-xs font-medium text-[#9CA3AF] px-3 mt-8 mb-3 uppercase tracking-wider">高级设置</p>
+                            <div class="space-y-1">
+                                <a href="#section2" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg><span>AI模型配置</span></a>
+                                <a href="#section8" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 1v6m0 0l-3-3m3 3l3-3m3 5.5A6.5 6.5 0 115.5 9.5a6.5 6.5 0 0113 0z"/></svg>
+                                    <span>数据与隐私</span>
+                                </a>
+                            </div>
+                        </nav>
+                        <div class="p-4 border-t border-gray-100">
+                            <a href="#section3" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9C9.3 8.33 9.75 7.76 10.35 7.41C10.95 7.05 11.65 6.93 12.33 7.07C13.01 7.21 13.61 7.59 14.02 8.14C14.43 8.69 14.61 9.37 14.53 10.04C14.45 10.71 14.11 11.32 13.58 11.73C13.3 11.95 13.02 12.14 12.74 12.31C12.46 12.48 12.2 12.65 11.98 12.85C11.76 13.04 11.59 13.27 11.48 13.53C11.36 13.79 11.31 14.08 11.31 14.39"/><circle cx="12" cy="17" r="0.5"/></svg><span>帮助中心</span></a>
+                        </div>
+                    </aside>
+                    <!-- 主内容区 -->
+                    <main class="flex-1 bg-white flex flex-col">
+                        <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100">
+                            <h1 class="text-lg font-medium text-[#374151]">用量与日志</h1>
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-2">
+                                    <button class="px-3 py-1.5 text-sm text-[#6B7280] hover:bg-gray-50 rounded-lg">日</button>
+                                    <button class="px-3 py-1.5 text-sm text-[#6B7280] hover:bg-gray-50 rounded-lg">周</button>
+                                    <button class="px-3 py-1.5 text-sm bg-[#4B5563] text-white rounded-lg">月</button>
+                                </div>
+                                <div class="w-px h-6 bg-gray-200"></div>
+                                <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    导出报告
+                                </button>
+                            </div>
+                        </header>
+                        <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] space-y-6">
+                            <!-- 统计卡片 -->
+                            <div class="grid grid-cols-4 gap-4">
+                                <div class="bg-white rounded-xl p-4 border border-gray-100">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <p class="text-xs text-[#9CA3AF]">总请求数</p>
+                                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                                    </div>
+                                    <p class="text-2xl font-semibold text-[#374151]">12,564</p>
+                                    <div class="mt-2 flex items-center gap-2">
+                                        <div class="flex-1 h-1 bg-gray-200 rounded">
+                                            <div class="h-full w-3/4 bg-blue-500 rounded"></div>
+                                        </div>
+                                        <span class="text-xs text-green-600">+8.2%</span>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl p-4 border border-gray-100">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <p class="text-xs text-[#9CA3AF]">Token 消耗</p>
+                                        <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+                                    </div>
+                                    <p class="text-2xl font-semibold text-[#374151]">856K</p>
+                                    <div class="mt-2 flex items-center gap-2">
+                                        <div class="flex-1 h-1 bg-gray-200 rounded">
+                                            <div class="h-full w-[85%] bg-purple-500 rounded"></div>
+                                        </div>
+                                        <span class="text-xs text-[#6B7280]">85.6%</span>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl p-4 border border-gray-100">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <p class="text-xs text-[#9CA3AF]">平均响应时间</p>
+                                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </div>
+                                    <p class="text-2xl font-semibold text-[#374151]">1.2s</p>
+                                    <div class="mt-2 flex items-center gap-2">
+                                        <div class="flex-1 h-1 bg-gray-200 rounded">
+                                            <div class="h-full w-1/4 bg-green-500 rounded"></div>
+                                        </div>
+                                        <span class="text-xs text-green-600">优秀</span>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl p-4 border border-gray-100">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <p class="text-xs text-[#9CA3AF]">错误率</p>
+                                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </div>
+                                    <p class="text-2xl font-semibold text-[#374151]">0.8%</p>
+                                    <div class="mt-2 flex items-center gap-2">
+                                        <div class="flex-1 h-1 bg-gray-200 rounded">
+                                            <div class="h-full w-[8%] bg-red-500 rounded"></div>
+                                        </div>
+                                        <span class="text-xs text-red-600">-0.2%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-base font-medium text-[#374151]">使用趋势</h3>
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-3 h-3 bg-blue-500 rounded"></div>
+                                            <span class="text-xs text-[#6B7280]">请求数</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-3 h-3 bg-purple-500 rounded"></div>
+                                            <span class="text-xs text-[#6B7280]">Token消耗</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+                                    <p class="text-gray-400 text-sm">[交互式图表 - 展示30天使用趋势]</p>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-base font-medium text-[#374151]">API 调用日志</h3>
+                                    <div class="flex items-center gap-3">
+                                        <select class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563]">
+                                            <option>所有模型</option>
+                                            <option>GPT-4</option>
+                                            <option>Claude 3</option>
+                                        </select>
+                                        <select class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563]">
+                                            <option>所有状态</option>
+                                            <option>成功</option>
+                                            <option>失败</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm text-left">
+                                        <thead class="bg-gray-50"><tr class="border-b border-gray-100 text-xs text-[#6B7280]"><th class="py-3 px-4 font-medium">时间戳</th><th class="py-3 px-4 font-medium">端点</th><th class="py-3 px-4 font-medium">模型</th><th class="py-3 px-4 font-medium">Token</th><th class="py-3 px-4 font-medium">状态</th><th class="py-3 px-4 font-medium">耗时</th><th class="py-3 px-4 font-medium">详情</th></tr></thead>
+                                        <tbody>
+                                            <tr class="border-b border-gray-100 text-[#374151] hover:bg-gray-50">
+                                                <td class="py-3 px-4">2024-06-18 10:32:05</td>
+                                                <td class="py-3 px-4 font-mono text-xs">/v1/chat/completions</td>
+                                                <td class="py-3 px-4">gpt-4-turbo</td>
+                                                <td class="py-3 px-4">1,245</td>
+                                                <td class="py-3 px-4"><span class="bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded-full">200 OK</span></td>
+                                                <td class="py-3 px-4">1.25s</td>
+                                                <td class="py-3 px-4"><a href="#" class="text-[#3B82F6] hover:underline">查看</a></td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 text-[#374151] hover:bg-gray-50">
+                                                <td class="py-3 px-4">2024-06-18 10:31:50</td>
+                                                <td class="py-3 px-4 font-mono text-xs">/v1/chat/completions</td>
+                                                <td class="py-3 px-4">claude-3-opus</td>
+                                                <td class="py-3 px-4">2,105</td>
+                                                <td class="py-3 px-4"><span class="bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded-full">200 OK</span></td>
+                                                <td class="py-3 px-4">2.01s</td>
+                                                <td class="py-3 px-4"><a href="#" class="text-[#3B82F6] hover:underline">查看</a></td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 text-[#374151] hover:bg-gray-50">
+                                                <td class="py-3 px-4">2024-06-18 10:30:12</td>
+                                                <td class="py-3 px-4 font-mono text-xs">/v1/chat/completions</td>
+                                                <td class="py-3 px-4">gpt-4-turbo</td>
+                                                <td class="py-3 px-4">0</td>
+                                                <td class="py-3 px-4"><span class="bg-red-100 text-red-700 text-xs font-medium px-2 py-1 rounded-full">400 Error</span></td>
+                                                <td class="py-3 px-4">0.05s</td>
+                                                <td class="py-3 px-4"><a href="#" class="text-[#3B82F6] hover:underline">查看</a></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-4 flex items-center justify-between">
+                                    <p class="text-sm text-[#6B7280]">显示 1-10 条，共 856 条</p>
+                                    <div class="flex items-center gap-2">
+                                        <button class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">上一页</button>
+                                        <button class="px-3 py-1.5 bg-[#4B5563] text-white rounded-lg text-sm">1</button>
+                                        <button class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">2</button>
+                                        <button class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">3</button>
+                                        <button class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">下一页</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页面6: 偏好设置 -->
+        <div id="section6" class="max-w-[1800px] mx-auto mb-16">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700">4. 偏好设置 (Preferences)</h2>
+             <div class="design-frame">
+                    <div class="h-[800px] flex">
+                        <!-- 侧边栏 -->
+                        <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col">
+                            <div class="p-4 space-y-4 border-b border-gray-100 h-20 flex items-center">
+                                <div class="flex items-center gap-3 px-2">
+                                    <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0"><svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+                                    <div><h3 class="font-medium text-[#374151] text-sm">设置中心</h3><p class="text-xs text-[#9CA3AF]">Settings</p></div>
+                                </div>
+                            </div>
+                            <nav class="flex-1 px-4 py-6">
+                                <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">主要功能</p>
+                                <div class="space-y-1">
+                                    <a href="#section1" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>设置总览</span></a>
+                                    <a href="#section4" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 7C16 9.21 14.21 11 12 11C9.79 11 8 9.21 8 7C8 4.79 9.79 3 12 3C14.21 3 16 4.79 16 7Z"/><path d="M12 14C7.29 14 3 16.29 3 21V22H21V21C21 16.29 16.71 14 12 14Z"/></svg><span>账户与API</span></a>
+                                    <a href="#section5" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 19V13M15 19V8M21 19V3M3 19L3 16"/></svg><span>用量与日志</span></a>
+                                    <a href="#section6" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg><span>偏好设置</span></a>
+                                    <a href="#section7" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 15V3m0 0l-4 4m4-4l4 4M2 17l.621 2.485A2 2 0 001.94 19.658 2 2 0 002 21h11.5c7 0 7-2 7-7V7c0-5 0-7-7-7H11"/></svg>
+                                        <span>集成与插件</span>
+                                    </a>
+                                </div>
+                                 <p class="text-xs font-medium text-[#9CA3AF] px-3 mt-8 mb-3 uppercase tracking-wider">高级设置</p>
+                                <div class="space-y-1">
+                                    <a href="#section2" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg><span>AI模型配置</span></a>
+                                    <a href="#section8" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 1v6m0 0l-3-3m3 3l3-3m3 5.5A6.5 6.5 0 115.5 9.5a6.5 6.5 0 0113 0z"/></svg>
+                                        <span>数据与隐私</span>
+                                    </a>
+                                </div>
+                            </nav>
+                            <div class="p-4 border-t border-gray-100">
+                                <a href="#section3" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9C9.3 8.33 9.75 7.76 10.35 7.41C10.95 7.05 11.65 6.93 12.33 7.07C13.01 7.21 13.61 7.59 14.02 8.14C14.43 8.69 14.61 9.37 14.53 10.04C14.45 10.71 14.11 11.32 13.58 11.73C13.3 11.95 13.02 12.14 12.74 12.31C12.46 12.48 12.2 12.65 11.98 12.85C11.76 13.04 11.59 13.27 11.48 13.53C11.36 13.79 11.31 14.08 11.31 14.39"/><circle cx="12" cy="17" r="0.5"/></svg><span>帮助中心</span></a>
+                            </div>
+                        </aside>
+                        <!-- 主内容区 -->
+                        <main class="flex-1 bg-white flex flex-col">
+                            <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100">
+                                <h1 class="text-lg font-medium text-[#374151]">偏好设置</h1>
+                                <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151]">保存设置</button>
+                            </header>
+                            <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] space-y-8">
+                                <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                    <h3 class="text-base font-medium text-[#374151] mb-1">外观</h3><p class="text-sm text-[#9CA3AF] mb-6">自定义平台的外观和显示</p>
+                                    <div class="space-y-6">
+                                        <div>
+                                            <label class="text-sm font-medium text-[#374151] mb-4 block">主题模式</label>
+                                            <div class="grid grid-cols-3 gap-4">
+                                                <label class="border-2 border-blue-500 rounded-lg p-4 text-center cursor-pointer">
+                                                    <div class="w-full h-16 bg-white border border-gray-200 rounded-md mb-2"></div>
+                                                    <span class="text-sm font-medium text-gray-700">浅色</span>
+                                                </label>
+                                                <label class="border-2 border-transparent hover:border-gray-300 rounded-lg p-4 text-center cursor-pointer">
+                                                    <div class="w-full h-16 bg-gray-800 border border-gray-700 rounded-md mb-2"></div>
+                                                    <span class="text-sm font-medium text-gray-700">深色</span>
+                                                </label>
+                                                <label class="border-2 border-transparent hover:border-gray-300 rounded-lg p-4 text-center cursor-pointer">
+                                                    <div class="w-full h-16 bg-gradient-to-tr from-white to-gray-800 border border-gray-400 rounded-md mb-2"></div>
+                                                    <span class="text-sm font-medium text-gray-700">跟随系统</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="text-sm font-medium text-[#374151] mb-2 block">界面缩放</label>
+                                            <div class="flex items-center gap-4">
+                                                <span class="text-sm text-[#6B7280]">80%</span>
+                                                <div class="flex-1 relative">
+                                                    <div class="slider-track">
+                                                        <div class="slider-fill" style="width: 50%"></div>
+                                                        <div class="slider-thumb" style="left: 50%"></div>
+                                                    </div>
+                                                </div>
+                                                <span class="text-sm text-[#6B7280]">120%</span>
+                                                <span class="text-sm font-medium text-[#374151] ml-2">100%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                    <h3 class="text-base font-medium text-[#374151] mb-1">语言与地区</h3>
+                                    <p class="text-sm text-[#9CA3AF] mb-6">设置您的语言偏好和地区信息</p>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="text-sm font-medium text-[#374151] mb-2 block">界面语言</label>
+                                            <select class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563]">
+                                                <option>简体中文</option>
+                                                <option>English</option>
+                                                <option>繁體中文</option>
+                                                <option>日本語</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-sm font-medium text-[#374151] mb-2 block">日期格式</label>
+                                            <select class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563]">
+                                                <option>YYYY-MM-DD</option>
+                                                <option>DD/MM/YYYY</option>
+                                                <option>MM/DD/YYYY</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                    <h3 class="text-base font-medium text-[#374151] mb-6">通知设置</h3>
+                                    <div class="space-y-4 divide-y divide-gray-100">
+                                        <div class="flex items-center justify-between pt-4 first:pt-0">
+                                            <div>
+                                                <h4 class="text-sm font-medium text-[#374151]">产品更新</h4>
+                                                <p class="text-xs text-[#9CA3AF] mt-1">获取关于新功能和改进的通知</p>
+                                            </div>
+                                            <div class="toggle-switch active" tabindex="0" onclick="this.classList.toggle('active')"></div>
+                                        </div>
+                                        <div class="flex items-center justify-between pt-4">
+                                            <div>
+                                                <h4 class="text-sm font-medium text-[#374151]">使用提醒</h4>
+                                                <p class="text-xs text-[#9CA3AF] mt-1">接近配额限制时收到提醒</p>
+                                            </div>
+                                            <div class="toggle-switch active" tabindex="0" onclick="this.classList.toggle('active')"></div>
+                                        </div>
+                                        <div class="flex items-center justify-between pt-4">
+                                            <div>
+                                                <h4 class="text-sm font-medium text-[#374151]">安全警报</h4>
+                                                <p class="text-xs text-[#9CA3AF] mt-1">异常登录或API使用时立即通知</p>
+                                            </div>
+                                            <div class="toggle-switch active" tabindex="0" onclick="this.classList.toggle('active')"></div>
+                                        </div>
+                                        <div class="flex items-center justify-between pt-4">
+                                            <div>
+                                                <h4 class="text-sm font-medium text-[#374151]">营销邮件</h4>
+                                                <p class="text-xs text-[#9CA3AF] mt-1">接收产品推荐和优惠信息</p>
+                                            </div>
+                                            <div class="toggle-switch" tabindex="0" onclick="this.classList.toggle('active')"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                    <h3 class="text-base font-medium text-[#374151] mb-6">快捷键设置</h3>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-sm text-[#374151]">新建对话</span>
+                                                <kbd class="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono">Ctrl+N</kbd>
+                                            </div>
+                                            <button class="text-sm text-[#3B82F6] hover:underline">修改</button>
+                                        </div>
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-sm text-[#374151]">搜索对话</span>
+                                                <kbd class="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono">Ctrl+K</kbd>
+                                            </div>
+                                            <button class="text-sm text-[#3B82F6] hover:underline">修改</button>
+                                        </div>
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-sm text-[#374151]">切换主题</span>
+                                                <kbd class="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono">Ctrl+Shift+D</kbd>
+                                            </div>
+                                            <button class="text-sm text-[#3B82F6] hover:underline">修改</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white rounded-xl p-6 border border-red-200 bg-red-50">
+                                    <h3 class="text-base font-medium text-red-600 mb-6">危险区域</h3>
+                                    <div class="space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <h4 class="text-sm font-medium text-[#374151]">清除所有数据</h4>
+                                                <p class="text-sm text-red-600 mt-1">删除所有对话历史、设置和缓存数据</p>
+                                            </div>
+                                            <button class="px-4 py-2 bg-white border border-red-300 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50">清除数据</button>
+                                        </div>
+                                        <div class="flex items-center justify-between pt-4 border-t border-red-200">
+                                            <div>
+                                                <h4 class="text-sm font-medium text-[#374151]">删除账户</h4>
+                                                <p class="text-sm text-red-600 mt-1">此操作无法撤销，将永久删除您的账户和所有数据</p>
+                                            </div>
+                                            <button class="px-4 py-2 bg-red-500 border border-red-600 rounded-lg text-sm font-medium text-white hover:bg-red-600">删除账户</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </main>
+                    </div>
+                </div>
+        </div>
+        
+        <!-- 页面7: 集成与插件 -->
+        <div id="section7" class="max-w-[1800px] mx-auto mb-16">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700">5. 集成与插件 (Integrations & Plugins)</h2>
+            <div class="design-frame">
+                <div class="h-[800px] flex">
+                    <!-- 侧边栏 (复用相同结构) -->
+                    <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col">
+                        <div class="p-4 space-y-4 border-b border-gray-100 h-20 flex items-center">
+                            <div class="flex items-center gap-3 px-2">
+                                <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0"><svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+                                <div><h3 class="font-medium text-[#374151] text-sm">设置中心</h3><p class="text-xs text-[#9CA3AF]">Settings</p></div>
+                            </div>
+                        </div>
+                        <nav class="flex-1 px-4 py-6">
+                            <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">主要功能</p>
+                            <div class="space-y-1">
+                                <a href="#section1" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>设置总览</span></a>
+                                <a href="#section4" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 7C16 9.21 14.21 11 12 11C9.79 11 8 9.21 8 7C8 4.79 9.79 3 12 3C14.21 3 16 4.79 16 7Z"/><path d="M12 14C7.29 14 3 16.29 3 21V22H21V21C21 16.29 16.71 14 12 14Z"/></svg><span>账户与API</span></a>
+                                <a href="#section5" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 19V13M15 19V8M21 19V3M3 19L3 16"/></svg><span>用量与日志</span></a>
+                                <a href="#section6" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg><span>偏好设置</span></a>
+                                <a href="#section7" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 15V3m0 0l-4 4m4-4l4 4M2 17l.621 2.485A2 2 0 001.94 19.658 2 2 0 002 21h11.5c7 0 7-2 7-7V7c0-5 0-7-7-7H11"/></svg>
+                                    <span>集成与插件</span>
+                                </a>
+                            </div>
+                            <p class="text-xs font-medium text-[#9CA3AF] px-3 mt-8 mb-3 uppercase tracking-wider">高级设置</p>
+                            <div class="space-y-1">
+                                <a href="#section2" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg><span>AI模型配置</span></a>
+                                <a href="#section8" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 1v6m0 0l-3-3m3 3l3-3m3 5.5A6.5 6.5 0 115.5 9.5a6.5 6.5 0 0113 0z"/></svg>
+                                    <span>数据与隐私</span>
+                                </a>
+                            </div>
+                        </nav>
+                        <div class="p-4 border-t border-gray-100">
+                            <a href="#section3" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9C9.3 8.33 9.75 7.76 10.35 7.41C10.95 7.05 11.65 6.93 12.33 7.07C13.01 7.21 13.61 7.59 14.02 8.14C14.43 8.69 14.61 9.37 14.53 10.04C14.45 10.71 14.11 11.32 13.58 11.73C13.3 11.95 13.02 12.14 12.74 12.31C12.46 12.48 12.2 12.65 11.98 12.85C11.76 13.04 11.59 13.27 11.48 13.53C11.36 13.79 11.31 14.08 11.31 14.39"/><circle cx="12" cy="17" r="0.5"/></svg><span>帮助中心</span></a>
+                        </div>
+                    </aside>
+                    <!-- 主内容区 -->
+                    <main class="flex-1 bg-white flex flex-col">
+                        <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100">
+                            <h1 class="text-lg font-medium text-[#374151]">集成与插件</h1>
+                            <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151]">探索插件市场</button>
+                        </header>
+                        <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] space-y-6">
+                            <div class="mb-4">
+                                <h2 class="text-xl font-light text-[#374151] mb-2">连接您喜爱的工具</h2>
+                                <p class="text-[#6B7280]">通过集成和插件扩展平台功能</p>
+                            </div>
+                            
+                            <!-- 已安装的集成 -->
+                            <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                <h3 class="text-base font-medium text-[#374151] mb-6">已安装的集成</h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
+                                        <div class="flex items-start gap-4">
+                                            <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold">S</div>
+                                            <div class="flex-1">
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <h4 class="font-medium text-[#374151]">Slack</h4>
+                                                    <div class="toggle-switch active" tabindex="0" onclick="this.classList.toggle('active')"></div>
+                                                </div>
+                                                <p class="text-xs text-[#9CA3AF] mb-3">实时同步消息到Slack工作区</p>
+                                                <div class="flex items-center gap-3">
+                                                    <button class="text-xs text-[#3B82F6] hover:underline">配置</button>
+                                                    <button class="text-xs text-[#EF4444] hover:underline">移除</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
+                                        <div class="flex items-start gap-4">
+                                            <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center text-white">
+                                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <h4 class="font-medium text-[#374151]">GitHub</h4>
+                                                    <div class="toggle-switch active" tabindex="0" onclick="this.classList.toggle('active')"></div>
+                                                </div>
+                                                <p class="text-xs text-[#9CA3AF] mb-3">同步代码仓库和问题跟踪</p>
+                                                <div class="flex items-center gap-3">
+                                                    <button class="text-xs text-[#3B82F6] hover:underline">配置</button>
+                                                    <button class="text-xs text-[#EF4444] hover:underline">移除</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
+                                        <div class="flex items-start gap-4">
+                                            <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center text-white font-bold">Z</div>
+                                            <div class="flex-1">
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <h4 class="font-medium text-[#374151]">Zapier</h4>
+                                                    <div class="toggle-switch active" tabindex="0" onclick="this.classList.toggle('active')"></div>
+                                                </div>
+                                                <p class="text-xs text-[#9CA3AF] mb-3">连接数千个应用，实现工作流自动化</p>
+                                                <div class="flex items-center gap-3">
+                                                    <button class="text-xs text-[#3B82F6] hover:underline">配置</button>
+                                                    <button class="text-xs text-[#EF4444] hover:underline">移除</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

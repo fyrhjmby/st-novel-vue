@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小说创作工作室 - 9. 版本历史与对比</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        body { background-color: #F5F5F7; }
+        .design-frame { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08); }
+        .page-title { font-size: 2rem; font-weight: 300; color: #374151; margin-bottom: 1rem; padding-left: 0.5rem; border-left: 4px solid #3B82F6; }
+        .page-container { max-width: 1600px; margin: 2rem auto; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #f1f1f1; } ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; } ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        .editor-content p { font-size: 1rem; line-height: 1.75; color: #374151; margin-bottom: 1rem; }
+        .diff-del { background-color: #fef2f2; text-decoration: line-through; padding: 0 2px; border-radius: 3px; color: #ef4444; }
+        .diff-add { background-color: #ecfdf5; padding: 0 2px; border-radius: 3px; text-decoration: none; color: #10b981; }
+    </style>
+</head>
+<body class="p-8">
+    <div id="page-9" class="page-container">
+        <h2 class="page-title">9. 版本历史与对比页</h2>
+        <div class="design-frame">
+            <div class="h-[800px] flex">
+                <!-- 侧边栏: 小说内部视图, "版本历史" 高亮 -->
+                <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
+                    <div class="p-4 space-y-4 border-b border-gray-100 h-20 flex items-center">
+                        <a href="#" class="flex items-center gap-3 px-2">
+                           <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            </div>
+                            <div><h3 class="font-medium text-[#374151] text-sm">小说工作室</h3><p class="text-xs text-[#9CA3AF]">递归创作版</p></div>
+                        </a>
+                    </div>
+                    <nav class="flex-1 px-4 py-6">
+                        <div class="mb-6">
+                            <a href="#" class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 px-3 py-2">
+                                <i class="fa-solid fa-arrow-left-long"></i> 返回工作台
+                            </a>
+                        </div>
+                        <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">当前小说</p>
+                        <div class="space-y-1">
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
+                                <i class="fa-solid fa-pen-to-square w-5 text-center"></i><span>编辑视图</span>
+                            </a>
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
+                                <i class="fa-solid fa-sliders w-5 text-center"></i><span>小说设置</span>
+                            </a>
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium">
+                                <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i><span>版本历史</span>
+                            </a>
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
+                                <i class="fa-solid fa-file-export w-5 text-center"></i><span>导出</span>
+                            </a>
+                        </div>
+                    </nav>
+                </aside>
+                
+                <main class="flex-1 flex flex-col bg-white">
+                    <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+                        <div class="flex items-center gap-4">
+                            <div>
+                                <h4 class="text-sm font-medium">对比版本</h4>
+                                <p class="text-xs text-gray-500">当前版本 vs 手动保存 (1小时前)</p>
+                            </div>
+                        </div>
+                        <!-- 主要按钮 -->
+                        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                            恢复到此版本
+                        </button>
+                    </header>
+                    <div class="flex-1 p-8 overflow-y-auto">
+                        <div class="max-w-3xl mx-auto editor-content">
+                            <p><del class="diff-del">控制台的警报声将卡尔文从浅眠中惊醒。他猛地坐直，眼前的屏幕上一片红色闪烁。</del><ins class="diff-add">警报的尖啸犹如一把利刃，划破了卡尔文短暂的假寐。他猛然挺直身躯，猩红的警示灯在他眼中投下不祥的光晕。</ins>“发现引力异常，”艾拉的声音冷静得不带一丝情感，“正在接近理论中的跃迁点。<del class="diff-del">这是我们唯一的回家机会。</del><ins class="diff-add">根据数据库推演，这或许是返回太阳系的唯一路径。</ins>”</p>
+                            <p><del class="diff-del">卡尔文的心跳漏了一拍。回家。这个词既熟悉又陌生，像一颗深埋的种子，在这一刻突然破土而出，疯狂生长。</del><ins class="diff-add">“回家”……这两个字像一枚遗忘已久的密钥，瞬间开启了他记忆的闸门，乡愁如潮水般汹涌而至。那颗蔚蓝的星球，那些模糊的笑脸，此刻都变得无比清晰。</ins>他<ins class="diff-add">压下心头的悸动，指尖微凉，却坚定地</ins><del class="diff-del">深吸一口气，</del>双手稳稳地放在控制杆上<ins class="diff-add">覆上控制杆</ins>。“艾拉，计算跃迁参数，准备进入。”</p>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

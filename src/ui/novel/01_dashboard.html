@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小说创作工作室 - 1. 工作台 (小说库)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        body { background-color: #F5F5F7; }
+        .design-frame { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08); }
+        .page-title { font-size: 2rem; font-weight: 300; color: #374151; margin-bottom: 1rem; padding-left: 0.5rem; border-left: 4px solid #3B82F6; }
+        .page-container { max-width: 1600px; margin: 2rem auto; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #f1f1f1; } ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; } ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    </style>
+</head>
+<body class="p-8">
+
+    <!-- 全局浮动AI按钮 -->
+    <div class="fixed bottom-8 right-8 z-[100]">
+        <button class="w-16 h-16 bg-[#374151] rounded-full flex items-center justify-center text-white shadow-lg transition-transform hover:scale-110">
+            <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
+        </button>
+    </div>
+
+    <div id="page-1" class="page-container">
+        <h2 class="page-title">1. 工作台 (小说库)</h2>
+        <div class="design-frame">
+            <div class="h-[800px] flex">
+                <!-- 侧边栏: 全局视图, "工作台" 高亮 -->
+                <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
+                    <div class="p-4 space-y-4 border-b border-gray-100 h-20 flex items-center">
+                        <div class="flex items-center gap-3 px-2">
+                            <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            </div>
+                            <div><h3 class="font-medium text-[#374151] text-sm">小说工作室</h3><p class="text-xs text-[#9CA3AF]">递归创作版</p></div>
+                        </div>
+                    </div>
+                    <nav class="flex-1 px-4 py-6">
+                        <div class="mb-8">
+                            <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">主要功能</p>
+                            <div class="space-y-1">
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium">
+                                    <i class="fa-solid fa-table-columns w-5 text-center"></i><span>工作台</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
+                                    <i class="fa-solid fa-boxes-stacked w-5 text-center"></i><span>创作中心</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
+                                    <i class="fa-solid fa-user-astronaut w-5 text-center"></i><span>角色扮演</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
+                                    <i class="fa-regular fa-trash-can w-5 text-center"></i><span>回收站</span>
+                                </a>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">工具</p>
+                            <div class="space-y-1">
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
+                                    <i class="fa-solid fa-diagram-project w-5 text-center"></i><span>工作流</span>
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
+                                    <i class="fa-solid fa-book-bookmark w-5 text-center"></i><span>提示词库</span>
+                                </a>
+                            </div>
+                        </div>
+                    </nav>
+                    <div class="p-4 border-t border-gray-100">
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                            <i class="fa-solid fa-gear w-5 text-center"></i><span>设置</span>
+                        </a>
+                    </div>
+                </aside>
+                
+                <main class="flex-1 bg-[#FCFCFC] flex flex-col">
+                    <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white flex-shrink-0">
+                        <div><h1 class="text-lg font-medium text-[#374151]">工作台</h1></div>
+                        <div class="flex items-center gap-2">
+                            <button class="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg"><i class="fa-solid fa-search"></i></button>
+                            <div class="ml-4 flex items-center gap-3">
+                                <img class="w-9 h-9 bg-gray-200 rounded-full object-cover" src="https://i.pravatar.cc/100?u=a042581f4e29026704d" alt="avatar">
+                                <div><p class="text-sm font-medium text-[#374151]">创作者</p><p class="text-xs text-[#9CA3AF]">专业版</p></div>
+                            </div>
+                        </div>
+                    </header>
+                    
+                    <div class="flex-1 p-8 overflow-auto">
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="flex items-center gap-4">
+                                <div class="relative">
+                                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                    <input type="text" placeholder="搜索小说名或标签..." class="w-64 pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <!-- 次要按钮 -->
+                                <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] flex items-center gap-2 hover:bg-gray-50">
+                                    <i class="fa-solid fa-upload"></i> 导入小说
+                                </button>
+                                <!-- 主要按钮 -->
+                                <button class="px-4 py-2 bg-[#374151] text-white rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-[#1f2937]">
+                                    <i class="fa-solid fa-plus"></i> 创建新小说
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div class="bg-white rounded-xl border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all p-5 flex flex-col">
+                                <a href="#" class="block aspect-[4/3] mb-4">
+                                    <img src="https://images.unsplash.com/photo-1589998059171-988d887df646?q=80&w=800" class="rounded-lg object-cover w-full h-full" alt="Book Cover">
+                                </a>
+                                <h3 class="font-medium text-gray-800"><a href="#">星际漫游者</a></h3>
+                                <p class="text-sm text-gray-500 mt-1 flex-grow">一部关于孤独宇航员在未知星系中寻找回家之路的科幻史诗。</p>
+                                <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
+                                    <span><i class="fa-regular fa-file-lines mr-1"></i> 24 章</span>
+                                    <span><i class="fa-regular fa-clock mr-1"></i> 2小时前</span>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all p-5 flex flex-col">
+                                <a href="#" class="block aspect-[4/3] mb-4">
+                                    <img src="https://images.unsplash.com/photo-1544716278-ca5e3ac4030e?q=80&w=800" class="rounded-lg object-cover w-full h-full" alt="Book Cover">
+                                </a>
+                                <h3 class="font-medium text-gray-800"><a href="#">月光下的约定</a></h3>
+                                <p class="text-sm text-gray-500 mt-1 flex-grow">都市中的两位年轻人在一次偶然的相遇后，展开了一段浪漫而曲折的爱情故事。</p>
+                                <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
+                                    <span><i class="fa-regular fa-file-lines mr-1"></i> 18 章</span>
+                                    <span><i class="fa-regular fa-clock mr-1"></i> 1天前</span>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all p-5 flex flex-col">
+                                <a href="#" class="block aspect-[4/3] mb-4">
+                                    <div class="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <i class="fa-solid fa-image text-gray-300 text-3xl"></i>
+                                    </div>
+                                </a>
+                                <h3 class="font-medium text-gray-800"><a href="#">深渊密码</a></h3>
+                                <p class="text-sm text-gray-500 mt-1 flex-grow">悬疑惊悚小说，一位失忆的侦探必须破解一个神秘组织留下的密码...</p>
+                                <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
+                                    <span><i class="fa-regular fa-file-lines mr-1"></i> 45 章</span>
+                                    <span><i class="fa-regular fa-clock mr-1"></i> 3天前</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
