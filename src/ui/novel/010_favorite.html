@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小说创作工作室 - 1. 工作台 (小说库)</title>
+    <title>小说创作工作室 - 收藏夹</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -18,16 +18,8 @@
 </head>
 <body class="p-8">
 
-    <!-- 全局浮动AI按钮 -->
-    <div class="fixed bottom-8 right-8 z-[100]">
-        <button class="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white shadow-lg transition-all hover:scale-110 hover:shadow-xl">
-            <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
-        </button>
-    </div>
-
-    <!-- 1. 工作台（全局视图） -->
-    <div id="page-1" class="page-container">
-        <h2 class="page-title">1. 工作台 - 小说库</h2>
+    <div id="page-favorites" class="page-container">
+        <h2 class="page-title">补充页面: 收藏夹</h2>
         <div class="design-frame">
             <div class="h-[800px] flex">
                 <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
@@ -48,13 +40,13 @@
                         <div class="mb-8">
                             <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">工作空间</p>
                             <div class="space-y-1">
-                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium">
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
                                     <i class="fa-solid fa-layer-group w-5 text-center"></i><span>我的小说</span>
                                 </a>
                                 <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
                                     <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i><span>最近编辑</span>
                                 </a>
-                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium">
                                     <i class="fa-solid fa-star w-5 text-center"></i><span>收藏夹</span>
                                 </a>
                             </div>
@@ -84,7 +76,7 @@
                 
                 <main class="flex-1 bg-[#FCFCFC] flex flex-col">
                     <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white flex-shrink-0">
-                        <div><h1 class="text-lg font-medium text-[#374151]">工作台</h1></div>
+                        <div><h1 class="text-lg font-medium text-[#374151]">收藏夹</h1></div>
                         <div class="flex items-center gap-2">
                             <button class="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg">
                                 <i class="fa-solid fa-search"></i>
@@ -104,52 +96,75 @@
                     
                     <div class="flex-1 p-8 overflow-auto">
                         <div class="flex justify-between items-center mb-6">
-                            <div class="flex items-center gap-4">
-                                <div class="relative">
-                                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                                    <input type="text" placeholder="搜索小说名或标签..." class="w-64 pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
-                                </div>
-                                <select class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm">
-                                    <option>全部类型</option>
-                                    <option>科幻</option>
-                                    <option>言情</option>
-                                    <option>悬疑</option>
+                            <p class="text-sm text-gray-500">共收藏了 2 部小说</p>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-600">排序:</span>
+                                <select class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm">
+                                    <option>按更新时间</option>
+                                    <option>按收藏时间</option>
+                                    <option>按小说标题</option>
                                 </select>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] flex items-center gap-2 hover:bg-gray-50">
-                                    <i class="fa-solid fa-upload"></i> 导入小说
-                                </button>
-                                <button class="px-4 py-2 bg-[#374151] text-white rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-[#1f2937]">
-                                    <i class="fa-solid fa-plus"></i> 创建新小说
-                                </button>
                             </div>
                         </div>
 
+                        <!-- 收藏列表 -->
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <!-- 小说卡片 (已收藏) -->
                             <div class="bg-white rounded-xl border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all p-5 flex flex-col">
                                 <a href="#" class="block aspect-[4/3] mb-4 relative overflow-hidden rounded-lg">
-                                    <img src="https://images.unsplash.com/photo-1589998059171-988d887df646?q=80&w=800" class="object-cover w-full h-full" alt="Book Cover">
-                                    <div class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                                        <i class="fa-solid fa-circle text-[6px] mr-1"></i>编辑中
-                                    </div>
+                                    <img src="https://images.unsplash.com/photo-1544716278-ca5e3ac4030e?q=80&w=800" class="object-cover w-full h-full" alt="Book Cover">
+                                    <button class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center bg-white/70 backdrop-blur-sm rounded-full text-yellow-500 hover:bg-white">
+                                        <i class="fa-solid fa-star"></i>
+                                    </button>
                                 </a>
-                                <h3 class="font-medium text-gray-800"><a href="#">星际漫游者</a></h3>
-                                <p class="text-sm text-gray-500 mt-1 flex-grow">一部关于孤独宇航员在未知星系中寻找回家之路的科幻史诗。</p>
+                                <h3 class="font-medium text-gray-800"><a href="#">月光下的约定</a></h3>
+                                <p class="text-sm text-gray-500 mt-1 flex-grow">都市中的两位年轻人在一次偶然的相遇后，展开了一段浪漫而曲折的爱情故事。</p>
                                 <div class="flex flex-wrap gap-1 mt-3">
-                                    <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">科幻</span>
-                                    <span class="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded">冒险</span>
+                                    <span class="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded">言情</span>
+                                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">都市</span>
                                 </div>
                                 <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
-                                    <span><i class="fa-regular fa-file-lines mr-1"></i> 24 章</span>
-                                    <span><i class="fa-regular fa-clock mr-1"></i> 2小时前</span>
+                                    <span><i class="fa-regular fa-file-lines mr-1"></i> 18 章</span>
+                                    <span><i class="fa-regular fa-clock mr-1"></i> 1天前</span>
+                                </div>
+                            </div>
+                             <!-- 小说卡片 (已收藏) -->
+                            <div class="bg-white rounded-xl border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all p-5 flex flex-col">
+                                <a href="#" class="block aspect-[4/3] mb-4 relative overflow-hidden rounded-lg">
+                                    <img src="https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=800" class="object-cover w-full h-full" alt="Book Cover">
+                                    <button class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center bg-white/70 backdrop-blur-sm rounded-full text-yellow-500 hover:bg-white">
+                                        <i class="fa-solid fa-star"></i>
+                                    </button>
+                                </a>
+                                <h3 class="font-medium text-gray-800"><a href="#">深渊密码</a></h3>
+                                <p class="text-sm text-gray-500 mt-1 flex-grow">悬疑惊悚小说，一位失忆的侦探必须破解一个神秘组织留下的密码...</p>
+                                <div class="flex flex-wrap gap-1 mt-3">
+                                    <span class="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded">悬疑</span>
+                                    <span class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded">惊悚</span>
+                                </div>
+                                <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
+                                    <span><i class="fa-regular fa-file-lines mr-1"></i> 45 章</span>
+                                    <span><i class="fa-regular fa-clock mr-1"></i> 3天前</span>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- 空状态示例 -->
+                        <!-- 
+                        <div class="text-center py-24">
+                            <i class="fa-regular fa-star text-6xl text-gray-300"></i>
+                            <h3 class="mt-4 text-lg font-medium text-gray-800">暂无收藏</h3>
+                            <p class="mt-1 text-sm text-gray-500">你可以在小说库中点击卡片上的星号进行收藏。</p>
+                            <button class="mt-6 px-4 py-2 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1f2937]">
+                                前往小说库
+                            </button>
+                        </div> 
+                        -->
                     </div>
                 </main>
             </div>
         </div>
     </div>
+
 </body>
 </html>

@@ -19,45 +19,71 @@
 </head>
 <body class="p-8">
     <div id="page-7" class="page-container">
-        <h2 class="page-title">7. AI任务模态框 (上下文预览)</h2>
+        <h2 class="page-title">7. AI任务模态框</h2>
         <div class="design-frame relative h-[800px] bg-gray-100 flex items-center justify-center p-8">
             <div class="annotation" style="top: 20px; left: 20px;">背景为编辑器视图，此模态框叠加在上方</div>
+            
+            <!-- 模态框: 遵循新版UI风格 -->
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-                <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <div class="p-6 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
                     <h3 class="text-lg font-medium text-gray-800">任务确认：润色选中段落</h3>
-                    <button class="text-gray-400 hover:text-gray-700">×</button>
+                    <button class="text-gray-400 hover:text-gray-700 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100">
+                        <i class="fa-solid fa-times text-lg"></i>
+                    </button>
                 </div>
                 <div class="flex-1 p-6 grid grid-cols-2 gap-6 overflow-y-auto">
-                    <div class="space-y-4">
+                    <!-- 左侧: 上下文预览 -->
+                    <div class="space-y-4 flex flex-col">
                         <h4 class="font-medium text-gray-600">上下文预览 (AI将看到的内容)</h4>
-                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 text-sm text-gray-600 leading-relaxed max-h-96 overflow-auto">
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 text-sm text-gray-600 leading-relaxed overflow-auto flex-grow">
                             <p class="font-bold text-gray-800">[小说简介]</p>
-                            <p>一部关于孤独宇航员...</p>
-                            <hr class="my-2 border-dashed">
-                            <p class="font-bold text-gray-800">[参考小说：银河帝国]</p>
-                            <p>风格：宏大叙事，政治斗争...</p>
-                            <hr class="my-2 border-dashed">
+                            <p>一部关于孤独宇航员在未知星系中寻找回家之路的科幻史诗。</p>
+                            <hr class="my-3 border-dashed">
+                            <p class="font-bold text-gray-800">[参考作品：银河帝国]</p>
+                            <p>风格：宏大叙事，政治斗争，技术哲学...</p>
+                            <hr class="my-3 border-dashed">
                             <p class="font-bold text-gray-800">[当前章节内容]</p>
                             <p>...控制台的警报声将卡尔文从浅眠中惊醒...</p>
-                            <p class="font-bold text-blue-600 bg-blue-100 p-2 rounded">[待处理文本]</p>
-                            <p class="bg-blue-50 p-2 rounded">这是我们唯一的回家机会。</p>
+                            <div class="mt-2 bg-blue-100/50 p-2 rounded-lg border border-blue-200">
+                                <p class="font-bold text-blue-700">[待处理文本]</p>
+                                <p class="mt-1 text-blue-900">这是我们唯一的回家机会。</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="space-y-4">
-                        <h4 class="font-medium text-gray-600">临时指令覆盖</h4>
-                        <textarea rows="8" placeholder="在此输入一次性指令，例如：'请用更诗意的语言来润色，并加入一些对主角心理的描写。'" class="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                        <h4 class="font-medium text-gray-600">模型选择</h4>
-                        <select class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option>高级模型 (GPT-4o) - 默认</option>
-                            <option>快速模型 (Llama3-8B)</option>
-                        </select>
+                    
+                    <!-- 右侧: 用户配置 -->
+                    <div class="space-y-6">
+                        <div>
+                            <label for="one-time-prompt" class="font-medium text-gray-600">一次性指令 (可选)</label>
+                            <textarea id="one-time-prompt" rows="5" placeholder="例如：'请用更诗意的语言来润色，并加入一些对主角心理的描写。'" class="mt-2 w-full p-3 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        </div>
+                        <div>
+                            <label for="prompt-template" class="font-medium text-gray-600">提示词模板</label>
+                            <select id="prompt-template" class="mt-2 w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option>默认润色模板</option>
+                                <option>精简风格模板</option>
+                                <option>华丽风格模板</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="model-select" class="font-medium text-gray-600">AI模型</label>
+                            <select id="model-select" class="mt-2 w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option>GPT-4o (推荐)</option>
+                                <option>Claude 3 Sonnet</option>
+                                <option>Llama3-70B (快速)</option>
+                                <option>自定义混合模型</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-                <div class="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
-                    <!-- 次要/取消按钮 -->
-                    <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-100">取消</button>
-                    <!-- 主要/确认按钮 -->
-                    <button class="px-4 py-2 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1f2937]">确认并执行</button>
+                <div class="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 flex-shrink-0">
+                    <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-100">
+                        取消
+                    </button>
+                    <button class="px-4 py-2 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1f2937] flex items-center gap-2">
+                        <i class="fa-solid fa-check"></i>
+                        确认并执行
+                    </button>
                 </div>
             </div>
         </div>

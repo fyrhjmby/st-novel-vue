@@ -27,24 +27,31 @@
                 <!-- 侧边栏: 小说内部视图, "版本历史" 高亮 -->
                 <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
                     <div class="p-4 space-y-4 border-b border-gray-100 h-20 flex items-center">
-                        <a href="#" class="flex items-center gap-3 px-2">
-                           <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        <a href="#" class="flex items-center gap-3 px-2 group">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:scale-110 transition-transform">
+                                <img src="https://images.unsplash.com/photo-1589998059171-988d887df646?q=80&w=100" class="w-full h-full object-cover" alt="">
                             </div>
-                            <div><h3 class="font-medium text-[#374151] text-sm">小说工作室</h3><p class="text-xs text-[#9CA3AF]">递归创作版</p></div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-medium text-[#374151] text-sm truncate">星际漫游者</h3>
+                                <p class="text-xs text-[#9CA3AF] truncate">科幻 • 24章</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-left text-gray-400 text-xs group-hover:-translate-x-1 transition-transform"></i>
                         </a>
                     </div>
+                    
                     <nav class="flex-1 px-4 py-6">
-                        <div class="mb-6">
-                            <a href="#" class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 px-3 py-2">
-                                <i class="fa-solid fa-arrow-left-long"></i> 返回工作台
-                            </a>
-                        </div>
-                        <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">当前小说</p>
+                        <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">小说管理</p>
                         <div class="space-y-1">
                             <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
-                                <i class="fa-solid fa-pen-to-square w-5 text-center"></i><span>编辑视图</span>
+                                <i class="fa-solid fa-pen-nib w-5 text-center"></i><span>编辑章节</span>
                             </a>
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
+                                <i class="fa-solid fa-sitemap w-5 text-center"></i><span>大纲视图</span>
+                            </a>
+                        </div>
+                        
+                        <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 mt-6 uppercase tracking-wider">工具</p>
+                        <div class="space-y-1">
                             <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
                                 <i class="fa-solid fa-sliders w-5 text-center"></i><span>小说设置</span>
                             </a>
@@ -52,29 +59,60 @@
                                 <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i><span>版本历史</span>
                             </a>
                             <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
-                                <i class="fa-solid fa-file-export w-5 text-center"></i><span>导出</span>
+                                <i class="fa-solid fa-download w-5 text-center"></i><span>导出</span>
                             </a>
                         </div>
                     </nav>
+                    
+                    <div class="p-4 border-t border-gray-100">
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                            <i class="fa-solid fa-gear w-5 text-center"></i>
+                            <span>设置</span>
+                        </a>
+                    </div>
                 </aside>
                 
                 <main class="flex-1 flex flex-col bg-white">
                     <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
                         <div class="flex items-center gap-4">
                             <div>
-                                <h4 class="text-sm font-medium">对比版本</h4>
-                                <p class="text-xs text-gray-500">当前版本 vs 手动保存 (1小时前)</p>
+                                <h1 class="text-lg font-medium text-[#374151]">版本历史</h1>
+                                <p class="text-sm text-gray-500">对比：当前版本 vs 手动保存 (1小时前)</p>
                             </div>
                         </div>
-                        <!-- 主要按钮 -->
-                        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
-                            恢复到此版本
-                        </button>
+                        <div class="flex items-center gap-3">
+                            <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50">
+                                选择其他版本
+                            </button>
+                            <button class="px-4 py-2 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1f2937]">
+                                恢复到此版本
+                            </button>
+                        </div>
                     </header>
-                    <div class="flex-1 p-8 overflow-y-auto">
+                    <div class="flex-1 p-8 md:p-12 lg:p-16 overflow-y-auto">
                         <div class="max-w-3xl mx-auto editor-content">
-                            <p><del class="diff-del">控制台的警报声将卡尔文从浅眠中惊醒。他猛地坐直，眼前的屏幕上一片红色闪烁。</del><ins class="diff-add">警报的尖啸犹如一把利刃，划破了卡尔文短暂的假寐。他猛然挺直身躯，猩红的警示灯在他眼中投下不祥的光晕。</ins>“发现引力异常，”艾拉的声音冷静得不带一丝情感，“正在接近理论中的跃迁点。<del class="diff-del">这是我们唯一的回家机会。</del><ins class="diff-add">根据数据库推演，这或许是返回太阳系的唯一路径。</ins>”</p>
-                            <p><del class="diff-del">卡尔文的心跳漏了一拍。回家。这个词既熟悉又陌生，像一颗深埋的种子，在这一刻突然破土而出，疯狂生长。</del><ins class="diff-add">“回家”……这两个字像一枚遗忘已久的密钥，瞬间开启了他记忆的闸门，乡愁如潮水般汹涌而至。那颗蔚蓝的星球，那些模糊的笑脸，此刻都变得无比清晰。</ins>他<ins class="diff-add">压下心头的悸动，指尖微凉，却坚定地</ins><del class="diff-del">深吸一口气，</del>双手稳稳地放在控制杆上<ins class="diff-add">覆上控制杆</ins>。“艾拉，计算跃迁参数，准备进入。”</p>
+                            <div class="flex items-center gap-4 p-4 mb-6 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+                                <i class="fa-solid fa-circle-info text-xl"></i>
+                                <div>
+                                    <p class="font-medium">你正在预览历史版本。</p>
+                                    <p class="text-sm">红色删除线代表已移除内容，绿色背景代表新增内容。</p>
+                                </div>
+                            </div>
+
+                            <p>
+                                <del class="diff-del">控制台的警报声将卡尔文从浅眠中惊醒。他猛地坐直，眼前的屏幕上一片红色闪烁。</del>
+                                <ins class="diff-add">警报的尖啸犹如一把利刃，划破了卡尔文短暂的假寐。他猛然挺直身躯，猩红的警示灯在他眼中投下不祥的光晕。</ins>
+                                “发现引力异常，”艾拉的声音冷静得不带一丝情感，“正在接近理论中的跃迁点。
+                                <del class="diff-del">这是我们唯一的回家机会。</del>
+                                <ins class="diff-add">根据数据库推演，这或许是返回太阳系的唯一路径。</ins>
+                                ”
+                            </p>
+                            <p>
+                                <del class="diff-del">卡尔文的心跳漏了一拍。回家。这个词既熟悉又陌生，像一颗深埋的种子，在这一刻突然破土而出，疯狂生长。</del>
+                                <ins class="diff-add">“回家”……这两个字像一枚遗忘已久的密钥，瞬间开启了他记忆的闸门，乡愁如潮水般汹涌而至。那颗蔚蓝的星球，那些模糊的笑脸，此刻都变得无比清晰。</ins>
+                                他<ins class="diff-add">压下心头的悸动，指尖微凉，却坚定地</ins><del class="diff-del">深吸一口气，</del>双手稳稳地<del class="diff-del">放在控制杆上</del><ins class="diff-add">覆上控制杆</ins>。“艾拉，
+                                <ins class="diff-add">全功率</ins>计算跃迁参数，准备进入。”
+                            </p>
                         </div>
                     </div>
                 </main>
