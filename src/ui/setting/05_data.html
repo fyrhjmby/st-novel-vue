@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI平台 - 数据与隐私</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: #F5F5F7;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* 设计系统颜色 */
+        :root {
+            --primary-900: #111827;
+            --primary-800: #1F2937;
+            --primary-700: #374151;
+            --primary-600: #4B5563;
+            --primary-500: #6B7280;
+            --primary-400: #9CA3AF;
+            --primary-300: #D1D5DB;
+            --primary-200: #E5E7EB;
+            --primary-100: #F3F4F6;
+            --primary-50: #F9FAFB;
+            
+            --accent-green: #10B981;
+            --accent-blue: #3B82F6;
+            --accent-red: #EF4444;
+            --accent-yellow: #F59E0B;
+            
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 0 0 1px rgba(0, 0, 0, 0.03), 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D1D5DB;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9CA3AF;
+        }
+        
+        .design-frame {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        }
+        
+        .toggle-switch {
+            width: 44px;
+            height: 24px;
+            background: #D1D5DB;
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .toggle-switch:focus-visible {
+            outline: 2px solid #4B5563;
+            outline-offset: 2px;
+        }
+        
+        .toggle-switch.active {
+            background: #10B981;
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 10px;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(20px);
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen p-8">
+        <!-- 设计头部 -->
+        <div class="max-w-[1800px] mx-auto mb-12">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl font-light text-gray-800 mb-2">AI Platform - Data & Privacy</h1>
+                    <p class="text-gray-500">数据与隐私 / 2025</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-400">Version 3.0</span>
+                    <div class="w-px h-6 bg-gray-300"></div>
+                    <span class="text-sm text-gray-400">Desktop 1440px</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页面: 数据与隐私 -->
+        <div class="max-w-[1800px] mx-auto mb-16">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700">5. 数据与隐私 (Data & Privacy)</h2>
+            <div class="design-frame">
+                <div class="h-[800px] flex">
+                    <!-- 侧边栏 -->
+                    <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col">
+                        <div class="p-4 space-y-4 border-b border-gray-100 h-20 flex items-center">
+                            <div class="flex items-center gap-3 px-2">
+                                <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0"><svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+                                <div><h3 class="font-medium text-[#374151] text-sm">设置中心</h3><p class="text-xs text-[#9CA3AF]">Settings</p></div>
+                            </div>
+                        </div>
+                        <nav class="flex-1 px-4 py-6">
+                            <div class="space-y-1">
+                                <a href="./01_user_settings.html" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 7C16 9.21 14.21 11 12 11C9.79 11 8 9.21 8 7C8 4.79 9.79 3 12 3C14.21 3 16 4.79 16 7Z"/><path d="M12 14C7.29 14 3 16.29 3 21V22H21V21C21 16.29 16.71 14 12 14Z"/></svg><span>用户设置</span></a>
+                                <a href="./02_api_settings.html" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg><span>API管理</span></a>
+                                <a href="./03_use_logs.html" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 19V13M15 19V8M21 19V3M3 19L3 16"/></svg><span>用量与日志</span></a>
+                                <a href="./04_system_settings.html" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg><span>系统设置</span></a>
+                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 1v6m0 0l-3-3m3 3l3-3m3 5.5A6.5 6.5 0 115.5 9.5a6.5 6.5 0 0113 0z"/></svg>
+                                    <span>数据与隐私</span>
+                                </a>
+                            </div>
+                        </nav>
+                        <div class="p-4 border-t border-gray-100">
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9C9.3 8.33 9.75 7.76 10.35 7.41C10.95 7.05 11.65 6.93 12.33 7.07C13.01 7.21 13.61 7.59 14.02 8.14C14.43 8.69 14.61 9.37 14.53 10.04C14.45 10.71 14.11 11.32 13.58 11.73C13.3 11.95 13.02 12.14 12.74 12.31C12.46 12.48 12.2 12.65 11.98 12.85C11.76 13.04 11.59 13.27 11.48 13.53C11.36 13.79 11.31 14.08 11.31 14.39"/><circle cx="12" cy="17" r="0.5"/></svg><span>帮助中心</span></a>
+                        </div>
+                    </aside>
+                    <!-- 主内容区 -->
+                    <main class="flex-1 bg-white flex flex-col">
+                        <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100">
+                            <h1 class="text-lg font-medium text-[#374151]">数据与隐私</h1>
+                            <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                下载隐私报告
+                            </button>
+                        </header>
+                        <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] space-y-6">
+                            <!-- 隐私概览 -->
+                            <div class="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-medium text-blue-900 mb-2">您的数据是安全的</h3>
+                                        <p class="text-sm text-blue-700">我们采用行业标准的加密技术保护您的数据，并严格遵守数据保护法规。您拥有对自己数据的完全控制权。</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 数据收集设置 -->
+                            <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                <h3 class="text-base font-medium text-[#374151] mb-6">数据收集设置</h3>
+                                <div class="space-y-4 divide-y divide-gray-100">
+                                    <div class="flex items-center justify-between pt-4 first:pt-0">
+                                        <div>
+                                            <h4 class="text-sm font-medium text-[#374151]">对话历史</h4>
+                                            <p class="text-xs text-[#9CA3AF] mt-1">保存您与AI的对话记录以提供更好的服务</p>
+                                        </div>
+                                        <div class="toggle-switch active" tabindex="0" onclick="this.classList.toggle('active')"></div>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-4">
+                                        <div>
+                                            <h4 class="text-sm font-medium text-[#374151]">使用分析</h4>
+                                            <p class="text-xs text-[#9CA3AF] mt-1">收集匿名使用数据以改进产品体验</p>
+                                        </div>
+                                        <div class="toggle-switch active" tabindex="0" onclick="this.classList.toggle('active')"></div>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-4">
+                                        <div>
+                                            <h4 class="text-sm font-medium text-[#374151]">性能监控</h4>
+                                            <p class="text-xs text-[#9CA3AF] mt-1">收集性能数据以优化系统响应速度</p>
+                                        </div>
+                                        <div class="toggle-switch" tabindex="0" onclick="this.classList.toggle('active')"></div>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-4">
+                                        <div>
+                                            <h4 class="text-sm font-medium text-[#374151]">错误报告</h4>
+                                            <p class="text-xs text-[#9CA3AF] mt-1">自动发送错误报告帮助我们修复问题</p>
+                                        </div>
+                                        <div class="toggle-switch active" tabindex="0" onclick="this.classList.toggle('active')"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 数据使用透明度 -->
+                            <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                <h3 class="text-base font-medium text-[#374151] mb-6">数据使用透明度</h3>
+                                <div class="space-y-4">
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h4 class="text-sm font-medium text-[#374151]">个人信息</h4>
+                                            <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">加密存储</span>
+                                        </div>
+                                        <p class="text-xs text-[#6B7280] mb-2">包括：姓名、邮箱、电话号码</p>
+                                        <p class="text-xs text-[#9CA3AF]">用途：账户管理、身份验证、客户支持</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h4 class="text-sm font-medium text-[#374151]">对话数据</h4>
+                                            <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">端到端加密</span>
+                                        </div>
+                                        <p class="text-xs text-[#6B7280] mb-2">包括：对话内容、上传文件、生成结果</p>
+                                        <p class="text-xs text-[#9CA3AF]">用途：提供AI服务、改进模型、个性化体验</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h4 class="text-sm font-medium text-[#374151]">使用数据</h4>
+                                            <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">匿名化处理</span>
+                                        </div>
+                                        <p class="text-xs text-[#6B7280] mb-2">包括：功能使用频率、响应时间、错误日志</p>
+                                        <p class="text-xs text-[#9CA3AF]">用途：产品改进、性能优化、问题诊断</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 数据权限管理 -->
+                            <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                <h3 class="text-base font-medium text-[#374151] mb-6">数据权限管理</h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
+                                        <div class="flex items-center gap-3 mb-3">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+                                            </div>
+                                            <h4 class="font-medium text-[#374151]">导出数据</h4>
+                                        </div>
+                                        <p class="text-sm text-[#6B7280] mb-3">下载您的所有个人数据副本</p>
+                                        <button class="text-sm text-[#3B82F6] hover:underline">立即导出</button>
+                                    </div>
+                                    <div class="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
+                                        <div class="flex items-center gap-3 mb-3">
+                                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                            </div>
+                                            <h4 class="font-medium text-[#374151]">数据迁移</h4>
+                                        </div>
+                                        <p class="text-sm text-[#6B7280] mb-3">将数据转移到其他服务</p>
+                                        <button class="text-sm text-[#3B82F6] hover:underline">开始迁移</button>
+                                    </div>
+                                    <div class="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
+                                        <div class="flex items-center gap-3 mb-3">
+                                            <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                            </div>
+                                            <h4 class="font-medium text-[#374151]">暂停收集</h4>
+                                        </div>
+                                        <p class="text-sm text-[#6B7280] mb-3">临时停止数据收集活动</p>
+                                        <button class="text-sm text-[#3B82F6] hover:underline">暂停收集</button>
+                                    </div>
+                                    <div class="border border-red-200 rounded-lg p-4 hover:border-red-300 transition-colors bg-red-50">
+                                        <div class="flex items-center gap-3 mb-3">
+                                            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </div>
+                                            <h4 class="font-medium text-[#374151]">删除数据</h4>
+                                        </div>
+                                        <p class="text-sm text-red-600 mb-3">永久删除所有数据</p>
+                                        <button class="text-sm text-red-600 hover:underline">请求删除</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 第三方共享 -->
+                            <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                <h3 class="text-base font-medium text-[#374151] mb-6">第三方数据共享</h3>
+                                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                    <p class="text-sm text-[#374151] mb-2">我们承诺：</p>
+                                    <ul class="space-y-1 text-sm text-[#6B7280]">
+                                        <li class="flex items-start gap-2">
+                                            <svg class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                            <span>不会出售您的个人数据</span>
+                                        </li>
+                                        <li class="flex items-start gap-2">
+                                            <svg class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                            <span>仅在必要时与服务提供商共享数据</span>
+                                        </li>
+                                        <li class="flex items-start gap-2">
+                                            <svg class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                            <span>所有第三方必须遵守我们的隐私标准</span>
+                                        </li>
+                                        <li class="flex items-start gap-2">
+                                            <svg class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                            <span>您可以随时撤销数据共享许可</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <button class="text-sm text-[#3B82F6] hover:underline">查看完整隐私政策</button>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

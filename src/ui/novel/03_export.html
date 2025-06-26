@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小说创作工作室 - 3. 小说导出配置页</title>
+    <!-- 引入 daisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -36,40 +39,29 @@
                         </a>
                     </div>
                     
+                    <!-- daisyUI Menu: 使用 menu 组件重构导航 -->
                     <nav class="flex-1 px-4 py-6">
-                        <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">小说管理</p>
-                        <div class="space-y-1">
-                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
-                                <i class="fa-solid fa-pen-nib w-5 text-center"></i><span>编辑章节</span>
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
-                                <i class="fa-solid fa-sitemap w-5 text-center"></i><span>大纲视图</span>
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
-                                <i class="fa-solid fa-users w-5 text-center"></i><span>角色设定</span>
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
-                                <i class="fa-solid fa-earth-asia w-5 text-center"></i><span>世界观</span>
-                            </a>
-                        </div>
-                        
-                        <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 mt-6 uppercase tracking-wider">工具</p>
-                        <div class="space-y-1">
-                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
-                                <i class="fa-solid fa-sliders w-5 text-center"></i><span>小说设置</span>
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
-                                <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i><span>版本历史</span>
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium">
-                                <i class="fa-solid fa-download w-5 text-center"></i><span>导出</span>
-                            </a>
-                        </div>
+                        <ul class="menu p-0">
+                            <li>
+                                <h2 class="menu-title px-3 text-[#9CA3AF] font-medium text-xs tracking-wider">小说管理</h2>
+                            </li>
+                            <li><a href="./06_editor.html" class="text-[#6B7280] gap-3 py-2.5"><i class="fa-solid fa-pen-nib w-5 text-center"></i><span>编辑章节</span></a></li>
+                            <li><a href="#" class="text-[#6B7280] gap-3 py-2.5"><i class="fa-solid fa-sitemap w-5 text-center"></i><span>大纲视图</span></a></li>
+                            <li><a href="./011_charter.html" class="text-[#6B7280] gap-3 py-2.5"><i class="fa-solid fa-users w-5 text-center"></i><span>角色设定</span></a></li>
+                            <li><a href="#" class="text-[#6B7280] gap-3 py-2.5"><i class="fa-solid fa-earth-asia w-5 text-center"></i><span>世界观</span></a></li>
+                            
+                            <li class="mt-3">
+                                <h2 class="menu-title px-3 text-[#9CA3AF] font-medium text-xs tracking-wider">工具</h2>
+                            </li>
+                            <li><a href="./05_novel_settings.html" class="text-[#6B7280] gap-3 py-2.5"><i class="fa-solid fa-sliders w-5 text-center"></i><span>小说设置</span></a></li>
+                            <li><a href="./09_history.html" class="text-[#6B7280] gap-3 py-2.5"><i class="fa-solid fa-clock-rotate-left w-5 text-center"></i><span>版本历史</span></a></li>
+                            <li><a href="./03_export.html" class="active bg-[#4B5563] text-white font-medium gap-3 py-2.5"><i class="fa-solid fa-download w-5 text-center"></i><span>导出</span></a></li>
+                        </ul>
                     </nav>
                     
                     <!-- 底部设置 - 全局固定 -->
                     <div class="p-4 border-t border-gray-100">
-                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                        <a href="../setting/01_setting.html" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
                             <i class="fa-solid fa-gear w-5 text-center"></i>
                             <span>设置</span>
                         </a>
@@ -115,27 +107,29 @@
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">包含内容</label>
                                     <div class="mt-2 space-y-2">
+                                        <!-- daisyUI checkbox: 使用 checkbox-xs 匹配原始 h-4 w-4 尺寸, checkbox-primary 匹配颜色 -->
                                         <label class="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                            <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked>
+                                            <input type="checkbox" class="checkbox checkbox-xs checkbox-primary" checked />
                                             <span class="text-sm">小说正文</span>
                                         </label>
                                         <label class="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                            <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked>
+                                            <input type="checkbox" class="checkbox checkbox-xs checkbox-primary" checked />
                                             <span class="text-sm">章节大纲</span>
                                         </label>
                                         <label class="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                            <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                            <input type="checkbox" class="checkbox checkbox-xs checkbox-primary" />
                                             <span class="text-sm">角色设定集</span>
                                         </label>
                                         <label class="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                            <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                            <input type="checkbox" class="checkbox checkbox-xs checkbox-primary" />
                                             <span class="text-sm">作者笔记</span>
                                         </label>
                                     </div>
                                 </div>
                             </div>
                             
-                            <button class="w-full mt-8 px-4 py-3 bg-[#374151] text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#1f2937]">
+                            <!-- daisyUI Button: 使用 btn-neutral 匹配颜色, btn-block 匹配宽度 -->
+                            <button class="btn btn-neutral btn-block mt-8 gap-2 font-medium text-sm h-auto py-3">
                                 <i class="fa-solid fa-download"></i>
                                 开始导出
                             </button>

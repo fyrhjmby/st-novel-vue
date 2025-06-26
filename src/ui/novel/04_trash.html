@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小说创作工作室 - 4. 回收站</title>
+    <!-- 引入 daisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -38,34 +41,25 @@
                     <nav class="flex-1 px-4 py-6">
                         <div class="mb-8">
                             <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">工作空间</p>
-                            <div class="space-y-1">
-                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
-                                    <i class="fa-solid fa-layer-group w-5 text-center"></i><span>我的小说</span>
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
-                                    <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i><span>最近编辑</span>
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
-                                    <i class="fa-solid fa-star w-5 text-center"></i><span>收藏夹</span>
-                                </a>
-                            </div>
+                            <!-- daisyUI Menu -->
+                            <ul class="menu p-0 space-y-1">
+                                <li><a href="./01_dashboard.html" class="text-[#6B7280] gap-3 py-2.5 text-sm"><i class="fa-solid fa-layer-group w-5 text-center"></i><span>我的小说</span></a></li>
+                                <li><a class="text-[#6B7280] gap-3 py-2.5 text-sm"><i class="fa-solid fa-clock-rotate-left w-5 text-center"></i><span>最近编辑</span></a></li>
+                            </ul>
                         </div>
                         
                         <div class="mb-8">
                             <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">管理</p>
-                            <div class="space-y-1">
-                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm">
-                                    <i class="fa-solid fa-tags w-5 text-center"></i><span>标签管理</span>
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium">
-                                    <i class="fa-solid fa-trash-can w-5 text-center"></i><span>回收站</span>
-                                </a>
-                            </div>
+                            <!-- daisyUI Menu -->
+                            <ul class="menu p-0 space-y-1">
+                                <li><a class="text-[#6B7280] gap-3 py-2.5 text-sm"><i class="fa-solid fa-tags w-5 text-center"></i><span>标签管理</span></a></li>
+                                <li><a class="active bg-[#4B5563] text-white font-medium gap-3 py-2.5 text-sm"><i class="fa-solid fa-trash-can w-5 text-center"></i><span>回收站</span></a></li>
+                            </ul>
                         </div>
                     </nav>
                     
                     <div class="p-4 border-t border-gray-100">
-                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                        <a href="../setting/01_setting.html" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
                             <i class="fa-solid fa-gear w-5 text-center"></i>
                             <span>设置</span>
                         </a>
@@ -82,19 +76,22 @@
                     </header>
                     
                     <div class="flex-1 p-8 overflow-auto">
-                        <div class="flex justify-between items-center mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <!-- daisyUI Alert: 使用 alert 类并覆盖布局和颜色以匹配原始设计 -->
+                        <div role="alert" class="alert flex justify-between items-center mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                             <p class="text-sm text-blue-800">
                                 <i class="fa-solid fa-info-circle mr-2"></i>
                                 项目将在回收站中保留30天，之后将被永久删除。
                             </p>
-                            <button class="px-4 py-2 bg-red-50 border border-red-200 rounded-lg text-sm font-medium text-red-600 flex items-center gap-2 hover:bg-red-100">
+                            <!-- daisyUI Button: 使用 btn 基类并覆盖样式 -->
+                            <button class="btn btn-sm h-auto font-medium bg-red-50 border-red-200 text-red-600 hover:bg-red-100 hover:border-red-200 no-animation gap-2">
                                 <i class="fa-solid fa-broom"></i>
                                 清空回收站
                             </button>
                         </div>
                         
                         <div class="bg-white rounded-lg border border-gray-100 overflow-hidden">
-                            <table class="w-full text-sm text-left text-gray-600">
+                            <!-- daisyUI Table: 添加 table 类, 移除 tr 上的样式 -->
+                            <table class="table w-full text-sm text-left text-gray-600">
                                 <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                                     <tr>
                                         <th scope="col" class="p-4 w-2/5">项目名称</th>
@@ -105,7 +102,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr class="bg-white border-b hover:bg-gray-50">
+                                    <tr>
                                         <td class="p-4 font-medium text-gray-900 flex items-center gap-3">
                                             <i class="fa-solid fa-book text-gray-400"></i>
                                             <span>废弃的赛博朋克大纲</span>
@@ -114,7 +111,8 @@
                                         <td class="p-4">2024-05-20 14:30</td>
                                         <td class="p-4">
                                             <div class="flex items-center gap-2">
-                                                <div class="w-full bg-gray-200 rounded-full h-1.5"><div class="bg-orange-400 h-1.5 rounded-full" style="width: 93%"></div></div>
+                                                <!-- daisyUI Progress bar -->
+                                                <progress class="progress progress-warning w-full h-1.5" value="93" max="100"></progress>
                                                 <span class="text-orange-600">28 天</span>
                                             </div>
                                         </td>
@@ -123,7 +121,7 @@
                                             <button class="font-medium text-red-600 hover:underline">永久删除</button>
                                         </td>
                                     </tr>
-                                    <tr class="bg-white hover:bg-gray-50">
+                                    <tr>
                                         <td class="p-4 font-medium text-gray-900 flex items-center gap-3">
                                             <i class="fa-regular fa-file-lines text-gray-400"></i>
                                             <span>一个短篇故事</span>
@@ -132,7 +130,8 @@
                                         <td class="p-4">2024-05-18 09:12</td>
                                         <td class="p-4">
                                             <div class="flex items-center gap-2">
-                                                <div class="w-full bg-gray-200 rounded-full h-1.5"><div class="bg-orange-500 h-1.5 rounded-full" style="width: 87%"></div></div>
+                                                 <!-- daisyUI Progress bar -->
+                                                <progress class="progress progress-warning w-full h-1.5" value="87" max="100"></progress>
                                                 <span class="text-orange-600">26 天</span>
                                             </div>
                                         </td>
