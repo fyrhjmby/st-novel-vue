@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	rootDirs := []string{"../src/ui/setting"}
+	rootDirs := []string{"../src/ui"}
 	outputFileName := "html.txt"
 	//
   	excludedDirs := []string{""}

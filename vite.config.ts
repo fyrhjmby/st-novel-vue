@@ -1,55 +1,73 @@
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
-import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
-
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
     plugins: [
       vue(),
+      // 自动导入 Vue/Router/Pinia 的 API
       AutoImport({
-        // 自动导入 Vue 相关函数，如：ref, reactive, toRef 等
         imports: ['vue', 'vue-router', 'pinia'],
-        resolvers: [
-          // 自动导入 Element Plus 相关函数，如：ElMessage, ElMessageBox... (带样式)
-          ElementPlusResolver()
+        dirs: [
+          'src/composables/**',
+          'src/utils/**',
         ],
-        // 指定自动导入文件的位置
         dts: path.resolve(__dirname, 'src/types/auto-imports.d.ts'),
+        vueTemplate: true,
       }),
+      // 自动导入我们自己的组件
       Components({
-        resolvers: [
-          // 自动导入 Element Plus 组件
-          ElementPlusResolver()
+        resolvers: [/* 这里不再需要 ElementPlusResolver */],
+        dirs: [
+          'src/components/base',
+          'src/admin/components',
+          'src/auth/components',
+          'src/novel/components',
+          'src/prompt/components',
+          'src/roleplay/components',
+          'src/settings/components',
+          'src/workflow/components',
         ],
-        // 指定自动导入组件的位置
         dts: path.resolve(__dirname, 'src/types/components.d.ts'),
       }),
     ],
+
+    // 路径别名配置 (适配我们的模块化架构)
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, 'src')
+        '@': path.resolve(__dirname, 'src'),
+        '@admin': path.resolve(__dirname, 'src/admin'),
+        '@auth': path.resolve(__dirname, 'src/auth'),
+        '@novel': path.resolve(__dirname, 'src/novel'),
+        '@prompt': path.resolve(__dirname, 'src/prompt'),
+        '@roleplay': path.resolve(__dirname, 'src/roleplay'),
+        '@settings': path.resolve(__dirname, 'src/settings'),
+        '@workflow': path.resolve(__dirname, 'src/workflow'),
+        '@core': path.resolve(__dirname, 'src/core'),
       }
     },
+
+    // CSS 预处理器选项 (如果仍需使用Sass)
+    css: {
+      preprocessorOptions: {
+        scss: {
+          additionalData: `@use "@/styles/variables.scss" as *;`
+        }
+      }
+    },
+    
+    // 服务器配置 (保持不变)
     server: {
       host: '0.0.0.0',
       port: 3000,
       proxy: {
-        '/api/v1': {
+        '/api': {
           target: 'http://localhost:8080',
           changeOrigin: true,
         },
       },
     },
-    css: {
-      preprocessorOptions: {
-        scss: {
-          additionalData: `@import "@/assets/styles/variables.scss";`
-        }
-      }
-    }
   }
 })

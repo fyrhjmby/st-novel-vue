@@ -102,6 +102,69 @@
         .toggle-switch.active::after {
             transform: translateX(20px);
         }
+
+        .info-card {
+            background: #FAFAFA;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+
+        .info-card:hover {
+            border-color: #D1D5DB;
+            background: #F9FAFB;
+        }
+
+        .editable-field {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .editable-field:hover .edit-icon {
+            opacity: 1;
+        }
+
+        .edit-icon {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #4B5563;
+            box-shadow: 0 0 0 3px rgba(75, 85, 99, 0.1);
+        }
+
+        .plan-card {
+            background: linear-gradient(135deg, #4B5563 0%, #374151 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .plan-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            transform: rotate(45deg);
+        }
     </style>
 </head>
 <body>
@@ -154,74 +217,139 @@
                     <main class="flex-1 bg-white flex flex-col">
                         <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100">
                             <h1 class="text-lg font-medium text-[#374151]">用户设置</h1>
-                            <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151]">保存更改</button>
                         </header>
                         <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] space-y-6">
                             <!-- 用户概览 -->
                             <div class="bg-white rounded-xl p-6 border border-gray-100">
-                                <div class="flex items-center gap-6 mb-6">
+                                <div class="flex items-center gap-6">
                                     <div class="relative">
-                                        <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-2xl font-medium text-gray-600">张</div>
-                                        <button class="absolute bottom-0 right-0 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50">
+                                        <div class="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center text-2xl font-medium text-gray-700">张</div>
+                                        <button class="absolute bottom-0 right-0 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 shadow-sm">
                                             <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                         </button>
                                     </div>
                                     <div class="flex-1">
                                         <h2 class="text-xl font-medium text-[#374151]">张小明</h2>
-                                        <p class="text-sm text-[#6B7280] mt-1">@zhangxiaoming · xiaoming@example.com</p>
-                                        <div class="flex items-center gap-4 mt-3">
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Pro 会员</span>
-                                            <span class="text-sm text-[#9CA3AF]">加入于 2023年5月</span>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-sm text-[#6B7280]">账户余额</p>
-                                        <p class="text-2xl font-semibold text-[#374151]">¥1,256.00</p>
-                                        <p class="text-xs text-[#9CA3AF] mt-1">积分: 8,560</p>
+                                        <p class="text-sm text-[#6B7280] mt-1">xiaoming@example.com</p>
+                                        <p class="text-xs text-[#9CA3AF] mt-2">加入于 2023年5月</p>
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- 基本信息 -->
                             <div class="bg-white rounded-xl p-6 border border-gray-100">
-                                <h3 class="text-base font-medium text-[#374151] mb-6">基本信息</h3>
-                                <div class="grid grid-cols-2 gap-6">
-                                    <div>
-                                        <label class="text-sm font-medium text-[#374151] mb-2 block">用户名</label>
-                                        <input type="text" value="zhangxiaoming" disabled class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-500">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-base font-medium text-[#374151]">基本信息</h3>
+                                    <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors">保存更改</button>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="info-card">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <label class="text-xs font-medium text-[#6B7280] uppercase tracking-wide">用户名</label>
+                                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                        </div>
+                                        <p class="text-sm font-medium text-[#374151]">zhangxiaoming</p>
                                     </div>
-                                    <div>
-                                        <label class="text-sm font-medium text-[#374151] mb-2 block">昵称</label>
-                                        <input type="text" value="张小明" class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563]">
+                                    <div class="info-card editable-field">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <label class="text-xs font-medium text-[#6B7280] uppercase tracking-wide">昵称</label>
+                                            <svg class="w-4 h-4 text-gray-400 edit-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                        </div>
+                                        <p class="text-sm font-medium text-[#374151]">张小明</p>
                                     </div>
-                                    <div>
-                                        <label class="text-sm font-medium text-[#374151] mb-2 block">电子邮箱</label>
-                                        <input type="email" value="xiaoming@example.com" class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563]">
+                                    <div class="info-card editable-field">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <label class="text-xs font-medium text-[#6B7280] uppercase tracking-wide">电子邮箱</label>
+                                            <svg class="w-4 h-4 text-gray-400 edit-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                        </div>
+                                        <p class="text-sm font-medium text-[#374151]">xiaoming@example.com</p>
                                     </div>
-                                    <div>
-                                        <label class="text-sm font-medium text-[#374151] mb-2 block">手机号码</label>
-                                        <input type="tel" value="+86 138****8888" class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563]">
+                                    <div class="info-card editable-field">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <label class="text-xs font-medium text-[#6B7280] uppercase tracking-wide">手机号码</label>
+                                            <svg class="w-4 h-4 text-gray-400 edit-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                        </div>
+                                        <p class="text-sm font-medium text-[#374151]">+86 138****8888</p>
                                     </div>
-                                    <div>
-                                        <label class="text-sm font-medium text-[#374151] mb-2 block">所在地区</label>
-                                        <select class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563]">
-                                            <option>中国大陆</option>
-                                            <option>中国香港</option>
-                                            <option>中国台湾</option>
-                                            <option>美国</option>
-                                            <option>其他</option>
-                                        </select>
+                                    <div class="info-card editable-field">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <label class="text-xs font-medium text-[#6B7280] uppercase tracking-wide">所在地区</label>
+                                            <svg class="w-4 h-4 text-gray-400 edit-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                        </div>
+                                        <p class="text-sm font-medium text-[#374151]">中国大陆</p>
                                     </div>
-                                    <div>
-                                        <label class="text-sm font-medium text-[#374151] mb-2 block">时区</label>
-                                        <select class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563]">
-                                            <option>UTC+8 北京时间</option>
-                                            <option>UTC+0 格林威治时间</option>
-                                        </select>
+                                    <div class="info-card editable-field">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <label class="text-xs font-medium text-[#6B7280] uppercase tracking-wide">时区</label>
+                                            <svg class="w-4 h-4 text-gray-400 edit-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                        </div>
+                                        <p class="text-sm font-medium text-[#374151]">UTC+8 北京时间</p>
                                     </div>
-                                    <div class="col-span-2">
-                                        <label class="text-sm font-medium text-[#374151] mb-2 block">个人简介</label>
-                                        <textarea rows="3" class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563] resize-none" placeholder="简单介绍一下自己">热爱技术，专注于AI和机器学习领域。</textarea>
+                                    <div class="col-span-2 info-card editable-field">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <label class="text-xs font-medium text-[#6B7280] uppercase tracking-wide">个人简介</label>
+                                            <svg class="w-4 h-4 text-gray-400 edit-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                        </div>
+                                        <p class="text-sm text-[#374151] leading-relaxed">热爱技术，专注于AI和机器学习领域。对新技术充满好奇，享受解决复杂问题的过程。</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 会员信息 -->
+                            <div class="bg-white rounded-xl p-6 border border-gray-100">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-base font-medium text-[#374151]">会员计划</h3>
+                                    <a href="#" class="text-sm text-[#4B5563] hover:underline">查看所有计划</a>
+                                </div>
+                                <div class="plan-card">
+                                    <div class="relative z-10">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <div>
+                                                <div class="flex items-center gap-2">
+                                                    <h4 class="text-xl font-semibold">Pro</h4>
+                                                    <span class="px-2 py-0.5 bg-white/20 rounded-full text-xs">当前计划</span>
+                                                </div>
+                                                <p class="text-sm text-gray-300 mt-1">专业版会员</p>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="text-2xl font-semibold">¥99<span class="text-sm font-normal">/月</span></p>
+                                            </div>
+                                        </div>
+                                        <div class="space-y-3">
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                <span class="text-sm">每月 50万 tokens</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                <span class="text-sm">GPT-4 & Claude 3 访问权限</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                <span class="text-sm">优先响应 & 技术支持</span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-6 pt-6 border-t border-white/20">
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <p class="text-sm text-gray-300">下次续费日期</p>
+                                                    <p class="text-base font-medium">2025年7月15日</p>
+                                                </div>
+                                                <button class="px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur rounded-lg text-sm font-medium transition-colors">
+                                                    管理订阅
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                                    <div class="flex items-start gap-3">
+                                        <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                        <div>
+                                            <p class="text-sm font-medium text-blue-900">升级到 Max 计划</p>
+                                            <p class="text-xs text-blue-700 mt-1">获得无限 tokens、更快的响应速度和专属功能</p>
+                                            <button class="mt-2 text-sm font-medium text-blue-600 hover:text-blue-700">了解更多 →</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -297,38 +425,6 @@
                                 </div>
                             </div>
                             
-                            <!-- 会员信息 -->
-                            <div class="bg-white rounded-xl p-6 border border-gray-100">
-                                <div class="flex items-center justify-between mb-6">
-                                    <h3 class="text-base font-medium text-[#374151]">会员信息</h3>
-                                    <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151]">升级会员</button>
-                                </div>
-                                <div class="grid grid-cols-3 gap-4 mb-6">
-                                    <div class="text-center p-4 bg-gray-50 rounded-lg">
-                                        <p class="text-2xl font-semibold text-[#374151]">Pro</p>
-                                        <p class="text-sm text-[#6B7280] mt-1">当前等级</p>
-                                    </div>
-                                    <div class="text-center p-4 bg-gray-50 rounded-lg">
-                                        <p class="text-2xl font-semibold text-[#374151]">256天</p>
-                                        <p class="text-sm text-[#6B7280] mt-1">剩余天数</p>
-                                    </div>
-                                    <div class="text-center p-4 bg-gray-50 rounded-lg">
-                                        <p class="text-2xl font-semibold text-[#374151]">8,560</p>
-                                        <p class="text-sm text-[#6B7280] mt-1">积分余额</p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-sm text-[#6B7280]">升级进度</span>
-                                        <span class="text-sm text-[#374151] font-medium">2,256/3,000 积分</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-[#4B5563] h-2 rounded-full" style="width: 75%"></div>
-                                    </div>
-                                    <p class="text-xs text-[#9CA3AF] mt-2">还需 744 积分即可升级至 Max 会员</p>
-                                </div>
-                            </div>
-                            
                             <!-- 安全设置 -->
                             <div class="bg-white rounded-xl p-6 border border-gray-100">
                                 <h3 class="text-base font-medium text-[#374151] mb-6">安全设置</h3>
@@ -362,38 +458,6 @@
                                         <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50">查看</button>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <!-- 连接的应用 -->
-                            <div class="bg-white rounded-xl p-6 border border-gray-100">
-                                <h3 class="text-base font-medium text-[#374151] mb-6">连接的应用</h3>
-                                <div class="space-y-3">
-                                    <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-                                            </div>
-                                            <div>
-                                                <h4 class="text-sm font-medium text-[#374151]">VS Code Extension</h4>
-                                                <p class="text-xs text-[#9CA3AF]">授权于 2024年5月20日</p>
-                                            </div>
-                                        </div>
-                                        <button class="text-sm text-red-500 hover:underline">断开连接</button>
-                                    </div>
-                                    <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
-                                            </div>
-                                            <div>
-                                                <h4 class="text-sm font-medium text-[#374151]">Slack Integration</h4>
-                                                <p class="text-xs text-[#9CA3AF]">授权于 2024年4月10日</p>
-                                            </div>
-                                        </div>
-                                        <button class="text-sm text-red-500 hover:underline">断开连接</button>
-                                    </div>
-                                </div>
-                                <button class="mt-4 w-full px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50">+ 添加新应用</button>
                             </div>
                             
                             <!-- 账户操作 -->

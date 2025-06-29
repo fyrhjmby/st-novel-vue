@@ -4,17 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小说创作工作室 - AI功能改进页面合集</title>
-    <!-- DaisyUI CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.11.1/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-        body { background-color: #F5F5F7; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
         
-        /* 统一设计风格 */
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        body {
+            background: #F5F5F7;
+        }
+        
+        /* 设计系统颜色 - 与主页保持一致 */
         :root {
             --primary-900: #111827;
             --primary-800: #1F2937;
@@ -26,42 +31,128 @@
             --primary-200: #E5E7EB;
             --primary-100: #F3F4F6;
             --primary-50: #F9FAFB;
+            
+            --accent-green: #10B981;
+            --accent-blue: #3B82F6;
+            --accent-red: #EF4444;
+            --accent-orange: #F59E0B;
+            
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 0 0 1px rgba(0, 0, 0, 0.03), 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
         }
         
-        .design-frame { 
-            background: white; 
-            border-radius: 16px; 
-            overflow: hidden; 
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08); 
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar {
+            display: none;
         }
-        .page-title { 
-            font-size: 2rem; 
-            font-weight: 300; 
-            color: #374151; 
-            margin-bottom: 1rem; 
-            padding-left: 0.5rem; 
-            border-left: 4px solid #3B82F6; 
+        
+        .design-frame {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
         }
-        .page-container { max-width: 1600px; margin: 2rem auto; }
-        ::-webkit-scrollbar { width: 6px; } 
-        ::-webkit-scrollbar-track { background: #f1f1f1; } 
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; } 
-        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-        .annotation { 
-            background: #FFFBEB; 
-            padding: 4px 10px; 
-            border-radius: 6px; 
-            font-size: 12px; 
-            font-weight: 500; 
-            color: #B45309; 
-            border: 1px solid #FDE68A; 
-            position: absolute; 
-            white-space: nowrap; 
-            z-index: 50; 
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); 
+        
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: var(--primary-700);
+            margin-bottom: 1.5rem;
         }
-        .diff-del { background-color: #fef2f2; text-decoration: line-through; padding: 0 2px; border-radius: 3px; color: #ef4444; }
-        .diff-add { background-color: #ecfdf5; padding: 0 2px; border-radius: 3px; text-decoration: none; color: #10b981; }
+        
+        .page-container {
+            max-width: 1800px;
+            margin: 0 auto;
+            margin-bottom: 3rem;
+        }
+        
+        /* 按钮样式 */
+        .btn-primary {
+            background: var(--primary-600);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-700);
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: var(--primary-700);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: 1px solid var(--primary-200);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--primary-50);
+            border-color: var(--primary-300);
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--primary-100);
+            transition: all 0.2s;
+        }
+        
+        .card:hover {
+            border-color: var(--primary-200);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* 输入框样式 */
+        .input-field {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            border: 1px solid var(--primary-200);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: var(--primary-700);
+            background: white;
+            transition: all 0.2s;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* 标签样式 */
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .badge-primary {
+            background: var(--primary-100);
+            color: var(--primary-700);
+        }
+        
+        .badge-success {
+            background: #ECFDF5;
+            color: var(--accent-green);
+        }
+        
+        .badge-blue {
+            background: #EFF6FF;
+            color: var(--accent-blue);
+        }
         
         /* 浮动菜单动画 */
         .float-menu-item {
@@ -70,588 +161,675 @@
             transform: scale(0.8);
             transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
+        
         .float-menu-item.active {
             opacity: 1;
             transform: scale(1);
         }
+        
+        /* 聊天气泡 */
+        .chat-bubble-user {
+            background: var(--accent-blue);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 12px 12px 4px 12px;
+            max-width: 70%;
+            margin-left: auto;
+        }
+        
+        .chat-bubble-ai {
+            background: var(--primary-100);
+            color: var(--primary-700);
+            padding: 0.75rem 1rem;
+            border-radius: 12px 12px 12px 4px;
+            max-width: 70%;
+        }
+        
+        /* 文本差异样式 */
+        .diff-del {
+            background-color: #FEE2E2;
+            text-decoration: line-through;
+            padding: 0 4px;
+            border-radius: 4px;
+            color: var(--accent-red);
+        }
+        
+        .diff-add {
+            background-color: #D1FAE5;
+            padding: 0 4px;
+            border-radius: 4px;
+            color: var(--accent-green);
+        }
     </style>
 </head>
-<body class="p-8">
-
-    <!-- 1. 改进的浮动AI按钮展示 -->
-    <div id="page-ai-button-improved" class="page-container">
-        <h2 class="page-title">1. 改进的浮动AI按钮展示</h2>
-        <div class="design-frame">
-            <div class="h-[600px] relative bg-[#FCFCFC] p-8">
-                <p class="text-gray-500 mb-4">点击全局AI按钮后，展示任务列表和聊天入口：</p>
-                
-                <!-- AI任务菜单卡片 -->
-                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-80 bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-100">
-                    <!-- 顶部标题栏 -->
-                    <div class="bg-gradient-to-r from-purple-500 to-blue-600 text-white p-4 flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <i class="fa-solid fa-wand-magic-sparkles text-xl"></i>
-                            <h3 class="font-medium">AI助手</h3>
-                        </div>
-                        <button class="btn btn-ghost btn-sm btn-circle text-white">
-                            <i class="fa-solid fa-times"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- 任务列表 -->
-                    <div class="p-4 space-y-2 max-h-96 overflow-y-auto">
-                        <p class="text-xs text-gray-500 font-medium mb-2">生成任务</p>
-                        <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                            <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center">
-                                <i class="fa-solid fa-pen-nib"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="font-medium text-sm">章节生成</p>
-                                <p class="text-xs text-gray-500">根据大纲创建新章节</p>
-                            </div>
-                            <i class="fa-solid fa-chevron-right text-gray-400 text-xs"></i>
-                        </a>
-                        
-                        <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                            <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                                <i class="fa-solid fa-paintbrush"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="font-medium text-sm">章节润色</p>
-                                <p class="text-xs text-gray-500">优化文字表达和风格</p>
-                            </div>
-                            <i class="fa-solid fa-chevron-right text-gray-400 text-xs"></i>
-                        </a>
-                        
-                        <p class="text-xs text-gray-500 font-medium mt-4 mb-2">分析任务</p>
-                        <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                            <div class="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
-                                <i class="fa-solid fa-magnifying-glass-chart"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="font-medium text-sm">章节分析</p>
-                                <p class="text-xs text-gray-500">分析情节和人物</p>
-                            </div>
-                            <i class="fa-solid fa-chevron-right text-gray-400 text-xs"></i>
-                        </a>
-                        
-                        <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                            <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
-                                <i class="fa-solid fa-chart-line"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="font-medium text-sm">阶段分析</p>
-                                <p class="text-xs text-gray-500">评估故事节奏和结构</p>
-                            </div>
-                            <i class="fa-solid fa-chevron-right text-gray-400 text-xs"></i>
-                        </a>
-                    </div>
-                    
-                    <!-- 底部聊天入口 -->
-                    <div class="border-t border-gray-100 p-4">
-                        <button class="btn btn-block btn-neutral">
-                            <i class="fa-solid fa-comments"></i>
-                            AI聊天助手
-                        </button>
-                    </div>
+<body>
+    <div class="min-h-screen p-8">
+        <!-- 设计头部 -->
+        <div class="max-w-[1800px] mx-auto mb-12">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl font-light text-gray-800 mb-2">小说创作工作室 - AI功能改进</h1>
+                    <p class="text-gray-500">统一设计风格 / 2025</p>
                 </div>
-                
-                <!-- 浮动AI按钮 -->
-                <div class="fixed bottom-8 right-8">
-                    <button class="btn btn-circle w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 text-white shadow-lg hover:scale-110 transition-transform border-none">
-                        <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
-                    </button>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-400">Version 2.0</span>
+                    <div class="w-px h-6 bg-gray-300"></div>
+                    <span class="text-sm text-gray-400">Desktop 1440px</span>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- 2. 新增AI任务配置页 -->
-    <div id="page-ai-config" class="page-container">
-        <h2 class="page-title">2. AI任务配置页</h2>
-        <div class="design-frame">
-            <div class="h-[800px] flex items-center justify-center p-8">
-                <!-- 配置模态框 -->
-                <div class="card bg-base-100 shadow-2xl w-full max-w-3xl">
-                    <div class="p-6 border-b border-base-200 flex justify-between items-center">
-                        <div>
-                            <h3 class="text-lg font-medium text-base-content">AI任务配置 - 章节润色</h3>
-                            <p class="text-sm text-base-content/60 mt-1">配置AI助手如何处理您的内容</p>
-                        </div>
-                        <button class="btn btn-ghost btn-sm btn-circle">
-                            <i class="fa-solid fa-times text-lg"></i>
-                        </button>
-                    </div>
+        <!-- 1. 改进的浮动AI按钮展示 -->
+        <div id="page-ai-button-improved" class="page-container">
+            <h2 class="page-title">1. 改进的浮动AI按钮展示</h2>
+            <div class="design-frame">
+                <div class="h-[600px] relative bg-[#FCFCFC] p-8">
+                    <p class="text-[#6B7280] mb-4">点击全局AI按钮后，展示任务列表和聊天入口：</p>
                     
-                    <div class="p-6 space-y-6 max-h-[500px] overflow-y-auto">
-                        <!-- AI模型配置 -->
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">AI模型选择</span>
-                                <span class="label-text-alt text-info cursor-pointer">
-                                    <i class="fa-solid fa-circle-info"></i> 了解模型差异
-                                </span>
-                            </label>
-                            <select class="select select-bordered w-full">
-                                <option selected>GPT-4o (推荐 - 均衡性能)</option>
-                                <option>Claude 3 Opus (文学创作专长)</option>
-                                <option>混合模型 (多模型协作)</option>
-                                <option>自定义微调模型</option>
-                            </select>
-                        </div>
-                        
-                        <!-- 提示词选择 -->
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">任务提示词模板</span>
-                            </label>
-                            <select class="select select-bordered w-full">
-                                <option selected>文学润色 - 注重修辞和意境</option>
-                                <option>简洁优化 - 删繁就简，保留精华</option>
-                                <option>情感强化 - 增强情感表达</option>
-                                <option>节奏调整 - 优化叙事节奏</option>
-                            </select>
-                        </div>
-                        
-                        <!-- 上下文选择 -->
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">上下文配置</span>
-                            </label>
-                            <div class="space-y-3">
-                                <!-- 固定上下文 -->
-                                <div class="card card-compact bg-base-100 border border-base-200">
-                                    <div class="card-body">
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center gap-3">
-                                                <i class="fa-solid fa-anchor text-base-content/50"></i>
-                                                <div>
-                                                    <p class="font-medium text-sm">固定上下文</p>
-                                                    <p class="text-xs text-base-content/60">小说设定、人物档案、世界观</p>
-                                                </div>
-                                            </div>
-                                            <input type="checkbox" class="toggle toggle-primary" checked />
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- 动态上下文 -->
-                                <div class="card card-compact bg-base-100 border border-base-200">
-                                    <div class="card-body">
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center gap-3">
-                                                <i class="fa-solid fa-arrows-rotate text-base-content/50"></i>
-                                                <div>
-                                                    <p class="font-medium text-sm">动态上下文</p>
-                                                    <p class="text-xs text-base-content/60">自动包含前后相关章节</p>
-                                                </div>
-                                            </div>
-                                            <input type="checkbox" class="toggle toggle-primary" checked />
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- RAG上下文 -->
-                                <div class="card card-compact bg-base-100 border border-base-200">
-                                    <div class="card-body">
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center gap-3">
-                                                <i class="fa-solid fa-magnifying-glass text-base-content/50"></i>
-                                                <div>
-                                                    <p class="font-medium text-sm">RAG智能搜索</p>
-                                                    <p class="text-xs text-base-content/60">自动检索相关内容</p>
-                                                </div>
-                                            </div>
-                                            <input type="checkbox" class="toggle toggle-primary" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- 其他配置 -->
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">高级设置</span>
-                            </label>
-                            <div class="space-y-3">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm">创作温度</span>
-                                    <div class="flex items-center gap-3">
-                                        <input type="range" min="0" max="100" value="70" class="range range-xs w-32" />
-                                        <span class="text-sm font-mono">0.7</span>
-                                    </div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm">保留原文风格</span>
-                                    <input type="checkbox" class="toggle toggle-sm" checked />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="p-6 bg-base-200 border-t border-base-300 flex justify-end gap-3">
-                        <button class="btn">取消</button>
-                        <button class="btn btn-neutral">
-                            <i class="fa-solid fa-save"></i>
-                            保存配置
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. 改进的历史版本页（精确到章节） -->
-    <div id="page-history-improved" class="page-container">
-        <h2 class="page-title">3. 改进的历史版本页（章节级别）</h2>
-        <div class="design-frame">
-            <div class="h-[800px] flex">
-                <aside class="w-64 bg-[#FAFAFA] border-r border-base-200 flex flex-col flex-shrink-0">
-                    <div class="p-4 space-y-4 border-b border-base-200 h-20 flex items-center">
-                        <a href="#" class="flex items-center gap-3 px-2 group">
-                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:scale-110 transition-transform">
-                                <img src="https://images.unsplash.com/photo-1589998059171-988d887df646?q=80&w=100" class="w-full h-full object-cover" alt="">
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h3 class="font-medium text-base-content text-sm truncate">星际漫游者</h3>
-                                <p class="text-xs text-base-content/60 truncate">科幻 • 24章</p>
-                            </div>
-                            <i class="fa-solid fa-chevron-left text-base-content/40 text-xs group-hover:-translate-x-1 transition-transform"></i>
-                        </a>
-                    </div>
-                    
-                    <ul class="menu p-4 w-full flex-1">
-                        <li><h2 class="menu-title text-xs uppercase tracking-wider">小说管理</h2></li>
-                        <li><a class="text-sm"><i class="fa-solid fa-pen-nib w-5 text-center"></i><span>编辑章节</span></a></li>
-                        <li><a class="text-sm"><i class="fa-solid fa-sitemap w-5 text-center"></i><span>大纲视图</span></a></li>
-                        
-                        <li><h2 class="menu-title text-xs uppercase tracking-wider mt-4">工具</h2></li>
-                        <li><a class="text-sm"><i class="fa-solid fa-sliders w-5 text-center"></i><span>小说设置</span></a></li>
-                        <li><a class="text-sm font-medium bg-neutral text-neutral-content">
-                            <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i><span>版本历史</span>
-                        </a></li>
-                        <li><a class="text-sm"><i class="fa-solid fa-download w-5 text-center"></i><span>导出</span></a></li>
-                    </ul>
-                    
-                    <div class="p-2 border-t border-base-200">
-                        <ul class="menu p-2 w-full">
-                           <li><a class="text-sm"><i class="fa-solid fa-gear w-5 text-center"></i><span>设置</span></a></li>
-                        </ul>
-                    </div>
-                </aside>
-                
-                <main class="flex-1 flex">
-                    <!-- 左侧章节列表 -->
-                    <div class="w-80 border-r border-base-200 bg-[#FCFCFC] flex flex-col">
-                        <header class="h-20 px-6 flex items-center justify-between border-b border-base-200 flex-shrink-0">
-                            <h2 class="font-medium">选择章节</h2>
-                            <select class="select select-sm select-bordered">
-                                <option>所有版本</option>
-                                <option>手动保存</option>
-                                <option>自动保存</option>
-                                <option>AI修改</option>
-                            </select>
-                        </header>
-                        
-                        <div class="flex-1 p-4 overflow-y-auto space-y-2">
-                            <div class="card card-compact bg-base-100 border-2 border-primary cursor-pointer">
-                                <div class="card-body">
-                                    <div class="flex items-center justify-between">
-                                        <h3 class="font-medium text-sm">第四章：跃迁点</h3>
-                                        <span class="badge badge-primary badge-sm">当前</span>
-                                    </div>
-                                    <p class="text-xs text-base-content/60">最后修改：10分钟前</p>
-                                    <p class="text-xs text-base-content/50">12个历史版本</p>
-                                </div>
-                            </div>
-                            
-                            <div class="card card-compact bg-base-100 border border-base-200 hover:border-base-300 cursor-pointer">
-                                <div class="card-body">
-                                    <h3 class="font-medium text-sm">第三章：意外的信号</h3>
-                                    <p class="text-xs text-base-content/60">最后修改：2小时前</p>
-                                    <p class="text-xs text-base-content/50">8个历史版本</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 右侧版本对比 -->
-                    <div class="flex-1 flex flex-col bg-base-100">
-                        <header class="h-20 px-8 flex items-center justify-between border-b border-base-200 flex-shrink-0">
-                            <div>
-                                <h1 class="text-lg font-medium text-base-content">第四章 版本对比</h1>
-                                <p class="text-sm text-base-content/60">当前版本 vs AI润色版本 (1小时前)</p>
-                            </div>
+                    <!-- AI任务菜单卡片 -->
+                    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-80 bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-100">
+                        <!-- 顶部标题栏 -->
+                        <div class="bg-gradient-to-r from-[#4B5563] to-[#374151] text-white p-5 flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <button class="btn btn-sm">
-                                    <i class="fa-solid fa-code-compare"></i>
-                                    切换对比模式
+                                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium">AI 助手</h3>
+                                    <p class="text-xs text-white/80">智能创作伴侣</p>
+                                </div>
+                            </div>
+                            <button class="w-8 h-8 hover:bg-white/10 rounded-lg flex items-center justify-center transition-colors">
+                                <i class="fa-solid fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- 任务列表 -->
+                        <div class="p-6 space-y-4 max-h-96 overflow-y-auto">
+                            <div>
+                                <p class="text-xs font-medium text-[#9CA3AF] uppercase tracking-wider mb-3">生成任务</p>
+                                <div class="space-y-2">
+                                    <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group">
+                                        <div class="w-10 h-10 bg-[#F3F4F6] text-[#4B5563] rounded-lg flex items-center justify-center group-hover:bg-[#4B5563] group-hover:text-white transition-colors">
+                                            <i class="fa-solid fa-pen-nib"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="font-medium text-sm text-[#374151]">章节生成</p>
+                                            <p class="text-xs text-[#9CA3AF]">根据大纲创建新章节</p>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-right text-[#9CA3AF] text-xs group-hover:translate-x-1 transition-transform"></i>
+                                    </a>
+                                    
+                                    <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group">
+                                        <div class="w-10 h-10 bg-[#F3F4F6] text-[#4B5563] rounded-lg flex items-center justify-center group-hover:bg-[#4B5563] group-hover:text-white transition-colors">
+                                            <i class="fa-solid fa-paintbrush"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="font-medium text-sm text-[#374151]">章节润色</p>
+                                            <p class="text-xs text-[#9CA3AF]">优化文字表达和风格</p>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-right text-[#9CA3AF] text-xs group-hover:translate-x-1 transition-transform"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <p class="text-xs font-medium text-[#9CA3AF] uppercase tracking-wider mb-3">分析任务</p>
+                                <div class="space-y-2">
+                                    <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group">
+                                        <div class="w-10 h-10 bg-[#F3F4F6] text-[#4B5563] rounded-lg flex items-center justify-center group-hover:bg-[#4B5563] group-hover:text-white transition-colors">
+                                            <i class="fa-solid fa-magnifying-glass-chart"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="font-medium text-sm text-[#374151]">章节分析</p>
+                                            <p class="text-xs text-[#9CA3AF]">分析情节和人物</p>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-right text-[#9CA3AF] text-xs group-hover:translate-x-1 transition-transform"></i>
+                                    </a>
+                                    
+                                    <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group">
+                                        <div class="w-10 h-10 bg-[#F3F4F6] text-[#4B5563] rounded-lg flex items-center justify-center group-hover:bg-[#4B5563] group-hover:text-white transition-colors">
+                                            <i class="fa-solid fa-chart-line"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="font-medium text-sm text-[#374151]">阶段分析</p>
+                                            <p class="text-xs text-[#9CA3AF]">评估故事节奏和结构</p>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-right text-[#9CA3AF] text-xs group-hover:translate-x-1 transition-transform"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 底部聊天入口 -->
+                        <div class="border-t border-gray-100 p-4 bg-[#FAFAFA]">
+                            <button class="w-full btn-primary flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-comments"></i>
+                                AI 聊天助手
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 浮动AI按钮 -->
+                    <div class="fixed bottom-8 right-8">
+                        <button class="w-16 h-16 bg-gradient-to-br from-[#4B5563] to-[#374151] text-white rounded-full shadow-lg hover:scale-110 transition-transform border-none flex items-center justify-center">
+                            <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. 新增AI任务配置页 -->
+        <div id="page-ai-config" class="page-container">
+            <h2 class="page-title">2. AI任务配置页</h2>
+            <div class="design-frame">
+                <div class="h-[800px] flex items-center justify-center p-8 bg-[#FCFCFC]">
+                    <!-- 配置模态框 -->
+                    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl border border-gray-100">
+                        <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                            <div>
+                                <h3 class="text-lg font-medium text-[#374151]">AI任务配置 - 章节润色</h3>
+                                <p class="text-sm text-[#6B7280] mt-1">配置AI助手如何处理您的内容</p>
+                            </div>
+                            <button class="w-8 h-8 hover:bg-gray-50 rounded-lg flex items-center justify-center transition-colors">
+                                <i class="fa-solid fa-times text-[#6B7280]"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="p-6 space-y-6 max-h-[500px] overflow-y-auto">
+                            <!-- AI模型配置 -->
+                            <div>
+                                <label class="flex items-center justify-between mb-3">
+                                    <span class="text-sm font-medium text-[#374151]">AI模型选择</span>
+                                    <span class="text-xs text-[#3B82F6] cursor-pointer flex items-center gap-1">
+                                        <i class="fa-solid fa-circle-info"></i> 了解模型差异
+                                    </span>
+                                </label>
+                                <select class="input-field">
+                                    <option selected>GPT-4o (推荐 - 均衡性能)</option>
+                                    <option>Claude 3 Opus (文学创作专长)</option>
+                                    <option>混合模型 (多模型协作)</option>
+                                    <option>自定义微调模型</option>
+                                </select>
+                            </div>
+                            
+                            <!-- 提示词选择 -->
+                            <div>
+                                <label class="text-sm font-medium text-[#374151] block mb-3">任务提示词模板</label>
+                                <select class="input-field">
+                                    <option selected>文学润色 - 注重修辞和意境</option>
+                                    <option>简洁优化 - 删繁就简，保留精华</option>
+                                    <option>情感强化 - 增强情感表达</option>
+                                    <option>节奏调整 - 优化叙事节奏</option>
+                                </select>
+                            </div>
+                            
+                            <!-- 上下文选择 -->
+                            <div>
+                                <label class="text-sm font-medium text-[#374151] block mb-3">上下文配置</label>
+                                <div class="space-y-3">
+                                    <!-- 固定上下文 -->
+                                    <div class="card p-4">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center">
+                                                    <i class="fa-solid fa-anchor text-[#4B5563]"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="font-medium text-sm text-[#374151]">固定上下文</p>
+                                                    <p class="text-xs text-[#9CA3AF]">小说设定、人物档案、世界观</p>
+                                                </div>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" class="sr-only peer" checked>
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4B5563]"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 动态上下文 -->
+                                    <div class="card p-4">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center">
+                                                    <i class="fa-solid fa-arrows-rotate text-[#4B5563]"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="font-medium text-sm text-[#374151]">动态上下文</p>
+                                                    <p class="text-xs text-[#9CA3AF]">自动包含前后相关章节</p>
+                                                </div>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" class="sr-only peer" checked>
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4B5563]"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- RAG上下文 -->
+                                    <div class="card p-4">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center">
+                                                    <i class="fa-solid fa-magnifying-glass text-[#4B5563]"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="font-medium text-sm text-[#374151]">RAG智能搜索</p>
+                                                    <p class="text-xs text-[#9CA3AF]">自动检索相关内容</p>
+                                                </div>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" class="sr-only peer">
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4B5563]"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 其他配置 -->
+                            <div>
+                                <label class="text-sm font-medium text-[#374151] block mb-3">高级设置</label>
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-[#6B7280]">创作温度</span>
+                                        <div class="flex items-center gap-3">
+                                            <input type="range" min="0" max="100" value="70" class="w-32 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                            <span class="text-sm font-mono text-[#374151]">0.7</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-[#6B7280]">保留原文风格</span>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" class="sr-only peer" checked>
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4B5563]"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-6 bg-[#FAFAFA] border-t border-gray-100 flex justify-end gap-3">
+                            <button class="btn-secondary">取消</button>
+                            <button class="btn-primary flex items-center gap-2">
+                                <i class="fa-solid fa-save"></i>
+                                保存配置
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 改进的历史版本页（精确到章节） -->
+        <div id="page-history-improved" class="page-container">
+            <h2 class="page-title">3. 改进的历史版本页（章节级别）</h2>
+            <div class="design-frame">
+                <div class="h-[800px] flex">
+                    <!-- 侧边栏 -->
+                    <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col">
+                        <div class="p-4 space-y-4 border-b border-gray-100">
+                            <a href="#" class="flex items-center gap-3 px-2 group">
+                                <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:scale-110 transition-transform">
+                                    <img src="https://images.unsplash.com/photo-1589998059171-988d887df646?q=80&w=100" class="w-full h-full object-cover" alt="">
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-medium text-[#374151] text-sm truncate">星际漫游者</h3>
+                                    <p class="text-xs text-[#9CA3AF] truncate">科幻 • 24章</p>
+                                </div>
+                            </a>
+                        </div>
+                        
+                        <nav class="flex-1 px-4 py-6">
+                            <div class="mb-8">
+                                <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">小说管理</p>
+                                <div class="space-y-1">
+                                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                        <i class="fa-solid fa-pen-nib w-5 text-center"></i>
+                                        <span>编辑章节</span>
+                                    </a>
+                                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                        <i class="fa-solid fa-sitemap w-5 text-center"></i>
+                                        <span>大纲视图</span>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">工具</p>
+                                <div class="space-y-1">
+                                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                        <i class="fa-solid fa-sliders w-5 text-center"></i>
+                                        <span>小说设置</span>
+                                    </a>
+                                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium">
+                                        <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i>
+                                        <span>版本历史</span>
+                                    </a>
+                                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                        <i class="fa-solid fa-download w-5 text-center"></i>
+                                        <span>导出</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </nav>
+                        
+                        <div class="p-4 border-t border-gray-100">
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                <i class="fa-solid fa-gear w-5 text-center"></i>
+                                <span>设置</span>
+                            </a>
+                        </div>
+                    </aside>
+                    
+                    <main class="flex-1 flex">
+                        <!-- 左侧章节列表 -->
+                        <div class="w-80 border-r border-gray-100 bg-[#FCFCFC] flex flex-col">
+                            <header class="h-20 px-6 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+                                <h2 class="font-medium text-[#374151]">选择章节</h2>
+                                <select class="input-field text-sm py-1.5 w-auto">
+                                    <option>所有版本</option>
+                                    <option>手动保存</option>
+                                    <option>自动保存</option>
+                                    <option>AI修改</option>
+                                </select>
+                            </header>
+                            
+                            <div class="flex-1 p-4 overflow-y-auto space-y-2">
+                                <div class="card border-2 border-[#4B5563] cursor-pointer">
+                                    <div class="p-4">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <h3 class="font-medium text-sm text-[#374151]">第四章：跃迁点</h3>
+                                            <span class="badge-primary">当前</span>
+                                        </div>
+                                        <p class="text-xs text-[#6B7280]">最后修改：10分钟前</p>
+                                        <p class="text-xs text-[#9CA3AF] mt-1">12个历史版本</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="card hover:border-gray-200 cursor-pointer">
+                                    <div class="p-4">
+                                        <h3 class="font-medium text-sm text-[#374151] mb-2">第三章：意外的信号</h3>
+                                        <p class="text-xs text-[#6B7280]">最后修改：2小时前</p>
+                                        <p class="text-xs text-[#9CA3AF] mt-1">8个历史版本</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 右侧版本对比 -->
+                        <div class="flex-1 flex flex-col bg-white">
+                            <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+                                <div>
+                                    <h1 class="text-lg font-medium text-[#374151]">第四章 版本对比</h1>
+                                    <p class="text-sm text-[#6B7280] mt-1">当前版本 vs AI润色版本 (1小时前)</p>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <button class="btn-secondary text-sm">
+                                        <i class="fa-solid fa-code-compare mr-2"></i>
+                                        切换对比模式
+                                    </button>
+                                    <button class="btn-primary text-sm">
+                                        恢复此版本
+                                    </button>
+                                </div>
+                            </header>
+                            
+                            <!-- 版本时间线 -->
+                            <div class="px-8 py-4 border-b border-gray-100 bg-[#F9FAFB]">
+                                <div class="flex items-center gap-2 overflow-x-auto pb-2">
+                                    <button class="w-8 h-8 hover:bg-gray-100 rounded-lg flex items-center justify-center transition-colors">
+                                        <i class="fa-solid fa-chevron-left text-[#6B7280] text-xs"></i>
+                                    </button>
+                                    <div class="flex gap-2">
+                                        <div class="badge-primary flex items-center gap-1">
+                                            <i class="fa-solid fa-circle text-[4px]"></i>
+                                            当前版本
+                                        </div>
+                                        <div class="badge cursor-pointer hover:bg-gray-200 transition-colors">
+                                            AI润色 • 1小时前
+                                        </div>
+                                        <div class="badge cursor-pointer hover:bg-gray-200 transition-colors">
+                                            手动保存 • 3小时前
+                                        </div>
+                                        <div class="badge cursor-pointer hover:bg-gray-200 transition-colors">
+                                            自动保存 • 5小时前
+                                        </div>
+                                    </div>
+                                    <button class="w-8 h-8 hover:bg-gray-100 rounded-lg flex items-center justify-center transition-colors">
+                                        <i class="fa-solid fa-chevron-right text-[#6B7280] text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="flex-1 p-8 overflow-y-auto">
+                                <div class="max-w-3xl mx-auto">
+                                    <div class="text-[#374151] leading-relaxed">
+                                        <p>
+                                            <del class="diff-del">控制台的警报声将卡尔文从浅眠中惊醒。</del>
+                                            <ins class="diff-add">警报的尖啸犹如一把利刃，划破了卡尔文短暂的假寐。</ins>
+                                            他猛地坐直，眼前的屏幕上一片红色闪烁。
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. 新增AI聊天页 -->
+        <div id="page-ai-chat" class="page-container">
+            <h2 class="page-title">4. AI聊天助手</h2>
+            <div class="design-frame">
+                <div class="h-[800px] flex">
+                    <!-- 左侧聊天列表 -->
+                    <aside class="w-80 bg-[#FAFAFA] border-r border-gray-100 flex flex-col">
+                        <div class="p-4 border-b border-gray-100">
+                            <button class="btn-primary w-full flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-plus"></i>
+                                新建对话
+                            </button>
+                        </div>
+                        
+                        <div class="flex-1 p-4 space-y-2 overflow-y-auto">
+                            <a href="#" class="block p-3 bg-[#EFF6FF] border border-[#3B82F6] rounded-lg">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-8 h-8 bg-[#3B82F6] rounded-full flex items-center justify-center flex-shrink-0">
+                                        <i class="fa-solid fa-comments text-white text-sm"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium text-sm text-[#374151] truncate">角色性格讨论</p>
+                                        <p class="text-xs text-[#6B7280] truncate mt-1">关于卡尔文的内心世界...</p>
+                                        <p class="text-xs text-[#9CA3AF] mt-2">2小时前</p>
+                                    </div>
+                                </div>
+                            </a>
+                            
+                            <a href="#" class="block p-3 hover:bg-gray-100 rounded-lg transition-colors">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-8 h-8 bg-[#F3F4F6] rounded-full flex items-center justify-center flex-shrink-0">
+                                        <i class="fa-solid fa-lightbulb text-[#6B7280] text-sm"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium text-sm text-[#374151] truncate">情节灵感</p>
+                                        <p class="text-xs text-[#6B7280] truncate mt-1">跃迁点的科学原理...</p>
+                                        <p class="text-xs text-[#9CA3AF] mt-2">昨天</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </aside>
+                    
+                    <!-- 右侧聊天界面 -->
+                    <main class="flex-1 flex flex-col bg-white">
+                        <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-gradient-to-br from-[#4B5563] to-[#374151] rounded-full flex items-center justify-center">
+                                    <i class="fa-solid fa-robot text-white"></i>
+                                </div>
+                                <div>
+                                    <h2 class="font-medium text-[#374151]">AI创作助手</h2>
+                                    <button class="text-sm text-[#6B7280] flex items-center gap-2 hover:text-[#374151] transition-colors mt-1">
+                                        <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                                        在线 • GPT-4o
+                                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button class="p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                                    <i class="fa-solid fa-book text-[#6B7280]"></i>
                                 </button>
-                                <button class="btn btn-sm btn-neutral">
-                                    恢复此版本
+                                <button class="p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                                    <i class="fa-solid fa-cog text-[#6B7280]"></i>
                                 </button>
                             </div>
                         </header>
                         
-                        <!-- 版本时间线 -->
-                        <div class="px-8 py-4 border-b border-base-200 bg-base-200/30">
-                            <div class="flex items-center gap-2 overflow-x-auto pb-2">
-                                <button class="btn btn-xs btn-ghost">
-                                    <i class="fa-solid fa-chevron-left"></i>
-                                </button>
-                                <div class="flex gap-2">
-                                    <div class="badge badge-primary gap-1">
-                                        <i class="fa-solid fa-circle text-[4px]"></i>
-                                        当前版本
-                                    </div>
-                                    <div class="badge badge-ghost gap-1 cursor-pointer">
-                                        AI润色 • 1小时前
-                                    </div>
-                                    <div class="badge badge-ghost gap-1 cursor-pointer">
-                                        手动保存 • 3小时前
-                                    </div>
-                                    <div class="badge badge-ghost gap-1 cursor-pointer">
-                                        自动保存 • 5小时前
+                        <div class="flex-1 p-6 overflow-y-auto">
+                            <div class="max-w-3xl mx-auto space-y-4">
+                                <!-- 用户消息 -->
+                                <div class="flex justify-end">
+                                    <div class="chat-bubble-user">
+                                        我想讨论一下卡尔文这个角色的内心世界。在面对跃迁点时，他应该有什么样的心理活动？
                                     </div>
                                 </div>
-                                <button class="btn btn-xs btn-ghost">
-                                    <i class="fa-solid fa-chevron-right"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="flex-1 p-8 overflow-y-auto">
-                            <div class="max-w-3xl mx-auto">
-                                <div class="prose">
-                                    <p>
-                                        <del class="diff-del">控制台的警报声将卡尔文从浅眠中惊醒。</del>
-                                        <ins class="diff-add">警报的尖啸犹如一把利刃，划破了卡尔文短暂的假寐。</ins>
-                                        他猛地坐直，眼前的屏幕上一片红色闪烁。
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </main>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. 新增AI聊天页 -->
-    <div id="page-ai-chat" class="page-container">
-        <h2 class="page-title">4. AI聊天助手</h2>
-        <div class="design-frame">
-            <div class="h-[800px] flex">
-                <!-- 左侧聊天列表 -->
-                <aside class="w-80 bg-[#FAFAFA] border-r border-base-200 flex flex-col">
-                    <div class="p-4 border-b border-base-200">
-                        <button class="btn btn-block btn-neutral">
-                            <i class="fa-solid fa-plus"></i>
-                            新建对话
-                        </button>
-                    </div>
-                    
-                    <div class="flex-1 p-4 space-y-2 overflow-y-auto">
-                        <a href="#" class="block p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <div class="flex items-start gap-3">
-                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <i class="fa-solid fa-comments text-blue-600 text-sm"></i>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="font-medium text-sm text-gray-800 truncate">角色性格讨论</p>
-                                    <p class="text-xs text-gray-500 truncate">关于卡尔文的内心世界...</p>
-                                    <p class="text-xs text-gray-400 mt-1">2小时前</p>
-                                </div>
-                            </div>
-                        </a>
-                        
-                        <a href="#" class="block p-3 hover:bg-base-200 rounded-lg">
-                            <div class="flex items-start gap-3">
-                                <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <i class="fa-solid fa-lightbulb text-gray-600 text-sm"></i>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="font-medium text-sm text-gray-800 truncate">情节灵感</p>
-                                    <p class="text-xs text-gray-500 truncate">跃迁点的科学原理...</p>
-                                    <p class="text-xs text-gray-400 mt-1">昨天</p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </aside>
-                
-                <!-- 右侧聊天界面 -->
-                <main class="flex-1 flex flex-col bg-base-100">
-                    <header class="h-20 px-8 flex items-center justify-between border-b border-base-200 flex-shrink-0">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
-                                <i class="fa-solid fa-robot text-white"></i>
-                            </div>
-                            <div>
-                                <h2 class="font-medium">AI创作助手</h2>
-                                <button class="text-sm text-base-content/60 flex items-center gap-2 hover:text-base-content transition-colors">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                                    在线 • GPT-4o
-                                    <i class="fa-solid fa-chevron-down text-xs"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button class="btn btn-ghost btn-sm">
-                                <i class="fa-solid fa-book"></i>
-                                上下文
-                            </button>
-                            <button class="btn btn-ghost btn-sm">
-                                <i class="fa-solid fa-cog"></i>
-                                设置
-                            </button>
-                        </div>
-                    </header>
-                    
-                    <div class="flex-1 p-6 overflow-y-auto">
-                        <div class="max-w-3xl mx-auto space-y-4">
-                            <!-- 用户消息 -->
-                            <div class="chat chat-end">
-                                <div class="chat-bubble bg-blue-600 text-white">
-                                    我想讨论一下卡尔文这个角色的内心世界。在面对跃迁点时，他应该有什么样的心理活动？
-                                </div>
-                            </div>
-                            
-                            <!-- AI回复 -->
-                            <div class="chat chat-start">
-                                <div class="chat-image avatar">
-                                    <div class="w-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
+                                
+                                <!-- AI回复 -->
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-[#4B5563] to-[#374151] rounded-full flex items-center justify-center flex-shrink-0">
                                         <i class="fa-solid fa-robot text-white text-sm"></i>
                                     </div>
-                                </div>
-                                <div class="chat-bubble bg-base-200 text-base-content">
-                                    <p class="mb-2">卡尔文在面对跃迁点时的心理活动可以从多个层面展现：</p>
-                                    <ol class="list-decimal list-inside space-y-2 text-sm">
-                                        <li><strong>希望与恐惧的交织</strong>：跃迁点代表着回家的可能，但也意味着巨大的未知风险。</li>
-                                        <li><strong>孤独感的顶峰</strong>：在做出这个重大决定时，他比任何时候都更加意识到自己的孤独。</li>
-                                        <li><strong>对过去的眷恋</strong>："回家"这个词会触发他的记忆闸门...</li>
-                                    </ol>
+                                    <div class="chat-bubble-ai">
+                                        <p class="mb-3">卡尔文在面对跃迁点时的心理活动可以从多个层面展现：</p>
+                                        <ol class="list-decimal list-inside space-y-2 text-sm">
+                                            <li><strong>希望与恐惧的交织</strong>：跃迁点代表着回家的可能，但也意味着巨大的未知风险。</li>
+                                            <li><strong>孤独感的顶峰</strong>：在做出这个重大决定时，他比任何时候都更加意识到自己的孤独。</li>
+                                            <li><strong>对过去的眷恋</strong>："回家"这个词会触发他的记忆闸门...</li>
+                                        </ol>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- 输入区域 -->
-                    <div class="p-4 border-t border-base-200">
-                        <div class="flex gap-3 items-end max-w-3xl mx-auto">
-                            <button class="btn btn-ghost btn-square">
-                                <i class="fa-solid fa-paperclip"></i>
-                            </button>
-                            <div class="flex-1">
-                                <textarea 
-                                    class="textarea textarea-bordered w-full resize-none" 
-                                    placeholder="输入您的问题..."
-                                    rows="2"
-                                ></textarea>
+                        
+                        <!-- 输入区域 -->
+                        <div class="p-4 border-t border-gray-100 bg-[#FAFAFA]">
+                            <div class="flex gap-3 items-end max-w-3xl mx-auto">
+                                <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                    <i class="fa-solid fa-paperclip text-[#6B7280]"></i>
+                                </button>
+                                <div class="flex-1">
+                                    <textarea 
+                                        class="input-field resize-none" 
+                                        placeholder="输入您的问题..."
+                                        rows="2"
+                                    ></textarea>
+                                </div>
+                                <button class="w-10 h-10 bg-[#4B5563] text-white rounded-lg hover:bg-[#374151] transition-colors flex items-center justify-center">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
                             </div>
-                            <button class="btn btn-neutral btn-square">
-                                <i class="fa-solid fa-paper-plane"></i>
-                            </button>
+                            <div class="flex items-center justify-center gap-4 mt-2 text-xs text-[#9CA3AF]">
+                                <span>按 Enter 发送，Shift+Enter 换行</span>
+                                <span>•</span>
+                                <span>当前会话: 1,847 tokens</span>
+                            </div>
                         </div>
-                        <div class="flex items-center justify-center gap-4 mt-2 text-xs text-base-content/50">
-                            <span>按 Enter 发送，Shift+Enter 换行</span>
-                            <span>•</span>
-                            <span>当前会话: 1,847 tokens</span>
-                        </div>
-                    </div>
-                </main>
+                    </main>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- 5. 交互示例：右键菜单 -->
-    <div id="page-context-menu" class="page-container">
-        <h2 class="page-title">5. 交互示例：右键菜单</h2>
-        <div class="design-frame">
-            <div class="h-[400px] relative bg-[#FCFCFC] p-8">
-                <p class="text-gray-500 mb-4">在编辑器中右键点击文本时出现的菜单：</p>
-                
-                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 bg-white rounded-xl shadow-2xl p-2 z-10 border border-gray-100">
-                    <p class="px-3 pt-1 pb-1 text-xs text-gray-400">AI生成任务</p>
-                    <a href="#" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100">
-                        <i class="fa-solid fa-wand-magic-sparkles w-4 text-center text-purple-500"></i>
-                        <span>续写内容</span>
-                    </a>
-                    <a href="#" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100">
-                        <i class="fa-solid fa-palette w-4 text-center text-blue-500"></i>
-                        <span>改写风格</span>
-                    </a>
-                    <a href="#" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100">
-                        <i class="fa-solid fa-expand w-4 text-center text-green-500"></i>
-                        <span>扩充内容</span>
-                    </a>
+        <!-- 5. 交互示例：右键菜单 -->
+        <div id="page-context-menu" class="page-container">
+            <h2 class="page-title">5. 交互示例：右键菜单</h2>
+            <div class="design-frame">
+                <div class="h-[400px] relative bg-[#FCFCFC] p-8">
+                    <p class="text-[#6B7280] mb-4">在编辑器中右键点击文本时出现的菜单：</p>
                     
-                    <div class="h-px bg-gray-100 my-1"></div>
+                    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 bg-white rounded-xl shadow-2xl p-2 z-10 border border-gray-100">
+                        <p class="px-3 pt-1 pb-1 text-xs text-[#9CA3AF] font-medium uppercase tracking-wider">AI生成任务</p>
+                        <a href="#" class="flex items-center gap-3 px-3 py-2 text-sm text-[#374151] rounded-lg hover:bg-[#F3F4F6] transition-colors">
+                            <i class="fa-solid fa-wand-magic-sparkles w-4 text-center text-[#4B5563]"></i>
+                            <span>续写内容</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-3 px-3 py-2 text-sm text-[#374151] rounded-lg hover:bg-[#F3F4F6] transition-colors">
+                            <i class="fa-solid fa-palette w-4 text-center text-[#3B82F6]"></i>
+                            <span>改写风格</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-3 px-3 py-2 text-sm text-[#374151] rounded-lg hover:bg-[#F3F4F6] transition-colors">
+                            <i class="fa-solid fa-expand w-4 text-center text-[#10B981]"></i>
+                            <span>扩充内容</span>
+                        </a>
+                        
+                        <div class="h-px bg-gray-100 my-2"></div>
+                        
+                        <p class="px-3 pt-1 pb-1 text-xs text-[#9CA3AF] font-medium uppercase tracking-wider">分析任务</p>
+                        <a href="#" class="flex items-center gap-3 px-3 py-2 text-sm text-[#374151] rounded-lg hover:bg-[#F3F4F6] transition-colors">
+                            <i class="fa-solid fa-magnifying-glass-chart w-4 text-center text-[#F59E0B]"></i>
+                            <span>情感分析</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-3 px-3 py-2 text-sm text-[#374151] rounded-lg hover:bg-[#F3F4F6] transition-colors">
+                            <i class="fa-solid fa-check-double w-4 text-center text-[#4B5563]"></i>
+                            <span>逻辑检查</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. 交互示例：全局AI按钮（环绕菜单） -->
+        <div id="page-ai-button" class="page-container">
+            <h2 class="page-title">6. 交互示例: 全局AI按钮（环绕菜单）</h2>
+            <div class="design-frame">
+                <div class="h-[400px] relative bg-[#FCFCFC] p-8 flex items-center justify-center">
+                    <p class="absolute top-8 left-8 text-[#6B7280]">点击右下角全局AI按钮后，菜单项环绕展开：</p>
                     
-                    <p class="px-3 pt-1 pb-1 text-xs text-gray-400">分析任务</p>
-                    <a href="#" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100">
-                        <i class="fa-solid fa-magnifying-glass-chart w-4 text-center text-orange-500"></i>
-                        <span>情感分析</span>
-                    </a>
-                    <a href="#" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100">
-                        <i class="fa-solid fa-check-double w-4 text-center text-indigo-500"></i>
-                        <span>逻辑检查</span>
-                    </a>
+                    <!-- 模拟浮动按钮和其菜单 -->
+                    <div class="relative w-16 h-16">
+                        <!-- 环绕菜单项 -->
+                        <div class="absolute top-1/2 left-1/2 w-48 h-48 -mt-24 -ml-24">
+                            <!-- 菜单项 1: 续写 -->
+                            <div class="float-menu-item active" style="transform: rotate(-135deg) translate(80px) rotate(135deg);">
+                                <a href="#" class="w-16 h-16 bg-white rounded-full shadow-lg flex flex-col items-center justify-center gap-1 text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#374151] transition-all border border-gray-100">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+                                    <span class="text-xs font-medium">续写</span>
+                                </a>
+                            </div>
+                             <!-- 菜单项 2: 润色 -->
+                             <div class="float-menu-item active" style="transform: rotate(-90deg) translate(80px) rotate(90deg);">
+                                <a href="#" class="w-16 h-16 bg-white rounded-full shadow-lg flex flex-col items-center justify-center gap-1 text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#374151] transition-all border border-gray-100">
+                                    <i class="fa-solid fa-palette text-lg"></i>
+                                    <span class="text-xs font-medium">润色</span>
+                                </a>
+                            </div>
+                             <!-- 菜单项 3: 分析 -->
+                             <div class="float-menu-item active" style="transform: rotate(-45deg) translate(80px) rotate(45deg);">
+                                <a href="#" class="w-16 h-16 bg-white rounded-full shadow-lg flex flex-col items-center justify-center gap-1 text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#374151] transition-all border border-gray-100">
+                                    <i class="fa-solid fa-magnifying-glass-chart text-lg"></i>
+                                    <span class="text-xs font-medium">分析</span>
+                                </a>
+                            </div>
+                            <!-- 菜单项 4: 聊天 -->
+                            <div class="float-menu-item active" style="transform: rotate(0deg) translate(80px) rotate(0deg);">
+                                <a href="#" class="w-16 h-16 bg-white rounded-full shadow-lg flex flex-col items-center justify-center gap-1 text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#374151] transition-all border border-gray-100">
+                                    <i class="fa-solid fa-comments text-lg"></i>
+                                    <span class="text-xs font-medium">聊天</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- 中心按钮 -->
+                        <button class="absolute top-0 left-0 w-16 h-16 bg-gradient-to-br from-[#4B5563] to-[#374151] text-white rounded-full shadow-lg flex items-center justify-center transform transition-transform hover:scale-110">
+                            <i class="fa-solid fa-times text-2xl"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- 6. 交互示例：全局AI按钮（环绕菜单） -->
-    <div id="page-ai-button" class="page-container">
-        <h2 class="page-title">6. 交互示例: 全局AI按钮（环绕菜单）</h2>
-        <div class="design-frame">
-            <div class="h-[400px] relative bg-[#FCFCFC] p-8 flex items-center justify-center">
-                <p class="absolute top-8 left-8 text-gray-500">点击右下角全局AI按钮后，菜单项环绕展开：</p>
-                
-                <!-- 模拟浮动按钮和其菜单 -->
-                <div class="relative w-16 h-16">
-                    <!-- 环绕菜单项 -->
-                    <div class="absolute top-1/2 left-1/2 w-48 h-48 -mt-24 -ml-24">
-                        <!-- 菜单项 1: 续写 -->
-                        <div class="float-menu-item active" style="transform: rotate(-135deg) translate(80px) rotate(135deg);">
-                            <a href="#" class="w-16 h-16 bg-white rounded-full shadow-lg flex flex-col items-center justify-center gap-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors border border-gray-100">
-                                <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
-                                <span class="text-xs font-medium">续写</span>
-                            </a>
-                        </div>
-                         <!-- 菜单项 2: 润色 -->
-                         <div class="float-menu-item active" style="transform: rotate(-90deg) translate(80px) rotate(90deg);">
-                            <a href="#" class="w-16 h-16 bg-white rounded-full shadow-lg flex flex-col items-center justify-center gap-1 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors border border-gray-100">
-                                <i class="fa-solid fa-palette text-lg"></i>
-                                <span class="text-xs font-medium">润色</span>
-                            </a>
-                        </div>
-                         <!-- 菜单项 3: 分析 -->
-                         <div class="float-menu-item active" style="transform: rotate(-45deg) translate(80px) rotate(45deg);">
-                            <a href="#" class="w-16 h-16 bg-white rounded-full shadow-lg flex flex-col items-center justify-center gap-1 text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors border border-gray-100">
-                                <i class="fa-solid fa-magnifying-glass-chart text-lg"></i>
-                                <span class="text-xs font-medium">分析</span>
-                            </a>
-                        </div>
-                        <!-- 菜单项 4: 聊天 -->
-                        <div class="float-menu-item active" style="transform: rotate(0deg) translate(80px) rotate(0deg);">
-                            <a href="#" class="w-16 h-16 bg-white rounded-full shadow-lg flex flex-col items-center justify-center gap-1 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors border border-gray-100">
-                                <i class="fa-solid fa-comments text-lg"></i>
-                                <span class="text-xs font-medium">聊天</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- 中心按钮 -->
-                    <button class="absolute top-0 left-0 w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 text-white rounded-full shadow-lg flex items-center justify-center transform transition-transform hover:scale-110">
-                        <i class="fa-solid fa-times text-2xl"></i> <!-- 打开状态显示关闭图标 -->
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
 </body>
 </html>

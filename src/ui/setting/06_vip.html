@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI平台 - 会员计划</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: #F5F5F7;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* 设计系统颜色 */
+        :root {
+            --primary-900: #111827;
+            --primary-800: #1F2937;
+            --primary-700: #374151;
+            --primary-600: #4B5563;
+            --primary-500: #6B7280;
+            --primary-400: #9CA3AF;
+            --primary-300: #D1D5DB;
+            --primary-200: #E5E7EB;
+            --primary-100: #F3F4F6;
+            --primary-50: #F9FAFB;
+            
+            --accent-green: #10B981;
+            --accent-blue: #3B82F6;
+            --accent-red: #EF4444;
+            --accent-yellow: #F59E0B;
+        }
+
+        .plan-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #E5E7EB;
+            padding: 32px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .plan-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            border-color: #D1D5DB;
+        }
+
+        .plan-card.featured {
+            border: 2px solid #4B5563;
+            transform: scale(1.05);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .plan-card.featured:hover {
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        .plan-card.featured::before {
+            content: '最受欢迎';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4B5563;
+            color: white;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .price-toggle {
+            display: inline-flex;
+            background: #F3F4F6;
+            padding: 4px;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .price-toggle button {
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6B7280;
+            transition: all 0.2s;
+            position: relative;
+            z-index: 2;
+        }
+
+        .price-toggle button.active {
+            color: #374151;
+        }
+
+        .price-toggle-slider {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        .price-toggle-slider.yearly {
+            transform: translateX(100%);
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: start;
+            gap: 12px;
+            padding: 12px 0;
+        }
+
+        .check-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #E8F5E9;
+            color: #10B981;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .x-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #FEF2F2;
+            color: #EF4444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .faq-item {
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .faq-item:hover {
+            border-color: #D1D5DB;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen">
+        <!-- 顶部导航 -->
+        <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center gap-8">
+                        <button class="text-gray-600 hover:text-gray-900">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                            </svg>
+                        </button>
+                        <h1 class="text-lg font-medium text-gray-900">会员计划</h1>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm text-gray-500">当前计划: Pro</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主要内容 -->
+        <main class="py-12">
+            <!-- 标题区域 -->
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-light text-gray-900 mb-4">选择适合您的计划</h1>
+                <p class="text-lg text-gray-600 mb-8">无论您是个人用户还是团队，我们都有适合的方案</p>
+                
+                <!-- 价格切换 -->
+                <div class="price-toggle">
+                    <div class="price-toggle-slider"></div>
+                    <button class="active" onclick="togglePricing('monthly')">按月付费</button>
+                    <button onclick="togglePricing('yearly')">按年付费</button>
+                </div>
+                <p class="text-sm text-green-600 mt-2">年付享8折优惠</p>
+            </div>
+
+            <!-- 价格卡片 -->
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                    <!-- Free Plan -->
+                    <div class="plan-card">
+                        <div class="mb-8">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Free</h3>
+                            <p class="text-gray-600 text-sm mb-6">适合个人轻度使用</p>
+                            <div class="mb-6">
+                                <span class="text-4xl font-light text-gray-900">¥0</span>
+                                <span class="text-gray-500">/月</span>
+                            </div>
+                            <button class="w-full py-3 px-6 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+                                当前计划
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="feature-item">
+                                <div class="check-icon">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-700">每月 1万 tokens</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="check-icon">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-700">GPT-3.5 访问权限</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="check-icon">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-700">基础功能</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="x-icon">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-400">API 访问</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="x-icon">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-400">优先支持</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pro Plan -->
+                    <div class="plan-card featured">
+                        <div class="mb-8">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Pro</h3>
+                            <p class="text-gray-600 text-sm mb-6">适合专业用户和创作者</p>
+                            <div class="mb-6">
+                                <span class="text-4xl font-light text-gray-900 monthly-price">¥99</span>
+                                <span class="text-4xl font-light text-gray-900 yearly-price hidden">¥79</span>
+                                <span class="text-gray-500">/月</span>
+                            </div>
+                            <button class="w-full py-3 px-6 bg-[#4B5563] text-white rounded-lg font-medium hover:bg-[#374151] transition-colors">
+                                升级到 Pro
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="feature-item">
+                                <div class="check-icon">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-700">每月 50万 tokens</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="check-icon">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-700">GPT-4 & Claude 3 访问权限</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="check-icon">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-700">高级功能 & 插件</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="check-icon">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-700">API 访问 (5,000次/月)</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="check-icon">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-700">优先响应 & 技术支持</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Max Plan -->
+                    <div class="plan-card">
+                        <div class="mb-8">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Max</h3>
+                            <p class="text-gray-600 text-sm mb-6">适合重度用户和团队</p>
+                            <div class="mb-6">
+                                <span class="text-4xl font-light text-gray-900 monthly-price">¥299</span>
+                                <span class="text-4xl font-light text-gray-900 yearly-price hidden">¥239</span>
+                                <span class="text-gray-500">/月</span>
+                            </div>
+                            <button class="w-full py-3 px-6 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+                                升级到 Max
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="feature-item">
+                                <div class="check-icon">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-700">无限 tokens</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="check-icon">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-700">所有模型访问权限</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="check-icon">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-700">专属功能 & 抢先体验</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="check-icon">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-700">API 访问 (无限制)</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="check-icon">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-700">专属客户经理</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 功能对比表 -->
+                <div class="mb-16">
+                    <h2 class="text-2xl font-semibold text-gray-900 text-center mb-8">功能对比</h2>
+                    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200 bg-gray-50">
+                                    <th class="text-left py-4 px-6 text-sm font-medium text-gray-700">功能</th>
+                                    <th class="text-center py-4 px-6 text-sm font-medium text-gray-700">Free</th>
+                                    <th class="text-center py-4 px-6 text-sm font-medium text-gray-700">Pro</th>
+                                    <th class="text-center py-4 px-6 text-sm font-medium text-gray-700">Max</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-gray-100">
+                                    <td class="py-4 px-6 text-sm text-gray-700">每月 Tokens 额度</td>
+                                    <td class="text-center py-4 px-6 text-sm text-gray-600">1万</td>
+                                    <td class="text-center py-4 px-6 text-sm text-gray-600">50万</td>
+                                    <td class="text-center py-4 px-6 text-sm text-gray-600">无限</td>
+                                </tr>
+                                <tr class="border-b border-gray-100">
+                                    <td class="py-4 px-6 text-sm text-gray-700">GPT-3.5 访问</td>
+                                    <td class="text-center py-4 px-6">
+                                        <svg class="w-5 h-5 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </td>
+                                    <td class="text-center py-4 px-6">
+                                        <svg class="w-5 h-5 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </td>
+                                    <td class="text-center py-4 px-6">
+                                        <svg class="w-5 h-5 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-100">
+                                    <td class="py-4 px-6 text-sm text-gray-700">GPT-4 访问</td>
+                                    <td class="text-center py-4 px-6">
+                                        <svg class="w-5 h-5 text-gray-300 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </td>
+                                    <td class="text-center py-4 px-6">
+                                        <svg class="w-5 h-5 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </td>
+                                    <td class="text-center py-4 px-6">
+                                        <svg class="w-5 h-5 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-100">
+                                    <td class="py-4 px-6 text-sm text-gray-700">Claude 3 访问</td>
+                                    <td class="text-center py-4 px-6">
+                                        <svg class="w-5 h-5 text-gray-300 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </td>
+                                    <td class="text-center py-4 px-6">
+                                        <svg class="w-5 h-5 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </td>
+                                    <td class="text-center py-4 px-6">
+                                        <svg class="w-5 h-5 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-100">
+                                    <td class="py-4 px-6 text-sm text-gray-700">响应速度</td>
+                                    <td class="text-center py-4 px-6 text-sm text-gray-600">标准</td>
+                                    <td class="text-center py-4 px-6 text-sm text-gray-600">快速</td>
+                                    <td class="text-center py-4 px-6 text-sm text-gray-600">最快</td>
+                                </tr>
+                                <tr class="border-b border-gray-100">
+                                    <td class="py-4 px-6 text-sm text-gray-700">API 调用次数</td>
+                                    <td class="text-center py-4 px-6 text-sm text-gray-600">-</td>
+                                    <td class="text-center py-4 px-6 text-sm text-gray-600">5,000/月</td>
+                                    <td class="text-center py-4 px-6 text-sm text-gray-600">无限制</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-4 px-6 text-sm text-gray-700">技术支持</td>
+                                    <td class="text-center py-4 px-6 text-sm text-gray-600">社区</td>
+                                    <td class="text-center py-4 px-6 text-sm text-gray-600">优先邮件</td>
+                                    <td class="text-center py-4 px-6 text-sm text-gray-600">专属经理</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- FAQ -->
+                <div class="mb-16">
+                    <h2 class="text-2xl font-semibold text-gray-900 text-center mb-8">常见问题</h2>
+                    <div class="max-w-3xl mx-auto space-y-4">
+                        <div class="faq-item">
+                            <button class="w-full p-6 text-left flex items-center justify-between" onclick="toggleFAQ(this)">
+                                <span class="text-gray-900 font-medium">如何升级或降级我的计划？</span>
+                                <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div class="px-6 pb-6 hidden">
+                                <p class="text-gray-600">您可以随时在设置页面中升级或降级您的计划。升级会立即生效，降级将在下个计费周期开始时生效。</p>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <button class="w-full p-6 text-left flex items-center justify-between" onclick="toggleFAQ(this)">
+                                <span class="text-gray-900 font-medium">Token 是什么？如何计算？</span>
+                                <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div class="px-6 pb-6 hidden">
+                                <p class="text-gray-600">Token 是 AI 模型处理文本的基本单位。通常 1 个 token 约等于 4 个字符或 0.75 个英文单词。中文通常每个字算 2-3 个 tokens。</p>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <button class="w-full p-6 text-left flex items-center justify-between" onclick="toggleFAQ(this)">
+                                <span class="text-gray-900 font-medium">可以退款吗？</span>
+                                <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div class="px-6 pb-6 hidden">
+                                <p class="text-gray-600">我们提供 7 天无理由退款保证。如果您对服务不满意，可以在购买后 7 天内申请全额退款。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 底部信息 -->
+        <footer class="gradient-bg py-8 mt-16">
+            <div class="max-w-7xl mx-auto px-4 text-center">
+                <p class="text-gray-600 text-sm">如有其他问题，请联系 support@example.com</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        function togglePricing(type) {
+            const monthlyPrices = document.querySelectorAll('.monthly-price');
+            const yearlyPrices = document.querySelectorAll('.yearly-price');
+            const slider = document.querySelector('.price-toggle-slider');
+            const buttons = document.querySelectorAll('.price-toggle button');
+            
+            if (type === 'yearly') {
+                monthlyPrices.forEach(el => el.classList.add('hidden'));
+                yearlyPrices.forEach(el => el.classList.remove('hidden'));
+                slider.classList.add('yearly');
+                buttons[0].classList.remove('active');
+                buttons[1].classList.add('active');
+            } else {
+                monthlyPrices.forEach(el => el.classList.remove('hidden'));
+                yearlyPrices.forEach(el => el.classList.add('hidden'));
+                slider.classList.remove('yearly');
+                buttons[0].classList.add('active');
+                buttons[1].classList.remove('active');
+            }
+        }
+
+        function toggleFAQ(button) {
+            const content = button.nextElementSibling;
+            const icon = button.querySelector('svg');
+            
+            content.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        }
+    </script>
+</body>
+</html>
