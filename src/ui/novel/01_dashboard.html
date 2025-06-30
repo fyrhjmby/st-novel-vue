@@ -1,339 +1,287 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>01das - 小说库</title>
+    <title>AI Creator - 创作中心</title>
     <!-- 1. 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 2. 引入 daisyUI (以备其他页面使用，但本页样式已主要由Tailwind定制) -->
+    <!-- 2. 引入 daisyUI (以备其他页面使用) -->
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.1/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        /* 基础样式设定 */
-        * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-        
-        body { 
-            background-color: #F5F5F7; /* 匹配主页背景色 */
-        }
-        
-        /* 容器样式，匹配主页设计 */
-        .design-frame { 
-            background: white; 
-            border-radius: 16px; /* 匹配主页容器圆角 */
-            overflow: hidden; 
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08); 
-        }
-        
-        .page-title { 
-            font-size: 2rem; 
-            font-weight: 300; 
-            color: #374151; 
-            margin-bottom: 1.5rem; /* 调整间距 */
-            padding-left: 0.5rem; 
-            border-left: 4px solid #3B82F6; 
+        /* 基础样式设定: 严格遵循参考风格 */
+        body {
+            background-color: #f5f5f7;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
         }
 
-        .page-container { 
-            max-width: 1600px; /* 设定一个合理的-最大宽度 */
-            margin: 0 auto; 
+        /* 隐藏滚动条以匹配 App.vue */
+        ::-webkit-scrollbar {
+            display: none;
         }
-        
-        /* 自定义滚动条样式 */
-        ::-webkit-scrollbar { width: 6px; } 
-        ::-webkit-scrollbar-track { background: #f1f1f1; } 
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; } 
-        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+        /* 模拟应用外框容器: 来自 DefaultLayout.vue */
+        .design-frame-container {
+            padding: 2rem;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* 模拟应用主框架: 来自 DefaultLayout.vue */
+        .design-frame {
+            width: 100%;
+            height: 100%;
+            max-width: 1800px;
+            margin: auto;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 自定义 line-clamp 以适应不同行数需求 */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+        }
     </style>
 </head>
-<body class="p-8">
+<body>
 
-    <!-- 全局浮动AI按钮: 保留原有功能和样式 -->
-    <div class="fixed bottom-8 right-8 z-[100]">
-        <button class="btn btn-circle w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 text-white shadow-lg transition-all hover:scale-110 hover:shadow-xl border-none">
-            <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
-        </button>
-    </div>
+<!-- 全局浮动AI按钮: 调整为与UI风格更匹配的样式 -->
+<div class="fixed bottom-8 right-8 z-50">
+    <button class="w-14 h-14 bg-[#4B5563] rounded-full flex items-center justify-center text-white shadow-lg transition-all hover:scale-110 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300">
+        <!-- AI/Sparkle SVG 图标 -->
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+    </button>
+</div>
 
-    <div id="page-1" class="page-container">
-        <h2 class="page-title">小说库</h2>
-        <div class="design-frame">
-            <div class="h-[850px] flex"> <!-- 增加整体高度以适应更舒展的布局 -->
-                
-                <!-- 侧边栏: 样式微调以匹配主页规范 -->
-                <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
-                    <div class="h-20 px-4 flex items-center border-b border-gray-100"> <!-- 高度与主内容区头部对齐 -->
-                        <div class="flex items-center gap-3 px-2">
-                            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <i class="fa-solid fa-feather text-white text-lg"></i>
-                            </div>
+<div class="design-frame-container">
+    <div class="design-frame">
+        <!-- 模拟macOS窗口栏: 来自 DefaultLayout.vue -->
+        <div class="h-10 px-5 flex items-center border-b border-gray-100 bg-gray-50 flex-shrink-0">
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-[#FF5F57]"></div>
+                <div class="w-3 h-3 rounded-full bg-[#FFBD2E]"></div>
+                <div class="w-3 h-3 rounded-full bg-[#28CA42]"></div>
+            </div>
+            <div class="ml-auto flex items-center gap-4 text-xs text-gray-400">
+                <span>AI Creator Platform</span>
+            </div>
+        </div>
+
+        <!-- 主布局: 侧边栏 + 内容区 -->
+        <div class="h-[calc(100%-40px)] flex">
+
+            <!-- 侧边栏: 完全对齐 AppSidebar.vue 风格 -->
+            <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
+                <div class="p-4 space-y-4 border-b border-gray-100">
+                    <div class="flex items-center gap-3 px-2">
+                        <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <!-- Logo/Icon SVG -->
+                            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-[#374151] text-sm">AI Creator</h3>
+                            <p class="text-xs text-[#9CA3AF]">专业版</p>
+                        </div>
+                    </div>
+                </div>
+
+                <nav class="flex-1 px-4 py-6">
+                    <div class="mb-8">
+                        <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">主要功能</p>
+                        <div class="space-y-1">
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                                <span>工作台</span>
+                            </a>
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white font-medium rounded-lg text-sm transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 2L2 7L12 12L22 7L12 2Z"/><path d="M2 17L12 22L22 17"/><path d="M2 12L12 17L22 12"/></svg>
+                                <span>创作中心</span>
+                            </a>
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20 21V18C20 16.3 19.3 14.8 18.2 13.7C17.1 12.6 15.6 12 14 12H10C8.4 12 6.9 12.6 5.8 13.7C4.7 14.8 4 16.3 4 18V21"/><circle cx="12" cy="7" r="4"/></svg>
+                                <span>角色扮演</span>
+                            </a>
+                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z"></path></svg>
+                                <span>回收站</span>
+                            </a>
+                        </div>
+                    </div>
+                </nav>
+
+                <div class="p-4 border-t border-gray-100 mt-auto">
+                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1V6M12 18V23M4.22 4.22L7.76 7.76M16.24 16.24L19.78 19.78M1 12H6M18 12H23M4.22 19.78L7.76 16.24M16.24 7.76L19.78 4.22"/></svg>
+                        <span>设置</span>
+                    </a>
+                </div>
+            </aside>
+
+            <main class="flex-1 bg-white flex flex-col">
+                <!-- 头部: 完全对齐 AppHeader.vue 风格 -->
+                <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0 bg-white">
+                    <h1 class="text-lg font-medium text-[#374151]">创作中心</h1>
+                    <div class="flex items-center gap-2">
+                        <button class="p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                            <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21L16.65 16.65"/></svg>
+                        </button>
+                        <button class="p-2 hover:bg-gray-50 rounded-lg transition-colors relative">
+                            <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z"/><path d="M13.73 21C13.5 21.6 12.8 22 12 22C11.2 22 10.5 21.6 10.27 21"/></svg>
+                            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                        </button>
+                        <div class="ml-4 flex items-center gap-3">
+                            <img class="w-9 h-9 bg-gray-200 rounded-full object-cover" src="https://i.pravatar.cc/100?u=a042581f4e29026704d" alt="avatar">
                             <div>
-                                <h3 class="font-medium text-[#374151] text-sm">创作中心</h3>
+                                <p class="text-sm font-medium text-[#374151]">创作者</p>
                                 <p class="text-xs text-[#9CA3AF]">专业版</p>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- 导航菜单: 采用主页风格的链接样式 -->
-                    <nav class="flex-1 px-4 py-6">
-                        <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">工作空间</p>
-                        <div class="space-y-1">
-                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium transition-colors">
-                                <i class="fa-solid fa-layer-group w-5 h-5 text-center"></i>
-                                <span>我的小说</span>
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
-                                <i class="fa-solid fa-clock-rotate-left w-5 h-5 text-center"></i>
-                                <span>最近编辑</span>
-                            </a>
-                             <a href="../novel/04_trash.html" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
-                                <i class="fa-solid fa-trash-can w-5 h-5 text-center"></i>
-                                <span>回收站</span>
-                            </a>
+                </header>
+
+                <!-- 内容区: 采用 home.vue 的背景色和内边距 -->
+                <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
+                    <div class="flex justify-between items-center mb-6">
+                        <!-- 左侧过滤控件 -->
+                        <div class="flex items-center gap-4">
+                            <div class="relative w-64">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21L16.65 16.65"/></svg>
+                                </div>
+                                <input type="text" class="w-full text-sm bg-white border border-gray-200 rounded-lg pl-9 pr-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" placeholder="搜索小说名或标签..." />
+                            </div>
+                            <select class="text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition appearance-none pr-8">
+                                <option>全部类型</option>
+                                <option>科幻</option>
+                                <option>言情</option>
+                                <option>悬疑</option>
+                            </select>
                         </div>
-                    </nav>
-                    
-                    <div class="p-4 border-t border-gray-100">
-                        <a href="../setting/01_setting.html" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
-                           <i class="fa-solid fa-gear w-5 h-5 text-center"></i>
-                            <span>设置</span>
-                        </a>
-                    </div>
-                </aside>
-                
-                <main class="flex-1 bg-white flex flex-col">
-                    <!-- 顶部栏: 完全对齐主页风格 -->
-                    <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
-                        <div><h1 class="text-lg font-medium text-[#374151]">工作台</h1></div>
-                        <div class="flex items-center gap-2">
-                            <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                               <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21L16.65 16.65"/></svg>
+                        <!-- 右侧操作按钮 -->
+                        <div class="flex items-center gap-4">
+                            <button class="text-sm font-medium text-[#6B7280] hover:text-[#374151] transition-colors flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 18C4.5 18 3 16.5 3 14C3 11.5 5 10 7 10C7.3 10 7.5 10 7.8 10.1C8.5 7.2 11 5 14 5C17.3 5 20 7.7 20 11C20 11.3 20 11.7 19.9 12C21.1 12.5 22 13.6 22 15C22 16.9 20.4 18.5 18.5 18.5"/><path d="M12 13V21M15 16L12 13L9 16"/></svg>
+                                <span>导入</span>
                             </button>
-                            <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
-                                <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z"/><path d="M13.73 21C13.5 21.6 12.8 22 12 22C11.2 22 10.5 21.6 10.27 21"/></svg>
-                                <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                            <button class="bg-[#4B5563] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5V19M5 12H19"/></svg>
+                                <span>新建小说</span>
                             </button>
-                            <div class="ml-4 flex items-center gap-3">
-                                <img class="w-9 h-9 bg-gray-200 rounded-full object-cover" src="https://i.pravatar.cc/100?u=a042581f4e29026704d" alt="avatar">
-                                <div>
-                                    <p class="text-sm font-medium text-[#374151]">创作者</p>
-                                    <p class="text-xs text-[#9CA3AF]">在线</p>
-                                </div>
-                            </div>
-                        </div>
-                    </header>
-                    
-                    <!-- 内容区: 采用主页的背景色和内边距 -->
-                    <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
-                        <div class="flex justify-between items-center mb-6">
-                            <div class="flex items-center gap-4">
-                                <!-- 搜索框和下拉选择: 样式更新 -->
-                                <label class="flex items-center gap-2 w-64 bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition">
-                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21L16.65 16.65"/></svg>
-                                    <input type="text" class="grow text-sm bg-transparent outline-none" placeholder="搜索小说名或标签..." />
-                                </label>
-                                <select class="text-sm bg-white border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
-                                    <option>全部类型</option>
-                                    <option>科幻</option>
-                                    <option>言情</option>
-                                    <option>悬疑</option>
-                                </select>
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <button class="text-sm font-medium text-[#6B7280] hover:text-[#374151] transition-colors flex items-center gap-2">
-                                    <i class="fa-solid fa-upload"></i>
-                                    <span>导入小说</span>
-                                </button>
-                                <button class="text-sm font-medium text-[#6B7280] hover:text-[#374151] transition-colors flex items-center gap-2">
-                                 <i class="fa-solid fa-plus"></i>
-                                    <span>新建小说</span>
-                                </button>
-
-                            </div>
-                        </div>
-
-                        <!-- 小说网格: 采用响应式布局和更大的间距 -->
-                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                            
-                            <!-- 卡片1: 全新设计，更美观，信息更清晰 -->
-                            <div class="group bg-white rounded-xl border border-gray-100 p-4 flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                                <figure class="aspect-[2/3] relative w-full mb-4">
-                                    <img src="https://images.unsplash.com/photo-1589998059171-988d887df646?q=80&w=800" class="object-cover w-full h-full rounded-lg" alt="Book Cover">
-                                    <div class="absolute top-2 right-2 bg-green-500/90 text-white text-xs px-2 py-1 rounded-md font-medium backdrop-blur-sm">编辑中</div>
-                                </figure>
-                                <div class="flex flex-col flex-grow">
-                                    <h3 class="text-sm font-semibold text-gray-800 leading-tight truncate"><a href="#" class="hover:text-blue-600">星际漫游者</a></h3>
-                                    <p class="text-xs text-gray-500 mt-1 h-10 line-clamp-2 leading-snug">一部关于孤独宇航员在未知星系中寻找回家之路的科幻史诗。</p>
-                                    <div class="mt-auto pt-3">
-                                        <div class="flex flex-wrap gap-1.5 mb-3">
-                                            <span class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium">科幻</span>
-                                            <span class="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded-md font-medium">冒险</span>
-                                        </div>
-                                        <div class="border-t border-gray-100 pt-2 flex justify-between items-center text-xs text-gray-400">
-                                            <span>24章</span>
-                                            <span>2小时前</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 卡片2 -->
-                             <div class="group bg-white rounded-xl border border-gray-100 p-4 flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                                <figure class="aspect-[2/3] relative w-full mb-4">
-                                    <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=800" class="object-cover w-full h-full rounded-lg" alt="Book Cover">
-                                    <div class="absolute top-2 right-2 bg-yellow-500/90 text-white text-xs px-2 py-1 rounded-md font-medium backdrop-blur-sm">待审核</div>
-                                </figure>
-                                <div class="flex flex-col flex-grow">
-                                    <h3 class="text-sm font-semibold text-gray-800 leading-tight truncate"><a href="#" class="hover:text-blue-600">时间之沙</a></h3>
-                                    <p class="text-xs text-gray-500 mt-1 h-10 line-clamp-2 leading-snug">当历史可以被改写，一个历史学家必须阻止一个神秘组织抹去关键的历史事件。</p>
-                                    <div class="mt-auto pt-3">
-                                        <div class="flex flex-wrap gap-1.5 mb-3">
-                                            <span class="text-xs bg-yellow-50 text-yellow-700 px-2 py-1 rounded-md font-medium">悬疑</span>
-                                            <span class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium">科幻</span>
-                                        </div>
-                                        <div class="border-t border-gray-100 pt-2 flex justify-between items-center text-xs text-gray-400">
-                                            <span>15章</span>
-                                            <span>1天前</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- 卡片3 -->
-                             <div class="group bg-white rounded-xl border border-gray-100 p-4 flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                                <figure class="aspect-[2/3] relative w-full mb-4">
-                                    <img src="https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=800" class="object-cover w-full h-full rounded-lg" alt="Book Cover">
-                                    <div class="absolute top-2 right-2 bg-red-500/90 text-white text-xs px-2 py-1 rounded-md font-medium backdrop-blur-sm">已驳回</div>
-                                </figure>
-                                <div class="flex flex-col flex-grow">
-                                    <h3 class="text-sm font-semibold text-gray-800 leading-tight truncate"><a href="#" class="hover:text-blue-600">深海回响</a></h3>
-                                    <p class="text-xs text-gray-500 mt-1 h-10 line-clamp-2 leading-snug">一支科考队在马里亚纳海沟深处唤醒了远古的未知生物，带来了无尽的恐惧。</p>
-                                    <div class="mt-auto pt-3">
-                                        <div class="flex flex-wrap gap-1.5 mb-3">
-                                            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md font-medium">恐怖</span>
-                                            <span class="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded-md font-medium">冒险</span>
-                                        </div>
-                                        <div class="border-t border-gray-100 pt-2 flex justify-between items-center text-xs text-gray-400">
-                                            <span>5章</span>
-                                            <span>3天前</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- 卡片4 -->
-                             <div class="group bg-white rounded-xl border border-gray-100 p-4 flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                                <figure class="aspect-[2/3] relative w-full mb-4">
-                                    <img src="https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=800" class="object-cover w-full h-full rounded-lg" alt="Book Cover">
-                                    <div class="absolute top-2 right-2 bg-blue-500/90 text-white text-xs px-2 py-1 rounded-md font-medium backdrop-blur-sm">已发布</div>
-                                </figure>
-                                <div class="flex flex-col flex-grow">
-                                    <h3 class="text-sm font-semibold text-gray-800 leading-tight truncate"><a href="#" class="hover:text-blue-600">都市霓虹</a></h3>
-                                    <p class="text-xs text-gray-500 mt-1 h-10 line-clamp-2 leading-snug">一个平凡的程序员意外获得读取他人思想的能力，卷入一场巨大的商业阴谋。</p>
-                                    <div class="mt-auto pt-3">
-                                        <div class="flex flex-wrap gap-1.5 mb-3">
-                                            <span class="text-xs bg-pink-50 text-pink-700 px-2 py-1 rounded-md font-medium">都市</span>
-                                            <span class="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-md font-medium">异能</span>
-                                        </div>
-                                        <div class="border-t border-gray-100 pt-2 flex justify-between items-center text-xs text-gray-400">
-                                            <span>102章</span>
-                                            <span>1周前</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 卡片5 -->
-                             <div class="group bg-white rounded-xl border border-gray-100 p-4 flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                                <figure class="aspect-[2/3] relative w-full mb-4">
-                                    <img src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=800" class="object-cover w-full h-full rounded-lg" alt="Book Cover">
-                                    <div class="absolute top-2 right-2 bg-green-500/90 text-white text-xs px-2 py-1 rounded-md font-medium backdrop-blur-sm">编辑中</div>
-                                </figure>
-                                <div class="flex flex-col flex-grow">
-                                    <h3 class="text-sm font-semibold text-gray-800 leading-tight truncate"><a href="#" class="hover:text-blue-600">红尘一梦</a></h3>
-                                    <p class="text-xs text-gray-500 mt-1 h-10 line-clamp-2 leading-snug">穿越回古代，成为一个不受宠的公主，她如何利用现代知识在宫廷斗争中生存。</p>
-                                    <div class="mt-auto pt-3">
-                                        <div class="flex flex-wrap gap-1.5 mb-3">
-                                            <span class="text-xs bg-red-50 text-red-700 px-2 py-1 rounded-md font-medium">古风</span>
-                                            <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md font-medium">言情</span>
-                                        </div>
-                                        <div class="border-t border-gray-100 pt-2 flex justify-between items-center text-xs text-gray-400">
-                                            <span>56章</span>
-                                            <span>5小时前</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- 更多卡片示例... -->
-                            <div class="group bg-white rounded-xl border border-gray-100 p-4 flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                                <figure class="aspect-[2/3] relative w-full mb-4">
-                                    <img src="https://images.unsplash.com/photo-1549122728-f51970943651?q=80&w=800" class="object-cover w-full h-full rounded-lg" alt="Book Cover">
-                                    <div class="absolute top-2 right-2 bg-gray-400/90 text-white text-xs px-2 py-1 rounded-md font-medium backdrop-blur-sm">草稿</div>
-                                </figure>
-                                <div class="flex flex-col flex-grow">
-                                    <h3 class="text-sm font-semibold text-gray-800 leading-tight truncate"><a href="#" class="hover:text-blue-600">机械之心</a></h3>
-                                    <p class="text-xs text-gray-500 mt-1 h-10 line-clamp-2 leading-snug">在未来世界，一个拥有自我意识的机器人开始质疑人类与机器的边界。</p>
-                                    <div class="mt-auto pt-3">
-                                        <div class="flex flex-wrap gap-1.5 mb-3">
-                                            <span class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium">科幻</span>
-                                            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md font-medium">哲学</span>
-                                        </div>
-                                        <div class="border-t border-gray-100 pt-2 flex justify-between items-center text-xs text-gray-400">
-                                            <span>1章</span>
-                                            <span>2天前</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="group bg-white rounded-xl border border-gray-100 p-4 flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                                <figure class="aspect-[2/3] relative w-full mb-4">
-                                    <img src="https://images.unsplash.com/photo-1589998059171-988d887df646?q=80&w=800" class="object-cover w-full h-full rounded-lg" alt="Book Cover">
-                                    <div class="absolute top-2 right-2 bg-green-500/90 text-white text-xs px-2 py-1 rounded-md font-medium backdrop-blur-sm">编辑中</div>
-                                </figure>
-                                <div class="flex flex-col flex-grow">
-                                    <h3 class="text-sm font-semibold text-gray-800 leading-tight truncate"><a href="#" class="hover:text-blue-600">星际漫游者</a></h3>
-                                    <p class="text-xs text-gray-500 mt-1 h-10 line-clamp-2 leading-snug">一部关于孤独宇航员在未知星系中寻找回家之路的科幻史诗。</p>
-                                    <div class="mt-auto pt-3">
-                                        <div class="flex flex-wrap gap-1.5 mb-3">
-                                            <span class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium">科幻</span>
-                                            <span class="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded-md font-medium">冒险</span>
-                                        </div>
-                                        <div class="border-t border-gray-100 pt-2 flex justify-between items-center text-xs text-gray-400">
-                                            <span>24章</span>
-                                            <span>2小时前</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="group bg-white rounded-xl border border-gray-100 p-4 flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                                <figure class="aspect-[2/3] relative w-full mb-4">
-                                    <img src="https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=800" class="object-cover w-full h-full rounded-lg" alt="Book Cover">
-                                    <div class="absolute top-2 right-2 bg-blue-500/90 text-white text-xs px-2 py-1 rounded-md font-medium backdrop-blur-sm">已发布</div>
-                                </figure>
-                                <div class="flex flex-col flex-grow">
-                                    <h3 class="text-sm font-semibold text-gray-800 leading-tight truncate"><a href="#" class="hover:text-blue-600">都市霓虹</a></h3>
-                                    <p class="text-xs text-gray-500 mt-1 h-10 line-clamp-2 leading-snug">一个平凡的程序员意外获得读取他人思想的能力，卷入一场巨大的商业阴谋。</p>
-                                    <div class="mt-auto pt-3">
-                                        <div class="flex flex-wrap gap-1.5 mb-3">
-                                            <span class="text-xs bg-pink-50 text-pink-700 px-2 py-1 rounded-md font-medium">都市</span>
-                                            <span class="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-md font-medium">异能</span>
-                                        </div>
-                                        <div class="border-t border-gray-100 pt-2 flex justify-between items-center text-xs text-gray-400">
-                                            <span>102章</span>
-                                            <span>1周前</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
                         </div>
                     </div>
-                </main>
-            </div>
+
+                    <!-- 小说网格: 卡片经过全新设计，信息层级清晰，风格统一 -->
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+
+                        <!-- 卡片模板: 可复用 -->
+                        <div class="group bg-white rounded-xl border border-gray-100 flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                            <figure class="aspect-[3/4] relative w-full p-3">
+                                <img src="https://images.unsplash.com/photo-1589998059171-988d887df646?q=80&w=800" class="object-cover w-full h-full rounded-lg shadow-sm" alt="Book Cover">
+                                <div class="absolute top-5 right-5 text-xs font-medium px-2 py-1 rounded-md text-green-700 bg-green-50">编辑中</div>
+                            </figure>
+                            <div class="p-4 pt-0 flex flex-col flex-grow">
+                                <h3 class="font-medium text-[#374151] leading-tight truncate"><a href="#" class="hover:text-blue-600">星际漫游者</a></h3>
+                                <p class="text-sm text-[#9CA3AF] mt-1 mb-3 h-10 line-clamp-2">一部关于孤独宇航员在未知星系中寻找回家之路的科幻史诗。</p>
+                                <div class="flex flex-wrap gap-1.5 mb-4">
+                                    <span class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium">科幻</span>
+                                    <span class="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded-md font-medium">冒险</span>
+                                </div>
+                                <div class="mt-auto border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-[#9CA3AF]">
+                                    <span>24 章</span>
+                                    <span>2小时前</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="group bg-white rounded-xl border border-gray-100 flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                            <figure class="aspect-[3/4] relative w-full p-3">
+                                <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=800" class="object-cover w-full h-full rounded-lg shadow-sm" alt="Book Cover">
+                                <div class="absolute top-5 right-5 text-xs font-medium px-2 py-1 rounded-md text-blue-700 bg-blue-50">待审核</div>
+                            </figure>
+                            <div class="p-4 pt-0 flex flex-col flex-grow">
+                                <h3 class="font-medium text-[#374151] leading-tight truncate"><a href="#" class="hover:text-blue-600">时间之沙</a></h3>
+                                <p class="text-sm text-[#9CA3AF] mt-1 mb-3 h-10 line-clamp-2">当历史可以被改写，一个历史学家必须阻止一个神秘组织抹去关键的历史事件。</p>
+                                <div class="flex flex-wrap gap-1.5 mb-4">
+                                    <span class="text-xs bg-yellow-50 text-yellow-700 px-2 py-1 rounded-md font-medium">悬疑</span>
+                                    <span class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium">科幻</span>
+                                </div>
+                                <div class="mt-auto border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-[#9CA3AF]">
+                                    <span>15 章</span>
+                                    <span>1天前</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="group bg-white rounded-xl border border-gray-100 flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                            <figure class="aspect-[3/4] relative w-full p-3">
+                                <img src="https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=800" class="object-cover w-full h-full rounded-lg shadow-sm" alt="Book Cover">
+                                <div class="absolute top-5 right-5 text-xs font-medium px-2 py-1 rounded-md text-red-700 bg-red-50">已驳回</div>
+                            </figure>
+                            <div class="p-4 pt-0 flex flex-col flex-grow">
+                                <h3 class="font-medium text-[#374151] leading-tight truncate"><a href="#" class="hover:text-blue-600">深海回响</a></h3>
+                                <p class="text-sm text-[#9CA3AF] mt-1 mb-3 h-10 line-clamp-2">一支科考队在马里亚纳海沟深处唤醒了远古的未知生物。</p>
+                                <div class="flex flex-wrap gap-1.5 mb-4">
+                                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md font-medium">恐怖</span>
+                                </div>
+                                <div class="mt-auto border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-[#9CA3AF]">
+                                    <span>5 章</span>
+                                    <span>3天前</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="group bg-white rounded-xl border border-gray-100 flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                            <figure class="aspect-[3/4] relative w-full p-3">
+                                <img src="https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=800" class="object-cover w-full h-full rounded-lg shadow-sm" alt="Book Cover">
+                                <div class="absolute top-5 right-5 text-xs font-medium px-2 py-1 rounded-md text-gray-700 bg-gray-100">已发布</div>
+                            </figure>
+                            <div class="p-4 pt-0 flex flex-col flex-grow">
+                                <h3 class="font-medium text-[#374151] leading-tight truncate"><a href="#" class="hover:text-blue-600">都市霓虹</a></h3>
+                                <p class="text-sm text-[#9CA3AF] mt-1 mb-3 h-10 line-clamp-2">一个平凡的程序员意外获得读取他人思想的能力，卷入一场巨大的商业阴谋。</p>
+                                <div class="flex flex-wrap gap-1.5 mb-4">
+                                    <span class="text-xs bg-pink-50 text-pink-700 px-2 py-1 rounded-md font-medium">都市</span>
+                                    <span class="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-md font-medium">异能</span>
+                                </div>
+                                <div class="mt-auto border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-[#9CA3AF]">
+                                    <span>102 章</span>
+                                    <span>1周前</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="group bg-white rounded-xl border border-gray-100 flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                            <figure class="aspect-[3/4] relative w-full p-3">
+                                <img src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=800" class="object-cover w-full h-full rounded-lg shadow-sm" alt="Book Cover">
+                                <div class="absolute top-5 right-5 text-xs font-medium px-2 py-1 rounded-md text-gray-700 bg-gray-100">草稿</div>
+                            </figure>
+                            <div class="p-4 pt-0 flex flex-col flex-grow">
+                                <h3 class="font-medium text-[#374151] leading-tight truncate"><a href="#" class="hover:text-blue-600">红尘一梦</a></h3>
+                                <p class="text-sm text-[#9CA3AF] mt-1 mb-3 h-10 line-clamp-2">她如何利用现代知识在宫廷斗争中生存。</p>
+                                <div class="flex flex-wrap gap-1.5 mb-4">
+                                    <span class="text-xs bg-red-50 text-red-700 px-2 py-1 rounded-md font-medium">古风</span>
+                                    <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md font-medium">言情</span>
+                                </div>
+                                <div class="mt-auto border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-[#9CA3AF]">
+                                    <span>1 章</span>
+                                    <span>5小时前</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
+</div>
 </body>
 </html>

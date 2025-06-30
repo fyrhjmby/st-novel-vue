@@ -10,12 +10,12 @@ import (
 )
 
 func main() {
-	rootDirs := []string{"/src/views/novels"}
-	outputFileName := "vue.txt"
+	rootDirs := []string{"../src/novel"}
+	outputFileName := "novel.txt"
 	// 定义要屏蔽（不进行递归读取）的目录名称列表。
-	// excludedDirs := []string{"admin", "login", "generation","prompt","trash","workflow","settings","TaskStatusPopover"}
+	excludedDirs := []string{"types","settings"}
 
-  	excludedDirs := []string{""}
+//   	excludedDirs := []string{""}
 
 	// 定义要屏蔽（不读取）的特定文件名列表。
 	excludedFiles := []string{".json", "package.json", "pnpm-lock.yaml"}
@@ -66,11 +66,7 @@ func main() {
 					return nil
 				}
 			}
-
-// 			if strings.HasSuffix(d.Name(), ".ts") || strings.HasSuffix(d.Name(), ".vue")||strings.HasSuffix(d.Name(), ".css") {
-// 				targetFiles = append(targetFiles, path)
-// 			}
-			if strings.HasSuffix(d.Name(), ".vue")  {
+			if strings.HasSuffix(d.Name(), ".ts")||strings.HasSuffix(d.Name(), ".vue")||strings.HasSuffix(d.Name(), ".css")  {
 				targetFiles = append(targetFiles, path)
 			}
 

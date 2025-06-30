@@ -11,11 +11,11 @@ import (
 
 func main() {
 	rootDirs := []string{"../src"}
-	outputFileName := "ts.txt"
+	outputFileName := "index.txt"
 	// 定义要屏蔽（不进行递归读取）的目录名称列表。
-	excludedDirs := []string{"types"}
+	excludedDirs := []string{"types","settings","novel"}
 
-  	excludedDirs := []string{""}
+//   	excludedDirs := []string{""}
 
 	// 定义要屏蔽（不读取）的特定文件名列表。
 	excludedFiles := []string{".json", "package.json", "pnpm-lock.yaml"}
@@ -66,7 +66,7 @@ func main() {
 					return nil
 				}
 			}
-			if strings.HasSuffix(d.Name(), ".ts")||strings.HasSuffix(d.Name(), ".vue")  {
+			if strings.HasSuffix(d.Name(), ".ts")||strings.HasSuffix(d.Name(), ".vue")||strings.HasSuffix(d.Name(), ".css")  {
 				targetFiles = append(targetFiles, path)
 			}
 
