@@ -13,7 +13,7 @@ func main() {
 	rootDirs := []string{"../src"}
 	outputFileName := "index.txt"
 	// 定义要屏蔽（不进行递归读取）的目录名称列表。
-	excludedDirs := []string{"types","settings","novel"}
+	excludedDirs := []string{"types","settings","novel","prompt","workflow"}
 
 //   	excludedDirs := []string{""}
 

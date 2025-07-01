@@ -1,38 +1,38 @@
 <template>
-  <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white flex-shrink-0">
-    <div class="flex items-center gap-8">
-      <h1 class="text-lg font-medium text-[#374151]">工作流仪表盘</h1>
-      <div class="flex items-center bg-[#F3F4F6] rounded-lg p-1 text-sm">
-        <button class="px-3 py-1 rounded-md text-[#6B7280]">今日</button>
-        <button class="px-3 py-1 rounded-md bg-white shadow-sm text-[#374151]">本周</button>
-        <button class="px-3 py-1 rounded-md text-[#6B7280]">本月</button>
-        <button class="px-3 py-1 rounded-md text-[#6B7280]">自定义</button>
-      </div>
-    </div>
-    <div class="flex items-center gap-2">
-      <div class="relative">
-        <input type="text" placeholder="搜索工作流..."
-               class="w-64 pl-10 pr-4 py-2 text-sm bg-[#F3F4F6] border border-transparent rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none transition-all">
-        <svg class="w-5 h-5 text-[#6B7280] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="M21 21L16.65 16.65"/>
-        </svg>
-      </div>
-      <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-        <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
-        </svg>
-      </button>
-      <button class="px-4 py-2 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1F2937] transition-colors flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path d="M12 5V19M5 12H19"/>
-        </svg>
-        创建工作流
-      </button>
-    </div>
-  </header>
-
   <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
+    <!-- 页面操作栏 (原Header内容) -->
+    <div class="flex items-center justify-between mb-8">
+      <div class="flex items-center gap-8">
+        <div class="flex items-center bg-[#F3F4F6] rounded-lg p-1 text-sm">
+          <button class="px-3 py-1 rounded-md text-[#6B7280]">今日</button>
+          <button class="px-3 py-1 rounded-md bg-white shadow-sm text-[#374151]">本周</button>
+          <button class="px-3 py-1 rounded-md text-[#6B7280]">本月</button>
+          <button class="px-3 py-1 rounded-md text-[#6B7280]">自定义</button>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="relative">
+          <input type="text" placeholder="搜索工作流..."
+                 class="w-64 pl-10 pr-4 py-2 text-sm bg-[#F3F4F6] border border-transparent rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none transition-all">
+          <svg class="w-5 h-5 text-[#6B7280] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21L16.65 16.65"/>
+          </svg>
+        </div>
+        <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+          </svg>
+        </button>
+        <button class="px-4 py-2 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1F2937] transition-colors flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M12 5V19M5 12H19"/>
+          </svg>
+          创建工作流
+        </button>
+      </div>
+    </div>
+
     <!-- 增强的数据统计卡片 -->
     <div class="grid grid-cols-4 gap-6 mb-8">
       <div v-for="stat in stats" :key="stat.label" class="bg-white rounded-xl p-6 border border-gray-100">

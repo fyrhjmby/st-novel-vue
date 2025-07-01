@@ -1,0 +1,13 @@
+/* src/novel/assets/styles/main.css */
+/* [重构] 这是小说模块的基础样式文件 */
+
+.novel-module {
+    /* This can be a placeholder for future shared styles */
+}
+
+/* 一个在多个组件中使用的通用样式类 */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Add any other global styles for the novel module here */

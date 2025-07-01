@@ -1,0 +1,1342 @@
+// == 扫描摘要 ==
+//
+// == 文件内容 ==
+
+// =
+// 文件: ..\src\workflow\index.css
+//
+
+/* 工作流编辑器画布的背景网格 */
+.workflow-canvas-bg {
+    background-color: #FDFDFD;
+    background-image:
+            linear-gradient(rgba(229, 231, 235, 0.4) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(229, 231, 235, 0.4) 1px, transparent 1px);
+    background-size: 24px 24px;
+}
+
+/* 节点连接线动画 */
+.connection-line {
+    stroke-dasharray: 4 4;
+    animation: dash 1s linear infinite;
+}
+
+@keyframes dash {
+    to {
+        stroke-dashoffset: -8;
+    }
+}
+
+/* 运行中的节点动画 */
+.running-node {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0px rgba(59, 130, 246, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0px rgba(59, 130, 246, 0);
+    }
+}
+
+/* 图表样式 */
+.chart-bar {
+    background: linear-gradient(to top, #3B82F6, #60A5FA);
+    transition: all 0.3s ease;
+}
+
+.chart-bar:hover {
+    background: linear-gradient(to top, #2563EB, #3B82F6);
+}
+
+/* 节点拖拽效果 */
+.draggable-node {
+    transition: all 0.2s ease;
+}
+
+.draggable-node:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+    opacity: 0.8;
+}
+
+/* 标签样式 */
+.tag-new {
+    background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+// =
+// 文件: ..\src\workflow\layouts\WorkflowLayout.vue
+//
+
+<template>
+  <div class="h-full w-full flex bg-white">
+    <!-- 工作流专用侧边栏 -->
+    <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
+      <div class="p-4 space-y-4 border-b border-gray-100">
+        <div class="flex items-center gap-3 px-2">
+          <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+          </div>
+          <div>
+            <h3 class="font-medium text-[#374151] text-sm">AI Creator</h3>
+            <p class="text-xs text-[#9CA3AF]">工作流引擎</p>
+          </div>
+        </div>
+      </div>
+
+      <nav class="flex-1 px-4 py-6">
+        <div class="mb-8">
+          <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">工作流管理</p>
+          <div class="space-y-1">
+            <router-link v-for="item in managementNav" :key="item.name" :to="item.path" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors" active-class="bg-[#4B5563] text-white font-medium">
+              <span v-html="item.icon"></span>
+              <span>{{ item.name }}</span>
+              <span v-if="item.count" class="ml-auto bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full">{{ item.count }}</span>
+              <span v-if="item.isNew" class="tag-new ml-auto">NEW</span>
+            </router-link>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">配置</p>
+          <div class="space-y-1">
+            <router-link v-for="item in configNav" :key="item.name" :to="item.path" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors" active-class="bg-[#4B5563] text-white font-medium">
+              <span v-html="item.icon"></span>
+              <span>{{ item.name }}</span>
+            </router-link>
+          </div>
+        </div>
+      </nav>
+
+      <!-- 用户信息区域 -->
+      <div class="p-4 border-t border-gray-100">
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 mb-3">
+          <p class="text-xs font-semibold text-gray-700 mb-1">使用量统计</p>
+          <div class="flex justify-between items-center">
+            <span class="text-xs text-gray-600">本月已用</span>
+            <span class="text-xs font-bold text-blue-600">5,420 / 10,000</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+            <div class="bg-blue-600 h-1.5 rounded-full" style="width: 54%"></div>
+          </div>
+        </div>
+        <router-link to="/settings" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1V6M12 18V23M4.22 4.22L7.76 7.76M16.24 16.24L19.78 19.78M1 12H6M18 12H23M4.22 19.78L7.76 16.24M16.24 7.76L19.78 4.22"/></svg>
+          <span>设置</span>
+        </router-link>
+      </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <router-view />
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+import '@workflow/index.css';
+
+const managementNav = ref([
+  { name: '仪表盘', path: '/workflow/dashboard', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>` },
+  { name: '我的工作流', path: '/workflow/my-flows', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 3V15M9 15L5 11M9 15L13 11"/><path d="M15 21V9M15 9L19 13M15 9L11 13"/></svg>`, count: 12 },
+  { name: '模板市场', path: '/workflow/market', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>`, isNew: true },
+  { name: '运行历史', path: '/workflow/history', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>` },
+]);
+
+const configNav = ref([
+  { name: '连接器', path: '/workflow/connectors', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>` },
+  { name: '变量库', path: '/workflow/variables', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>` },
+  { name: '调度任务', path: '/workflow/schedules', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>` },
+  { name: '回收站', path: '/workflow/trash', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 7h18M9 7V3h6v4M5 7h14l-1 10H6L5 7zm4 5h6m-4 0v4"/></svg>` },
+]);
+</script>
+
+<style scoped>
+.router-link-exact-active {
+  color: white !important;
+  background-color: #4B5563; /* active-class in template is better but this is a fallback */
+}
+</style>
+
+// =
+// 文件: ..\src\workflow\router.ts
+//
+
+import type { RouteRecordRaw } from 'vue-router';
+import WorkflowLayout from '@/workflow/layouts/WorkflowLayout.vue';
+
+export const workflowRoutes: Array<RouteRecordRaw> = [
+    {
+        path: '/workflow',
+        component: WorkflowLayout,
+        redirect: '/workflow/dashboard',
+        children: [
+            // === 工作流管理 ===
+            {
+                path: 'dashboard',
+                name: 'WorkflowDashboard',
+                component: () => import('@/workflow/views/Dashboard.vue'),
+                meta: { title: '工作流仪表盘' },
+            },
+            {
+                path: 'my-flows',
+                name: 'MyWorkflows',
+                // 由于没有提供 "我的工作流" 页面，暂时指向仪表盘作为占位符
+                component: () => import('@/workflow/views/Dashboard.vue'),
+                meta: { title: '我的工作流' },
+            },
+            {
+                path: 'market',
+                name: 'WorkflowMarketplace',
+                component: () => import('@/workflow/views/Marketplace.vue'),
+                meta: { title: '工作流市场' },
+            },
+            {
+                path: 'history',
+                name: 'WorkflowHistory',
+                component: () => import('@/workflow/views/History.vue'),
+                meta: { title: '运行历史' },
+            },
+
+            // === 配置 ===
+            {
+                path: 'connectors',
+                name: 'WorkflowConnectors',
+                // 占位符
+                component: () => import('@/workflow/views/Dashboard.vue'),
+                meta: { title: '连接器' },
+            },
+            {
+                path: 'variables',
+                name: 'WorkflowVariables',
+                // 占位符
+                component: () => import('@/workflow/views/Dashboard.vue'),
+                meta: { title: '变量库' },
+            },
+            {
+                path: 'schedules',
+                name: 'WorkflowSchedules',
+                // 占位符
+                component: () => import('@/workflow/views/Dashboard.vue'),
+                meta: { title: '调度任务' },
+            },
+            {
+                path: 'trash',
+                name: 'WorkflowTrash',
+                // 占位符
+                component: () => import('@/workflow/views/Dashboard.vue'),
+                meta: { title: '回收站' },
+            },
+
+            // === 动态/功能性页面 ===
+            {
+                path: 'editor/:id',
+                name: 'WorkflowEditor',
+                component: () => import('@/workflow/views/Editor.vue'),
+                meta: { title: '可视化工作流编辑器' },
+                props: true,
+            },
+            {
+                path: 'run/:id',
+                name: 'WorkflowRun',
+                component: () => import('@/workflow/views/Run.vue'),
+                meta: { title: '工作流运行配置' },
+                props: true,
+            },
+            {
+                path: 'monitor/:runId',
+                name: 'WorkflowMonitor',
+                component: () => import('@/workflow/views/Monitor.vue'),
+                meta: { title: '工作流运行实时监控' },
+                props: true,
+            },
+        ],
+    },
+];
+
+// =
+// 文件: ..\src\workflow\views\Dashboard.vue
+//
+
+<template>
+  <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white flex-shrink-0">
+    <div class="flex items-center gap-8">
+      <h1 class="text-lg font-medium text-[#374151]">工作流仪表盘</h1>
+      <div class="flex items-center bg-[#F3F4F6] rounded-lg p-1 text-sm">
+        <button class="px-3 py-1 rounded-md text-[#6B7280]">今日</button>
+        <button class="px-3 py-1 rounded-md bg-white shadow-sm text-[#374151]">本周</button>
+        <button class="px-3 py-1 rounded-md text-[#6B7280]">本月</button>
+        <button class="px-3 py-1 rounded-md text-[#6B7280]">自定义</button>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="relative">
+        <input type="text" placeholder="搜索工作流..."
+               class="w-64 pl-10 pr-4 py-2 text-sm bg-[#F3F4F6] border border-transparent rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none transition-all">
+        <svg class="w-5 h-5 text-[#6B7280] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21L16.65 16.65"/>
+        </svg>
+      </div>
+      <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+        <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+        </svg>
+      </button>
+      <button class="px-4 py-2 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1F2937] transition-colors flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path d="M12 5V19M5 12H19"/>
+        </svg>
+        创建工作流
+      </button>
+    </div>
+  </header>
+
+  <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
+    <!-- 增强的数据统计卡片 -->
+    <div class="grid grid-cols-4 gap-6 mb-8">
+      <div v-for="stat in stats" :key="stat.label" class="bg-white rounded-xl p-6 border border-gray-100">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center" :class="stat.iconBgClass">
+            <span v-html="stat.icon"></span>
+          </div>
+          <span v-if="stat.trend" class="text-xs font-medium px-2 py-1 rounded-full" :class="stat.trendClass" v-html="stat.trend"></span>
+        </div>
+        <p class="text-2xl font-light text-[#374151]" v-html="stat.value"></p>
+        <p class="text-sm text-[#9CA3AF] mt-1">{{ stat.label }}</p>
+        <div v-if="stat.subtext" class="mt-4 text-xs text-gray-500" v-html="stat.subtext"></div>
+        <div v-else-if="stat.chart" class="mt-4 flex items-end gap-1 h-8">
+          <div v-for="(bar, index) in stat.chart" :key="index" class="flex-1 chart-bar rounded-sm" :style="{ height: bar }"></div>
+        </div>
+        <div v-else-if="stat.progress" class="mt-4 space-y-1">
+          <div class="flex justify-between text-xs">
+            <span class="text-green-600">成功</span>
+            <span class="text-gray-500">{{ stat.progress }}%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-1">
+            <div class="bg-green-500 h-1 rounded-full" :style="{ width: stat.progress + '%' }"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 快速操作区域 -->
+    <div class="mb-8">
+      <h3 class="text-sm font-medium text-[#374151] mb-4">快速开始</h3>
+      <div class="grid grid-cols-4 gap-4">
+        <button v-for="action in quickStartActions" :key="action.title" class="bg-white rounded-lg p-4 border border-gray-100 hover:border-blue-300 hover:shadow-md transition-all text-center">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2" :class="action.bgClass">
+            <span v-html="action.icon"></span>
+          </div>
+          <span class="text-sm text-[#374151]">{{ action.title }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 最近使用的工作流 -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-medium text-[#374151]">最近使用</h3>
+        <a href="#" class="text-sm text-[#3B82F6] hover:text-blue-700">查看全部</a>
+      </div>
+      <div class="grid grid-cols-4 gap-4">
+        <div v-for="project in recentProjects" :key="project.title" class="bg-white rounded-lg p-4 border border-gray-100 hover:border-gray-200 transition-all hover:shadow-md">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="project.iconBgClass">
+              <span v-html="project.icon"></span>
+            </div>
+            <span class="text-xs text-gray-400">{{ project.time }}</span>
+          </div>
+          <p class="text-sm font-medium text-[#374151] mb-1">{{ project.title }}</p>
+          <p class="text-xs text-[#9CA3AF]">{{ project.details }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 所有工作流列表 -->
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-medium text-[#374151]">所有工作流</h3>
+        <div class="flex items-center gap-2">
+          <button class="p-2 hover:bg-gray-100 rounded-lg text-gray-500">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 4h18M3 8h18M3 12h18M3 16h18M3 20h18"/></svg>
+          </button>
+          <button class="p-2 hover:bg-gray-100 rounded-lg text-gray-500">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-for="flow in allWorkflows" :key="flow.title" class="bg-white rounded-xl p-5 border border-gray-100 hover:border-gray-200 transition-all hover:shadow-md flex flex-col">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="font-medium text-[#374151] leading-tight">{{ flow.title }}</h3>
+            <span class="flex-shrink-0 flex items-center gap-1.5 text-xs px-2 py-1 rounded-full" :class="flow.status.class">
+                            <span class="w-2 h-2 rounded-full" :class="flow.status.dotClass"></span>
+                            {{ flow.status.text }}
+                        </span>
+          </div>
+          <p class="text-sm text-[#9CA3AF] mb-4 flex-1">{{ flow.description }}</p>
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span v-for="tag in flow.tags" :key="tag" class="text-xs text-[#4B5563] bg-[#F3F4F6] px-2 py-1 rounded-md">{{ tag }}</span>
+          </div>
+          <div class="flex items-center gap-4 text-xs text-[#9CA3AF] mb-4 border-t border-gray-100 pt-3">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            {{ flow.usage }}
+                        </span>
+            <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            {{ flow.successRate }}
+                        </span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="text-xs text-[#9CA3AF]">{{ flow.updated }}</div>
+            <div class="flex items-center gap-1">
+              <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg class="w-4 h-4 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"/></svg>
+              </button>
+              <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg class="w-4 h-4 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </button>
+              <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors">运行</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 border border-dashed border-gray-300 hover:border-blue-500 hover:bg-blue-50/50 transition-all flex items-center justify-center text-center">
+          <div class="text-gray-500 hover:text-blue-600">
+            <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            <span class="font-medium">创建新工作流</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const stats = ref([
+  {
+    label: '工作流总数',
+    value: '12',
+    trend: '+8%',
+    trendClass: 'text-[#10B981] bg-green-50',
+    icon: `<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 3V15M9 15L5 11M9 15L13 11"/><path d="M15 21V9M15 9L19 13M15 9L11 13"/></svg>`,
+    iconBgClass: 'bg-blue-50',
+    chart: ['40%', '60%', '45%', '80%', '70%', '100%']
+  },
+  {
+    label: '执行次数',
+    value: '156 <span class="text-lg text-gray-400">/ 24h</span>',
+    trend: `<div class="flex items-center gap-1"><div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div><span class="text-gray-500">实时</span></div>`,
+    trendClass: '',
+    icon: `<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6V12L16 16"/></svg>`,
+    iconBgClass: 'bg-green-50',
+    subtext: `<span>当前运行: 3</span><span class="mx-1">•</span><span>队列中: 7</span>`
+  },
+  {
+    label: '平均成功率',
+    value: '98.5%',
+    trend: null,
+    icon: `<svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 20L12 10"/><path d="M18 20L18 4"/><path d="M6 20L6 16"/></svg>`,
+    iconBgClass: 'bg-indigo-50',
+    progress: 98.5
+  },
+  {
+    label: '平均执行时间',
+    value: '~12.3s',
+    trend: '-15%',
+    trendClass: 'text-rose-600 bg-rose-50',
+    icon: `<svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`,
+    iconBgClass: 'bg-rose-50',
+    subtext: `<span>最快: 3.2s</span><span class="mx-1">•</span><span>最慢: 45.6s</span>`
+  },
+]);
+
+const quickStartActions = ref([
+  { title: '创建工作流', icon: `<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>`, bgClass: 'bg-blue-50'},
+  { title: '导入工作流', icon: `<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>`, bgClass: 'bg-green-50'},
+  { title: '复制模板', icon: `<svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`, bgClass: 'bg-indigo-50'},
+  { title: '管理变量', icon: `<svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>`, bgClass: 'bg-amber-50'}
+]);
+
+const recentProjects = ref([
+  { title: '社交媒体帖子', details: '执行 23 次', time: '5分钟前', icon: `<svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>`, iconBgClass: 'bg-blue-100' },
+  { title: '周报生成器', details: '执行 8 次', time: '2小时前', icon: `<svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`, iconBgClass: 'bg-green-100' },
+]);
+
+const allWorkflows = ref([
+  {
+    title: '社交媒体帖子生成器',
+    description: '自动从核心主题生成适用于多平台的帖子内容。',
+    tags: ['内容生成', '社交媒体'],
+    status: { text: '已发布', class: 'text-[#10B981] bg-green-50', dotClass: 'bg-[#10B981]' },
+    usage: '23次/天',
+    successRate: '98%成功',
+    updated: '2天前更新'
+  },
+  {
+    title: '公司周报摘要',
+    description: '上传多个文档，自动提取关键信息生成周报。',
+    tags: ['文档处理', '信息提取'],
+    status: { text: '草稿', class: 'text-[#6B7280] bg-gray-100', dotClass: 'bg-[#9CA3AF]' },
+    usage: '8次/周',
+    successRate: '100%成功',
+    updated: '5小时前编辑'
+  }
+]);
+
+</script>
+
+// =
+// 文件: ..\src\workflow\views\Editor.vue
+//
+
+<template>
+  <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white flex-shrink-0">
+    <div>
+      <p class="text-sm text-[#9CA3AF]">我的工作流 / 编辑中</p>
+      <h1 class="text-lg font-medium text-[#374151] mt-1">社交媒体帖子生成器</h1>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-gray-400 mr-2">所有更改已保存</span>
+      <!-- 撤销/重做按钮 -->
+      <button class="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+        </svg>
+      </button>
+      <button class="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 10H11a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6"/>
+        </svg>
+      </button>
+      <div class="w-px h-5 bg-gray-200 mx-2"></div>
+      <button class="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v11.494m-9-5.747h18"/>
+        </svg>
+      </button>
+      <!-- 调试模式开关 -->
+      <label class="relative inline-flex items-center cursor-pointer ml-4">
+        <input type="checkbox" class="sr-only peer">
+        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+        <span class="ms-2 text-sm font-medium text-gray-700">调试</span>
+      </label>
+      <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50 transition-colors flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+        测试
+      </button>
+      <button class="px-4 py-2 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1F2937] transition-colors flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        发布
+      </button>
+    </div>
+  </header>
+
+  <div class="flex-1 flex overflow-hidden">
+    <!-- 左侧节点工具箱 -->
+    <aside class="w-72 bg-white border-r border-gray-100 flex flex-col p-4">
+      <div class="relative mb-4">
+        <input type="text" placeholder="搜索组件..." class="w-full pl-9 pr-4 py-2 text-sm bg-[#F3F4F6] border-transparent rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none">
+        <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21L16.65 16.65"/></svg>
+      </div>
+      <div class="flex bg-gray-100 rounded-lg p-1 mb-4 text-sm">
+        <button class="flex-1 py-1 px-2 bg-white rounded-md text-gray-700 font-medium">全部</button>
+        <button class="flex-1 py-1 px-2 text-gray-500">常用</button>
+        <button class="flex-1 py-1 px-2 text-gray-500">最近</button>
+      </div>
+      <div class="flex-1 overflow-y-auto space-y-6 -mr-2 pr-2">
+        <div v-for="category in nodeCategories" :key="category.title">
+          <div class="flex items-center justify-between px-2 mb-2">
+            <p class="text-xs font-semibold text-gray-400 uppercase">{{ category.title }}</p>
+            <span v-if="category.isNew" class="tag-new">HOT</span>
+          </div>
+          <div class="space-y-1">
+            <div v-for="node in category.nodes" :key="node.name" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-grab draggable-node">
+              <div class="w-8 h-8 flex-shrink-0 rounded-md flex items-center justify-center" :class="node.bgClass">
+                <span v-html="node.icon"></span>
+              </div>
+              <div class="flex-1">
+                <span class="text-sm font-medium text-gray-700">{{ node.name }}</span>
+                <p class="text-xs text-gray-400">{{ node.description }}</p>
+              </div>
+              <span v-if="node.count" class="text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">{{ node.count }}</span>
+              <span v-if="node.isNew" class="tag-new">NEW</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Canvas -->
+    <main class="flex-1 workflow-canvas-bg relative">
+      <svg class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 1;">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#D1D5DB" /></marker>
+        </defs>
+        <g class="relative group">
+          <path d="M 270 120 C 330 120, 330 262, 394 262" stroke="#D1D5DB" stroke-width="2" fill="none" marker-end="url(#arrowhead)" class="connection-line"/>
+          <foreignObject x="322" y="176" width="40" height="40" class="pointer-events-auto cursor-pointer">
+            <div class="flex items-center justify-center h-full">
+              <div class="w-6 h-6 bg-white border-2 border-gray-300 rounded-full flex items-center justify-center text-gray-400 group-hover:border-blue-500 group-hover:text-blue-500 group-hover:bg-white group-hover:shadow-lg transition-all"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg></div>
+            </div>
+          </foreignObject>
+        </g>
+        <path d="M 570 262 C 630 262, 630 402, 690 402" stroke="#D1D5DB" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+      </svg>
+
+      <!-- Nodes -->
+      <div class="absolute group" style="top: 80px; left: 80px; z-index: 10;">
+        <div class="w-64 bg-white rounded-xl shadow-md border border-gray-200">
+          <div class="p-3 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="p-1 rounded-md bg-green-100 text-green-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"/></svg></div>
+              <p class="font-medium text-sm text-[#374151]">开始</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+              <button class="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg></button>
+            </div>
+          </div>
+          <div class="p-4 text-xs text-gray-500 space-y-1.5">
+            <div><p class="font-medium text-gray-600">topic</p><p class="text-gray-400">用户输入的主题</p></div>
+            <div><p class="font-medium text-gray-600">platform</p><p class="text-gray-400">目标社交平台</p></div>
+          </div>
+          <div class="absolute top-1/2 -right-2.5 -translate-y-1/2 w-5 h-5 bg-gray-100 border-2 border-gray-300 rounded-full cursor-pointer hover:border-blue-500 transition-colors"></div>
+        </div>
+      </div>
+      <div class="absolute group" style="top: 220px; left: 390px; z-index: 10;">
+        <div class="w-64 bg-white rounded-xl shadow-md border-2 border-blue-500">
+          <div class="p-3 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="p-1 rounded-md bg-blue-100 text-blue-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg></div>
+              <p class="font-medium text-sm text-[#374151]">大语言模型</p>
+            </div>
+            <button class="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg></button>
+          </div>
+          <div class="p-4 text-xs text-gray-500">
+            <p class="truncate">模型: GPT-4-Turbo</p>
+            <p class="text-gray-400 mt-1 truncate">Prompt: "你是一个社交媒体专家..."</p>
+            <div class="mt-2 flex items-center justify-between text-xs"><span class="text-gray-400">Token预估</span><span class="text-blue-600 font-medium">~850</span></div>
+          </div>
+          <div class="absolute top-1/2 -left-2.5 -translate-y-1/2 w-5 h-5 bg-gray-100 border-2 border-gray-300 rounded-full cursor-pointer hover:border-blue-500 transition-colors"></div>
+          <div class="absolute top-1/2 -right-2.5 -translate-y-1/2 w-5 h-5 bg-gray-100 border-2 border-gray-300 rounded-full cursor-pointer hover:border-blue-500 transition-colors"></div>
+        </div>
+      </div>
+      <div class="absolute group" style="top: 360px; left: 690px; z-index: 10;">
+        <div class="w-64 bg-white rounded-xl shadow-md border border-gray-200">
+          <div class="p-3 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="p-1 rounded-md bg-red-100 text-red-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg></div>
+              <p class="font-medium text-sm text-[#374151]">结束</p>
+            </div>
+          </div>
+          <div class="p-4 text-xs text-gray-500 space-y-1.5"><div><p class="font-medium text-gray-600">post_content</p><p class="text-gray-400">生成的帖子内容</p></div></div>
+          <div class="absolute top-1/2 -left-2.5 -translate-y-1/2 w-5 h-5 bg-gray-100 border-2 border-gray-300 rounded-full cursor-pointer hover:border-blue-500 transition-colors"></div>
+        </div>
+      </div>
+
+      <!-- Canvas Controls -->
+      <div class="absolute bottom-6 right-6 bg-white rounded-lg shadow-md border border-gray-200 flex items-center p-1 space-x-1">
+        <button class="p-2 rounded-md hover:bg-gray-100 text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6"/></svg></button>
+        <span class="text-xs text-gray-500 font-semibold w-12 text-center">100%</span>
+        <button class="p-2 rounded-md hover:bg-gray-100 text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-6-6h12"/></svg></button>
+        <div class="w-px h-5 bg-gray-200 mx-1"></div>
+        <button class="p-2 rounded-md hover:bg-gray-100 text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l7.5-7.5 7.5 7.5M4.5 18.75l7.5-7.5 7.5 7.5"/></svg></button>
+        <div class="w-px h-5 bg-gray-200 mx-1"></div>
+        <button class="p-2 rounded-md hover:bg-gray-100 text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg></button>
+      </div>
+
+      <!-- Minimap -->
+      <div class="absolute bottom-6 left-6 bg-white rounded-lg shadow-md border border-gray-200 p-2 w-32 h-24">
+        <div class="relative w-full h-full bg-gray-50 rounded">
+          <div class="absolute top-2 left-2 w-2 h-2 bg-green-500 rounded-sm"></div>
+          <div class="absolute top-6 left-8 w-2 h-2 bg-blue-500 rounded-sm"></div>
+          <div class="absolute bottom-2 right-2 w-2 h-2 bg-red-500 rounded-sm"></div>
+          <div class="absolute inset-0 border-2 border-gray-400 rounded opacity-50" style="width: 40%; height: 40%; top: 10%; left: 10%;"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 右侧节点配置面板 -->
+    <aside class="w-96 bg-white border-l border-gray-100 flex flex-col">
+      <div class="p-6 border-b border-gray-100">
+        <h3 class="font-medium text-[#374151]">配置 "大语言模型"</h3>
+        <p class="text-sm text-[#9CA3AF] mt-1">自定义LLM节点的行为和参数</p>
+      </div>
+      <div class="flex-1 p-6 space-y-6 overflow-y-auto">
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">模型</p>
+          <select class="block w-full pl-3 pr-10 py-2.5 text-sm border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 rounded-lg">
+            <option>GPT-4-Turbo (推荐)</option><option>Claude 3 Sonnet</option><option>Gemini Pro</option>
+          </select>
+          <div class="mt-2 text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
+            <div class="flex justify-between mb-1"><span>速度</span><div class="flex gap-1"><span class="w-1 h-3 bg-blue-500 rounded-sm"></span><span class="w-1 h-3 bg-blue-500 rounded-sm"></span><span class="w-1 h-3 bg-blue-500 rounded-sm"></span><span class="w-1 h-3 bg-gray-300 rounded-sm"></span><span class="w-1 h-3 bg-gray-300 rounded-sm"></span></div></div>
+            <div class="flex justify-between"><span>成本</span><span class="font-medium">$0.01 / 1K tokens</span></div>
+          </div>
+        </div>
+
+        <div class="border-t border-gray-200 pt-5">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">参数设置</p>
+          <div class="space-y-4">
+            <div>
+              <label class="text-sm text-gray-600">Temperature</label>
+              <div class="flex items-center gap-3 mt-1"><input type="range" min="0" max="2" step="0.1" value="0.7" class="flex-1"><span class="text-sm font-medium text-gray-700 w-8">0.7</span></div>
+            </div>
+            <div><label class="text-sm text-gray-600">Max Tokens</label><input type="number" value="1000" class="mt-1 block w-full text-sm border-gray-200 bg-white rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 p-2"></div>
+          </div>
+        </div>
+
+        <div class="border-t border-gray-200 pt-5">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">输入变量</p>
+          <div class="space-y-2">
+            <div class="bg-gray-50 rounded-lg p-3 text-sm flex items-center justify-between">
+              <div class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg><span class="text-gray-800 font-medium">topic</span></div>
+              <div class="flex items-center gap-2 text-xs bg-white border border-gray-200 rounded-md p-1.5"><svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"/></svg><span class="font-mono text-gray-600">start.topic</span></div>
+            </div>
+            <button class="w-full py-2 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600">+ 添加输入变量</button>
+          </div>
+        </div>
+
+        <div class="border-t border-gray-200 pt-5">
+          <div class="flex items-center justify-between mb-3"><p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">提示词 (Prompt)</p><button class="text-xs text-blue-600 hover:text-blue-700">从模板库选择</button></div>
+          <textarea rows="8" class="block w-full text-sm border-gray-200 bg-white rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 font-mono p-3 leading-relaxed" placeholder="使用 {{变量}} 来引用输入">{system_prompt}
+你是一个社交媒体专家，请根据以下主题为推特平台生成一篇帖子:
+{{topic}}</textarea>
+          <div class="mt-2 p-2 bg-blue-50 rounded-lg text-xs text-blue-700">
+            <p class="font-medium mb-1">优化建议：</p>
+            <ul class="space-y-1 ml-4 list-disc"><li>可以添加 "保持字数在280字以内" 的限制</li><li>建议加入目标受众描述</li></ul>
+          </div>
+        </div>
+
+        <div class="border-t border-gray-200 pt-5"><p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">输出变量</p><input type="text" value="post_content" class="block w-full text-sm border-gray-200 bg-white rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 p-2.5 font-mono"></div>
+
+        <details class="border-t border-gray-200 pt-5">
+          <summary class="text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer">高级设置</summary>
+          <div class="mt-4 space-y-4"><label class="flex items-center gap-2"><input type="checkbox" class="rounded text-blue-600"><span class="text-sm text-gray-700">启用流式输出</span></label><label class="flex items-center gap-2"><input type="checkbox" class="rounded text-blue-600"><span class="text-sm text-gray-700">保存对话历史</span></label></div>
+        </details>
+      </div>
+    </aside>
+  </div>
+
+  <div class="h-12 border-t border-gray-100 px-8 flex items-center gap-6 bg-gray-50 flex-shrink-0">
+    <span class="text-xs font-medium text-gray-500">全局变量：</span>
+    <div class="flex items-center gap-4"><span class="text-xs px-2 py-1 bg-white border border-gray-200 rounded">{{user_id}}</span><span class="text-xs px-2 py-1 bg-white border border-gray-200 rounded">{{timestamp}}</span><span class="text-xs px-2 py-1 bg-white border border-gray-200 rounded">{{api_key}}</span></div>
+    <button class="ml-auto text-xs text-blue-600 hover:text-blue-700">管理变量</button>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const nodeCategories = ref([
+  {
+    title: '核心',
+    nodes: [
+      { name: '开始', description: '工作流入口', icon: `<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"/></svg>`, bgClass: 'bg-green-100' },
+      { name: '结束', description: '输出结果', icon: `<svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>`, bgClass: 'bg-red-100' },
+    ],
+  },
+  {
+    title: '大语言模型',
+    isNew: true,
+    nodes: [
+      { name: 'LLM', description: '文本生成', icon: `<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>`, bgClass: 'bg-blue-100', count: 12 },
+      { name: '知识库检索', description: 'RAG增强', icon: `<svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zm0 0c0 1.657 1.007 3 2.25 3S21 13.657 21 12a9 9 0 10-2.636 6.364M16.5 12V8.25"/></svg>`, bgClass: 'bg-indigo-100' },
+      { name: '对话历史', description: '上下文管理', icon: `<svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>`, bgClass: 'bg-purple-100', isNew: true },
+    ],
+  },
+  {
+    title: '工具',
+    nodes: [
+      { name: '翻译', description: '多语言支持', icon: `<svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 21l5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 016-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C13.18 7.061 14.1 10.033 14.1 12c0 1.967-.918 4.939-2.766 6.364M14.1 12l-5.454-2.271"/></svg>`, bgClass: 'bg-amber-100' },
+      { name: '文生图', description: 'DALL·E 3', icon: `<svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>`, bgClass: 'bg-sky-100' },
+    ],
+  },
+  {
+    title: '控制流',
+    nodes: [
+      { name: '条件判断', description: 'IF/ELSE逻辑', icon: `<svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`, bgClass: 'bg-orange-100' },
+      { name: '循环', description: '批量处理', icon: `<svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>`, bgClass: 'bg-rose-100' },
+    ],
+  },
+]);
+</script>
+
+// =
+// 文件: ..\src\workflow\views\History.vue
+//
+
+<template>
+  <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white flex-shrink-0">
+    <h1 class="text-lg font-medium text-[#374151]">运行历史</h1>
+    <div class="flex items-center gap-3">
+      <select class="text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none transition-all py-2 px-3"><option>所有工作流</option><option>社交媒体帖子生成器</option><option>公司周报摘要</option></select>
+      <select class="text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none transition-all py-2 px-3"><option>所有状态</option><option>成功</option><option>失败</option><option>运行中</option><option>已取消</option></select>
+      <input type="date" class="text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none transition-all py-2 px-3 text-[#6B7280]">
+      <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50 transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        导出
+      </button>
+    </div>
+  </header>
+
+  <div class="flex-1 overflow-auto bg-[#FCFCFC]">
+    <div class="p-8 pb-4">
+      <div class="grid grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg p-4 border border-gray-100">
+          <p class="text-2xl font-light text-[#374151]">156</p>
+          <p class="text-sm text-[#9CA3AF] mt-1">总执行次数</p>
+        </div>
+        <div class="bg-white rounded-lg p-4 border border-gray-100">
+          <p class="text-2xl font-light text-green-600">148</p>
+          <p class="text-sm text-[#9CA3AF] mt-1">成功次数</p>
+        </div>
+        <div class="bg-white rounded-lg p-4 border border-gray-100">
+          <p class="text-2xl font-light text-[#374151]">94.8%</p>
+          <p class="text-sm text-[#9CA3AF] mt-1">成功率</p>
+        </div>
+        <div class="bg-white rounded-lg p-4 border border-gray-100">
+          <p class="text-2xl font-light text-[#374151]">12.5s</p>
+          <p class="text-sm text-[#9CA3AF] mt-1">平均耗时</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-8 pb-8">
+      <div class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+        <table class="min-w-full divide-y divide-gray-100">
+          <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">运行 ID</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">工作流名称</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">触发方式</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">开始时间</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">持续时间</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">状态</th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">操作</th>
+          </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100">
+          <tr v-for="run in runHistory" :key="run.id" class="hover:bg-gray-50/50 transition-colors">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-[#6B7280] font-mono">{{ run.id }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#374151]">{{ run.workflowName }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-[#6B7280]">
+                                <span class="flex items-center gap-1">
+                                    <span v-html="run.trigger.icon"></span>
+                                    {{ run.trigger.text }}
+                                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-[#6B7280]">{{ run.startTime }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-[#6B7280]">{{ run.duration }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex items-center text-xs leading-5 font-semibold rounded-full" :class="run.status.class">
+                                    <span v-if="run.status.icon" v-html="run.status.icon" class="mr-1"></span>
+                                    {{ run.status.text }}
+                                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <button class="text-[#3B82F6] hover:text-blue-700 mr-3">{{ run.primaryAction }}</button>
+              <button v-if="run.secondaryAction" class="text-[#3B82F6] hover:text-blue-700 mr-3">{{ run.secondaryAction }}</button>
+              <button class="text-gray-400 hover:text-gray-600 inline-block align-middle">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+
+        <div class="bg-gray-50 px-6 py-3 flex items-center justify-between border-t border-gray-100">
+          <div class="text-sm text-gray-500">
+            显示第 <span class="font-medium text-gray-700">1</span> 到 <span class="font-medium text-gray-700">5</span> 条，共 <span class="font-medium text-gray-700">156</span> 条记录
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100">上一页</button>
+            <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100">下一页</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const runHistory = ref([
+  {
+    id: '#f8a1b3',
+    workflowName: '社交媒体帖子生成器',
+    trigger: { text: '手动', icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>' },
+    startTime: '2024-05-20 10:30',
+    duration: '12.5s',
+    status: { text: '成功', class: 'bg-green-100 text-green-800' },
+    primaryAction: '查看详情',
+  },
+  {
+    id: '#e7b2c4',
+    workflowName: '公司周报摘要',
+    trigger: { text: '定时', icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' },
+    startTime: '2024-05-20 09:15',
+    duration: '45.2s',
+    status: { text: '失败', class: 'bg-red-100 text-red-800' },
+    primaryAction: '查看日志',
+    secondaryAction: '重试'
+  },
+  {
+    id: '#d6c3d5',
+    workflowName: '小说角色生成器',
+    trigger: { text: 'API', icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>' },
+    startTime: '2024-05-19 18:45',
+    duration: '8.1s',
+    status: { text: '成功', class: 'bg-green-100 text-green-800' },
+    primaryAction: '查看详情',
+  },
+  {
+    id: '#c5d4e6',
+    workflowName: '社交媒体帖子生成器',
+    trigger: { text: '手动', icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>' },
+    startTime: '2024-05-19 14:20',
+    duration: '1.2s',
+    status: { text: '已取消', class: 'bg-yellow-100 text-yellow-800' },
+    primaryAction: '查看详情',
+  },
+  {
+    id: '#b4d5f7',
+    workflowName: '数据分析报告',
+    trigger: { text: 'Webhook', icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>' },
+    startTime: '2024-05-19 11:30',
+    duration: '23.7s',
+    status: { text: '运行中', class: 'bg-blue-100 text-blue-800', icon: '<svg class="animate-spin h-3 w-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>' },
+    primaryAction: '实时监控',
+    secondaryAction: '停止'
+  },
+]);
+</script>
+
+// =
+// 文件: ..\src\workflow\views\Marketplace.vue
+//
+
+<template>
+  <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white flex-shrink-0">
+    <h1 class="text-lg font-medium text-[#374151]">工作流市场</h1>
+    <div class="flex items-center gap-4">
+      <!-- 分类筛选 -->
+      <select class="text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none transition-all py-2 px-3">
+        <option>所有分类</option>
+        <option>内容创作</option>
+        <option>数据分析</option>
+        <option>营销自动化</option>
+        <option>客户服务</option>
+        <option>开发工具</option>
+      </select>
+      <div class="hidden sm:flex items-center bg-[#F3F4F6] rounded-lg p-1 text-sm font-medium text-[#6B7280]">
+        <button class="px-3 py-1 rounded-md bg-white shadow-sm text-[#374151]">全部</button>
+        <button class="px-3 py-1 rounded-md hover:bg-gray-200">官方推荐</button>
+        <button class="px-3 py-1 rounded-md hover:bg-gray-200">最受欢迎</button>
+        <button class="px-3 py-1 rounded-md hover:bg-gray-200">最新</button>
+      </div>
+      <div class="relative">
+        <input type="text" placeholder="搜索模板..." class="w-64 pl-10 pr-4 py-2 text-sm bg-[#F3F4F6] border-transparent rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none transition-all">
+        <svg class="w-5 h-5 text-[#6B7280] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21L16.65 16.65"/></svg>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
+    <!-- 精选推荐 -->
+    <div class="mb-8">
+      <h3 class="text-sm font-medium text-[#374151] mb-4">本周精选</h3>
+      <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-6 text-white">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-lg font-medium">AI内容创作大师套装</h3>
+                <p class="text-sm text-white/80">包含10+专业工作流模板</p>
+              </div>
+            </div>
+            <p class="text-sm text-white/90 mb-4 max-w-2xl">从博客文章到社交媒体，从视频脚本到邮件营销，一站式解决所有内容创作需求。基于最新的GPT-4和Claude模型优化。</p>
+            <div class="flex items-center gap-4 text-sm">
+                            <span class="flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                4.9 (2.3k评价)
+                            </span>
+              <span>15.2k 次使用</span>
+              <span>由官方团队维护</span>
+            </div>
+          </div>
+          <button class="px-6 py-3 bg-white text-blue-600 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+            立即使用
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分类标签 -->
+    <div class="mb-6">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-sm text-gray-500">热门标签：</span>
+        <button v-for="tag in popularTags" :key="tag.name" class="px-3 py-1 rounded-full text-sm hover:opacity-80" :class="tag.class">{{ tag.name }}</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-for="template in workflowTemplates" :key="template.title" class="bg-white rounded-xl border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all group flex flex-col">
+        <div class="p-6 flex-1 flex flex-col">
+          <div class="flex items-start gap-4 mb-4">
+            <div class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" :class="template.iconBgClass">
+              <span v-html="template.icon"></span>
+            </div>
+            <div class="flex-1">
+              <h3 class="font-medium text-[#374151]">{{ template.title }}</h3>
+              <p class="text-xs text-[#9CA3AF] mt-1">由 <span class="font-semibold text-[#4B5563]">{{ template.author }}</span> 提供</p>
+              <div class="flex items-center gap-1 mt-2">
+                <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <span class="text-xs text-gray-600">{{ template.rating }} ({{ template.reviews }})</span>
+              </div>
+            </div>
+          </div>
+          <p class="text-sm text-[#6B7280] flex-1 mb-4">{{ template.description }}</p>
+          <div class="border-t border-gray-100 pt-4 mt-auto flex items-center justify-between">
+            <div class="text-sm text-[#9CA3AF] flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+              <span class="font-medium">{{ template.usage }}</span> 次使用
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="p-2 hover:bg-gray-100 rounded-lg text-gray-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              </button>
+              <button class="px-4 py-2 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1F2937] transition-colors">使用模板</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分页 -->
+    <div class="mt-8 flex items-center justify-center gap-2">
+      <button class="px-3 py-1 rounded-lg text-gray-500 hover:bg-gray-100">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <button class="px-3 py-1 rounded-lg bg-blue-500 text-white">1</button>
+      <button class="px-3 py-1 rounded-lg text-gray-700 hover:bg-gray-100">2</button>
+      <button class="px-3 py-1 rounded-lg text-gray-700 hover:bg-gray-100">3</button>
+      <span class="px-2 text-gray-400">...</span>
+      <button class="px-3 py-1 rounded-lg text-gray-700 hover:bg-gray-100">12</button>
+      <button class="px-3 py-1 rounded-lg text-gray-500 hover:bg-gray-100">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const popularTags = ref([
+  { name: '内容生成', class: 'bg-blue-100 text-blue-700' },
+  { name: '数据处理', class: 'bg-green-100 text-green-700' },
+  { name: '自动化营销', class: 'bg-purple-100 text-purple-700' },
+  { name: 'API集成', class: 'bg-amber-100 text-amber-700' },
+  { name: '图像处理', class: 'bg-rose-100 text-rose-700' },
+]);
+
+const workflowTemplates = ref([
+  {
+    title: '会议纪要生成器',
+    author: '官方',
+    rating: '4.8',
+    reviews: '234',
+    description: '上传会议录音或文字记录，自动生成结构化、带要点的会议纪要。',
+    usage: '2.1k',
+    icon: `<svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`,
+    iconBgClass: 'bg-blue-100',
+  },
+  {
+    title: '市场研究分析师',
+    author: '官方',
+    rating: '4.7',
+    reviews: '189',
+    description: '输入行业或产品，自动抓取网络信息，生成SWOT分析报告。',
+    usage: '1.8k',
+    icon: `<svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>`,
+    iconBgClass: 'bg-green-100',
+  },
+  {
+    title: '短视频脚本创作',
+    author: '社区',
+    rating: '4.6',
+    reviews: '156',
+    description: '只需一个创意点，即可自动生成包含场景、对话和动作的完整短视频脚本。',
+    usage: '972',
+    icon: `<svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`,
+    iconBgClass: 'bg-rose-100',
+  },
+  {
+    title: '客服对话优化器',
+    author: '企业版',
+    rating: '4.9',
+    reviews: '512',
+    description: '分析客服对话记录，提供改进建议，生成标准化回复模板。',
+    usage: '3.5k',
+    icon: `<svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/></svg>`,
+    iconBgClass: 'bg-indigo-100',
+  },
+]);
+</script>
+
+// =
+// 文件: ..\src\workflow\views\Monitor.vue
+//
+
+<template>
+  <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white flex-shrink-0">
+    <div>
+      <h1 class="text-lg font-medium text-[#374151]">实时监控: <span class="font-mono">#RUN-f8a1b3</span></h1>
+      <p class="text-sm text-[#9CA3AF] mt-1">工作流: 社交媒体帖子生成器</p>
+    </div>
+    <div class="flex items-center gap-4">
+            <span class="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full font-medium">
+                <svg class="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                运行中
+            </span>
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-gray-500">进度</span>
+        <div class="w-32 bg-gray-200 rounded-full h-2">
+          <div class="bg-blue-600 h-2 rounded-full" style="width: 45%"></div>
+        </div>
+        <span class="text-sm font-medium text-gray-700">45%</span>
+      </div>
+      <button class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        停止
+      </button>
+    </div>
+  </header>
+
+  <div class="flex-1 flex overflow-hidden">
+    <div class="flex-1 workflow-canvas-bg relative p-8">
+      <div class="absolute top-4 right-4 bg-white rounded-lg shadow-md border border-gray-200 p-4 w-64">
+        <h4 class="text-sm font-medium text-gray-700 mb-3">实时性能</h4>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between"><span class="text-gray-500">CPU使用率</span><span class="font-medium text-gray-700">23%</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">内存占用</span><span class="font-medium text-gray-700">156MB</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">已用Token</span><span class="font-medium text-gray-700">342 / 850</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">已用时间</span><span class="font-medium text-gray-700">00:03:21</span></div>
+        </div>
+      </div>
+
+      <div class="absolute" style="top: 80px; left: 80px;">
+        <div class="w-64 bg-white rounded-xl shadow-md border-2 border-green-500">
+          <div class="p-3 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-2"><div class="p-1 rounded-md bg-green-100 text-green-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"/></svg></div><p class="font-medium text-sm text-[#374151]">开始</p></div>
+            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          </div>
+          <div class="p-3 text-xs text-gray-500"><span class="font-semibold text-green-700">已完成</span> (0.1s)<div class="mt-2 bg-gray-50 rounded p-2"><p class="text-gray-600">输入: "AI在创意写作中的应用"</p></div></div>
+        </div>
+      </div>
+      <div class="absolute" style="top: 220px; left: 390px;">
+        <div class="w-64 bg-white rounded-xl shadow-md border-2 border-blue-500 running-node">
+          <div class="p-3 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-2"><div class="p-1 rounded-md bg-blue-100 text-blue-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg></div><p class="font-medium text-sm text-[#374151]">大语言模型</p></div>
+            <svg class="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          </div>
+          <div class="p-3 text-xs text-gray-500"><span class="font-semibold text-blue-700">运行中...</span><div class="mt-2 space-y-1"><div class="flex justify-between"><span>Token使用</span><span>342 / 850</span></div><div class="w-full bg-gray-200 rounded-full h-1"><div class="bg-blue-600 h-1 rounded-full" style="width: 40%"></div></div></div></div>
+        </div>
+      </div>
+      <div class="absolute" style="top: 360px; left: 690px;">
+        <div class="w-64 bg-white rounded-xl shadow-md border border-gray-200 opacity-60">
+          <div class="p-3 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-2"><div class="p-1 rounded-md bg-red-100 text-red-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg></div><p class="font-medium text-sm text-gray-500">结束</p></div>
+          </div>
+          <div class="p-3 text-xs text-gray-400"><span class="font-semibold">等待中</span></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="w-96 bg-[#F9FAFB] border-l border-gray-200 flex flex-col">
+      <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="font-medium text-[#374151]">运行日志</h3>
+        <div class="flex items-center gap-2">
+          <button class="p-1 hover:bg-gray-200 rounded text-gray-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg></button>
+          <button class="p-1 hover:bg-gray-200 rounded text-gray-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></button>
+        </div>
+      </div>
+      <div class="flex-1 p-5 space-y-4 overflow-y-auto font-mono text-xs leading-relaxed">
+        <div class="flex gap-3"><span class="text-gray-400 flex-shrink-0">10:30:01</span><span class="text-green-500">[成功]</span><p class="text-gray-600">工作流启动</p></div>
+        <div class="flex gap-3"><span class="text-gray-400 flex-shrink-0">10:30:01</span><span class="text-green-500">[成功]</span><p class="text-gray-600">节点 [开始] 执行完毕 (0.1s)</p></div>
+        <div class="flex gap-3"><span class="text-gray-400 flex-shrink-0">10:30:02</span><span class="text-blue-500">[信息]</span><p class="text-gray-600">节点 [大语言模型] 开始执行...</p></div>
+        <div class="flex gap-3"><span class="text-gray-400 flex-shrink-0">10:30:03</span><span class="text-blue-500">[信息]</span><p class="text-gray-600">向 GPT-4-Turbo 发送请求</p></div>
+        <div class="flex gap-3 bg-blue-50 -mx-5 px-5 py-2"><span class="text-gray-400 flex-shrink-0">10:30:04</span><span class="text-blue-500">[调试]</span><div class="text-gray-600"><p>API请求详情:</p><pre class="mt-1 text-xs bg-white rounded p-2 border border-blue-200">{
+"model": "gpt-4-turbo",
+"temperature": 0.7,
+"max_tokens": 1000
+}</pre></div></div>
+        <div class="flex gap-3"><span class="text-gray-400 flex-shrink-0">10:30:05</span><span class="text-blue-500">[信息]</span><p class="text-gray-600">正在生成内容...</p></div>
+      </div>
+      <div class="p-5 border-t border-gray-200">
+        <h4 class="text-sm font-medium text-gray-700 mb-3">实时输出预览</h4>
+        <div class="bg-white rounded-lg border border-gray-200 p-3 text-sm">
+          <p class="text-gray-600 leading-relaxed"><span class="text-blue-600">🤖 AI正在创造魔法...</span> 想象一下，当作家遇到创作瓶颈时，AI就像一位永不疲倦的灵感缪斯</p>
+          <div class="mt-2 flex items-center justify-between text-xs text-gray-500"><span>字数: 42 / 280</span><span class="animate-pulse">生成中...</span></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</template>
+
+<script setup lang="ts">
+// Component logic will go here
+</script>
+
+// =
+// 文件: ..\src\workflow\views\Run.vue
+//
+
+<template>
+  <main class="flex-1 bg-[#FCFCFC] flex flex-col items-center justify-center p-8 overflow-auto">
+    <div class="w-full max-w-3xl mx-auto">
+      <div class="text-center mb-8">
+        <h1 class="text-2xl font-light text-[#374151]">运行工作流</h1>
+        <p class="text-lg text-[#6B7280] mt-1">社交媒体帖子生成器</p>
+        <div class="mt-4 flex items-center justify-center gap-6 text-sm text-gray-500">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        预计耗时: ~15秒
+                    </span>
+          <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        预计费用: ~$0.02
+                    </span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-6 border border-gray-100 shadow-md mb-6">
+        <h3 class="text-base font-medium text-[#374151] mb-4">选择参数预设</h3>
+        <div class="grid grid-cols-3 gap-3">
+          <button class="p-3 border-2 border-blue-500 bg-blue-50 rounded-lg text-sm text-left">
+            <p class="font-medium text-gray-700">推特营销</p>
+            <p class="text-xs text-gray-500 mt-1">适合产品推广</p>
+          </button>
+          <button class="p-3 border border-gray-200 bg-white rounded-lg text-sm text-left hover:border-blue-300">
+            <p class="font-medium text-gray-700">个人分享</p>
+            <p class="text-xs text-gray-500 mt-1">日常动态更新</p>
+          </button>
+          <button class="p-3 border border-gray-200 bg-white rounded-lg text-sm text-left hover:border-blue-300">
+            <p class="font-medium text-gray-700">新闻快讯</p>
+            <p class="text-xs text-gray-500 mt-1">时事热点评论</p>
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-8 border border-gray-100 shadow-md space-y-6">
+        <h3 class="text-base font-medium text-[#374151]">输入参数 (Start 节点)</h3>
+        <div>
+          <label for="topic" class="text-sm font-medium text-[#374151]">主题 (topic: string)</label>
+          <input type="text" id="topic" placeholder="例如：人工智能在创意写作中的应用" class="mt-2 block w-full pl-3 pr-10 py-2.5 text-sm border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 rounded-lg">
+          <p class="mt-2 text-xs text-[#9CA3AF]">这是启动工作流所需的核心内容。</p>
+          <div class="mt-2 flex items-start gap-2 p-3 bg-blue-50 rounded-lg">
+            <svg class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <div class="text-xs text-blue-700">
+              <p class="font-medium">AI 建议：</p>
+              <p>尝试使用更具体的主题，如 "AI如何帮助小说作家克服创作瓶颈"</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label for="platform" class="text-sm font-medium text-[#374151]">目标平台 (platform: string)</label>
+          <select id="platform" class="mt-2 block w-full pl-3 pr-10 py-2.5 text-sm border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 rounded-lg">
+            <option>推特 (默认)</option>
+            <option>博客文章</option>
+            <option>领英动态</option>
+            <option>Instagram 说明</option>
+          </select>
+          <div class="mt-2 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
+            <p><strong>推特限制：</strong>280字符，支持话题标签和@提及</p>
+          </div>
+        </div>
+
+        <details class="border-t border-gray-100 pt-6">
+          <summary class="text-sm font-medium text-[#374151] cursor-pointer">高级选项</summary>
+          <div class="mt-4 space-y-4">
+            <div>
+              <label class="text-sm font-medium text-[#374151]">语调风格</label>
+              <div class="mt-2 flex gap-2">
+                <button class="px-3 py-1 bg-blue-500 text-white text-sm rounded-lg">专业</button>
+                <button class="px-3 py-1 bg-white border border-gray-200 text-sm rounded-lg">友好</button>
+                <button class="px-3 py-1 bg-white border border-gray-200 text-sm rounded-lg">幽默</button>
+                <button class="px-3 py-1 bg-white border border-gray-200 text-sm rounded-lg">正式</button>
+              </div>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-[#374151]">包含元素</label>
+              <div class="mt-2 space-y-2">
+                <label class="flex items-center gap-2"><input type="checkbox" checked class="rounded text-blue-600"><span class="text-sm text-gray-700">话题标签 (#hashtags)</span></label>
+                <label class="flex items-center gap-2"><input type="checkbox" checked class="rounded text-blue-600"><span class="text-sm text-gray-700">表情符号</span></label>
+                <label class="flex items-center gap-2"><input type="checkbox" class="rounded text-blue-600"><span class="text-sm text-gray-700">行动号召 (CTA)</span></label>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <div class="border-t border-gray-100 pt-6 flex justify-between items-center">
+          <button class="px-4 py-2 text-gray-600 hover:text-gray-800">保存为预设</button>
+          <div class="flex gap-3">
+            <button class="px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">测试运行</button>
+            <button class="px-8 py-3 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1F2937] transition-colors flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+              开始运行
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <h4 class="text-sm font-medium text-gray-700 mb-3">最近使用的参数</h4>
+        <div class="space-y-2">
+          <button class="w-full p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors text-left">
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="text-sm font-medium text-gray-700">AI在教育领域的应用</p>
+                <p class="text-xs text-gray-500">推特 • 专业语调 • 2小时前</p>
+              </div>
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+</template>
+
+<script setup lang="ts">
+// Component logic will go here
+</script>
+

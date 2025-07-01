@@ -1,3 +1,4 @@
+
 import type { RouteRecordRaw } from 'vue-router';
 import WorkflowLayout from '@/workflow/layouts/WorkflowLayout.vue';
 
@@ -17,8 +18,8 @@ export const workflowRoutes: Array<RouteRecordRaw> = [
             {
                 path: 'my-flows',
                 name: 'MyWorkflows',
-                // 由于没有提供 "我的工作流" 页面，暂时指向仪表盘作为占位符
-                component: () => import('@/workflow/views/Dashboard.vue'),
+                // 从占位符更新为实际组件
+                component: () => import('@/workflow/views/MyWorkflows.vue'),
                 meta: { title: '我的工作流' },
             },
             {
@@ -38,29 +39,29 @@ export const workflowRoutes: Array<RouteRecordRaw> = [
             {
                 path: 'connectors',
                 name: 'WorkflowConnectors',
-                // 占位符
-                component: () => import('@/workflow/views/Dashboard.vue'),
+                // 从占位符更新为实际组件
+                component: () => import('@/workflow/views/Connectors.vue'),
                 meta: { title: '连接器' },
             },
             {
                 path: 'variables',
                 name: 'WorkflowVariables',
-                // 占位符
-                component: () => import('@/workflow/views/Dashboard.vue'),
+                // 从占位符更新为实际组件
+                component: () => import('@/workflow/views/Variables.vue'),
                 meta: { title: '变量库' },
             },
             {
                 path: 'schedules',
                 name: 'WorkflowSchedules',
-                // 占位符
-                component: () => import('@/workflow/views/Dashboard.vue'),
+                // 从占位符更新为实际组件
+                component: () => import('@/workflow/views/Schedules.vue'),
                 meta: { title: '调度任务' },
             },
             {
                 path: 'trash',
                 name: 'WorkflowTrash',
-                // 占位符
-                component: () => import('@/workflow/views/Dashboard.vue'),
+                // 从占位符更新为实际组件
+                component: () => import('@/workflow/views/Trash.vue'),
                 meta: { title: '回收站' },
             },
 

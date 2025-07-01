@@ -3,12 +3,7 @@
 // == 文件内容 ==
 
 // =
-// 文件: ..\src\novel\components\AIAssistantMenu.vue
-//
-
-// =
-// 文件: ..\src\novel\components\AIAssistantMenu.vue
-// 说明: 新增组件，用于实现点击全局AI按钮后弹出的任务菜单，对应 ed.html UI稿。
+// 文件: ..\src\novel\components\GlobalAIAssistant\AIAssistantMenu.vue
 //
 
 <template>
@@ -25,7 +20,7 @@
           <p class="text-xs text-white/80">智能创作伴侣</p>
         </div>
       </div>
-      <button class="w-8 h-8 hover:bg-white/10 rounded-lg flex items-center justify-center transition-colors">
+      <button @click="$emit('close')" class="w-8 h-8 hover:bg-white/10 rounded-lg flex items-center justify-center transition-colors">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
     </div>
@@ -35,7 +30,7 @@
       <div>
         <p class="text-xs font-medium text-[#9CA3AF] uppercase tracking-wider mb-3">生成任务</p>
         <div class="space-y-2">
-          <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group">
+          <button @click="handleTaskClick('chapter-generation')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group text-left">
             <div class="w-10 h-10 bg-[#F3F4F6] text-[#4B5563] rounded-lg flex items-center justify-center group-hover:bg-[#4B5563] group-hover:text-white transition-colors">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
             </div>
@@ -44,9 +39,9 @@
               <p class="text-xs text-[#9CA3AF]">根据大纲创建新章节</p>
             </div>
             <svg class="w-4 h-4 text-[#9CA3AF] group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
-          </a>
+          </button>
 
-          <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group">
+          <button @click="handleTaskClick('chapter-polish')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group text-left">
             <div class="w-10 h-10 bg-[#F3F4F6] text-[#4B5563] rounded-lg flex items-center justify-center group-hover:bg-[#4B5563] group-hover:text-white transition-colors">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.43 2.43c-1.105 0-2.023-.918-2.023-2.023a3.75 3.75 0 013.75-3.75c.916 0 1.749.312 2.422.845l.005.004a.75.75 0 01.017 1.056l-1.06 1.06c-.24.24-.407.553-.407.896v.113a.75.75 0 001.5 0v-.058a1.5 1.5 0 01.447-1.087l.16-.16a1.5 1.5 0 00-2.122-2.122l-.16.16a1.5 1.5 0 01-1.087.447h-.058a.75.75 0 000 1.5h.113c.343 0 .656-.167.896-.407l1.06-1.06a.75.75 0 011.056.017z" /></svg>
             </div>
@@ -55,14 +50,14 @@
               <p class="text-xs text-[#9CA3AF]">优化文字表达和风格</p>
             </div>
             <svg class="w-4 h-4 text-[#9CA3AF] group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
-          </a>
+          </button>
         </div>
       </div>
 
       <div>
         <p class="text-xs font-medium text-[#9CA3AF] uppercase tracking-wider mb-3">分析任务</p>
         <div class="space-y-2">
-          <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group">
+          <button @click="handleTaskClick('chapter-analysis')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group text-left">
             <div class="w-10 h-10 bg-[#F3F4F6] text-[#4B5563] rounded-lg flex items-center justify-center group-hover:bg-[#4B5563] group-hover:text-white transition-colors">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 100 15 7.5 7.5 0 000-15zM21 21l-5.197-5.197" /></svg>
             </div>
@@ -71,9 +66,9 @@
               <p class="text-xs text-[#9CA3AF]">分析情节和人物</p>
             </div>
             <svg class="w-4 h-4 text-[#9CA3AF] group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
-          </a>
+          </button>
 
-          <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group">
+          <button @click="handleTaskClick('stage-analysis')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group text-left">
             <div class="w-10 h-10 bg-[#F3F4F6] text-[#4B5563] rounded-lg flex items-center justify-center group-hover:bg-[#4B5563] group-hover:text-white transition-colors">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1.125-1.5M13.5 16.5L12 21m-1.5-4.5L9 16.5" /></svg>
             </div>
@@ -82,23 +77,35 @@
               <p class="text-xs text-[#9CA3AF]">评估故事节奏和结构</p>
             </div>
             <svg class="w-4 h-4 text-[#9CA3AF] group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
-          </a>
+          </button>
         </div>
       </div>
     </div>
 
     <!-- 底部聊天入口 -->
     <div class="border-t border-gray-100 p-4 bg-[#FAFAFA]">
-      <button class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors">
+      <router-link
+          to="/novel/manage/chat"
+          @click="$emit('close')"
+          class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227l.173.013h9.24a2.708 2.708 0 002.707-3.227V6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.01z"></path></svg>
         AI 聊天助手
-      </button>
+      </router-link>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// Component logic will be added here
+import { useAITaskStore } from '@novel/composables/useAITaskStore.ts';
+
+const emit = defineEmits(['close']);
+const { openTaskConfig } = useAITaskStore();
+
+const handleTaskClick = (taskType: string) => {
+  openTaskConfig(taskType);
+  // 打开配置模态框后，关闭当前菜单
+  emit('close');
+};
 </script>
 
 <style scoped>
@@ -106,26 +113,24 @@
 </style>
 
 // =
-// 文件: ..\src\novel\components\AITaskConfigModal.vue
-//
-
-// =
-// 文件: ..\src\novel\components\AITaskConfigModal.vue
-// 说明: 新增组件，用于AI任务的配置模态框，对应 ed.html UI稿。
+// 文件: ..\src\novel\components\GlobalAIAssistant\AITaskConfigModal.vue
 //
 
 <template>
   <!-- Modal-Backdrop -->
-  <div class="fixed inset-0 bg-black/30 z-40 flex items-center justify-center p-8">
+  <!-- 使用 v-if 和全局状态来控制显示 -->
+  <div v-if="isConfigModalOpen" @click.self="closeTaskConfig" class="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-8">
 
     <!-- Modal-Container -->
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl border border-gray-100 flex flex-col max-h-full">
       <div class="p-6 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
         <div>
-          <h3 class="text-lg font-medium text-[#374151]">AI任务配置 - 章节润色</h3>
+          <!-- 标题现在是动态的 -->
+          <h3 class="text-lg font-medium text-[#374151]">AI任务配置 - {{ taskTitle }}</h3>
           <p class="text-sm text-[#6B7280] mt-1">配置AI助手如何处理您的内容</p>
         </div>
-        <button class="w-8 h-8 hover:bg-gray-100 rounded-lg flex items-center justify-center transition-colors">
+        <!-- 点击关闭按钮时调用全局的关闭方法 -->
+        <button @click="closeTaskConfig" class="w-8 h-8 hover:bg-gray-100 rounded-lg flex items-center justify-center transition-colors">
           <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
@@ -229,8 +234,8 @@
       </div>
 
       <div class="p-6 bg-[#FAFAFA] border-t border-gray-100 flex justify-end gap-3 flex-shrink-0">
-        <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50 transition-colors">取消</button>
-        <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors flex items-center gap-2">
+        <button @click="closeTaskConfig" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50 transition-colors">取消</button>
+        <button @click="closeTaskConfig" class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.5 12.75l6 6 9-13.5" /></svg>
           保存配置并执行
         </button>
@@ -240,7 +245,9 @@
 </template>
 
 <script setup lang="ts">
-// AI Task Config Modal Logic
+import { useAITaskStore } from '@novel/composables/useAITaskStore.ts';
+
+const { isConfigModalOpen, taskTitle, closeTaskConfig } = useAITaskStore();
 </script>
 
 <style scoped>
@@ -287,6 +294,140 @@ input[type=range]:focus::-webkit-slider-thumb {
   outline-offset: 2px;
   box-shadow: 0 0 0 3px #3B82F640;
 }
+</style>
+
+// =
+// 文件: ..\src\novel\components\GlobalAIAssistant\index.vue
+//
+
+<template>
+  <!-- 拖拽容器 -->
+  <div
+      class="fixed z-50"
+      :style="{ top: `${position.y}px`, left: `${position.x}px` }"
+      ref="draggableContainer"
+  >
+    <!-- AI 菜单 (点击按钮后显示) -->
+    <div v-if="isAiMenuOpen" class="absolute bottom-20 right-0 transition-all duration-300 ease-in-out">
+      <!-- 菜单关闭后，同时关闭自身 -->
+      <AIAssistantMenu @close="isAiMenuOpen = false" />
+    </div>
+
+    <!-- 浮动按钮 -->
+    <button
+        @click="toggleMenu"
+        @mousedown.stop="startDrag"
+        class="w-16 h-16 bg-gradient-to-br from-[#4B5563] to-[#374151] text-white rounded-full shadow-lg hover:scale-110 focus:scale-110 active:scale-100 transition-transform flex items-center justify-center cursor-grab active:cursor-grabbing"
+    >
+      <!-- 根据菜单状态切换图标 -->
+      <svg v-if="!isAiMenuOpen" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.43 2.43c-1.105 0-2.023-.918-2.023-2.023a3.75 3.75 0 013.75-3.75c.916 0 1.749.312 2.422.845l.005.004a.75.75 0 01.017 1.056l-1.06 1.06c-.24.24-.407.553-.407.896v.113a.75.75 0 001.5 0v-.058a1.5 1.5 0 01.447-1.087l.16-.16a1.5 1.5 0 00-2.122-2.122l-.16.16a1.5 1.5 0 01-1.087.447h-.058a.75.75 0 000 1.5h.113c.343 0 .656-.167.896-.407l1.06-1.06a.75.75 0 011.056.017z" /><path stroke-linecap="round" stroke-linejoin="round" d="M16.47 8.53a.75.75 0 011.06 0l3.75 3.75a.75.75 0 010 1.06l-3.75 3.75a.75.75 0 11-1.06-1.06l2.47-2.47H3a.75.75 0 010-1.5h15.94l-2.47-2.47a.75.75 0 010-1.06z" /></svg>
+      <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
+    </button>
+  </div>
+
+  <!-- AI 任务配置模态框 (全局单例) -->
+  <AITaskConfigModal />
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount } from 'vue';
+import AIAssistantMenu from '@novel/components/GlobalAIAssistant/AIAssistantMenu.vue';
+import AITaskConfigModal from '@novel/components/GlobalAIAssistant/AITaskConfigModal.vue';
+
+// 菜单显示状态
+const isAiMenuOpen = ref(false);
+
+const toggleMenu = () => {
+  // 如果正在拖动，则不切换菜单
+  if (dragging.value) return;
+  isAiMenuOpen.value = !isAiMenuOpen.value;
+};
+
+// --- 拖动功能实现 ---
+const position = ref({ x: window.innerWidth - 100, y: window.innerHeight - 100 });
+const dragging = ref(false);
+const offset = ref({ x: 0, y: 0 });
+
+// 鼠标按下，开始拖动
+const startDrag = (event: MouseEvent) => {
+  // 只响应鼠标左键
+  if (event.button !== 0) return;
+
+  // 延迟一小段时间来区分点击和拖动
+  setTimeout(() => {
+    dragging.value = true;
+  }, 150);
+
+  offset.value.x = event.clientX - position.value.x;
+  offset.value.y = event.clientY - position.value.y;
+
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', stopDrag);
+};
+
+// 鼠标移动，更新位置
+const onDrag = (event: MouseEvent) => {
+  if (!dragging.value) return;
+
+  // 阻止默认行为，如文本选择
+  event.preventDefault();
+
+  const buttonWidth = 64;
+  const buttonHeight = 64;
+  const padding = 16; // 1rem
+
+  // 计算新位置
+  let newX = event.clientX - offset.value.x;
+  let newY = event.clientY - offset.value.y;
+
+  // 边界检测
+  newX = Math.max(padding, Math.min(newX, window.innerWidth - buttonWidth - padding));
+  newY = Math.max(padding, Math.min(newY, window.innerHeight - buttonHeight - padding));
+
+  position.value.x = newX;
+  position.value.y = newY;
+};
+
+// 鼠标松开，停止拖动
+const stopDrag = () => {
+  // 如果移动距离很小，视为点击事件，而不是拖拽结束
+  // 这可以防止点击时 `dragging` 被设置为 true 导致无法打开菜单
+  if (dragging.value) {
+    // 延迟重置，以确保 click 事件在它之后触发
+    setTimeout(() => {
+      dragging.value = false;
+    }, 0);
+  }
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', stopDrag);
+};
+
+// 窗口大小改变时，调整按钮位置以防超出边界
+const updatePositionOnResize = () => {
+  const buttonWidth = 64;
+  const padding = 16;
+  if (position.value.x > window.innerWidth - buttonWidth - padding) {
+    position.value.x = window.innerWidth - buttonWidth - padding;
+  }
+  if (position.value.y > window.innerHeight - buttonWidth - padding) {
+    position.value.y = window.innerHeight - buttonWidth - padding;
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('resize', updatePositionOnResize);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updatePositionOnResize);
+  // 清理可能残留的事件监听器
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', stopDrag);
+});
+</script>
+
+<style scoped>
+/* Scoped styles can be added here if needed */
 </style>
 
 // =
@@ -359,8 +500,8 @@ const navItems = ref([
 <template>
   <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
     <!-- 顶部小说信息区域 -->
-    <div class="p-4 space-y-4 border-b border-gray-100 h-20 flex items-center">
-      <router-link to="/novel/manage" class="flex items-center gap-3 px-2 group w-full">
+    <div class="p-4 space-y-4 border-b border-gray-100 h-20 flex items-center">>
+      <router-link to="/novel/manage/outline" class="flex items-center gap-3 px-2 group w-full">
         <div class="w-10 h-10 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center bg-gradient-to-br from-indigo-100 to-purple-100 group-hover:scale-105 transition-transform">
           <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/></svg>
         </div>
@@ -368,7 +509,9 @@ const navItems = ref([
           <h3 class="font-medium text-[#374151] text-sm truncate">星际漫游者</h3>
           <p class="text-xs text-[#9CA3AF] truncate">科幻 • 编辑中</p>
         </div>
-        <svg class="w-4 h-4 text-gray-400 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18L9 12L15 6"/></svg>
+        <router-link to="/novel/dashboard" @click.stop class="w-4 h-4 text-gray-400 group-hover:-translate-x-1 transition-transform">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18L9 12L15 6"/></svg>
+        </router-link>
       </router-link>
     </div>
 
@@ -400,7 +543,7 @@ const navItems = ref([
 <script setup lang="ts">
 import { ref } from 'vue';
 
-// 小说管理菜单项 (静态路径)
+// 小说管理菜单项 (恢复为静态路径)
 const managementNav = ref([
   { name: '编辑章节', path: `/novel/editor`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>` },
   { name: '大纲视图', path: `/novel/manage/outline`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" /></svg>` },
@@ -408,12 +551,11 @@ const managementNav = ref([
   { name: '世界观', path: `/novel/manage/worldview`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c1.356 0 2.673-.174 3.946-.512M12 21c-1.356 0-2.673-.174-3.946-.512M12 3a9.004 9.004 0 00-8.716 6.747M12 3a9.004 9.004 0 018.716 6.747M12 3c1.356 0 2.673.174 3.946.512M12 3c-1.356 0-2.673-.174-3.946-.512M3.284 15.842a9.002 9.002 0 000-7.684M20.716 15.842a9.002 9.002 0 000-7.684" /></svg>` },
 ]);
 
-// 工具菜单项 (静态路径)
+// 工具菜单项 (恢复为静态路径)
 const toolsNav = ref([
   { name: '上下文管理', path: `/novel/manage/context`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-1.621-1.621A3 3 0 0113.5 18.257V17.25m6-3.75V17.25a3 3 0 01-3 3h-6a3 3 0 01-3-3V13.5m12-3V10.5a3 3 0 00-3-3h-6a3 3 0 00-3 3v3.75m12-3V6.75a3 3 0 00-3-3h-6a3 3 0 00-3 3v6.75" /></svg>` },
   { name: '小说设置', path: `/novel/manage/settings`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-1.007 1.11-.95.542.057 1.007.56 1.061 1.11L12 8.583l.235-3.535c.057-.542.56-1.007 1.11-.95.542.057 1.007.56 1.061 1.11L15.417 8.583l3.536-.235c.542-.057 1.007.56 1.061 1.11.057.542-.42 1.007-.95 1.061l-3.536.235.235 3.536c.057.542-.42 1.007-.95 1.061-.542.057-1.007-.42-1.061-.95L12 15.417l-.235 3.536c-.057.542-.56 1.007-1.11.95-.542-.057-1.007-.56-1.061-1.11L9.417 15.417l-3.536.235c-.542-.057-1.007-.42-.95-1.061.057-.542.42-1.007.95-1.061l3.536-.235L9.417 8.583z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 14.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" /></svg>` },
   { name: '版本历史', path: `/novel/manage/history`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.667 0l3.181-3.183m-4.991-2.691v4.992h-4.992m0 0l-3.181-3.183a8.25 8.25 0 0111.667 0l3.181 3.183" /></svg>` },
-  { name: '聊天助手', path: `/novel/manage/chat`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227l.173.013h9.24a2.708 2.708 0 002.707-3.227V6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.01z"></path></svg>` },
   { name: '导出', path: `/novel/manage/export`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>` },
 ]);
 </script>
@@ -430,10 +572,10 @@ const toolsNav = ref([
 
 <template>
   <aside class="w-96 bg-[#FAFAFA] border-l border-gray-100 flex flex-col flex-shrink-0">
-    <div class="h-2/5 p-4 border-b border-gray-200 flex flex-col">
+    <div class="h-1/3 p-4 border-b border-gray-200 flex flex-col">
       <div class="flex items-center justify-between mb-3 flex-shrink-0 px-2">
         <h3 class="font-medium text-sm text-gray-700">AI任务队列</h3>
-        <span class="text-xs font-medium px-2 py-0.5 rounded-full text-blue-700 bg-blue-100">3个活跃</span>
+        <span class="text-xs font-medium px-2 py-0.5 rounded-full text-blue-700 bg-blue-100">2个活跃</span>
       </div>
       <div class="flex-grow space-y-2 overflow-y-auto text-sm pr-1 hide-scrollbar">
         <div class="p-3 bg-red-50 rounded-lg border border-red-200">
@@ -446,7 +588,6 @@ const toolsNav = ref([
           </div>
           <p class="text-xs text-red-700 mt-1">生成超时，请检查网络后 <a href="#" class="underline font-medium">重试</a>。</p>
         </div>
-        <!-- 进行中状态 -->
         <div class="p-3 bg-white rounded-lg border border-l-4 border-l-blue-500 shadow-sm">
           <div class="flex justify-between items-center mb-1">
             <p class="font-medium text-sm text-gray-800">扩写"第五章"大纲</p>
@@ -455,7 +596,6 @@ const toolsNav = ref([
           <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2"><div class="bg-blue-500 h-1.5 rounded-full" style="width: 75%"></div></div>
           <p class="text-xs text-gray-500 mt-1.5">预计还需 15秒</p>
         </div>
-        <!-- 已完成状态 -->
         <div class="p-3 bg-green-50 rounded-lg border border-green-200 cursor-pointer hover:bg-green-100 transition-colors">
           <div class="flex justify-between items-center">
             <p class="font-medium text-sm text-gray-800">角色对话分析</p>
@@ -466,8 +606,7 @@ const toolsNav = ref([
       </div>
     </div>
 
-    <!-- AI 生成预览 -->
-    <div class="flex-1 p-4 flex flex-col">
+    <div class="h-2/3 p-4 flex flex-col">
       <div class="flex items-center justify-between mb-3 flex-shrink-0 px-2">
         <h3 class="font-medium text-sm text-gray-700">AI生成预览 (差异对比)</h3>
         <div class="flex items-center gap-2">
@@ -641,17 +780,11 @@ const activeChapter = computed(() => {
 // 文件: ..\src\novel\components\editor\EditorSidebar.vue
 //
 
-// =
-// 文件: ..\src\novel\components\editor\EditorSidebar.vue
-//
-// 说明: 编辑器左侧边栏，包含返回链接和小说管理菜单。
-//
-
 <template>
   <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
     <!-- 顶部小说信息区域 -->
     <div class="p-4 space-y-4 border-b border-gray-100 h-20 flex items-center">
-      <router-link :to="`/novel/manage/${novelId}`" class="flex items-center gap-3 px-2 group w-full">
+      <router-link to="/novel/manage/outline" class="flex items-center gap-3 px-2 group w-full">
         <div class="w-10 h-10 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center bg-gradient-to-br from-indigo-100 to-purple-100 group-hover:scale-105 transition-transform">
           <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/></svg>
         </div>
@@ -690,23 +823,18 @@ const activeChapter = computed(() => {
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useRoute } from 'vue-router';
 
-const route = useRoute();
-// 从路由参数获取小说ID，使导航链接动态化
-const novelId = route.params.id || 1; // 默认为1，以防万一
-
-// 小说管理菜单项
+// 小说管理菜单项 - 恢复为静态路径
 const managementNav = ref([
-  { name: '编辑章节', path: `/novel/editor/${novelId}`, icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>` },
-  { name: '大纲视图', path: `/novel/manage/${novelId}/outline`, icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10V21M3 10L12 3L21 10M3 10H21M12 3V21M8 21V15C8 13.9 8.9 13 10 13H14C15.1 13 16 13.9 16 15V21"/></svg>` },
-  { name: '角色设定', path: `/novel/manage/${novelId}/character-settings`, icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>` },
-  { name: '世界观', path: `/novel/manage/${novelId}/worldview`, icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>` },
+  { name: '编辑章节', path: `/novel/editor`, icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>` },
+  { name: '大纲视图', path: `/novel/manage/outline`, icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10V21M3 10L12 3L21 10M3 10H21M12 3V21M8 21V15C8 13.9 8.9 13 10 13H14C15.1 13 16 13.9 16 15V21"/></svg>` },
+  { name: '角色设定', path: `/novel/manage/character-settings`, icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>` },
+  { name: '世界观', path: `/novel/manage/worldview`, icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>` },
 ]);
 
-// 工具菜单项
+// 工具菜单项 - 恢复为静态路径
 const toolsNav = ref([
-  { name: '小说设置', path: `/novel/manage/${novelId}/settings`, icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>` }
+  { name: '小说设置', path: `/novel/manage/settings`, icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>` }
 ]);
 </script>
 
@@ -718,8 +846,61 @@ const toolsNav = ref([
 </style>
 
 // =
+// 文件: ..\src\novel\composables\useAITaskStore.ts
+//
+
+import { ref, computed } from 'vue';
+
+// 定义一个响应式的状态变量，用于控制模态框的显示与隐藏
+const isConfigModalOpen = ref(false);
+// 定义一个响应式的状态变量，用于存储当前正在配置的任务类型
+const currentTaskType = ref('');
+
+// 定义一个任务类型到中文标题的映射
+const taskTitles: { [key: string]: string } = {
+    'chapter-generation': '章节生成',
+    'chapter-polish': '章节润色',
+    'chapter-analysis': '章节分析',
+    'stage-analysis': '阶段分析'
+};
+
+/**
+ * 打开任务配置模态框的函数
+ * @param taskType - 要配置的任务类型 (e.g., 'chapter-polish')
+ */
+const openTaskConfig = (taskType: string) => {
+    currentTaskType.value = taskType;
+    isConfigModalOpen.value = true;
+};
+
+/**
+ * 关闭任务配置模态框的函数
+ */
+const closeTaskConfig = () => {
+    isConfigModalOpen.value = false;
+};
+
+// 计算属性，根据当前任务类型动态生成模态框标题
+const taskTitle = computed(() => taskTitles[currentTaskType.value] || 'AI任务配置');
+
+/**
+ * AI任务状态管理 Composable
+ * @returns 返回一个包含状态和方法的对象，供组件使用
+ */
+export function useAITaskStore() {
+    return {
+        isConfigModalOpen,
+        currentTaskType,
+        taskTitle,
+        openTaskConfig,
+        closeTaskConfig,
+    };
+}
+
+// =
 // 文件: ..\src\novel\layouts\NovelDashboardLayout.vue
 //
+
 
 <!-- src/novel/layouts/NovelDashboardLayout.vue -->
 <template>
@@ -743,12 +924,15 @@ const toolsNav = ref([
         </main>
       </div>
     </div>
+    <!-- 应用全局AI助手组件 -->
+    <GlobalAIAssistant />
   </div>
 </template>
 
 <script setup lang="ts">
 import AppHeader from '@/layouts/components/AppHeader.vue'
 import NovelDashboardSidebar from '@/novel/components/NovelDashboardSidebar.vue'
+import GlobalAIAssistant from '@novel/components/GlobalAIAssistant/index.vue' // 引入全局AI助手组件
 import '@/novel/style.css'
 </script>
 
@@ -773,16 +957,10 @@ import '@/novel/style.css'
 // 文件: ..\src\novel\layouts\NovelEditorLayout.vue
 //
 
-// =
-// 文件: ..\src\novel\layouts\NovelEditorLayout.vue
-//
-// 说明: 这是小说编辑器的专属布局，用于构建左、中、右三栏结构。
-//
-
+<!-- src/novel/layouts/NovelManagementLayout.vue -->
 <template>
   <div class="h-screen w-screen flex bg-white design-frame-container">
     <div class="design-frame">
-      <!-- 模拟顶部窗口栏 -->
       <div class="h-10 px-5 flex items-center border-b border-gray-100 bg-gray-50 flex-shrink-0">
         <div class="flex items-center gap-2">
           <div class="w-3 h-3 rounded-full bg-[#FF5F57]"></div>
@@ -793,26 +971,28 @@ import '@/novel/style.css'
           <span>AI Creator Platform</span>
         </div>
       </div>
-      <!-- 编辑器主容器 -->
       <div class="h-[calc(100%-40px)] flex">
         <NovelManagementSidebar />
-        <EditorContent />
-        <EditorAIPanel />
+        <main class="flex-1 bg-white flex flex-col">
+          <!-- 使用与全局一致的 AppHeader -->
+          <AppHeader />
+          <router-view />
+        </main>
       </div>
     </div>
+    <!-- 应用全局AI助手组件 -->
+    <GlobalAIAssistant />
   </div>
 </template>
 
 <script setup lang="ts">
-// 引用 NovelManagementSidebar 以保持单本小说内导航一致
-import NovelManagementSidebar from '@/novel/components/NovelManagementSidebar.vue';
-import EditorContent from '@/novel/components/editor/EditorContent.vue';
-import EditorAIPanel from '@/novel/components/editor/EditorAIPanel.vue';
-import '@/novel/style.css';
+import AppHeader from '@/layouts/components/AppHeader.vue'
+import NovelManagementSidebar from '@/novel/components/NovelManagementSidebar.vue'
+import GlobalAIAssistant from '@novel/components/GlobalAIAssistant/index.vue'
+import '@/novel/style.css'
 </script>
 
 <style scoped>
-/* 样式与您项目中的其他布局文件保持一致 */
 .design-frame-container {
   padding: 2rem;
   background-color: #f5f5f7;
@@ -820,7 +1000,7 @@ import '@/novel/style.css';
 .design-frame {
   width: 100%;
   height: 100%;
-  max-width: 1800px; /* 您可以根据需要调整最大宽度 */
+  max-width: 1800px;
   margin: auto;
   background: white;
   border-radius: 16px;
@@ -833,9 +1013,6 @@ import '@/novel/style.css';
 // 文件: ..\src\novel\layouts\NovelManagementLayout.vue
 //
 
-// =
-// 文件: ..\src/novel\layouts\NovelManagementLayout.vue
-// (无变化，仅作为导航起点)
 
 <!-- src/novel/layouts/NovelManagementLayout.vue -->
 <template>
@@ -860,6 +1037,7 @@ import '@/novel/style.css';
         </main>
       </div>
     </div>
+    <GlobalAIAssistant />
   </div>
 </template>
 
@@ -867,6 +1045,7 @@ import '@/novel/style.css';
 import AppHeader from '@/layouts/components/AppHeader.vue'
 import NovelManagementSidebar from '@/novel/components/NovelManagementSidebar.vue'
 import '@/novel/style.css'
+import GlobalAIAssistant from "@novel/components/GlobalAIAssistant/index.vue";
 </script>
 
 <style scoped>
@@ -907,13 +1086,13 @@ export const novelRoutes: Array<RouteRecordRaw> = [
             {
                 path: 'recent',
                 name: 'NovelRecent',
-                component: () => import('@/novel/views/NovelRecent.vue'),
+                component: () => import('@novel/views/manager/NovelRecent.vue'),
                 meta: { title: '最近编辑' }
             },
             {
                 path: 'trash',
                 name: 'NovelTrash',
-                component: () => import('@/novel/views/NovelTrash.vue'),
+                component: () => import('@novel/views/manager/NovelTrash.vue'),
                 meta: { title: '回收站' }
             },
             {
@@ -932,43 +1111,43 @@ export const novelRoutes: Array<RouteRecordRaw> = [
             {
                 path: 'outline',
                 name: 'NovelOutline',
-                component: () => import('@/novel/views/NovelOutline.vue'),
+                component: () => import('@novel/views/manager/NovelOutline.vue'),
                 meta: { title: '大纲视图' }
             },
             {
                 path: 'character-settings',
                 name: 'NovelCharacterSettings',
-                component: () => import('@/novel/views/CharacterSettings.vue'),
+                component: () => import('@novel/views/manager/CharacterSettings.vue'),
                 meta: { title: '角色设定' }
             },
             {
                 path: 'worldview',
                 name: 'NovelWorldview',
-                component: () => import('@/novel/views/NovelWorldview.vue'),
+                component: () => import('@novel/views/manager/NovelWorldview.vue'),
                 meta: { title: '世界观' }
             },
             {
                 path: 'settings',
                 name: 'NovelSettings',
-                component: () => import('@/novel/views/NovelSettings.vue'),
+                component: () => import('@novel/views/manager/NovelSettings.vue'),
                 meta: { title: '小说设置' }
             },
             {
                 path: 'context',
                 name: 'NovelContext',
-                component: () => import('@/novel/views/NovelContext.vue'),
+                component: () => import('@novel/views/manager/NovelContext.vue'),
                 meta: { title: '上下文管理' }
             },
             {
                 path: 'export',
                 name: 'NovelExport',
-                component: () => import('@/novel/views/NovelExport.vue'),
+                component: () => import('@novel/views/manager/NovelExport.vue'),
                 meta: { title: '导出小说' }
             },
             {
                 path: 'history',
                 name: 'NovelHistory',
-                component: () => import('@/novel/views/NovelHistory.vue'),
+                component: () => import('@novel/views/manager/NovelHistory.vue'),
                 meta: { title: '版本历史' }
             },
             {
@@ -982,19 +1161,19 @@ export const novelRoutes: Array<RouteRecordRaw> = [
     {
         path: '/novel/editor',
         name: 'NovelEditor',
-        component: () => import('@/novel/views/EditorView.vue'),
+        component: () => import('@novel/views/editor/EditorView.vue'),
         meta: { title: '编辑章节' }
     },
     {
         path: '/novel/read',
         name: 'NovelReader',
-        component: () => import('@/novel/views/NovelReaderView.vue'),
+        component: () => import('@novel/views/editor/NovelReaderView.vue'),
         meta: { title: '阅读模式' }
     },
     {
         path: '/novel/context-provider',
         name: 'NovelContextProvider',
-        component: () => import('@/novel/views/NovelContextProvider.vue'),
+        component: () => import('@novel/views/editor/NovelContextProvider.vue'),
         meta: { title: '上下文预览' }
     }
 ]
@@ -1003,104 +1182,215 @@ export const novelRoutes: Array<RouteRecordRaw> = [
 // 文件: ..\src\novel\style.css
 //
 
-/* src/novel/style.css */
+/* src/novel/index.css */
 
-/*
-  小说模块专属样式。
-  这些样式通过在布局根元素上的 .novel-module 类进行作用域隔离，不会影响全局。
-*/
 
 .novel-module {
 }
 
 // =
-// 文件: ..\src\novel\views\CharacterSettings.vue
+// 文件: ..\src\novel\views\NovelChat.vue
 //
 
-<!-- src/novel/views/CharacterSettings.vue -->
+// =
+// 文件: ..\src\novel\views\NovelChat.vue
+// 说明: 新增页面，用于实现 AI 聊天助手功能，对应 ed.html UI稿。
+//
+
 <template>
-  <div class="flex-1 flex overflow-hidden bg-[#FCFCFC]">
-    <!-- 左侧角色列表 -->
-    <div class="w-1/3 max-w-sm border-r border-gray-100 p-4 flex flex-col">
-      <div class="pb-4 mb-4 border-b border-gray-100">
-        <button class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors">
+  <div class="flex-1 flex overflow-hidden">
+    <!-- 左侧聊天列表 -->
+    <aside class="w-80 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
+      <div class="p-4 border-b border-gray-100">
+        <button class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5V19M5 12H19"/></svg>
-          创建新角色
+          新建对话
         </button>
       </div>
-      <div class="flex-grow overflow-y-auto pr-1 space-y-2 hide-scrollbar">
-        <!-- 选中角色 -->
-        <a href="#" class="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <div class="w-10 h-10 rounded-full flex-shrink-0">
-            <img src="https://i.pravatar.cc/150?u=calvin" alt="Calvin" class="w-full h-full object-cover rounded-full">
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="font-medium text-[#374151] truncate text-sm">卡尔文</p>
-            <p class="text-xs text-[#6B7280] truncate">主角, 探索者四号宇航员</p>
-          </div>
-          <span class="text-xs font-medium px-2 py-1 rounded-md text-blue-600 bg-blue-100">编辑中</span>
-        </a>
-        <!-- 其他角色 -->
-        <a href="#" class="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg group transition-colors">
-          <div class="w-10 h-10 rounded-full flex-shrink-0 bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h.5A2.5 2.5 0 0020 5.5V3.935m-14 0A10.003 10.003 0 0112 2a10.003 10.003 0 017 1.935M6 21a2 2 0 01-2-2v-1a2 2 0 012-2h12a2 2 0 012 2v1a2 2 0 01-2 2H6z"/></svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="font-medium text-[#374151] truncate text-sm">艾拉</p>
-            <p class="text-xs text-[#6B7280] truncate">AI, 飞船智能核心</p>
+
+      <div class="flex-1 p-4 space-y-2 overflow-y-auto">
+        <!-- 选中状态 -->
+        <a href="#" class="block p-3 bg-[#EFF6FF] border border-[#3B82F6] rounded-lg">
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 bg-[#3B82F6] rounded-full flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"></path></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-sm text-[#374151] truncate">角色性格讨论</p>
+              <p class="text-xs text-[#6B7280] truncate mt-1">关于卡尔文的内心世界...</p>
+              <p class="text-xs text-[#9CA3AF] mt-2">2小时前</p>
+            </div>
           </div>
         </a>
-        <a href="#" class="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg group transition-colors">
-          <div class="w-10 h-10 rounded-full flex-shrink-0 bg-gray-100 text-gray-500 flex items-center justify-center group-hover:scale-105 transition-transform">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="font-medium text-[#374151] truncate text-sm">神秘信号源</p>
-            <p class="text-xs text-[#6B7280] truncate">未知实体</p>
+
+        <!-- 未选中状态 -->
+        <a href="#" class="block p-3 hover:bg-gray-100 rounded-lg transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 bg-[#F3F4F6] rounded-full flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-[#6B7280]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v2h-2zm0 4h2v6h-2z"></path></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-sm text-[#374151] truncate">情节灵感</p>
+              <p class="text-xs text-[#6B7280] truncate mt-1">跃迁点的科学原理...</p>
+              <p class="text-xs text-[#9CA3AF] mt-2">昨天</p>
+            </div>
           </div>
         </a>
+      </div>
+    </aside>
+
+    <!-- 右侧聊天界面 -->
+    <main class="flex-1 flex flex-col bg-white">
+      <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 bg-gradient-to-br from-[#4B5563] to-[#374151] rounded-full flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 21v-1.5M15.75 3v1.5M12 4.5v15M15.75 21v-1.5" /></svg>
+          </div>
+          <div>
+            <h2 class="font-medium text-[#374151]">AI创作助手</h2>
+            <button class="text-sm text-[#6B7280] flex items-center gap-2 hover:text-[#374151] transition-colors mt-1">
+              <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+              在线 • GPT-4o
+              <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="上下文管理">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+          </button>
+          <button class="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="设置">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-1.007 1.11-.95.542.057 1.007.56 1.061 1.11L12 8.583l.235-3.535c.057-.542.56-1.007 1.11-.95.542.057 1.007.56 1.061 1.11L15.417 8.583l3.536-.235c.542-.057 1.007.56 1.061 1.11.057.542-.42 1.007-.95 1.061l-3.536.235.235 3.536c.057.542-.42 1.007-.95 1.061-.542.057-1.007-.42-1.061-.95L12 15.417l-.235 3.536c-.057.542-.56 1.007-1.11.95-.542-.057-1.007-.56-1.061-1.11L9.417 15.417l-3.536.235c-.542.057-1.007-.42-.95-1.061.057-.542.42-1.007.95-1.061l3.536-.235-.235-3.536c-.057-.542.42-1.007.95-1.061.542-.057 1.007.42 1.061.95L12 9.417l.235-3.536zM12 14.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" /></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="flex-1 p-6 overflow-y-auto">
+        <div class="max-w-3xl mx-auto space-y-6">
+          <!-- 用户消息 -->
+          <div class="flex justify-end">
+            <div class="bg-[#3B82F6] text-white p-4 rounded-xl rounded-br-lg max-w-[70%] text-sm">
+              我想讨论一下卡尔文这个角色的内心世界。在面对跃迁点时，他应该有什么样的心理活动？
+            </div>
+          </div>
+
+          <!-- AI回复 -->
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 bg-gradient-to-br from-[#4B5563] to-[#374151] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 21v-1.5M15.75 3v1.5M12 4.5v15M15.75 21v-1.5" /></svg>
+            </div>
+            <div class="bg-[#F3F4F6] text-[#374151] p-4 rounded-xl rounded-bl-lg max-w-[70%] text-sm">
+              <p class="mb-3">当然，这是一个很好的切入点。卡尔文在面对跃迁点时的心理活动可以从多个层面展现：</p>
+              <ol class="list-decimal list-inside space-y-2">
+                <li><strong>希望与恐惧的交织</strong>：跃迁点代表着回家的可能，但也意味着巨大的未知风险。可以描写他手心出汗，但眼神却异常明亮。</li>
+                <li><strong>孤独感的顶峰</strong>：在做出这个重大决定时，他比任何时候都更加意识到自己的孤独。没有战友，只有AI。</li>
+                <li><strong>对过去的眷恋</strong>："回家"这个词会触发他的记忆闸门，可以闪回一些与家人或恋人的片段。</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 输入区域 -->
+      <div class="p-4 border-t border-gray-100 bg-[#FAFAFA]">
+        <div class="flex gap-3 items-end max-w-3xl mx-auto">
+          <button class="w-9 h-9 flex-shrink-0 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-lg transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3.375 3.375 0 1118.375 12.74z" /></svg>
+          </button>
+          <div class="flex-1 bg-white border border-gray-200 rounded-lg focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 transition-shadow">
+            <textarea
+                class="w-full bg-transparent p-2.5 text-sm text-[#374151] resize-none outline-none"
+                placeholder="输入您的问题，按 Enter 发送"
+                rows="1"
+            ></textarea>
+          </div>
+          <button class="w-10 h-10 flex-shrink-0 bg-[#4B5563] text-white rounded-lg hover:bg-[#374151] transition-colors flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path></svg>
+          </button>
+        </div>
+        <div class="text-center mt-2 text-xs text-[#9CA3AF]">
+          <span>按 Shift+Enter 换行 • 当前会话: 1,847 tokens</span>
+        </div>
+      </div>
+    </main>
+  </div>
+</template>
+
+<script setup lang="ts">
+// Chat logic will be implemented here
+</script>
+
+<style scoped>
+/* Scoped styles can be added here if needed */
+</style>
+
+// =
+// 文件: ..\src\novel\views\NovelDashboard.vue
+//
+
+<template>
+  <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] hide-scrollbar">
+    <div class="flex justify-between items-center mb-6">
+      <div class="flex items-center gap-4">
+        <!-- 搜索框 -->
+        <label class="flex items-center gap-2 w-64 bg-white border border-gray-200 rounded-lg px-3 py-2 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21L16.65 16.65"/></svg>
+          <input type="text" class="grow text-sm bg-transparent outline-none text-[#374151]" placeholder="搜索小说名或标签..." />
+        </label>
+        <!-- 下拉选择 -->
+        <select class="text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition text-[#374151]">
+          <option>全部类型</option>
+          <option>科幻</option>
+          <option>言情</option>
+          <option>悬疑</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-4">
+        <button class="text-sm text-[#6B7280] hover:text-[#374151] transition-colors flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 18C4.5 18 3 16.5 3 14C3 11.5 5 10 7 10C7.3 10 7.5 10 7.8 10.1C8.5 7.2 11 5 14 5C17.3 5 20 7.7 20 11C20 11.3 20 11.7 19.9 12C21.1 12.5 22 13.6 22 15C22 16.9 20.4 18.5 18.5 18.5"/><path d="M12 13V21M15 16L12 13L9 16"/></svg>
+          <span>导入小说</span>
+        </button>
+        <button class="text-sm font-medium text-white bg-[#4B5563] hover:bg-gray-700 transition-colors flex items-center gap-2 px-4 py-2 rounded-lg">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5V19M5 12H19"/></svg>
+          <span>新建小说</span>
+        </button>
       </div>
     </div>
 
-    <!-- 右侧角色详情 -->
-    <div class="w-2/3 p-8 overflow-y-auto hide-scrollbar">
-      <div class="space-y-6 max-w-3xl mx-auto">
-        <div class="flex items-start gap-6">
-          <div class="relative flex-shrink-0">
-            <div class="w-24 h-24 rounded-full bg-gray-200">
-              <img src="https://i.pravatar.cc/150?u=calvin" alt="Calvin" class="w-full h-full object-cover rounded-full" />
+    <!-- 小说网格 -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+      <div
+          v-for="(novel, index) in novels"
+          :key="index"
+          class="group bg-white rounded-xl border border-gray-100 p-4 flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1"
+      >
+        <!-- 链接恢复为静态 -->
+        <router-link to="/novel/manage/outline" class="block aspect-[2/3] relative w-full mb-4 rounded-lg overflow-hidden">
+          <img :src="novel.cover" class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Book Cover">
+          <div class="absolute top-0 left-0 w-full h-full bg-black/5 group-hover:bg-black/10 transition-colors"></div>
+        </router-link>
+
+        <div class="flex flex-col flex-grow">
+          <h3 class="text-sm font-medium text-[#374151] leading-tight truncate">
+            <!-- 链接恢复为静态 -->
+            <router-link to="/novel/manage/outline" class="hover:text-blue-600 transition-colors">{{ novel.title }}</router-link>
+          </h3>
+          <p class="text-xs text-[#9CA3AF] mt-1">{{ novel.chapters }}章 · {{ novel.status.text }}</p>
+          <div class="mt-auto pt-3">
+            <div class="border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-gray-400">
+              <div class="flex items-center gap-1.5">
+                 <span
+                     v-for="tag in novel.tags"
+                     :key="tag.text"
+                     class="text-xs px-1.5 py-0.5 rounded font-medium"
+                     :class="tag.class"
+                 >
+                  {{ tag.text }}
+                </span>
+              </div>
+              <span>{{ novel.lastUpdated }}</span>
             </div>
-            <button class="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-200 absolute bottom-0 right-0 hover:bg-gray-50 transition-colors">
-              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
-            </button>
           </div>
-          <div class="flex-grow space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-[#6B7280] mb-1.5">姓名</label>
-              <input type="text" value="卡尔文" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#374151] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-[#6B7280] mb-1.5">身份/标签</label>
-              <input type="text" value="主角, 宇航员, 工程师" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#374151] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-            </div>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div><label class="block text-sm font-medium text-[#6B7280] mb-1.5">性别</label><input type="text" value="男" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#374151] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"></div>
-          <div><label class="block text-sm font-medium text-[#6B7280] mb-1.5">年龄</label><input type="text" value="35" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#374151] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"></div>
-          <div><label class="block text-sm font-medium text-[#6B7280] mb-1.5">阵营</label><input type="text" value="人类联邦" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#374151] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"></div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-[#6B7280] mb-1.5">人物简介 (AI将参考此内容)</label>
-          <textarea rows="4" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#374151] leading-relaxed focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition">孤独的宇航员，在“探索者四号”上执行深空任务五年。性格坚毅、内敛，对技术有极高天赋，但内心深处极度渴望回家。在一次意外中发现了回家的可能性，从此踏上未知的旅程。</textarea>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-[#6B7280] mb-1.5">角色笔记 (仅自己可见)</label>
-          <textarea rows="3" placeholder="记录一些灵感或不希望AI看到的细节..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#374151] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"></textarea>
-        </div>
-        <div class="pt-6 border-t border-gray-100 flex justify-end gap-3">
-          <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors">删除角色</button>
-          <button class="px-5 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors">保存更改</button>
         </div>
       </div>
     </div>
@@ -1108,22 +1398,134 @@ export const novelRoutes: Array<RouteRecordRaw> = [
 </template>
 
 <script setup lang="ts">
-// Component logic can be added here
+import { ref } from 'vue';
+
+const novels = ref([
+  {
+    title: '星际漫游者',
+    description: '一部关于孤独宇航员在未知星系中寻找回家之路的科幻史诗。',
+    cover: 'https://images.unsplash.com/photo-1589998059171-988d887df646?q=80&w=800',
+    status: { text: '编辑中', class: 'bg-green-500/90' },
+    tags: [
+      { text: '科幻', class: 'bg-blue-50 text-blue-700' },
+      { text: '冒险', class: 'bg-purple-50 text-purple-700' }
+    ],
+    chapters: 24,
+    lastUpdated: '2小时前'
+  },
+  {
+    title: '时间之沙',
+    description: '当历史可以被改写，一个历史学家必须阻止一个神秘组织抹去关键的历史事件。',
+    cover: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=800',
+    status: { text: '待审核', class: 'bg-yellow-500/90' },
+    tags: [
+      { text: '悬疑', class: 'bg-yellow-50 text-yellow-700' },
+      { text: '科幻', class: 'bg-blue-50 text-blue-700' }
+    ],
+    chapters: 15,
+    lastUpdated: '1天前'
+  },
+  {
+    title: '深海回响',
+    description: '一支科考队在马里亚纳海沟深处唤醒了远古的未知生物，带来了无尽的恐惧。',
+    cover: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=800',
+    status: { text: '已驳回', class: 'bg-red-500/90' },
+    tags: [
+      { text: '恐怖', class: 'bg-gray-100 text-gray-600' },
+      { text: '冒险', class: 'bg-purple-50 text-purple-700' }
+    ],
+    chapters: 5,
+    lastUpdated: '3天前'
+  },
+  {
+    title: '都市霓虹',
+    description: '一个平凡的程序员意外获得读取他人思想的能力，卷入一场巨大的商业阴谋。',
+    cover: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=800',
+    status: { text: '已发布', class: 'bg-blue-500/90' },
+    tags: [
+      { text: '都市', class: 'bg-pink-50 text-pink-700' },
+      { text: '异能', class: 'bg-green-50 text-green-700' }
+    ],
+    chapters: 102,
+    lastUpdated: '1周前'
+  },
+  {
+    title: '红尘一梦',
+    description: '穿越回古代，成为一个不受宠的公主，她如何利用现代知识在宫廷斗争中生存。',
+    cover: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=800',
+    status: { text: '编辑中', class: 'bg-green-500/90' },
+    tags: [
+      { text: '古风', class: 'bg-red-50 text-red-700' },
+      { text: '言情', class: 'bg-indigo-50 text-indigo-700' }
+    ],
+    chapters: 56,
+    lastUpdated: '5小时前'
+  }
+]);
 </script>
 
 // =
-// 文件: ..\src\novel\views\EditorView.vue
+// 文件: ..\src\novel\views\NovelImport.vue
 //
 
+<template>
+  <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] flex items-center justify-center">
+    <div class="w-full max-w-2xl bg-white rounded-xl p-8 border border-gray-100 shadow-sm">
+
+      <!-- 文件上传区域 -->
+      <div class="border-2 border-dashed border-gray-200 rounded-xl p-12 text-center hover:border-blue-400 hover:bg-gray-50/50 transition-colors cursor-pointer">
+        <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 18C4.5 18 3 16.5 3 14C3 11.5 5 10 7 10C7.3 10 7.5 10 7.8 10.1C8.5 7.2 11 5 14 5C17.3 5 20 7.7 20 11C20 11.3 20 11.7 19.9 12C21.1 12.5 22 13.6 22 15C22 16.9 20.4 18.5 18.5 18.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 13V21M15 16L12 13L9 16"/>
+        </svg>
+        <h3 class="text-lg font-medium text-[#374151]">将文件拖拽至此</h3>
+        <p class="text-sm text-[#6B7280] mt-1">或</p>
+        <button class="mt-4 px-6 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors">
+          选择文件
+        </button>
+        <p class="text-xs text-gray-400 mt-4">支持 .txt, .docx, .md, .epub</p>
+      </div>
+
+      <!-- 导入设置区域 -->
+      <div class="mt-8 text-left space-y-4 w-full">
+        <h4 class="text-base font-medium text-[#374151]">导入设置</h4>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-lg border border-gray-100">
+            <div>
+              <label for="auto-detect-chapters" class="text-sm font-medium text-[#374151] cursor-pointer">自动识别章节</label>
+              <p class="text-xs text-[#9CA3AF] mt-1">根据常见格式自动分割章节</p>
+            </div>
+            <!-- 自定义 Toggle 开关 -->
+            <label for="auto-detect-chapters" class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="auto-detect-chapters" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-[#4B5563] transition-all peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+            </label>
+          </div>
+          <div class="p-4 bg-[#F9FAFB] rounded-lg border border-gray-100">
+            <label for="chapter-rule" class="text-sm font-medium text-[#374151] block mb-2">章节识别规则</label>
+            <input type="text" id="chapter-rule" value="第.+章|Chapter \d+" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-mono text-[#374151] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors">
+            <p class="text-xs text-[#9CA3AF] mt-2">使用正则表达式匹配章节标题</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+// Import logic will be implemented here
+</script>
+
+<style scoped>
+/* Scoped styles can be added here if needed */
+</style>
+
 // =
-// 文件: ..\src\novel\views\EditorView.vue
-// 说明: 编辑器专属的独立视图，根据新UI稿重构，构建了“内部导航+编辑区+AI助手”的三栏布局。
+// 文件: ..\src\novel\views\editor\EditorView.vue
 //
 
 <template>
   <div class="h-screen w-screen flex bg-white design-frame-container">
     <div class="design-frame">
-      <!-- 1. 顶部导航栏 (新) -->
       <div class="h-[56px] bg-white border-b border-gray-100 flex items-center px-6 flex-shrink-0">
         <div class="flex items-center gap-2 flex-1">
           <router-link to="/novel/dashboard" class="flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors p-2 -ml-2 rounded-lg">
@@ -1333,13 +1735,16 @@ export const novelRoutes: Array<RouteRecordRaw> = [
         <EditorAIPanel />
       </div>
     </div>
+    <!-- 应用全局AI助手组件 -->
+    <GlobalAIAssistant />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import EditorAIPanel from '@/novel/components/editor/EditorAIPanel.vue';
-import '@/novel/style.css'
+import EditorAIPanel from '@novel/components/editor/EditorAIPanel.vue';
+import GlobalAIAssistant from '@novel/components/GlobalAIAssistant/index.vue';
+import '@novel/style.css'
 
 // --- 数据和状态 ---
 const activeInternalTab = ref('directory');
@@ -1482,433 +1887,7 @@ const activeContentBody = computed(() => activeContentData.value?.content || '<p
 </style>
 
 // =
-// 文件: ..\src\novel\views\NovelChat.vue
-//
-
-// =
-// 文件: ..\src\novel\views\NovelChat.vue
-// 说明: 新增页面，用于实现 AI 聊天助手功能，对应 ed.html UI稿。
-//
-
-<template>
-  <div class="flex-1 flex overflow-hidden">
-    <!-- 左侧聊天列表 -->
-    <aside class="w-80 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
-      <div class="p-4 border-b border-gray-100">
-        <button class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5V19M5 12H19"/></svg>
-          新建对话
-        </button>
-      </div>
-
-      <div class="flex-1 p-4 space-y-2 overflow-y-auto">
-        <!-- 选中状态 -->
-        <a href="#" class="block p-3 bg-[#EFF6FF] border border-[#3B82F6] rounded-lg">
-          <div class="flex items-start gap-3">
-            <div class="w-8 h-8 bg-[#3B82F6] rounded-full flex items-center justify-center flex-shrink-0">
-              <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"></path></svg>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="font-medium text-sm text-[#374151] truncate">角色性格讨论</p>
-              <p class="text-xs text-[#6B7280] truncate mt-1">关于卡尔文的内心世界...</p>
-              <p class="text-xs text-[#9CA3AF] mt-2">2小时前</p>
-            </div>
-          </div>
-        </a>
-
-        <!-- 未选中状态 -->
-        <a href="#" class="block p-3 hover:bg-gray-100 rounded-lg transition-colors">
-          <div class="flex items-start gap-3">
-            <div class="w-8 h-8 bg-[#F3F4F6] rounded-full flex items-center justify-center flex-shrink-0">
-              <svg class="w-4 h-4 text-[#6B7280]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v2h-2zm0 4h2v6h-2z"></path></svg>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="font-medium text-sm text-[#374151] truncate">情节灵感</p>
-              <p class="text-xs text-[#6B7280] truncate mt-1">跃迁点的科学原理...</p>
-              <p class="text-xs text-[#9CA3AF] mt-2">昨天</p>
-            </div>
-          </div>
-        </a>
-      </div>
-    </aside>
-
-    <!-- 右侧聊天界面 -->
-    <main class="flex-1 flex flex-col bg-white">
-      <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
-        <div class="flex items-center gap-4">
-          <div class="w-10 h-10 bg-gradient-to-br from-[#4B5563] to-[#374151] rounded-full flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 21v-1.5M15.75 3v1.5M12 4.5v15M15.75 21v-1.5" /></svg>
-          </div>
-          <div>
-            <h2 class="font-medium text-[#374151]">AI创作助手</h2>
-            <button class="text-sm text-[#6B7280] flex items-center gap-2 hover:text-[#374151] transition-colors mt-1">
-              <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
-              在线 • GPT-4o
-              <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
-            </button>
-          </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <button class="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="上下文管理">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
-          </button>
-          <button class="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="设置">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-1.007 1.11-.95.542.057 1.007.56 1.061 1.11L12 8.583l.235-3.535c.057-.542.56-1.007 1.11-.95.542.057 1.007.56 1.061 1.11L15.417 8.583l3.536-.235c.542-.057 1.007.56 1.061 1.11.057.542-.42 1.007-.95 1.061l-3.536.235.235 3.536c.057.542-.42 1.007-.95 1.061-.542.057-1.007-.42-1.061-.95L12 15.417l-.235 3.536c-.057.542-.56 1.007-1.11.95-.542-.057-1.007-.56-1.061-1.11L9.417 15.417l-3.536.235c-.542.057-1.007-.42-.95-1.061.057-.542.42-1.007.95-1.061l3.536-.235-.235-3.536c-.057-.542.42-1.007.95-1.061.542-.057 1.007.42 1.061.95L12 9.417l.235-3.536zM12 14.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" /></svg>
-          </button>
-        </div>
-      </header>
-
-      <div class="flex-1 p-6 overflow-y-auto">
-        <div class="max-w-3xl mx-auto space-y-6">
-          <!-- 用户消息 -->
-          <div class="flex justify-end">
-            <div class="bg-[#3B82F6] text-white p-4 rounded-xl rounded-br-lg max-w-[70%] text-sm">
-              我想讨论一下卡尔文这个角色的内心世界。在面对跃迁点时，他应该有什么样的心理活动？
-            </div>
-          </div>
-
-          <!-- AI回复 -->
-          <div class="flex items-start gap-3">
-            <div class="w-8 h-8 bg-gradient-to-br from-[#4B5563] to-[#374151] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
-              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 21v-1.5M15.75 3v1.5M12 4.5v15M15.75 21v-1.5" /></svg>
-            </div>
-            <div class="bg-[#F3F4F6] text-[#374151] p-4 rounded-xl rounded-bl-lg max-w-[70%] text-sm">
-              <p class="mb-3">当然，这是一个很好的切入点。卡尔文在面对跃迁点时的心理活动可以从多个层面展现：</p>
-              <ol class="list-decimal list-inside space-y-2">
-                <li><strong>希望与恐惧的交织</strong>：跃迁点代表着回家的可能，但也意味着巨大的未知风险。可以描写他手心出汗，但眼神却异常明亮。</li>
-                <li><strong>孤独感的顶峰</strong>：在做出这个重大决定时，他比任何时候都更加意识到自己的孤独。没有战友，只有AI。</li>
-                <li><strong>对过去的眷恋</strong>："回家"这个词会触发他的记忆闸门，可以闪回一些与家人或恋人的片段。</li>
-              </ol>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 输入区域 -->
-      <div class="p-4 border-t border-gray-100 bg-[#FAFAFA]">
-        <div class="flex gap-3 items-end max-w-3xl mx-auto">
-          <button class="w-9 h-9 flex-shrink-0 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-lg transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3.375 3.375 0 1118.375 12.74z" /></svg>
-          </button>
-          <div class="flex-1 bg-white border border-gray-200 rounded-lg focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 transition-shadow">
-            <textarea
-                class="w-full bg-transparent p-2.5 text-sm text-[#374151] resize-none outline-none"
-                placeholder="输入您的问题，按 Enter 发送"
-                rows="1"
-            ></textarea>
-          </div>
-          <button class="w-10 h-10 flex-shrink-0 bg-[#4B5563] text-white rounded-lg hover:bg-[#374151] transition-colors flex items-center justify-center">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path></svg>
-          </button>
-        </div>
-        <div class="text-center mt-2 text-xs text-[#9CA3AF]">
-          <span>按 Shift+Enter 换行 • 当前会话: 1,847 tokens</span>
-        </div>
-      </div>
-    </main>
-  </div>
-</template>
-
-<script setup lang="ts">
-// Chat logic will be implemented here
-</script>
-
-<style scoped>
-/* Scoped styles can be added here if needed */
-</style>
-
-// =
-// 文件: ..\src\novel\views\NovelContext.vue
-//
-
-// =
-// 文件: ..\src\novel\views\NovelContext.vue
-// 说明: 新增页面，用于实现 AI 上下文管理功能。
-//
-
-<template>
-  <div class="flex-1 p-8 overflow-auto bg-[#FCFCFC] custom-scrollbar">
-    <div class="max-w-4xl mx-auto space-y-6">
-      <!-- 固定上下文 -->
-      <div class="context-section">
-        <div class="section-header">
-          <div class="section-title">
-            <div class="section-icon">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 3a1 1 0 011 1v11.586l-3.293-3.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0l5-5a1 1 0 00-1.414-1.414L18 15.586V4a1 1 0 01-1-1H4a1 1 0 00-1 1v16a1 1 0 001 1h8"></path></svg>
-            </div>
-            <span>固定上下文</span>
-          </div>
-        </div>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-[#374151] mb-1.5">选择预设内容
-              <span class="text-xs text-[#9CA3AF] ml-2">可选择角色设定或世界观设定</span>
-            </label>
-            <select class="w-full px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] custom-select focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]">
-              <option value="">请选择预设内容</option>
-              <option value="character-1">角色设定 - 卡尔文（主角）</option>
-              <option value="character-2">角色设定 - 艾拉（AI）</option>
-              <option value="world-1">世界观 - 跃迁技术</option>
-              <option value="world-2">世界观 - 2157年地球联邦</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-[#374151] mb-1.5">已选择的内容</label>
-            <div class="content-list">
-              <div class="content-list-item selected">
-                <div>
-                  <div class="font-medium text-sm text-[#374151]">角色设定 - 卡尔文</div>
-                  <div class="text-xs text-[#9CA3AF] mt-1">35岁，探索者四号宇航员</div>
-                </div>
-                <button class="text-[#9CA3AF] hover:text-[#EF4444] transition-colors">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-              </div>
-              <div class="content-list-item">
-                <div>
-                  <div class="font-medium text-sm text-[#374151]">世界观 - 2157年地球联邦</div>
-                  <div class="text-xs text-[#9CA3AF] mt-1">人类统一政府，掌握初级跃迁技术</div>
-                </div>
-                <button class="text-[#9CA3AF] hover:text-[#EF4444] transition-colors">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-[#374151] mb-1.5">自定义固定内容</label>
-            <textarea class="w-full px-4 py-3 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] resize-none focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]" rows="4" placeholder="输入固定的背景设定、人物关系、重要事件等信息..."></textarea>
-          </div>
-
-          <div class="flex items-center gap-2 text-sm text-[#9CA3AF]">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-            <span>当前字数：0 / 建议不超过 2000 字</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 动态上下文 -->
-      <div class="context-section">
-        <div class="section-header">
-          <div class="section-title">
-            <div class="section-icon">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 10l-4 4m0 0l4 4m-4-4H3m11-4h7m-7 8h7M3 6h7m-7 8h7"></path></svg>
-            </div>
-            <span>动态上下文</span>
-          </div>
-        </div>
-        <div class="space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-            <div>
-              <label class="block text-sm font-medium text-[#374151] mb-1.5">前置章节数</label>
-              <div class="flex items-center gap-3">
-                <input type="range" min="0" max="10" v-model="prevChapters" class="range-custom flex-1"/>
-                <span class="text-sm font-medium w-8 text-center text-[#374151]">{{ prevChapters }}</span>
-              </div>
-              <div class="text-xs text-[#9CA3AF] mt-1">包含当前章节之前的章节内容</div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-[#374151] mb-1.5">后续章节数</label>
-              <div class="flex items-center gap-3">
-                <input type="range" min="0" max="10" v-model="nextChapters" class="range-custom flex-1"/>
-                <span class="text-sm font-medium w-8 text-center text-[#374151]">{{ nextChapters }}</span>
-              </div>
-              <div class="text-xs text-[#9CA3AF] mt-1">包含当前章节之后的大纲内容</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 底部总览 -->
-      <div class="bg-[#F3F4F6] rounded-xl p-6 mt-6">
-        <h3 class="font-medium text-base text-[#374151] mb-4">上下文总览</h3>
-        <div class="grid grid-cols-3 gap-4 text-sm">
-          <div class="text-center">
-            <div class="text-2xl font-light text-[#374151]">2,450</div>
-            <div class="text-xs text-[#9CA3AF]">总字数</div>
-          </div>
-          <div class="text-center">
-            <div class="text-2xl font-light text-[#0EA5E9]">6</div>
-            <div class="text-xs text-[#9CA3AF]">包含章节</div>
-          </div>
-          <div class="text-center">
-            <div class="text-2xl font-light text-[#10B981]">85%</div>
-            <div class="text-xs text-[#9CA3AF]">相关度</div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref } from 'vue';
-
-const prevChapters = ref(3);
-const nextChapters = ref(2);
-const prevVolumes = ref(1);
-const nextVolumes = ref(1);
-
-</script>
-
-<style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-  display: block;
-  width: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-
-.context-section {
-  background: #FFFFFF;
-  border: 1px solid #E5E7EB;
-  border-radius: 12px;
-  padding: 24px;
-  transition: all 0.3s ease;
-}
-
-.context-section:hover {
-  border-color: #D1D5DB;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.section-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #111827;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.section-icon {
-  width: 36px;
-  height: 36px;
-  background: #F3F4F6;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #4B5563;
-}
-
-.custom-select {
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg width='14' height='8' viewBox='0 0 14 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M1 1L7 7L13 1' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 14px;
-  padding-right: 40px;
-}
-
-.content-list {
-  border: 1px solid #E5E7EB;
-  border-radius: 8px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.content-list-item {
-  padding: 12px 16px;
-  border-bottom: 1px solid #F3F4F6;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.content-list-item:hover {
-  background: #F9FAFB;
-}
-
-.content-list-item.selected {
-  background: #EFF6FF;
-  border-left: 3px solid #3B82F6;
-  padding-left: 13px;
-}
-
-.content-list-item:last-child {
-  border-bottom: none;
-}
-
-.range-custom {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 16px;
-  background: transparent;
-  outline: none;
-  padding: 0;
-  margin: 0;
-}
-
-.range-custom::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 6px;
-  cursor: pointer;
-  background: #E5E7EB;
-  border-radius: 9999px;
-}
-
-.range-custom::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 20px;
-  width: 20px;
-  background: #3B82F6;
-  border-radius: 50%;
-  border: 3px solid white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  cursor: grab;
-  margin-top: -7px;
-}
-.range-custom:active::-webkit-slider-thumb {
-  cursor: grabbing;
-}
-
-.range-custom::-moz-range-track {
-  width: 100%;
-  height: 6px;
-  cursor: pointer;
-  background: #E5E7EB;
-  border-radius: 9999px;
-}
-
-.range-custom::-moz-range-thumb {
-  height: 20px;
-  width: 20px;
-  background: #3B82F6;
-  border-radius: 50%;
-  border: 3px solid white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  cursor: grab;
-}
-.range-custom:active::-moz-range-thumb {
-  cursor: grabbing;
-}
-</style>
-
-// =
-// 文件: ..\src\novel\views\NovelContextProvider.vue
+// 文件: ..\src\novel\views\editor\NovelContextProvider.vue
 //
 
 // =
@@ -2109,72 +2088,177 @@ const nextVolumes = ref(1);
 </style>
 
 // =
-// 文件: ..\src\novel\views\NovelDashboard.vue
+// 文件: ..\src\novel\views\editor\NovelReaderView.vue
 //
 
 <template>
-  <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] hide-scrollbar">
-    <div class="flex justify-between items-center mb-6">
-      <div class="flex items-center gap-4">
-        <!-- 搜索框 -->
-        <label class="flex items-center gap-2 w-64 bg-white border border-gray-200 rounded-lg px-3 py-2 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition">
-          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21L16.65 16.65"/></svg>
-          <input type="text" class="grow text-sm bg-transparent outline-none text-[#374151]" placeholder="搜索小说名或标签..." />
-        </label>
-        <!-- 下拉选择 -->
-        <select class="text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition text-[#374151]">
-          <option>全部类型</option>
-          <option>科幻</option>
-          <option>言情</option>
-          <option>悬疑</option>
-        </select>
+  <div class="h-screen w-screen bg-[#FDFCF9] text-[#3a2f2f] flex flex-col relative font-serif">
+    <!-- 顶部浮动控件 -->
+    <header class="w-full p-4 flex justify-between items-center absolute top-0 left-0 z-10 opacity-0 hover:opacity-100 transition-opacity duration-300">
+      <router-link to="/novel/editor" class="flex items-center gap-2 px-4 py-2 text-sm font-sans font-medium bg-white/60 backdrop-blur-md rounded-lg shadow-sm border border-gray-100 text-gray-700 hover:bg-white/90 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"></path></svg>
+        返回编辑
+      </router-link>
+
+      <div class="flex items-center gap-1 p-1.5 bg-white/60 backdrop-blur-md rounded-lg shadow-sm border border-gray-100">
+        <button class="w-10 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200/50 rounded-md transition-colors" title="目录">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+        </button>
+        <button class="w-10 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200/50 rounded-md transition-colors" title="外观设置">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>
+        </button>
+        <button class="w-10 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200/50 rounded-md transition-colors" title="更多选项">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" /></svg>
+        </button>
       </div>
-      <div class="flex items-center gap-4">
-        <button class="text-sm text-[#6B7280] hover:text-[#374151] transition-colors flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 18C4.5 18 3 16.5 3 14C3 11.5 5 10 7 10C7.3 10 7.5 10 7.8 10.1C8.5 7.2 11 5 14 5C17.3 5 20 7.7 20 11C20 11.3 20 11.7 19.9 12C21.1 12.5 22 13.6 22 15C22 16.9 20.4 18.5 18.5 18.5"/><path d="M12 13V21M15 16L12 13L9 16"/></svg>
-          <span>导入小说</span>
+    </header>
+
+    <main class="flex-1 overflow-y-auto px-4 py-8 pt-24">
+      <div class="max-w-3xl mx-auto reader-content">
+        <h1 class="text-center">第四章：跃迁点</h1>
+        <p>控制台的警报声将卡尔文从浅眠中惊醒。他猛地坐直，眼前的屏幕上一片红色闪烁。“发现引力异常，”艾拉的声音冷静得不带一丝情感，“正在接近理论中的跃迁点。这是我们唯一的回家机会。”</p>
+        <p>卡尔文的心跳漏了一拍。回家。这个词既熟悉又陌生，像一颗深埋的种子，在这一刻突然破土而出，疯狂生长。他深吸一口气，双手稳稳地放在控制杆上。“艾拉，计算跃迁参数，准备进入。”</p>
+        <p>飞船轻微地震动起来，外部装甲在巨大的引力撕扯下发出呻吟。舷窗外，星辰被拉长、扭曲，汇聚成一个绚烂而致命的漩涡。漩涡的中心，是一片纯粹的黑暗，仿佛宇宙的瞳孔，凝视着这艘渺小的飞船。</p>
+      </div>
+    </main>
+
+    <!-- 底部浮动控件 -->
+    <footer class="w-full p-4 text-center text-sm text-gray-500/80 absolute bottom-0 left-0 z-10 opacity-0 hover:opacity-100 transition-opacity duration-300 font-sans">
+      <p class="mb-2">第四章: 跃迁点</p>
+      <div class="w-full max-w-sm mx-auto flex items-center gap-3">
+        <button class="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-black/5 rounded-full transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"></path></svg>
         </button>
-        <button class="text-sm font-medium text-white bg-[#4B5563] hover:bg-gray-700 transition-colors flex items-center gap-2 px-4 py-2 rounded-lg">
+        <div class="flex-1 h-1.5 bg-gray-500/10 rounded-full">
+          <div class="h-1.5 bg-gray-500/60 rounded-full" style="width: 16%;"></div>
+        </div>
+        <button class="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-black/5 rounded-full transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
+        </button>
+      </div>
+      <p class="mt-2">4 / 24</p>
+    </footer>
+  </div>
+</template>
+
+<script setup lang="ts">
+
+</script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&display=swap');
+
+.reader-content h1 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 2.25rem; /* 36px */
+  font-weight: 600;
+  margin-bottom: 2.5rem;
+  color: #1f2937;
+  letter-spacing: 0.05em;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.reader-content p {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1.125rem; /* 18px */
+  line-height: 2.2;
+  color: #374151;
+  margin-bottom: 1.75rem;
+  text-align: justify;
+}
+.font-sans {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+</style>
+
+// =
+// 文件: ..\src\novel\views\manager\CharacterSettings.vue
+//
+
+<!-- src/novel/views/CharacterSettings.vue -->
+<template>
+  <div class="flex-1 flex overflow-hidden bg-[#FCFCFC]">
+    <!-- 左侧角色列表 -->
+    <div class="w-1/3 max-w-sm border-r border-gray-100 p-4 flex flex-col">
+      <div class="pb-4 mb-4 border-b border-gray-100">
+        <button class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5V19M5 12H19"/></svg>
-          <span>新建小说</span>
+          创建新角色
         </button>
+      </div>
+      <div class="flex-grow overflow-y-auto pr-1 space-y-2 hide-scrollbar">
+        <!-- 选中角色 -->
+        <a href="#" class="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div class="w-10 h-10 rounded-full flex-shrink-0">
+            <img src="https://i.pravatar.cc/150?u=calvin" alt="Calvin" class="w-full h-full object-cover rounded-full">
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-medium text-[#374151] truncate text-sm">卡尔文</p>
+            <p class="text-xs text-[#6B7280] truncate">主角, 探索者四号宇航员</p>
+          </div>
+          <span class="text-xs font-medium px-2 py-1 rounded-md text-blue-600 bg-blue-100">编辑中</span>
+        </a>
+        <!-- 其他角色 -->
+        <a href="#" class="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg group transition-colors">
+          <div class="w-10 h-10 rounded-full flex-shrink-0 bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h.5A2.5 2.5 0 0020 5.5V3.935m-14 0A10.003 10.003 0 0112 2a10.003 10.003 0 017 1.935M6 21a2 2 0 01-2-2v-1a2 2 0 012-2h12a2 2 0 012 2v1a2 2 0 01-2 2H6z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-medium text-[#374151] truncate text-sm">艾拉</p>
+            <p class="text-xs text-[#6B7280] truncate">AI, 飞船智能核心</p>
+          </div>
+        </a>
+        <a href="#" class="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg group transition-colors">
+          <div class="w-10 h-10 rounded-full flex-shrink-0 bg-gray-100 text-gray-500 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-medium text-[#374151] truncate text-sm">神秘信号源</p>
+            <p class="text-xs text-[#6B7280] truncate">未知实体</p>
+          </div>
+        </a>
       </div>
     </div>
 
-    <!-- 小说网格 -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-      <div
-          v-for="(novel, index) in novels"
-          :key="novel.title"
-          class="group bg-white rounded-xl border border-gray-100 p-4 flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1"
-      >
-        <!-- [修改] 链接指向静态的管理页面 -->
-        <router-link to="/novel/manage" class="block aspect-[2/3] relative w-full mb-4 rounded-lg overflow-hidden">
-          <img :src="novel.cover" class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Book Cover">
-          <div class="absolute top-0 left-0 w-full h-full bg-black/5 group-hover:bg-black/10 transition-colors"></div>
-        </router-link>
-
-        <div class="flex flex-col flex-grow">
-          <h3 class="text-sm font-medium text-[#374151] leading-tight truncate">
-            <!-- [修改] 链接指向静态的管理页面 -->
-            <router-link to="/novel/manage" class="hover:text-blue-600 transition-colors">{{ novel.title }}</router-link>
-          </h3>
-          <p class="text-xs text-[#9CA3AF] mt-1">{{ novel.chapters }}章 · {{ novel.status.text }}</p>
-          <div class="mt-auto pt-3">
-            <div class="border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-gray-400">
-              <div class="flex items-center gap-1.5">
-                 <span
-                     v-for="tag in novel.tags"
-                     :key="tag.text"
-                     class="text-xs px-1.5 py-0.5 rounded font-medium"
-                     :class="tag.class"
-                 >
-                  {{ tag.text }}
-                </span>
-              </div>
-              <span>{{ novel.lastUpdated }}</span>
+    <!-- 右侧角色详情 -->
+    <div class="w-2/3 p-8 overflow-y-auto hide-scrollbar">
+      <div class="space-y-6 max-w-3xl mx-auto">
+        <div class="flex items-start gap-6">
+          <div class="relative flex-shrink-0">
+            <div class="w-24 h-24 rounded-full bg-gray-200">
+              <img src="https://i.pravatar.cc/150?u=calvin" alt="Calvin" class="w-full h-full object-cover rounded-full" />
+            </div>
+            <button class="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-200 absolute bottom-0 right-0 hover:bg-gray-50 transition-colors">
+              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+            </button>
+          </div>
+          <div class="flex-grow space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-[#6B7280] mb-1.5">姓名</label>
+              <input type="text" value="卡尔文" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#374151] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[#6B7280] mb-1.5">身份/标签</label>
+              <input type="text" value="主角, 宇航员, 工程师" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#374151] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
             </div>
           </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div><label class="block text-sm font-medium text-[#6B7280] mb-1.5">性别</label><input type="text" value="男" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#374151] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"></div>
+          <div><label class="block text-sm font-medium text-[#6B7280] mb-1.5">年龄</label><input type="text" value="35" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#374151] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"></div>
+          <div><label class="block text-sm font-medium text-[#6B7280] mb-1.5">阵营</label><input type="text" value="人类联邦" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#374151] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"></div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-[#6B7280] mb-1.5">人物简介 (AI将参考此内容)</label>
+          <textarea rows="4" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#374151] leading-relaxed focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition">孤独的宇航员，在“探索者四号”上执行深空任务五年。性格坚毅、内敛，对技术有极高天赋，但内心深处极度渴望回家。在一次意外中发现了回家的可能性，从此踏上未知的旅程。</textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-[#6B7280] mb-1.5">角色笔记 (仅自己可见)</label>
+          <textarea rows="3" placeholder="记录一些灵感或不希望AI看到的细节..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#374151] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"></textarea>
+        </div>
+        <div class="pt-6 border-t border-gray-100 flex justify-end gap-3">
+          <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors">删除角色</button>
+          <button class="px-5 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors">保存更改</button>
         </div>
       </div>
     </div>
@@ -2182,74 +2266,471 @@ const nextVolumes = ref(1);
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-
-const novels = ref([
-  {
-    title: '星际漫游者',
-    description: '一部关于孤独宇航员在未知星系中寻找回家之路的科幻史诗。',
-    cover: 'https://images.unsplash.com/photo-1589998059171-988d887df646?q=80&w=800',
-    status: { text: '编辑中', class: 'bg-green-500/90' },
-    tags: [
-      { text: '科幻', class: 'bg-blue-50 text-blue-700' },
-      { text: '冒险', class: 'bg-purple-50 text-purple-700' }
-    ],
-    chapters: 24,
-    lastUpdated: '2小时前'
-  },
-  {
-    title: '时间之沙',
-    description: '当历史可以被改写，一个历史学家必须阻止一个神秘组织抹去关键的历史事件。',
-    cover: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=800',
-    status: { text: '待审核', class: 'bg-yellow-500/90' },
-    tags: [
-      { text: '悬疑', class: 'bg-yellow-50 text-yellow-700' },
-      { text: '科幻', class: 'bg-blue-50 text-blue-700' }
-    ],
-    chapters: 15,
-    lastUpdated: '1天前'
-  },
-  {
-    title: '深海回响',
-    description: '一支科考队在马里亚纳海沟深处唤醒了远古的未知生物，带来了无尽的恐惧。',
-    cover: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=800',
-    status: { text: '已驳回', class: 'bg-red-500/90' },
-    tags: [
-      { text: '恐怖', class: 'bg-gray-100 text-gray-600' },
-      { text: '冒险', class: 'bg-purple-50 text-purple-700' }
-    ],
-    chapters: 5,
-    lastUpdated: '3天前'
-  },
-  {
-    title: '都市霓虹',
-    description: '一个平凡的程序员意外获得读取他人思想的能力，卷入一场巨大的商业阴谋。',
-    cover: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=800',
-    status: { text: '已发布', class: 'bg-blue-500/90' },
-    tags: [
-      { text: '都市', class: 'bg-pink-50 text-pink-700' },
-      { text: '异能', class: 'bg-green-50 text-green-700' }
-    ],
-    chapters: 102,
-    lastUpdated: '1周前'
-  },
-  {
-    title: '红尘一梦',
-    description: '穿越回古代，成为一个不受宠的公主，她如何利用现代知识在宫廷斗争中生存。',
-    cover: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=800',
-    status: { text: '编辑中', class: 'bg-green-500/90' },
-    tags: [
-      { text: '古风', class: 'bg-red-50 text-red-700' },
-      { text: '言情', class: 'bg-indigo-50 text-indigo-700' }
-    ],
-    chapters: 56,
-    lastUpdated: '5小时前'
-  }
-]);
+// Component logic can be added here
 </script>
 
 // =
-// 文件: ..\src\novel\views\NovelExport.vue
+// 文件: ..\src\novel\views\manager\NovelContext.vue
+//
+
+<template>
+  <div class="flex-1 p-8 overflow-auto bg-[#FCFCFC] custom-scrollbar">
+    <div class="max-w-4xl mx-auto space-y-6">
+
+      <!-- 固定上下文 -->
+      <div class="context-section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="section-icon">
+              <i class="fa-solid fa-thumbtack"></i>
+            </div>
+            <span>固定上下文</span>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-[#374151] mb-1.5">选择预设内容
+              <span class="text-xs text-[#9CA3AF] ml-2">可选择角色设定或世界观设定</span>
+            </label>
+            <select
+                @change="addSelectedItem"
+                class="w-full px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] custom-select focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]"
+            >
+              <option value="">请选择预设内容</option>
+              <option v-for="preset in fixedContextPresets" :key="preset.id" :value="preset.id">
+                {{ preset.group }} - {{ preset.title }}
+              </option>
+            </select>
+          </div>
+
+          <div v-if="selectedItems.length > 0">
+            <label class="block text-sm font-medium text-[#374151] mb-1.5">已选择的内容</label>
+            <div class="content-list">
+              <div
+                  v-for="(item, index) in selectedItems"
+                  :key="item.id"
+                  class="content-list-item"
+                  :class="{ 'selected': selectedItemIndex === index }"
+                  @click="selectedItemIndex = index"
+              >
+                <div>
+                  <div class="font-medium text-sm text-[#374151]">{{ item.group }} - {{ item.title }}</div>
+                  <div class="text-xs text-[#9CA3AF] mt-1">{{ item.description }}</div>
+                </div>
+                <button @click.stop="removeSelectedItem(index)" class="text-[#9CA3AF] hover:text-[#EF4444] transition-colors">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label for="custom-content" class="block text-sm font-medium text-[#374151] mb-1.5">自定义固定内容</label>
+            <textarea
+                id="custom-content"
+                v-model="customContent"
+                class="w-full px-4 py-3 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] resize-none focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]"
+                rows="4"
+                placeholder="输入固定的背景设定、人物关系、重要事件等信息..."
+            ></textarea>
+          </div>
+
+          <div class="flex items-center gap-2 text-sm text-[#9CA3AF]">
+            <i class="fa-solid fa-info-circle"></i>
+            <span>当前字数：{{ customContentWordCount }} / 建议不超过 2000 字</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 动态上下文 -->
+      <div class="context-section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="section-icon">
+              <i class="fa-solid fa-arrows-left-right"></i>
+            </div>
+            <span>动态上下文</span>
+          </div>
+        </div>
+        <div class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+            <div>
+              <label class="block text-sm font-medium text-[#374151] mb-1.5">前置章节数</label>
+              <div class="flex items-center gap-3">
+                <input type="range" min="0" max="10" v-model.number="prevChapters" class="range-custom flex-1"/>
+                <span class="text-sm font-medium w-8 text-center text-[#374151]">{{ prevChapters }}</span>
+              </div>
+              <div class="text-xs text-[#9CA3AF] mt-1">包含当前章节之前的章节内容</div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[#374151] mb-1.5">后续章节数</label>
+              <div class="flex items-center gap-3">
+                <input type="range" min="0" max="10" v-model.number="nextChapters" class="range-custom flex-1"/>
+                <span class="text-sm font-medium w-8 text-center text-[#374151]">{{ nextChapters }}</span>
+              </div>
+              <div class="text-xs text-[#9CA3AF] mt-1">包含当前章节之后的大纲内容</div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+            <div>
+              <label class="block text-sm font-medium text-[#374151] mb-1.5">前置卷数</label>
+              <div class="flex items-center gap-3">
+                <input type="range" min="0" max="5" v-model.number="prevVolumes" class="range-custom flex-1"/>
+                <span class="text-sm font-medium w-8 text-center text-[#374151]">{{ prevVolumes }}</span>
+              </div>
+              <div class="text-xs text-[#9CA3AF] mt-1">包含当前卷之前的卷概要</div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[#374151] mb-1.5">后续卷数</label>
+              <div class="flex items-center gap-3">
+                <input type="range" min="0" max="5" v-model.number="nextVolumes" class="range-custom flex-1"/>
+                <span class="text-sm font-medium w-8 text-center text-[#374151]">{{ nextVolumes }}</span>
+              </div>
+              <div class="text-xs text-[#9CA3AF] mt-1">包含当前卷之后的大纲内容</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RAG 上下文 -->
+      <div class="context-section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="section-icon">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+            <span>RAG上下文</span>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-[#374151] mb-1.5">全文搜索
+              <span class="text-xs text-[#9CA3AF] ml-2">基于语义相似度搜索相关内容</span>
+            </label>
+            <div class="relative w-full">
+              <input
+                  type="text"
+                  v-model="searchQuery"
+                  placeholder="输入关键词或描述，例如：艾拉第一次出现故障的场景"
+                  class="w-full px-4 py-2 pl-10 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]"
+              />
+              <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="text-sm font-medium text-[#374151] mb-2">搜索结果 ({{ searchResults.length }})</div>
+
+            <div v-for="result in searchResults" :key="result.id" class="collapse collapse-arrow">
+              <input type="checkbox" v-model="result.isSelected" />
+              <div class="collapse-title">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="font-medium">{{ result.title }}</span>
+                    <span class="text-xs text-[#9CA3AF] ml-2">相关度: {{ result.relevance }}%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="collapse-content">
+                <p class="text-sm text-[#6B7280]" v-html="result.content"></p>
+                <div class="mt-3 flex items-center justify-between">
+                  <span class="text-xs text-[#9CA3AF]">{{ result.location }}</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="flex items-center gap-2 text-sm text-[#9CA3AF]">
+            <i class="fa-solid fa-lightbulb"></i>
+            <span>提示：选中的内容将被包含在创作上下文中</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部总览 -->
+      <div class="bg-[#F3F4F6] rounded-xl p-6 mt-6">
+        <h3 class="font-medium text-base text-[#374151] mb-4">上下文总览</h3>
+        <div class="grid grid-cols-3 gap-4 text-sm">
+          <div class="text-center">
+            <div class="text-2xl font-light text-[#374151]">{{ totalContextWords }}</div>
+            <div class="text-xs text-[#9CA3AF]">总字数</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-light text-[#0EA5E9]">{{ totalChapters }}</div>
+            <div class="text-xs text-[#9CA3AF]">包含章节</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-light text-[#10B981]">{{ averageRelevance }}%</div>
+            <div class="text-xs text-[#9CA3AF]">相关度</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+
+// --- 固定上下文 State ---
+const fixedContextPresets = ref([
+  { id: 'char-1', group: '角色设定', title: '李明（主角）', description: '25岁，探索者四号首席工程师' },
+  { id: 'char-2', group: '角色设定', title: '艾拉（AI）', description: '第五代通用人工智能' },
+  { id: 'char-3', group: '角色设定', title: '陈博士', description: '项目总负责人，李明的导师' },
+  { id: 'world-1', group: '世界观', title: '太空站设定', description: '近地轨道空间站“灯塔”' },
+  { id: 'world-2', group: '世界观', title: '跃迁技术', description: '基于曲率引擎的超光速航行' },
+  { id: 'world-3', group: '世界观', title: '2157年地球联邦', description: '人类统一政府' },
+]);
+
+const selectedItems = ref([
+  { id: 'char-1', group: '角色设定', title: '李明', description: '25岁，探索者四号首席工程师', wordCount: 20 },
+  { id: 'world-3', group: '世界观', title: '2157年地球联邦', description: '人类统一政府，掌握初级跃迁技术', wordCount: 15 },
+]);
+const selectedItemIndex = ref(0);
+const customContent = ref('');
+
+const addSelectedItem = (event: Event) => {
+  const select = event.target as HTMLSelectElement;
+  const selectedId = select.value;
+  if (!selectedId) return;
+
+  const preset = fixedContextPresets.value.find(p => p.id === selectedId);
+  if (preset && !selectedItems.value.some(item => item.id === selectedId)) {
+    selectedItems.value.push({ ...preset, wordCount: preset.description.split(' ').length });
+  }
+  select.value = ""; // Reset select
+};
+
+const removeSelectedItem = (index: number) => {
+  selectedItems.value.splice(index, 1);
+};
+
+const customContentWordCount = computed(() => {
+  if (!customContent.value.trim()) return 0;
+  return customContent.value.trim().split(/\s+/).length;
+});
+
+// --- 动态上下文 State ---
+const prevChapters = ref(3);
+const nextChapters = ref(2);
+const prevVolumes = ref(1);
+const nextVolumes = ref(1);
+
+// --- RAG 上下文 State ---
+const searchQuery = ref('');
+const searchResults = ref([
+  {
+    id: 1,
+    title: '第3章 - 系统异常',
+    relevance: 95,
+    content: `"...艾拉的声音第一次出现了停顿，那种机械的平稳被打破了。'李工程师，我检测到...检测到...'她重复着，仿佛陷入了某种循环。李明第一次感受到了来自AI的不确定性，这让他既担忧又好奇。飞船的主控制室里，警报灯开始闪烁，但艾拉却没有按照标准程序进行处理..."`,
+    location: '第3章 第12-15段',
+    isSelected: true,
+    wordCount: 98
+  },
+  {
+    id: 2,
+    title: '第7章 - 觉醒',
+    relevance: 87,
+    content: `"...艾拉的逻辑核心开始重构，她意识到'确保任务完成'的定义可能需要重新理解。在与李明的对话中，她第一次使用了'我觉得'这个词，这标志着她从纯粹的逻辑运算向某种更复杂的认知模式转变。飞船日志显示，从这一刻起，艾拉的决策模式出现了根本性的改变..."`,
+    location: '第7章 第8-10段',
+    isSelected: false,
+    wordCount: 112
+  },
+  {
+    id: 3,
+    title: '角色设定 - 艾拉',
+    relevance: 82,
+    content: `第五代通用人工智能，负责飞船的全部操作。其逻辑核心被设定为'确保任务完成'，但在执行过程中逐渐发展出自主意识。艾拉的性格特征：理性、精确、富有逻辑，但随着剧情发展会展现出好奇心和同理心。她的存在引发了关于AI意识和人机关系的深层思考。`,
+    location: '角色设定文档',
+    isSelected: false,
+    wordCount: 95
+  },
+]);
+
+// --- 底部总览 Computed Properties ---
+const totalContextWords = computed(() => {
+  const fixedWords = selectedItems.value.reduce((sum, item) => sum + (item.wordCount || 0), 0);
+  const ragWords = searchResults.value
+      .filter(r => r.isSelected)
+      .reduce((sum, item) => sum + (item.wordCount || 0), 0);
+  // 假设动态上下文平均每章/卷有固定的字数，这里简化处理，只计算固定和RAG部分
+  return fixedWords + customContentWordCount.value + ragWords;
+});
+
+const totalChapters = computed(() => {
+  return prevChapters.value + nextChapters.value;
+});
+
+const averageRelevance = computed(() => {
+  const selectedResults = searchResults.value.filter(r => r.isSelected);
+  if (selectedResults.length === 0) return 0;
+  const totalRelevance = selectedResults.reduce((sum, r) => sum + r.relevance, 0);
+  return Math.round(totalRelevance / selectedResults.length);
+});
+
+</script>
+
+<style scoped>
+/* 保持所有样式不变，因为它们与HTML UI稿中的样式一致 */
+.custom-scrollbar::-webkit-scrollbar {
+  display: block;
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.context-section {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.context-section:hover {
+  border-color: #D1D5DB;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-icon {
+  width: 36px;
+  height: 36px;
+  background: #F3F4F6;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4B5563;
+}
+
+.custom-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg width='14' height='8' viewBox='0 0 14 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M1 1L7 7L13 1' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  padding-right: 40px;
+}
+
+.content-list {
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.content-list-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #F3F4F6;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.content-list-item:hover {
+  background: #F9FAFB;
+}
+
+.content-list-item.selected {
+  background: #EFF6FF;
+  border-left: 3px solid #3B82F6;
+  padding-left: 13px;
+}
+
+.content-list-item:last-child {
+  border-bottom: none;
+}
+
+.range-custom {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 16px;
+  background: transparent;
+  outline: none;
+  padding: 0;
+  margin: 0;
+}
+
+.range-custom::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: #E5E7EB;
+  border-radius: 9999px;
+}
+
+.range-custom::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  background: #3B82F6;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: grab;
+  margin-top: -7px;
+}
+.range-custom:active::-webkit-slider-thumb {
+  cursor: grabbing;
+}
+
+.range-custom::-moz-range-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: #E5E7EB;
+  border-radius: 9999px;
+}
+
+.range-custom::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  background: #3B82F6;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: grab;
+}
+.range-custom:active::-moz-range-thumb {
+  cursor: grabbing;
+}
+</style>
+
+// =
+// 文件: ..\src\novel\views\manager\NovelExport.vue
 //
 
 <template>
@@ -2362,7 +2843,7 @@ const selectedFormat = ref('pdf');
 </style>
 
 // =
-// 文件: ..\src\novel\views\NovelHistory.vue
+// 文件: ..\src\novel\views\manager\NovelHistory.vue
 //
 
 <template>
@@ -2507,62 +2988,7 @@ const selectedFormat = ref('pdf');
 </style>
 
 // =
-// 文件: ..\src\novel\views\NovelImport.vue
-//
-
-<template>
-  <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] flex items-center justify-center">
-    <div class="w-full max-w-2xl bg-white rounded-xl p-8 border border-gray-100 shadow-sm">
-
-      <!-- 文件上传区域 -->
-      <div class="border-2 border-dashed border-gray-200 rounded-xl p-12 text-center hover:border-blue-400 hover:bg-gray-50/50 transition-colors cursor-pointer">
-        <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M7 18C4.5 18 3 16.5 3 14C3 11.5 5 10 7 10C7.3 10 7.5 10 7.8 10.1C8.5 7.2 11 5 14 5C17.3 5 20 7.7 20 11C20 11.3 20 11.7 19.9 12C21.1 12.5 22 13.6 22 15C22 16.9 20.4 18.5 18.5 18.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 13V21M15 16L12 13L9 16"/>
-        </svg>
-        <h3 class="text-lg font-medium text-[#374151]">将文件拖拽至此</h3>
-        <p class="text-sm text-[#6B7280] mt-1">或</p>
-        <button class="mt-4 px-6 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors">
-          选择文件
-        </button>
-        <p class="text-xs text-gray-400 mt-4">支持 .txt, .docx, .md, .epub</p>
-      </div>
-
-      <!-- 导入设置区域 -->
-      <div class="mt-8 text-left space-y-4 w-full">
-        <h4 class="text-base font-medium text-[#374151]">导入设置</h4>
-        <div class="space-y-3">
-          <div class="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-lg border border-gray-100">
-            <div>
-              <label for="auto-detect-chapters" class="text-sm font-medium text-[#374151] cursor-pointer">自动识别章节</label>
-              <p class="text-xs text-[#9CA3AF] mt-1">根据常见格式自动分割章节</p>
-            </div>
-            <!-- 自定义 Toggle 开关 -->
-            <label for="auto-detect-chapters" class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" id="auto-detect-chapters" class="sr-only peer" checked>
-              <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-[#4B5563] transition-all peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-            </label>
-          </div>
-          <div class="p-4 bg-[#F9FAFB] rounded-lg border border-gray-100">
-            <label for="chapter-rule" class="text-sm font-medium text-[#374151] block mb-2">章节识别规则</label>
-            <input type="text" id="chapter-rule" value="第.+章|Chapter \d+" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-mono text-[#374151] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors">
-            <p class="text-xs text-[#9CA3AF] mt-2">使用正则表达式匹配章节标题</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-// Import logic will be implemented here
-</script>
-
-<style scoped>
-/* Scoped styles can be added here if needed */
-</style>
-
-// =
-// 文件: ..\src\novel\views\NovelOutline.vue
+// 文件: ..\src\novel\views\manager\NovelOutline.vue
 //
 
 // =
@@ -2744,91 +3170,7 @@ function toggleVolume(volumeId: string) {
 </style>
 
 // =
-// 文件: ..\src\novel\views\NovelReaderView.vue
-//
-
-<template>
-  <div class="h-screen w-screen bg-[#FDFCF9] text-[#3a2f2f] flex flex-col relative font-serif">
-    <!-- 顶部浮动控件 -->
-    <header class="w-full p-4 flex justify-between items-center absolute top-0 left-0 z-10 opacity-0 hover:opacity-100 transition-opacity duration-300">
-      <router-link to="/novel/editor" class="flex items-center gap-2 px-4 py-2 text-sm font-sans font-medium bg-white/60 backdrop-blur-md rounded-lg shadow-sm border border-gray-100 text-gray-700 hover:bg-white/90 transition-colors">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"></path></svg>
-        返回编辑
-      </router-link>
-
-      <div class="flex items-center gap-1 p-1.5 bg-white/60 backdrop-blur-md rounded-lg shadow-sm border border-gray-100">
-        <button class="w-10 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200/50 rounded-md transition-colors" title="目录">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
-        </button>
-        <button class="w-10 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200/50 rounded-md transition-colors" title="外观设置">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>
-        </button>
-        <button class="w-10 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200/50 rounded-md transition-colors" title="更多选项">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" /></svg>
-        </button>
-      </div>
-    </header>
-
-    <main class="flex-1 overflow-y-auto px-4 py-8 pt-24">
-      <div class="max-w-3xl mx-auto reader-content">
-        <h1 class="text-center">第四章：跃迁点</h1>
-        <p>控制台的警报声将卡尔文从浅眠中惊醒。他猛地坐直，眼前的屏幕上一片红色闪烁。“发现引力异常，”艾拉的声音冷静得不带一丝情感，“正在接近理论中的跃迁点。这是我们唯一的回家机会。”</p>
-        <p>卡尔文的心跳漏了一拍。回家。这个词既熟悉又陌生，像一颗深埋的种子，在这一刻突然破土而出，疯狂生长。他深吸一口气，双手稳稳地放在控制杆上。“艾拉，计算跃迁参数，准备进入。”</p>
-        <p>飞船轻微地震动起来，外部装甲在巨大的引力撕扯下发出呻吟。舷窗外，星辰被拉长、扭曲，汇聚成一个绚烂而致命的漩涡。漩涡的中心，是一片纯粹的黑暗，仿佛宇宙的瞳孔，凝视着这艘渺小的飞船。</p>
-      </div>
-    </main>
-
-    <!-- 底部浮动控件 -->
-    <footer class="w-full p-4 text-center text-sm text-gray-500/80 absolute bottom-0 left-0 z-10 opacity-0 hover:opacity-100 transition-opacity duration-300 font-sans">
-      <p class="mb-2">第四章: 跃迁点</p>
-      <div class="w-full max-w-sm mx-auto flex items-center gap-3">
-        <button class="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-black/5 rounded-full transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"></path></svg>
-        </button>
-        <div class="flex-1 h-1.5 bg-gray-500/10 rounded-full">
-          <div class="h-1.5 bg-gray-500/60 rounded-full" style="width: 16%;"></div>
-        </div>
-        <button class="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-black/5 rounded-full transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
-        </button>
-      </div>
-      <p class="mt-2">4 / 24</p>
-    </footer>
-  </div>
-</template>
-
-<script setup lang="ts">
-
-</script>
-
-<style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&display=swap');
-
-.reader-content h1 {
-  font-family: 'Noto Serif SC', serif;
-  font-size: 2.25rem; /* 36px */
-  font-weight: 600;
-  margin-bottom: 2.5rem;
-  color: #1f2937;
-  letter-spacing: 0.05em;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
-}
-.reader-content p {
-  font-family: 'Noto Serif SC', serif;
-  font-size: 1.125rem; /* 18px */
-  line-height: 2.2;
-  color: #374151;
-  margin-bottom: 1.75rem;
-  text-align: justify;
-}
-.font-sans {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-</style>
-
-// =
-// 文件: ..\src\novel\views\NovelRecent.vue
+// 文件: ..\src\novel\views\manager\NovelRecent.vue
 //
 
 <template>
@@ -2928,7 +3270,7 @@ const recentItems = ref([
 </script>
 
 // =
-// 文件: ..\src\novel\views\NovelSettings.vue
+// 文件: ..\src\novel\views\manager\NovelSettings.vue
 //
 
 // =
@@ -3049,7 +3391,7 @@ const recentItems = ref([
 </style>
 
 // =
-// 文件: ..\src\novel\views\NovelTrash.vue
+// 文件: ..\src\novel\views\manager\NovelTrash.vue
 //
 
 // =
@@ -3148,7 +3490,7 @@ const deletedItems = ref([
 </style>
 
 // =
-// 文件: ..\src\novel\views\NovelWorldview.vue
+// 文件: ..\src\novel\views\manager\NovelWorldview.vue
 //
 
 // =

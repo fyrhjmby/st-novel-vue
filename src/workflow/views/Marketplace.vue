@@ -1,30 +1,31 @@
 <template>
-  <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white flex-shrink-0">
-    <h1 class="text-lg font-medium text-[#374151]">工作流市场</h1>
-    <div class="flex items-center gap-4">
-      <!-- 分类筛选 -->
-      <select class="text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none transition-all py-2 px-3">
-        <option>所有分类</option>
-        <option>内容创作</option>
-        <option>数据分析</option>
-        <option>营销自动化</option>
-        <option>客户服务</option>
-        <option>开发工具</option>
-      </select>
-      <div class="hidden sm:flex items-center bg-[#F3F4F6] rounded-lg p-1 text-sm font-medium text-[#6B7280]">
-        <button class="px-3 py-1 rounded-md bg-white shadow-sm text-[#374151]">全部</button>
-        <button class="px-3 py-1 rounded-md hover:bg-gray-200">官方推荐</button>
-        <button class="px-3 py-1 rounded-md hover:bg-gray-200">最受欢迎</button>
-        <button class="px-3 py-1 rounded-md hover:bg-gray-200">最新</button>
+  <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
+    <!-- 页面操作/筛选栏 (原Header内容) -->
+    <div class="flex items-center justify-between mb-8">
+      <div class="flex items-center gap-4">
+        <!-- 分类筛选 -->
+        <select class="text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none transition-all py-2 px-3">
+          <option>所有分类</option>
+          <option>内容创作</option>
+          <option>数据分析</option>
+          <option>营销自动化</option>
+          <option>客户服务</option>
+          <option>开发工具</option>
+        </select>
+        <div class="hidden sm:flex items-center bg-[#F3F4F6] rounded-lg p-1 text-sm font-medium text-[#6B7280]">
+          <button class="px-3 py-1 rounded-md bg-white shadow-sm text-[#374151]">全部</button>
+          <button class="px-3 py-1 rounded-md hover:bg-gray-200">官方推荐</button>
+          <button class="px-3 py-1 rounded-md hover:bg-gray-200">最受欢迎</button>
+          <button class="px-3 py-1 rounded-md hover:bg-gray-200">最新</button>
+        </div>
       </div>
       <div class="relative">
         <input type="text" placeholder="搜索模板..." class="w-64 pl-10 pr-4 py-2 text-sm bg-[#F3F4F6] border-transparent rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none transition-all">
         <svg class="w-5 h-5 text-[#6B7280] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21L16.65 16.65"/></svg>
       </div>
     </div>
-  </header>
 
-  <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
+
     <!-- 精选推荐 -->
     <div class="mb-8">
       <h3 class="text-sm font-medium text-[#374151] mb-4">本周精选</h3>

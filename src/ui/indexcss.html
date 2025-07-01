@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI创作平台 - UI设计规范</title>
+    <!-- <script src="https://cdn.tailwindcss.com"></script> --> <!-- Tailwind CSS has been removed -->
+    <style>
+        /* 谷歌字体导入 */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+        /* 全局样式重置和字体设置 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: #F5F5F7;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 设计系统颜色和阴影变量 */
+        :root {
+            --primary-900: #111827;
+            --primary-800: #1F2937;
+            --primary-700: #374151;
+            --primary-600: #4B5563;
+            --primary-500: #6B7280;
+            --primary-400: #9CA3AF;
+            --primary-300: #D1D5DB;
+            --primary-200: #E5E7EB;
+            --primary-100: #F3F4F6;
+            --primary-50: #F9FAFB;
+
+            --accent-green: #10B981;
+            --accent-blue: #3B82F6;
+            --accent-red: #EF4444;
+
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 0 0 1px rgba(0, 0, 0, 0.03), 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* 预设的辅助类 */
+        .design-frame {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        }
+
+        .color-block {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 500;
+            color: white;
+        }
+
+        .annotation {
+            background: #FFE4B5;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #B8860B;
+            position: absolute;
+            white-space: nowrap;
+        }
+
+        /* ---------------------------------- */
+        /*   原始 CSS 实现 (从这里开始)        */
+        /* ---------------------------------- */
+
+        /* --- 布局和容器 --- */
+        .page-container {
+            min-height: 100vh;
+            padding: 2rem; /* p-8 */
+        }
+        .main-container {
+            max-width: 1800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .section-mb-12 {
+            margin-bottom: 3rem; /* mb-12 */
+        }
+        .section-mb-8 {
+            margin-bottom: 2rem; /* mb-8 */
+        }
+
+        /* --- 页面头部 --- */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem; /* mb-8 */
+        }
+        .page-header h1 {
+            font-size: 1.875rem; /* text-3xl */
+            line-height: 2.25rem;
+            font-weight: 300; /* font-light */
+            color: var(--primary-800); /* text-gray-800 */
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+        .page-header p {
+            color: var(--primary-500); /* text-gray-500 */
+        }
+        .page-header .version-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem; /* gap-4 */
+        }
+        .version-info span {
+            font-size: 0.875rem; /* text-sm */
+            color: var(--primary-400); /* text-gray-400 */
+        }
+        .version-info .separator {
+            width: 1px; /* w-px */
+            height: 1.5rem; /* h-6 */
+            background-color: var(--primary-300); /* bg-gray-300 */
+        }
+
+        /* --- 色彩系统卡片 --- */
+        .spec-card {
+            background-color: white;
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 2rem; /* p-8 */
+            margin-bottom: 2rem; /* mb-8 */
+        }
+        .spec-card h2 {
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 500; /* font-medium */
+            color: var(--primary-800); /* text-gray-800 */
+            margin-bottom: 1.5rem; /* mb-6 */
+        }
+        .spec-card-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr)); /* grid-cols-2 */
+            gap: 2rem; /* gap-8 */
+        }
+        .color-group p:first-child {
+            font-size: 0.875rem; /* text-sm */
+            color: var(--primary-500); /* text-gray-500 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .color-group .color-palette {
+            display: flex;
+            gap: 0.75rem; /* gap-3 */
+        }
+        .color-palette p {
+            font-size: 0.75rem; /* text-xs */
+            color: var(--primary-500); /* text-gray-500 */
+            margin-top: 0.5rem; /* mt-2 */
+            text-align: center; /* text-center */
+        }
+
+        /* --- 主界面展示 --- */
+        .main-display-wrapper {
+            position: relative; /* relative */
+        }
+
+        /* --- 窗口标题栏 --- */
+        .window-title-bar {
+            height: 2.5rem; /* h-10 */
+            padding-left: 1.25rem; /* px-5 */
+            padding-right: 1.25rem; /* px-5 */
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--primary-100); /* border-b border-gray-100 */
+            background-color: var(--primary-50); /* bg-gray-50 */
+        }
+        .traffic-lights {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* gap-2 */
+        }
+        .traffic-lights .light {
+            width: 0.75rem; /* w-3 */
+            height: 0.75rem; /* h-3 */
+            border-radius: 9999px; /* rounded-full */
+        }
+        .light.red { background-color: #FF5F57; }
+        .light.yellow { background-color: #FFBD2E; }
+        .light.green { background-color: #28CA42; }
+
+        .window-title-text {
+            margin-left: auto; /* ml-auto */
+            display: flex;
+            align-items: center;
+            gap: 1rem; /* gap-4 */
+            font-size: 0.75rem; /* text-xs */
+            color: var(--primary-400); /* text-gray-400 */
+        }
+
+        /* --- 内容区布局 --- */
+        .app-content-area {
+            height: 800px; /* h-[800px] */
+            display: flex;
+        }
+
+        /* --- 侧边栏 --- */
+        .sidebar {
+            width: 256px; /* w-64 */
+            background-color: #FAFAFA; /* bg-[#FAFAFA] */
+            border-right: 1px solid var(--primary-100); /* border-r border-gray-100 */
+            display: flex;
+            flex-direction: column; /* flex-col */
+        }
+        .sidebar-header {
+            padding: 1rem; /* p-4 */
+            border-bottom: 1px solid var(--primary-100); /* border-b border-gray-100 */
+            /* space-y-4 is not effective here as there is only one child */
+        }
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem; /* gap-3 */
+            padding-left: 0.5rem; /* px-2 */
+            padding-right: 0.5rem; /* px-2 */
+        }
+        .sidebar-logo-wrapper {
+            width: 2.5rem; /* w-10 */
+            height: 2.5rem; /* h-10 */
+            background-color: var(--primary-200); /* bg-gray-200 */
+            border-radius: 0.5rem; /* rounded-lg */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0; /* flex-shrink-0 */
+        }
+        .sidebar-logo-wrapper svg {
+            width: 1.5rem; /* w-6 */
+            height: 1.5rem; /* h-6 */
+            color: var(--primary-600); /* text-gray-600 */
+        }
+        .sidebar-brand-text h3 {
+            font-weight: 500; /* font-medium */
+            color: #374151; /* text-[#374151] */
+            font-size: 0.875rem; /* text-sm */
+        }
+        .sidebar-brand-text p {
+            font-size: 0.75rem; /* text-xs */
+            color: #9CA3AF; /* text-[#9CA3AF] */
+        }
+        .sidebar nav {
+            flex: 1 1 0%; /* flex-1 */
+            padding: 1.5rem 1rem; /* px-4 py-6 */
+        }
+        .sidebar .nav-group {
+            margin-bottom: 2rem; /* mb-8 */
+        }
+        .sidebar .nav-group-title {
+            font-size: 0.75rem; /* text-xs */
+            font-weight: 500; /* font-medium */
+            color: #9CA3AF; /* text-[#9CA3AF] */
+            padding-left: 0.75rem; /* px-3 */
+            padding-right: 0.75rem; /* px-3 */
+            margin-bottom: 0.75rem; /* mb-3 */
+            text-transform: uppercase; /* uppercase */
+            letter-spacing: 0.05em; /* tracking-wider */
+        }
+        .sidebar .nav-links > :not([hidden]) ~ :not([hidden]) {
+            margin-top: 0.25rem; /* space-y-1 */
+        }
+        .sidebar .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem; /* gap-3 */
+            padding: 0.625rem 0.75rem; /* px-3 py-2.5 */
+            border-radius: 0.5rem; /* rounded-lg */
+            font-size: 0.875rem; /* text-sm */
+            text-decoration: none;
+            transition: color 150ms ease-in-out, background-color 150ms ease-in-out; /* transition-colors */
+        }
+        .sidebar .nav-link.active {
+            background-color: #4B5563; /* bg-[#4B5563] */
+            color: white; /* text-white */
+            font-weight: 500; /* font-medium */
+        }
+        .sidebar .nav-link:not(.active) {
+            color: #6B7280; /* text-[#6B7280] */
+        }
+        .sidebar .nav-link:not(.active):hover {
+            background-color: var(--primary-100); /* hover:bg-gray-100 */
+        }
+        .sidebar .nav-link svg {
+            width: 1.25rem; /* w-5 */
+            height: 1.25rem; /* h-5 */
+        }
+        .sidebar-footer {
+            padding: 1rem; /* p-4 */
+            border-top: 1px solid var(--primary-100); /* border-t border-gray-100 */
+        }
+
+        /* --- 主内容区 --- */
+        .main-content {
+            flex: 1 1 0%; /* flex-1 */
+            background-color: white; /* bg-white */
+            display: flex;
+            flex-direction: column; /* flex-col */
+        }
+        .main-content-header {
+            height: 5rem; /* h-20 */
+            padding: 0 2rem; /* px-8 */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--primary-100); /* border-b border-gray-100 */
+            flex-shrink: 0;
+        }
+        .main-content-header h1 {
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 500; /* font-medium */
+            color: #374151; /* text-[#374151] */
+        }
+        .main-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* gap-2 */
+        }
+        .main-header-actions .action-btn {
+            padding: 0.5rem; /* p-2 */
+            border-radius: 0.5rem; /* rounded-lg */
+            transition: background-color 150ms ease-in-out; /* transition-colors */
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            position: relative; /* relative for notification dot */
+        }
+        .main-header-actions .action-btn:hover {
+            background-color: var(--primary-50); /* hover:bg-gray-50 */
+        }
+        .main-header-actions .action-btn svg {
+            width: 1.25rem; /* w-5 */
+            height: 1.25rem; /* h-5 */
+            color: #6B7280; /* text-[#6B7280] */
+            display: block; /* To prevent extra space under SVG */
+        }
+        .notification-dot {
+            position: absolute;
+            top: 0.375rem; /* top-1.5 */
+            right: 0.375rem; /* right-1.5 */
+            width: 0.5rem; /* w-2 */
+            height: 0.5rem; /* h-2 */
+            background-color: var(--accent-red); /* bg-red-500 */
+            border-radius: 9999px; /* rounded-full */
+        }
+        .user-profile {
+            margin-left: 1rem; /* ml-4 */
+            display: flex;
+            align-items: center;
+            gap: 0.75rem; /* gap-3 */
+        }
+        .user-profile .avatar {
+            width: 2.25rem; /* w-9 */
+            height: 2.25rem; /* h-9 */
+            background-color: var(--primary-200); /* bg-gray-200 */
+            border-radius: 9999px; /* rounded-full */
+        }
+        .user-profile .user-info-name {
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+            color: #374151; /* text-[#374151] */
+        }
+        .user-profile .user-info-plan {
+            font-size: 0.75rem; /* text-xs */
+            color: #9CA3AF; /* text-[#9CA3AF] */
+        }
+
+        /* --- 内容滚动区 --- */
+        .content-scroll-area {
+            flex: 1 1 0%; /* flex-1 */
+            padding: 1.5rem 2rem; /* px-8 py-6 */
+            overflow: auto; /* overflow-auto */
+            background-color: #FCFCFC; /* bg-[#FCFCFC] */
+        }
+        .welcome-area {
+            margin-bottom: 2rem; /* mb-8 */
+        }
+        .welcome-area h2 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 300; /* font-light */
+            color: #374151; /* text-[#374151] */
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+        .welcome-area p {
+            color: #6B7280; /* text-[#6B7280] */
+        }
+
+        /* --- 统计卡片 --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr)); /* grid-cols-4 */
+            gap: 1.5rem; /* gap-6 */
+            margin-bottom: 2rem; /* mb-8 */
+        }
+        .stat-card {
+            background-color: white; /* bg-white */
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 1.5rem; /* p-6 */
+            border: 1px solid var(--primary-100); /* border border-gray-100 */
+        }
+        .stat-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .stat-card-icon-wrapper {
+            width: 2.5rem; /* w-10 */
+            height: 2.5rem; /* h-10 */
+            background-color: #F3F4F6; /* bg-[#F3F4F6] */
+            border-radius: 0.5rem; /* rounded-lg */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .stat-card-icon-wrapper svg {
+            width: 1.25rem; /* w-5 */
+            height: 1.25rem; /* h-5 */
+            color: #4B5563; /* text-[#4B5563] */
+        }
+        .stat-badge {
+            font-size: 0.75rem; /* text-xs */
+            font-weight: 500; /* font-medium */
+            padding: 0.25rem 0.5rem; /* px-2 py-1 */
+            border-radius: 0.375rem; /* rounded-md */
+        }
+        .stat-badge.green {
+            color: var(--accent-green); /* text-[#10B981] */
+            background-color: #F0FDF4; /* bg-green-50 */
+        }
+        .stat-badge.blue {
+            color: var(--accent-blue); /* text-[#3B82F6] */
+            background-color: #EFF6FF; /* bg-blue-50 */
+        }
+        .stat-card .stat-value {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 300; /* font-light */
+            color: #374151; /* text-[#374151] */
+        }
+        .stat-card .stat-label {
+            font-size: 0.875rem; /* text-sm */
+            color: #9CA3AF; /* text-[#9CA3AF] */
+            margin-top: 0.25rem; /* mt-1 */
+        }
+
+        /* --- 快速开始 --- */
+        .quick-start-section {
+            margin-bottom: 2rem; /* mb-8 */
+        }
+        .section-title {
+            font-size: 1rem; /* text-base */
+            font-weight: 500; /* font-medium */
+            color: #374151; /* text-[#374151] */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .quick-start-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr)); /* grid-cols-3 */
+            gap: 1.5rem; /* gap-6 */
+        }
+        .quick-start-card {
+            background-color: white; /* bg-white */
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 1.5rem; /* p-6 */
+            border: 1px solid var(--primary-100); /* border border-gray-100 */
+            transition: all 150ms ease-in-out; /* transition-all */
+            text-align: left; /* text-left */
+            cursor: pointer;
+        }
+        .quick-start-card:hover {
+            border-color: var(--primary-200); /* hover:border-gray-200 */
+            box-shadow: var(--shadow-sm); /* hover:shadow-sm */
+        }
+        .quick-start-icon-wrapper {
+            width: 3rem; /* w-12 */
+            height: 3rem; /* h-12 */
+            border-radius: 0.75rem; /* rounded-xl */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem; /* mb-4 */
+            transition: transform 150ms ease-in-out; /* transition-transform */
+        }
+        .quick-start-card:hover .quick-start-icon-wrapper {
+            transform: scale(1.05); /* group-hover:scale-105 */
+        }
+        .quick-start-icon-wrapper.primary {
+            background-color: #4B5563; /* bg-[#4B5563] */
+            color: white; /* text-white */
+        }
+        .quick-start-icon-wrapper.secondary {
+            background-color: #F3F4F6; /* bg-[#F3F4F6] */
+            color: #4B5563; /* text-[#4B5563] */
+        }
+        .quick-start-icon-wrapper svg {
+            width: 1.5rem; /* w-6 */
+            height: 1.5rem; /* h-6 */
+        }
+        .quick-start-card h4 {
+            font-weight: 500; /* font-medium */
+            color: #374151; /* text-[#374151] */
+            margin-bottom: 0.25rem; /* mb-1 */
+        }
+        .quick-start-card p {
+            font-size: 0.875rem; /* text-sm */
+            color: #9CA3AF; /* text-[#9CA3AF] */
+        }
+
+        /* --- 最近项目 --- */
+        .recent-projects-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .recent-projects-header button {
+            font-size: 0.875rem; /* text-sm */
+            color: #6B7280; /* text-[#6B7280] */
+            transition: color 150ms ease-in-out; /* transition-colors */
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .recent-projects-header button:hover {
+            color: #374151; /* hover:text-[#374151] */
+        }
+        .project-list > :not([hidden]) ~ :not([hidden]) {
+            margin-top: 0.75rem; /* space-y-3 */
+        }
+        .project-card {
+            background-color: white; /* bg-white */
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 1.25rem; /* p-5 */
+            border: 1px solid var(--primary-100); /* border border-gray-100 */
+            transition: all 150ms ease-in-out; /* transition-all */
+            display: flex;
+            align-items: center;
+            gap: 1rem; /* gap-4 */
+        }
+        .project-card:hover {
+            border-color: var(--primary-200); /* hover:border-gray-200 */
+            box-shadow: var(--shadow-sm); /* hover:shadow-sm */
+        }
+        .project-thumbnail {
+            width: 3.5rem; /* w-14 */
+            height: 3.5rem; /* h-14 */
+            border-radius: 0.5rem; /* rounded-lg */
+            flex-shrink: 0; /* flex-shrink-0 */
+        }
+        .project-thumbnail.gradient-1 {
+            background-image: linear-gradient(to bottom right, #e0e7ff, #f3e8ff); /* from-indigo-100 to-purple-100 */
+        }
+        .project-thumbnail.gradient-2 {
+            background-image: linear-gradient(to bottom right, #fce7f3, #ffe4e6); /* from-pink-100 to-rose-100 */
+        }
+        .project-info {
+            flex: 1 1 0%; /* flex-1 */
+        }
+        .project-info h4 {
+            font-weight: 500; /* font-medium */
+            color: #374151; /* text-[#374151] */
+        }
+        .project-info p {
+            font-size: 0.875rem; /* text-sm */
+            color: #9CA3AF; /* text-[#9CA3AF] */
+            margin-top: 0.25rem; /* mt-1 */
+        }
+        .project-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* gap-2 */
+        }
+        .status-dot {
+            width: 0.5rem; /* w-2 */
+            height: 0.5rem; /* h-2 */
+            border-radius: 9999px; /* rounded-full */
+        }
+        .status-dot.active {
+            background-color: var(--accent-green); /* bg-[#10B981] */
+        }
+        .status-dot.paused {
+            background-color: #9CA3AF; /* bg-[#9CA3AF] */
+        }
+        .project-status span {
+            font-size: 0.875rem; /* text-sm */
+            color: #9CA3AF; /* text-[#9CA3AF] */
+        }
+        .project-action-btn {
+            padding: 0.5rem 1rem; /* px-4 py-2 */
+            background-color: white; /* bg-white */
+            border: 1px solid var(--primary-200); /* border border-gray-200 */
+            border-radius: 0.5rem; /* rounded-lg */
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+            color: #374151; /* text-[#374151] */
+            transition: background-color 150ms ease-in-out; /* transition-colors */
+            cursor: pointer;
+        }
+        .project-action-btn:hover {
+            background-color: var(--primary-50); /* hover:bg-gray-50 */
+        }
+
+        /* --- 设计规范说明 --- */
+        .spec-footer-grid {
+            margin-top: 3rem; /* mt-12 */
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr)); /* grid-cols-3 */
+            gap: 2rem; /* gap-8 */
+        }
+        .spec-info-card {
+            background-color: white; /* bg-white */
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 1.5rem; /* p-6 */
+        }
+        .spec-info-card h3 {
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+            color: var(--primary-800); /* text-gray-800 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .spec-list > * + * {
+            margin-top: 0.5rem; /* space-y-2 */
+        }
+        .spec-list .spec-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem; /* text-xs */
+            color: var(--primary-600); /* text-gray-600 */
+        }
+        .spec-item span:last-child {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* font-mono */
+        }
+
+    </style>
+</head>
+<body>
+<div class="page-container">
+    <!-- 设计头部 -->
+    <div class="main-container section-mb-12">
+        <div class="page-header">
+            <div>
+                <h1>AI Creator Platform - UI Design System</h1>
+                <p>精致细腻的界面设计 / 2025</p>
+            </div>
+            <div class="version-info">
+                <span>Version 2.0</span>
+                <div class="separator"></div>
+                <span>Desktop 1440px</span>
+            </div>
+        </div>
+
+        <!-- 色彩系统 -->
+        <div class="spec-card">
+            <h2>色彩系统 / Color System</h2>
+            <div class="spec-card-grid-2">
+                <!-- 主色调 -->
+                <div class="color-group">
+                    <p>主色调 / Primary Colors</p>
+                    <div class="color-palette">
+                        <div>
+                            <div class="color-block" style="background: #374151;">#374151</div>
+                            <p>Primary</p>
+                        </div>
+                        <div>
+                            <div class="color-block" style="background: #4B5563;">#4B5563</div>
+                            <p>Selected</p>
+                        </div>
+                        <div>
+                            <div class="color-block" style="background: #6B7280;">#6B7280</div>
+                            <p>Secondary</p>
+                        </div>
+                        <div>
+                            <div class="color-block" style="background: #9CA3AF; color: #374151;">#9CA3AF</div>
+                            <p>Disabled</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 辅助色 -->
+                <div class="color-group">
+                    <p>辅助色 / Accent Colors</p>
+                    <div class="color-palette">
+                        <div>
+                            <div class="color-block" style="background: #10B981;">#10B981</div>
+                            <p>Success</p>
+                        </div>
+                        <div>
+                            <div class="color-block" style="background: #3B82F6;">#3B82F6</div>
+                            <p>Info</p>
+                        </div>
+                        <div>
+                            <div class="color-block" style="background: #F59E0B;">#F59E0B</div>
+                            <p>Warning</p>
+                        </div>
+                        <div>
+                            <div class="color-block" style="background: #EF4444;">#EF4444</div>
+                            <p>Error</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主界面展示 -->
+    <div class="main-container">
+        <div class="main-display-wrapper">
+            <!-- 设计注释 -->
+            <div class="annotation" style="top: -30px; left: 20px;">圆角: 16px</div>
+            <div class="annotation" style="top: 80px; left: -120px;">侧边栏宽度: 256px</div>
+            <div class="annotation" style="top: 200px; right: -100px;">卡片间距: 24px</div>
+
+            <div class="design-frame">
+                <!-- 标题栏 -->
+                <div class="window-title-bar">
+                    <div class="traffic-lights">
+                        <div class="light red"></div>
+                        <div class="light yellow"></div>
+                        <div class="light green"></div>
+                    </div>
+                    <div class="window-title-text">
+                        <span>AI Creator Platform</span>
+                    </div>
+                </div>
+
+                <!-- 内容区 -->
+                <div class="app-content-area">
+                    <!-- 侧边栏 -->
+                    <aside class="sidebar">
+                        <!-- 新的侧边栏头部区域 -->
+                        <div class="sidebar-header">
+                            <!-- Logo 和品牌信息 -->
+                            <div class="sidebar-brand">
+                                <div class="sidebar-logo-wrapper">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                                </div>
+                                <div class="sidebar-brand-text">
+                                    <h3>AI Creator</h3>
+                                    <p>创作平台</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 主导航 -->
+                        <nav>
+                            <div class="nav-group">
+                                <p class="nav-group-title">主要功能</p>
+                                <div class="nav-links">
+                                    <a href="#" class="nav-link active">
+                                        <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                            <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+                                            <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+                                            <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+                                            <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+                                        </svg>
+                                        <span>工作台</span>
+                                    </a>
+                                    <a href="#" class="nav-link">
+                                        <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                            <path d="M12 2L2 7L12 12L22 7L12 2Z"/>
+                                            <path d="M2 17L12 22L22 17"/>
+                                            <path d="M2 12L12 17L22 12"/>
+                                        </svg>
+                                        <span>创作中心</span>
+                                    </a>
+                                    <a href="#" class="nav-link">
+                                        <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                            <path d="M20 21V18C20 16.3 19.3 14.8 18.2 13.7C17.1 12.6 15.6 12 14 12H10C8.4 12 6.9 12.6 5.8 13.7C4.7 14.8 4 16.3 4 18V21"/>
+                                            <circle cx="12" cy="7" r="4"/>
+                                        </svg>
+                                        <span>角色扮演</span>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="nav-group">
+                                <p class="nav-group-title">工具</p>
+                                <div class="nav-links">
+                                    <a href="#" class="nav-link">
+                                        <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                            <path d="M9 3V15M9 15L5 11M9 15L13 11"/>
+                                            <path d="M15 21V9M15 9L19 13M15 9L11 13"/>
+                                        </svg>
+                                        <span>工作流</span>
+                                    </a>
+                                    <a href="#" class="nav-link">
+                                        <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                            <path d="M8 12H16"/>
+                                        </svg>
+                                        <span>提示词库</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </nav>
+
+                        <!-- 底部设置 -->
+                        <div class="sidebar-footer">
+                            <a href="#" class="nav-link">
+                                <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M12 1V6M12 18V23M4.22 4.22L7.76 7.76M16.24 16.24L19.78 19.78M1 12H6M18 12H23M4.22 19.78L7.76 16.24M16.24 7.76L19.78 4.22"/>
+                                </svg>
+                                <span>设置</span>
+                            </a>
+                        </div>
+                    </aside>
+
+                    <!-- 主内容区 -->
+                    <main class="main-content">
+                        <!-- 顶部导航栏 -->
+                        <header class="main-content-header">
+                            <div>
+                                <h1>工作台</h1>
+                            </div>
+                            <div class="main-header-actions">
+                                <button class="action-btn">
+                                    <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <circle cx="11" cy="11" r="8"/>
+                                        <path d="M21 21L16.65 16.65"/>
+                                    </svg>
+                                </button>
+                                <button class="action-btn">
+                                    <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path d="M18 8A6 6 0 0 0 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z"/>
+                                        <path d="M13.73 21C13.5 21.6 12.8 22 12 22C11.2 22 10.5 21.6 10.27 21"/>
+                                    </svg>
+                                    <span class="notification-dot"></span>
+                                </button>
+                                <div class="user-profile">
+                                    <div class="avatar"></div>
+                                    <div>
+                                        <p class="user-info-name">张小明</p>
+                                        <p class="user-info-plan">免费版</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </header>
+
+                        <!-- 内容区域 -->
+                        <div class="content-scroll-area">
+                            <!-- 欢迎区域 -->
+                            <div class="welcome-area">
+                                <h2>欢迎回来</h2>
+                                <p>今天想创作什么内容？</p>
+                            </div>
+
+                            <!-- 统计卡片 -->
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-card-header">
+                                        <div class="stat-card-icon-wrapper">
+                                            <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                <rect x="5" y="3" width="14" height="18" rx="2"/>
+                                                <path d="M9 7H15M9 11H15M9 15H13"/>
+                                            </svg>
+                                        </div>
+                                        <span class="stat-badge green">+12%</span>
+                                    </div>
+                                    <p class="stat-value">24</p>
+                                    <p class="stat-label">作品总数</p>
+                                </div>
+
+                                <div class="stat-card">
+                                    <div class="stat-card-header">
+                                        <div class="stat-card-icon-wrapper">
+                                            <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                <path d="M12 20L12 10"/>
+                                                <path d="M18 20L18 4"/>
+                                                <path d="M6 20L6 16"/>
+                                            </svg>
+                                        </div>
+                                        <span class="stat-badge green">+8%</span>
+                                    </div>
+                                    <p class="stat-value">128.5k</p>
+                                    <p class="stat-label">总字数</p>
+                                </div>
+
+                                <div class="stat-card">
+                                    <div class="stat-card-header">
+                                        <div class="stat-card-icon-wrapper">
+                                            <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                <circle cx="12" cy="12" r="10"/>
+                                                <path d="M12 6V12L16 16"/>
+                                            </svg>
+                                        </div>
+                                        <span class="stat-badge blue">进行中</span>
+                                    </div>
+                                    <p class="stat-value">856</p>
+                                    <p class="stat-label">AI 使用次数</p>
+                                </div>
+
+                                <div class="stat-card">
+                                    <div class="stat-card-header">
+                                        <div class="stat-card-icon-wrapper">
+                                            <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                <path d="M20.84 4.61C20.3 4.07 19.5 3.87 18.75 4.12L5.23 8.62C4.34 8.91 3.75 9.76 3.75 10.72C3.75 11.68 4.34 12.53 5.23 12.82L10.5 14.53L12.21 19.8C12.5 20.69 13.35 21.28 14.31 21.28C15.27 21.28 16.12 20.69 16.41 19.8L20.91 6.28C21.16 5.53 20.96 4.73 20.42 4.19L20.84 4.61Z"/>
+                                            </svg>
+                                        </div>
+                                        <span class="stat-badge green">+24</span>
+                                    </div>
+                                    <p class="stat-value">342</p>
+                                    <p class="stat-label">获得赞赏</p>
+                                </div>
+                            </div>
+
+                            <div class="quick-start-section">
+                                <h3 class="section-title">快速开始</h3>
+                                <div class="quick-start-grid">
+                                    <button class="quick-start-card">
+                                        <div class="quick-start-icon-wrapper primary">
+                                            <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                <path d="M12 5V19M5 12H19"/>
+                                            </svg>
+                                        </div>
+                                        <h4>创建新作品</h4>
+                                        <p>开始全新的创作之旅</p>
+                                    </button>
+
+                                    <button class="quick-start-card">
+                                        <div class="quick-start-icon-wrapper secondary">
+                                            <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z"/>
+                                            </svg>
+                                        </div>
+                                        <h4>AI 助手</h4>
+                                        <p>智能创作伴侣</p>
+                                    </button>
+
+                                    <button class="quick-start-card">
+                                        <div class="quick-start-icon-wrapper secondary">
+                                            <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                <path d="M7 18C4.5 18 3 16.5 3 14C3 11.5 5 10 7 10C7.3 10 7.5 10 7.8 10.1C8.5 7.2 11 5 14 5C17.3 5 20 7.7 20 11C20 11.3 20 11.7 19.9 12C21.1 12.5 22 13.6 22 15C22 16.9 20.4 18.5 18.5 18.5"/>
+                                                <path d="M12 13V21M15 16L12 13L9 16"/>
+                                            </svg>
+                                        </div>
+                                        <h4>导入文档</h4>
+                                        <p>继续未完成的创作</p>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 最近项目 -->
+                            <div>
+                                <div class="recent-projects-header">
+                                    <h3 class="section-title" style="margin-bottom: 0;">最近项目</h3>
+                                    <button>查看全部 →</button>
+                                </div>
+                                <div class="project-list">
+                                    <div class="project-card">
+                                        <div class="project-thumbnail gradient-1"></div>
+                                        <div class="project-info">
+                                            <h4>星际漫游者</h4>
+                                            <p>科幻冒险 · 24章 · 2小时前</p>
+                                        </div>
+                                        <div class="project-status">
+                                            <span class="status-dot active"></span>
+                                            <span>编辑中</span>
+                                        </div>
+                                        <button class="project-action-btn">
+                                            继续
+                                        </button>
+                                    </div>
+
+                                    <div class="project-card">
+                                        <div class="project-thumbnail gradient-2"></div>
+                                        <div class="project-info">
+                                            <h4>月光下的约定</h4>
+                                            <p>现代言情 · 18章 · 昨天</p>
+                                        </div>
+                                        <div class="project-status">
+                                            <span class="status-dot paused"></span>
+                                            <span>暂停</span>
+                                        </div>
+                                        <button class="project-action-btn">
+                                            继续
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </div>
+
+        <!-- 设计规范说明 -->
+        <div class="spec-footer-grid">
+            <div class="spec-info-card">
+                <h3>间距规范</h3>
+                <div class="spec-list">
+                    <div class="spec-item">
+                        <span>基础间距</span>
+                        <span>8px</span>
+                    </div>
+                    <div class="spec-item">
+                        <span>卡片内边距</span>
+                        <span>24px</span>
+                    </div>
+                    <div class="spec-item">
+                        <span>组件间距</span>
+                        <span>16px</span>
+                    </div>
+                    <div class="spec-item">
+                        <span>栅格间距</span>
+                        <span>24px</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="spec-info-card">
+                <h3>圆角系统</h3>
+                <div class="spec-list">
+                    <div class="spec-item">
+                        <span>小组件</span>
+                        <span>6px</span>
+                    </div>
+                    <div class="spec-item">
+                        <span>按钮/输入框</span>
+                        <span>8px</span>
+                    </div>
+                    <div class="spec-item">
+                        <span>卡片</span>
+                        <span>12px</span>
+                    </div>
+                    <div class="spec-item">
+                        <span>容器</span>
+                        <span>16px</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="spec-info-card">
+                <h3>字体规范</h3>
+                <div class="spec-list">
+                    <div class="spec-item">
+                        <span>标题</span>
+                        <span>24px / Light</span>
+                    </div>
+                    <div class="spec-item">
+                        <span>副标题</span>
+                        <span>18px / Medium</span>
+                    </div>
+                    <div class="spec-item">
+                        <span>正文</span>
+                        <span>14px / Regular</span>
+                    </div>
+                    <div class="spec-item">
+                        <span>辅助文字</span>
+                        <span>12px / Regular</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
