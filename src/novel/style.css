@@ -1,9 +1,0 @@
-/* src/novel/index.css */
-
-/*
-  小说模块专属样式。
-  这些样式通过在布局根元素上的 .novel-module 类进行作用域隔离，不会影响全局。
-*/
-
-.novel-module {
-}
