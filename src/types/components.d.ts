@@ -7,12 +7,16 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    AIAssistantMenu: typeof import('./../novel/components/AIAssistantMenu.vue')['default']
+    AITaskConfigModal: typeof import('./../novel/components/AITaskConfigModal.vue')['default']
     EditorAIPanel: typeof import('./../novel/components/editor/EditorAIPanel.vue')['default']
     EditorContent: typeof import('./../novel/components/editor/EditorContent.vue')['default']
     EditorSidebar: typeof import('./../novel/components/editor/EditorSidebar.vue')['default']
+    GlobalAIAssistant: typeof import('./../novel/components/GlobalAIAssistant.vue')['default']
     NovelDashboardSidebar: typeof import('./../novel/components/NovelDashboardSidebar.vue')['default']
     NovelManagementSidebar: typeof import('./../novel/components/NovelManagementSidebar.vue')['default']
     NovelSidebar: typeof import('./../novel/components/NovelSidebar.vue')['default']
+    PromptSidebar: typeof import('./../prompt/components/PromptSidebar.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SettingsSidebar: typeof import('./../settings/components/SettingsSidebar.vue')['default']

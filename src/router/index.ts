@@ -2,7 +2,9 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import { settingsRoutes } from '@/settings/router'
-import {novelRoutes} from "@novel/router.ts";
+import { novelRoutes } from "@novel/router.ts";
+import { promptRoutes } from "@/prompt/router";
+import {workflowRoutes} from "@workflow/router.ts";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -22,6 +24,8 @@ const routes: Array<RouteRecordRaw> = [
         ],
     },
     ...novelRoutes,
+    ...promptRoutes,
+    ...workflowRoutes,
     {
         path: '/settings',
         component: () => import('@/settings/layouts/SettingsLayout.vue'),

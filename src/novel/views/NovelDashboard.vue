@@ -1,4 +1,3 @@
-<!-- src/novel/views/NovelDashboard.vue -->
 <template>
   <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] hide-scrollbar">
     <div class="flex justify-between items-center mb-6">
@@ -35,14 +34,16 @@
           :key="novel.title"
           class="group bg-white rounded-xl border border-gray-100 p-4 flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1"
       >
-        <router-link :to="`/novel/manage/${index + 1}`" class="block aspect-[2/3] relative w-full mb-4 rounded-lg overflow-hidden">
+        <!-- [修改] 链接指向静态的管理页面 -->
+        <router-link to="/novel/manage" class="block aspect-[2/3] relative w-full mb-4 rounded-lg overflow-hidden">
           <img :src="novel.cover" class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Book Cover">
           <div class="absolute top-0 left-0 w-full h-full bg-black/5 group-hover:bg-black/10 transition-colors"></div>
         </router-link>
 
         <div class="flex flex-col flex-grow">
           <h3 class="text-sm font-medium text-[#374151] leading-tight truncate">
-            <router-link :to="`/novel/manage/${index + 1}`" class="hover:text-blue-600 transition-colors">{{ novel.title }}</router-link>
+            <!-- [修改] 链接指向静态的管理页面 -->
+            <router-link to="/novel/manage" class="hover:text-blue-600 transition-colors">{{ novel.title }}</router-link>
           </h3>
           <p class="text-xs text-[#9CA3AF] mt-1">{{ novel.chapters }}章 · {{ novel.status.text }}</p>
           <div class="mt-auto pt-3">

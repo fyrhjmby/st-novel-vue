@@ -1,5 +1,3 @@
-
-<!-- src/novel/layouts/NovelDashboardLayout.vue -->
 <template>
   <div class="h-screen w-screen flex bg-white design-frame-container">
     <div class="design-frame">
@@ -14,23 +12,15 @@
         </div>
       </div>
       <div class="h-[calc(100%-40px)] flex">
-        <NovelDashboardSidebar />
-        <main class="flex-1 bg-white flex flex-col">
-          <AppHeader />
-          <router-view />
-        </main>
+        <PromptSidebar />
+        <router-view />
       </div>
     </div>
-    <!-- 应用全局AI助手组件 -->
-    <GlobalAIAssistant />
   </div>
 </template>
 
 <script setup lang="ts">
-import AppHeader from '@/layouts/components/AppHeader.vue'
-import NovelDashboardSidebar from '@/novel/components/NovelDashboardSidebar.vue'
-import GlobalAIAssistant from '@/novel/components/GlobalAIAssistant.vue' // 引入全局AI助手组件
-import '@/novel/style.css'
+import PromptSidebar from '@/prompt/components/PromptSidebar.vue'
 </script>
 
 <style scoped>

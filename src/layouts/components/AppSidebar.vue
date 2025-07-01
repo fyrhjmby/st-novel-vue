@@ -1,7 +1,6 @@
 <!-- src/layouts/components/AppSidebar.vue -->
 <template>
   <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
-    <!-- 侧边栏头部区域 -->
     <div class="p-4 space-y-4 border-b border-gray-100">
       <div class="flex items-center gap-3 px-2">
         <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -29,10 +28,16 @@
       <div>
         <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">工具</p>
         <div class="space-y-1">
-          <div v-for="item in toolsNav" :key="item.name" class="flex items-center gap-3 px-3 py-2.5 text-gray-400 rounded-lg text-sm cursor-not-allowed">
-            <span v-html="item.icon"></span>
-            <span>{{ item.name }}</span>
-          </div>
+          <template v-for="item in toolsNav" :key="item.name">
+            <router-link v-if="!item.disabled" :to="item.path" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors" active-class="bg-[#4B5563] text-white font-medium">
+              <span v-html="item.icon"></span>
+              <span>{{ item.name }}</span>
+            </router-link>
+            <div v-else class="flex items-center gap-3 px-3 py-2.5 text-gray-400 rounded-lg text-sm cursor-not-allowed">
+              <span v-html="item.icon"></span>
+              <span>{{ item.name }}</span>
+            </div>
+          </template>
         </div>
       </div>
     </nav>
@@ -57,8 +62,8 @@ const mainNav = ref([
 ]);
 
 const toolsNav = ref([
-  { name: '工作流', path: '#', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 3V15M9 15L5 11M9 15L13 11"/><path d="M15 21V9M15 9L19 13M15 9L11 13"/></svg>` },
-  { name: '提示词库', path: '#', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12H16"/></svg>`}
+  { name: '工作流', path: '/workflow', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 3V15M9 15L5 11M9 15L13 11"/><path d="M15 21V9M15 9L19 13M15 9L11 13"/></svg>`, disabled: false },
+  { name: '提示词库', path: '/prompt', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12H16"/></svg>`, disabled: false }
 ]);
 </script>
 

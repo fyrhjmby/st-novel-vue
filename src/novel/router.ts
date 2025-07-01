@@ -1,7 +1,3 @@
-// =
-// 文件: ..\src\novel\router.ts
-//
-
 import type { RouteRecordRaw } from 'vue-router'
 
 export const novelRoutes: Array<RouteRecordRaw> = [
@@ -28,15 +24,19 @@ export const novelRoutes: Array<RouteRecordRaw> = [
                 component: () => import('@/novel/views/NovelTrash.vue'),
                 meta: { title: '回收站' }
             },
+            {
+                path: 'import',
+                name: 'NovelImport',
+                component: () => import('@/novel/views/NovelImport.vue'),
+                meta: { title: '导入小说' }
+            },
         ]
     },
-    // 小说管理页面 (除编辑器外)
     {
-        path: '/novel/manage/:id',
+        path: '/novel/manage',
         component: () => import('@/novel/layouts/NovelManagementLayout.vue'),
-        redirect: to => `/novel/manage/${to.params.id}/outline`,
+        redirect: '/novel/manage/outline',
         children: [
-            // 注意：'editor' 路径已完全移除
             {
                 path: 'outline',
                 name: 'NovelOutline',
@@ -60,15 +60,49 @@ export const novelRoutes: Array<RouteRecordRaw> = [
                 name: 'NovelSettings',
                 component: () => import('@/novel/views/NovelSettings.vue'),
                 meta: { title: '小说设置' }
-            }
+            },
+            {
+                path: 'context',
+                name: 'NovelContext',
+                component: () => import('@/novel/views/NovelContext.vue'),
+                meta: { title: '上下文管理' }
+            },
+            {
+                path: 'export',
+                name: 'NovelExport',
+                component: () => import('@/novel/views/NovelExport.vue'),
+                meta: { title: '导出小说' }
+            },
+            {
+                path: 'history',
+                name: 'NovelHistory',
+                component: () => import('@/novel/views/NovelHistory.vue'),
+                meta: { title: '版本历史' }
+            },
+            {
+                path: 'chat',
+                name: 'NovelChat',
+                component: () => import('@/novel/views/NovelChat.vue'),
+                meta: { title: 'AI聊天助手' }
+            },
         ]
     },
-    // 小说编辑器专属路由，使用新的 EditorView
     {
-        path: '/novel/editor/:id?',
+        path: '/novel/editor',
         name: 'NovelEditor',
-        // 入口指向新的、独立的编辑器视图
         component: () => import('@/novel/views/EditorView.vue'),
         meta: { title: '编辑章节' }
+    },
+    {
+        path: '/novel/read',
+        name: 'NovelReader',
+        component: () => import('@/novel/views/NovelReaderView.vue'),
+        meta: { title: '阅读模式' }
+    },
+    {
+        path: '/novel/context-provider',
+        name: 'NovelContextProvider',
+        component: () => import('@/novel/views/NovelContextProvider.vue'),
+        meta: { title: '上下文预览' }
     }
 ]
