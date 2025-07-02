@@ -1,7 +1,6 @@
 <template>
   <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] hide-scrollbar">
     <div class="space-y-8 max-w-7xl mx-auto">
-      <!-- 分类: 地点 -->
       <div>
         <div class="flex items-center gap-3 mb-4">
           <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">

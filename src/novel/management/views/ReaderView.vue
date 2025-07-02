@@ -1,6 +1,5 @@
 <template>
   <div class="h-screen w-screen bg-[#FDFCF9] text-[#3a2f2f] flex flex-col relative font-serif">
-    <!-- 顶部浮动控件 -->
     <header class="w-full p-4 flex justify-between items-center absolute top-0 left-0 z-10 opacity-0 hover:opacity-100 transition-opacity duration-300">
       <router-link to="/novel/editor" class="flex items-center gap-2 px-4 py-2 text-sm font-sans font-medium bg-white/60 backdrop-blur-md rounded-lg shadow-sm border border-gray-100 text-gray-700 hover:bg-white/90 transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"></path></svg>
@@ -29,7 +28,6 @@
       </div>
     </main>
 
-    <!-- 底部浮动控件 -->
     <footer class="w-full p-4 text-center text-sm text-gray-500/80 absolute bottom-0 left-0 z-10 opacity-0 hover:opacity-100 transition-opacity duration-300 font-sans">
       <p class="mb-2">第四章: 跃迁点</p>
       <div class="w-full max-w-sm mx-auto flex items-center gap-3">
@@ -57,7 +55,7 @@
 
 .reader-content h1 {
   font-family: 'Noto Serif SC', serif;
-  font-size: 2.25rem; /* 36px */
+  font-size: 2.25rem;
   font-weight: 600;
   margin-bottom: 2.5rem;
   color: #1f2937;
@@ -67,7 +65,7 @@
 }
 .reader-content p {
   font-family: 'Noto Serif SC', serif;
-  font-size: 1.125rem; /* 18px */
+  font-size: 1.125rem;
   line-height: 2.2;
   color: #374151;
   margin-bottom: 1.75rem;

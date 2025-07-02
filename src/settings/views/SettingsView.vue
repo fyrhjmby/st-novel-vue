@@ -114,14 +114,14 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-// 模拟用户数据
+
 const user = ref({
   name: '张小明',
   email: 'xiaoming@example.com',
   joinedAt: '2023年5月',
 });
 
-// 模拟订阅数据
+
 const subscription = ref({
   planName: 'Pro',
   planDesc: '专业版会员',
@@ -129,7 +129,7 @@ const subscription = ref({
   nextBillingDate: '2025年7月15日',
 });
 
-// 模拟偏好设置数据
+
 const preferences = ref({
   language: '简体中文',
   analytics: true,

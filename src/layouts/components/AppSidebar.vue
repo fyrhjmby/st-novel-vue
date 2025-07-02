@@ -1,4 +1,3 @@
-<!-- src/layouts/components/AppSidebar.vue -->
 <template>
   <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
     <div class="p-4 space-y-4 border-b border-gray-100">

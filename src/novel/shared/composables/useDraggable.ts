@@ -1,4 +1,3 @@
-
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 
 interface Position {
@@ -25,13 +24,16 @@ export function useDraggable(options: DraggableOptions = {}) {
     const position = ref<Position>({ ...initialPosition });
     const dragging = ref(false);
     const offset = ref({ x: 0, y: 0 });
-    // [重构] 用于存储 setTimeout 的 ID，以便可以清除它
+    // [修复] 用于存储 setTimeout 的 ID，以便可以清除它，从而区分点击和拖动
     const dragTimeout = ref<number | undefined>(undefined);
 
-    // 鼠标按下，开始拖动
+    // 鼠标按下，准备开始拖动
     const startDrag = (event: MouseEvent) => {
         // 只响应鼠标左键
         if (event.button !== 0) return;
+
+        // [修复] 设置一个延迟来区分点击和拖拽
+        // 如果用户按住超过150ms，我们才认为他想拖动
         dragTimeout.value = window.setTimeout(() => {
             dragging.value = true;
         }, 150);
@@ -44,6 +46,7 @@ export function useDraggable(options: DraggableOptions = {}) {
     };
 
     const onDrag = (event: MouseEvent) => {
+        // 只有在 dragging 状态为 true 时才移动
         if (!dragging.value) return;
         event.preventDefault();
 
@@ -64,8 +67,11 @@ export function useDraggable(options: DraggableOptions = {}) {
 
     // 鼠标松开，停止拖动
     const stopDrag = () => {
+        // [修复] 无论如何都清除定时器。如果 mouseup 发生在150ms内，拖拽就不会开始。
         window.clearTimeout(dragTimeout.value);
 
+        // 使用 setTimeout 确保 dragging 状态在 click 事件处理后改变
+        // 这给 click 事件一个机会去检查 dragging 状态 (此时还是 false)
         if (dragging.value) {
             setTimeout(() => {
                 dragging.value = false;
@@ -78,7 +84,7 @@ export function useDraggable(options: DraggableOptions = {}) {
 
     const updatePositionOnResize = () => {
         const buttonWidth = 64;
-        const buttonHeight = 64; // 在此定义，以保持一致
+        const buttonHeight = 64;
         if (position.value.x > window.innerWidth - buttonWidth - padding) {
             position.value.x = window.innerWidth - buttonWidth - padding;
         }

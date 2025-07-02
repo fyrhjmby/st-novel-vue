@@ -1,4 +1,3 @@
-<!-- src/settings/views/HelpCenter.vue -->
 <template>
   <main class="flex-1 bg-white flex flex-col">
     <!-- Header -->

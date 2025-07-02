@@ -6,19 +6,18 @@
 // 文件: ..\src\novel\assets\styles\main.css
 //
 
-/* src/novel/assets/styles/main.css */
-/* [重构] 这是小说模块的基础样式文件 */
+
 
 .novel-module {
-    /* This can be a placeholder for future shared styles */
+
 }
 
-/* 一个在多个组件中使用的通用样式类 */
+
 .hide-scrollbar::-webkit-scrollbar {
     display: none;
 }
 
-/* Add any other global styles for the novel module here */
+
 
 // =
 // 文件: ..\src\novel\chat\router.ts
@@ -28,8 +27,7 @@ import type { RouteRecordRaw } from 'vue-router'
 
 export const chatRoutes: Array<RouteRecordRaw> = [
     {
-        // 这里的路径将由小说的主路由文件处理
-        // 例如，可以挂载在 /novel/chat 下
+
         path: 'chat',
         name: 'NovelChat',
         component: () => import('@/novel/chat/views/ChatView.vue'),
@@ -239,7 +237,6 @@ import type { RouteRecordRaw } from 'vue-router'
 
 export const dashboardRoutes: Array<RouteRecordRaw> = [
     {
-        // 注意：这里的路径是相对于父路由的，父路由将定义为 /novel
         path: 'dashboard',
         name: 'NovelDashboard',
         component: () => import('@/novel/dashboard/views/DashboardView.vue'),
@@ -305,7 +302,6 @@ export const dashboardRoutes: Array<RouteRecordRaw> = [
           :key="index"
           class="group bg-white rounded-xl border border-gray-100 p-4 flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1"
       >
-        <!-- [重构] 链接指向 management 模块的入口 -->
         <router-link to="/novel/manage/outline" class="block aspect-[2/3] relative w-full mb-4 rounded-lg overflow-hidden">
           <img :src="novel.cover" class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Book Cover">
           <div class="absolute top-0 left-0 w-full h-full bg-black/5 group-hover:bg-black/10 transition-colors"></div>
@@ -313,7 +309,6 @@ export const dashboardRoutes: Array<RouteRecordRaw> = [
 
         <div class="flex flex-col flex-grow">
           <h3 class="text-sm font-medium text-[#374151] leading-tight truncate">
-            <!-- [重构] 链接指向 management 模块的入口 -->
             <router-link to="/novel/manage/outline" class="hover:text-blue-600 transition-colors">{{ novel.title }}</router-link>
           </h3>
           <p class="text-xs text-[#9CA3AF] mt-1">{{ novel.chapters }}章 · {{ novel.status.text }}</p>
@@ -453,11 +448,11 @@ const novels = ref([
 </template>
 
 <script setup lang="ts">
-// Import logic will be implemented here
+
 </script>
 
 <style scoped>
-/* Scoped styles can be added here if needed */
+
 </style>
 
 // =
@@ -652,14 +647,1852 @@ const deletedItems = ref([
 </script>
 
 <style scoped>
-/* Scoped styles can be added here if needed, but Tailwind CSS covers most cases. */
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\ai\AIDiffPreview.vue
+//
+
+// =
+// 文件: ..\src\novel\editor\components\ai\AIDiffPreview.vue
+//
+
+<template>
+  <div class="diff-preview-container">
+    <div class="header">
+      <h3 class="title">AI生成预览 (差异对比)</h3>
+      <div class="actions">
+        <!-- [修复] 只有在有选中任务时才显示按钮 -->
+        <button v-if="previewTask" @click="$emit('apply-changes', previewTask.generatedContent)" class="apply-btn">
+          <i class="fa-solid fa-check"></i>
+          应用修改
+        </button>
+      </div>
+    </div>
+    <div class="content-area hide-scrollbar">
+      <!-- [修复] v-html 绑定到 diffHtml 计算属性 -->
+      <div v-if="previewTask" v-html="diffHtml" class="prose-diff"></div>
+      <div v-else class="empty-state">
+        <i class="fa-regular fa-eye text-3xl text-gray-300"></i>
+        <p class="mt-2">请从上方任务队列中</p>
+        <p>选择一个 <span class="font-medium text-green-600">已完成</span> 的任务来查看预览。</p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import type { PropType } from 'vue';
+// [修复] 导入 diff_match_patch 和常量
+import { diff_match_patch, DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL } from 'diff-match-patch';
+import type { AITask } from '@/novel/editor/stores/aiTaskStore';
+
+// --- Props & Emits ---
+const props = defineProps({
+  previewTask: {
+    type: Object as PropType<AITask | null>,
+    default: null
+  }
+});
+
+defineEmits<{
+  (e: 'apply-changes', content: string): void;
+}>();
+
+
+/**
+ * 差异对比的核心逻辑。
+ * 使用 google-diff-match-patch 库来计算差异并生成HTML。
+ */
+const diffHtml = computed(() => {
+  if (!props.previewTask) return '';
+
+  const dmp = new diff_match_patch();
+  // 注意：这里我们对比的是HTML内容，但为了简化显示，不处理复杂的块级元素差异
+  const text1 = props.previewTask.originalContent;
+  const text2 = props.previewTask.generatedContent;
+
+  const diffs = dmp.diff_main(text1, text2);
+  dmp.diff_cleanupSemantic(diffs);
+
+  let html = '';
+  for (const [op, data] of diffs) {
+    // [修复] 正确处理HTML特殊字符，并将换行符替换为<br>
+    const text = data.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>').replace(/\n/g, '<br>');
+    switch (op) {
+      case DIFF_INSERT:
+        // 用 <span> 替代 <ins> 以避免 ProseMirror 的默认样式冲突
+        html += `<span class="diff-add">${text.replace(/<br>/g, '<br>')}</span>`;
+        break;
+      case DIFF_DELETE:
+        // 用 <span> 替代 <del>
+        html += `<span class="diff-del">${text.replace(/<br>/g, '<br>')}</span>`;
+        break;
+      case DIFF_EQUAL:
+        html += `<span>${text.replace(/<br>/g, '<br>')}</span>`;
+        break;
+    }
+  }
+  // [修复] 再次替换，确保 <p> 和 <h1> 等标签能被正确渲染
+  return html.replace(/</g, '<').replace(/>/g, '>');
+});
+</script>
+
+<style scoped>
+.diff-preview-container { padding: 1rem; display: flex; flex-direction: column; height: 100%; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding: 0 0.5rem; flex-shrink: 0; }
+.title { font-size: 0.875rem; font-weight: 500; color: #4B5563; }
+.apply-btn { display: flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.75rem; background-color: #16A34A; color: white; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500; transition: background-color 0.2s ease; }
+.apply-btn:hover { background-color: #15803D; }
+.content-area { flex-grow: 1; background-color: #FFFFFF; border-radius: 0.5rem; border: 1px solid #E5E7EB; padding: 1rem; overflow-y: auto; font-size: 0.875rem; line-height: 1.6; }
+.empty-state { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #9CA3AF; font-size: 0.875rem; }
+
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+
+/*
+ * [修复] 使用 :global 来定义 diff 样式, 确保它们能作用于 v-html 插入的内容。
+ * 并且使用 span 替代 del/ins 来避免浏览器默认样式或 ProseMirror 的干扰。
+*/
+:global(.prose-diff .diff-del) {
+  background-color: #FEE2E2;
+  text-decoration: line-through;
+  text-decoration-color: #EF4444;
+  color: #991B1B; /* 更深的红色以提高可读性 */
+  padding: 1px 2px;
+  border-radius: 3px;
+}
+:global(.prose-diff .diff-add) {
+  background-color: #D1FAE5;
+  text-decoration: none;
+  color: #065F46;
+  padding: 1px 2px;
+  border-radius: 3px;
+}
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\ai\AITaskQueue.vue
+//
+
+// =
+// 文件: ..\src\novel\editor\components\ai\AITaskQueue.vue
+//
+
+<template>
+  <div class="task-queue-container">
+    <div class="header">
+      <h3 class="title">AI任务队列</h3>
+      <span v-if="activeTasksCount > 0" class="badge">{{ activeTasksCount }}个活跃</span>
+    </div>
+    <div v-if="tasks.length > 0" class="task-list">
+      <div
+          v-for="task in tasks"
+          :key="task.id"
+          :class="['task-item', `status-${task.status}`, { 'clickable': task.status === 'completed' }]"
+          @click="handleTaskClick(task)"
+      >
+        <!-- Task Title & Status Icon -->
+        <div class="task-item-header">
+          <p class="task-title" :title="task.title">{{ task.title }}</p>
+          <span class="task-status-text">
+            <i :class="getStatusIcon(task.status)" class="status-icon"></i>
+            {{ getStatusText(task.status) }}
+          </span>
+        </div>
+
+        <!-- Progress Bar or Message -->
+        <div class="task-item-body">
+          <div v-if="task.status === 'processing'" class="progress-bar-container">
+            <div class="progress-bar"></div>
+          </div>
+          <p v-if="task.status === 'failed'" class="error-message">
+            {{ task.error }} <a href="#" @click.prevent class="retry-link">重试</a>
+          </p>
+          <p v-if="task.status === 'completed'" class="completed-message">
+            点击查看结果
+          </p>
+        </div>
+      </div>
+    </div>
+    <div v-else class="empty-state">
+      <i class="fa-regular fa-folder-open text-3xl text-gray-300"></i>
+      <p class="mt-2">当前没有AI任务</p>
+      <p class="text-xs text-gray-400 mt-1">在编辑器中右键开始</p>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useAITaskStore, type AITask, type AITaskStatus } from '@/novel/editor/stores/aiTaskStore';
+
+// --- Emits ---
+const emit = defineEmits<{
+  (e: 'select-task', task: AITask): void;
+}>();
+
+// --- Store ---
+const aiTaskStore = useAITaskStore();
+const tasks = computed(() => aiTaskStore.tasks);
+
+// --- Computed ---
+const activeTasksCount = computed(() => {
+  return tasks.value.filter(t => t.status === 'processing' || t.status === 'pending').length;
+});
+
+// --- Methods ---
+const getStatusText = (status: AITaskStatus): string => {
+  const map: Record<AITaskStatus, string> = {
+    pending: '等待中',
+    processing: '进行中...',
+    completed: '已完成',
+    failed: '失败'
+  };
+  return map[status];
+};
+
+const getStatusIcon = (status: AITaskStatus): string => {
+  const map: Record<AITaskStatus, string> = {
+    pending: 'fa-solid fa-hourglass-half',
+    processing: 'fa-solid fa-spinner fa-spin',
+    completed: 'fa-solid fa-check-circle',
+    failed: 'fa-solid fa-times-circle'
+  };
+  return map[status];
+}
+
+const handleTaskClick = (task: AITask) => {
+  // [修复] 只有已完成的任务可以被选中预览
+  if (task.status === 'completed') {
+    emit('select-task', task);
+  }
+};
+</script>
+
+<style scoped>
+.task-queue-container { padding: 1rem; display: flex; flex-direction: column; height: 100%; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding: 0 0.5rem; }
+.title { font-size: 0.875rem; font-weight: 500; color: #4B5563; }
+.badge { font-size: 0.75rem; font-weight: 500; padding: 0.125rem 0.5rem; border-radius: 9999px; color: #1D4ED8; background-color: #DBEAFE; }
+.task-list { flex-grow: 1; overflow-y: auto; space-y: 0.5rem; padding-right: 4px; }
+.task-list::-webkit-scrollbar { display: none; }
+.task-item { padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #E5E7EB; transition: all 0.2s ease; background-color: #FFFFFF;}
+.task-item.clickable { cursor: pointer; }
+.task-item.clickable:hover { border-color: #D1D5DB; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.task-item.status-processing { border-left-width: 4px; border-left-color: #3B82F6; }
+.task-item.status-completed.clickable { border: 1px solid #BBF7D0; background-color: #F0FDF4; }
+.task-item.status-completed.clickable:hover { background-color: #DCFCE7; border-color: #A7F3D0; }
+.task-item.status-failed { border: 1px solid #FECACA; background-color: #FEF2F2; }
+.task-item-header { display: flex; justify-content: space-between; align-items: center; }
+.task-title { font-size: 0.875rem; font-weight: 500; color: #1F2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.task-status-text { font-size: 0.75rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
+.status-icon { width: 1rem; text-align: center; }
+.status-pending .task-status-text { color: #6B7280; }
+.status-processing .task-status-text { color: #2563EB; }
+.status-completed .task-status-text { color: #16A34A; }
+.status-failed .task-status-text { color: #DC2626; }
+.task-item-body { margin-top: 0.5rem; }
+.progress-bar-container { width: 100%; background-color: #E5E7EB; border-radius: 9999px; height: 0.25rem; overflow: hidden; }
+.progress-bar { background-color: #3B82F6; height: 100%; width: 100%; border-radius: 9999px; animation: indeterminate-progress 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+@keyframes indeterminate-progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.error-message, .completed-message { font-size: 0.75rem; margin-top: 0.25rem; }
+.error-message { color: #B91C1C; }
+.completed-message { color: #6B7280; }
+.retry-link { text-decoration: underline; font-weight: 500; }
+.empty-state { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #9CA3AF; font-size: 0.875rem; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\ai\EditorAIPanel.vue
+//
+
+// =
+// 文件: ..\src\novel\editor\components\ai\EditorAIPanel.vue
+//
+
+<template>
+  <aside class="editor-ai-panel-container">
+    <!-- Top Part: AI Task Queue -->
+    <div class="task-queue-section">
+      <!-- [修复] 监听 select-task 事件 -->
+      <AITaskQueue @select-task="handleSelectTask" />
+    </div>
+
+    <!-- Divider -->
+    <div class="divider"></div>
+
+    <!-- Bottom Part: AI Diff Preview -->
+    <div class="diff-preview-section">
+      <!-- [修复] 将 selectedTask 作为 prop 传递，并监听 apply-changes 事件 -->
+      <AIDiffPreview :preview-task="selectedTask" @apply-changes="handleApplyChanges" />
+    </div>
+  </aside>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+import AITaskQueue from './AITaskQueue.vue';
+import AIDiffPreview from './AIDiffPreview.vue';
+import type { AITask } from '@/novel/editor/stores/aiTaskStore';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+
+// --- State ---
+const selectedTask = ref<AITask | null>(null);
+
+// --- Store ---
+const editorStore = useEditorStore();
+
+// --- Methods ---
+
+/**
+ * 当用户从队列中选择一个任务时，更新当前要预览的任务
+ * @param task - 被选中的任务
+ */
+const handleSelectTask = (task: AITask) => {
+  selectedTask.value = task;
+};
+
+/**
+ * 处理“应用修改”事件
+ * @param newContent - AI生成的新内容
+ */
+const handleApplyChanges = (newContent: string) => {
+  if (selectedTask.value && editorStore.activeItemId) {
+    // 调用 editorStore 的 action 来更新激活文档的内容
+    editorStore.updateItemContentById(editorStore.activeItemId, newContent);
+    // 清空预览，避免误操作
+    selectedTask.value = null;
+  } else {
+    console.error("无法应用修改：没有选中任务或没有激活的文档。");
+  }
+};
+</script>
+
+<style scoped>
+.editor-ai-panel-container {
+  width: 24rem; /* 384px */
+  background-color: #F9FAFB; /* gray-50 */
+  border-left: 1px solid #F3F4F6; /* gray-100 */
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.task-queue-section {
+  height: 40%;
+  min-height: 200px; /* 保证即使在小屏幕下也有足够空间 */
+  flex-shrink: 0;
+}
+
+.divider {
+  height: 1px;
+  background-color: #E5E7EB; /* gray-200, a bit darker */
+  margin: 0 1rem; /* 在两侧留出边距 */
+}
+
+.diff-preview-section {
+  flex-grow: 1;
+  height: 60%;
+}
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\content\EditorContentArea.vue
+//
+
+// =
+// 文件: ..\src\novel\editor\components\content\EditorContentArea.vue
+//
+
+<template>
+  <main class="editor-content-area-container" ref="editorWrapperRef">
+    <!-- Header: 恢复所有UI元素，并从 activeItem 获取数据 -->
+    <header class="header">
+      <div v-if="activeItem" class="header-left">
+        <span class="item-icon" :class="getIconClass(activeItem).split(' ').slice(2).join(' ')">
+            <i :class="getIconClass(activeItem)"></i>
+        </span>
+        <span class="item-title">{{ activeItem.title }}</span>
+        <span v-if="activeItem.type === 'chapter' && activeItem.status === 'editing'" class="item-status-badge">
+          已保存
+        </span>
+      </div>
+      <div v-else class="header-left">
+        <span class="item-title">请从左侧选择一个文档</span>
+      </div>
+
+      <!-- Right side: 恢复字数统计和操作按钮 -->
+      <div v-if="activeItem" class="header-right">
+        <div class="stats">
+          <span v-if="wordCount > 0">字数: {{ wordCount }}</span>
+          <template v-if="readingTime > 0">
+            <span class="divider">•</span>
+            <span>预计阅读: {{ readingTime }}分钟</span>
+          </template>
+        </div>
+        <div class="actions">
+          <button class="action-btn" title="阅读模式"><i class="fa-solid fa-book-open-reader"></i></button>
+          <button class="action-btn" title="历史版本"><i class="fa-solid fa-clock-rotate-left"></i></button>
+          <button class="action-btn" title="更多选项"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content: 编辑器核心区域 -->
+    <div
+        class="editor-scroll-wrapper"
+        @scroll="handleScroll"
+    >
+      <!-- [修复] 将右键事件监听移到 TiptapEditor 内部处理更可靠，这里移除 -->
+
+      <!-- Floating Toolbar -->
+      <FloatingToolbar ref="floatingToolbarRef" />
+
+      <!-- Context Menu -->
+      <EditorContextMenu ref="editorContextMenuRef" />
+
+      <div class="editor-content-wrapper" ref="editorContentRef">
+        <TiptapEditor
+            v-if="activeItem"
+            :key="activeItem.id"
+            v-model="activeItemContent"
+            @show-context-menu="showEditorContextMenu"
+        />
+        <div v-else class="placeholder">
+          <div class="text-center">
+            <i class="fa-regular fa-hand-pointer text-4xl text-gray-300"></i>
+            <p class="mt-4 text-gray-500">请从左侧目录选择一个项目进行查看或编辑。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</template>
+
+<script setup lang="ts">
+import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+import TiptapEditor from './TiptapEditor.vue';
+import FloatingToolbar from './FloatingToolbar.vue';
+import EditorContextMenu from './EditorContextMenu.vue';
+
+const editorStore = useEditorStore();
+const editorWrapperRef = ref<HTMLElement | null>(null);
+const editorContentRef = ref<HTMLElement | null>(null);
+const floatingToolbarRef = ref<InstanceType<typeof FloatingToolbar> | null>(null);
+const editorContextMenuRef = ref<InstanceType<typeof EditorContextMenu> | null>(null);
+
+// [修复] activeItem 从 store 中获取
+const activeItem = computed(() => editorStore.activeItem);
+
+// [修复] activeItemContent 通过 v-model 与 TiptapEditor 绑定
+const activeItemContent = computed({
+  get: () => activeItem.value?.content || '',
+  set: (newContent: string) => {
+    if (activeItem.value) {
+      // 通过 action 更新 store 中的内容
+      editorStore.updateItemContentById(activeItem.value.id, newContent);
+    }
+  }
+});
+
+const wordCount = computed(() => (activeItem.value?.type === 'chapter' && (activeItem.value as any).wordCount) ? (activeItem.value as any).wordCount : 0);
+const readingTime = computed(() => {
+  if (!wordCount.value) return 0;
+  // 平均阅读速度 300 字/分钟
+  const time = Math.ceil(wordCount.value / 300);
+  return time > 0 ? time : 1;
+});
+
+const getIconClass = (item: any): string => {
+  const typeIcons: Record<string, string> = {
+    volume: 'fa-solid fa-book-open text-orange-500',
+    chapter: 'fa-solid fa-file-lines text-blue-600',
+    character_profile: 'fa-solid fa-user text-teal-500',
+    worldview_doc: 'fa-solid fa-earth-americas text-sky-500',
+    note: 'fa-solid fa-note-sticky text-yellow-500',
+  };
+  return typeIcons[item.type] || 'fa-solid fa-question text-gray-400';
+}
+
+// [修复] showEditorContextMenu 现在由 TiptapEditor emit 的事件触发
+const showEditorContextMenu = (event: MouseEvent) => {
+  editorContextMenuRef.value?.show(event, editorWrapperRef.value);
+};
+
+const handleSelectionChange = () => {
+  if (!floatingToolbarRef.value || !editorWrapperRef.value || !editorContentRef.value) return;
+
+  const selection = window.getSelection();
+  // 检查选区是否存在、非空，并且是否在编辑器内容区域内
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed || !editorContentRef.value.contains(selection.getRangeAt(0).commonAncestorContainer)) {
+    floatingToolbarRef.value.hide();
+    return;
+  }
+
+  // 显示浮动工具栏，并隐藏右键菜单
+  floatingToolbarRef.value.show(selection.getRangeAt(0).getBoundingClientRect(), editorWrapperRef.value.getBoundingClientRect());
+  editorContextMenuRef.value?.hide();
+};
+
+// 滚动时隐藏所有浮动菜单
+const handleScroll = () => {
+  floatingToolbarRef.value?.hide();
+  editorContextMenuRef.value?.hide();
+}
+
+// 全局点击事件，用于隐藏菜单
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.context-menu') && !target.closest('.floating-toolbar')) {
+    editorContextMenuRef.value?.hide();
+    floatingToolbarRef.value?.hide();
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('selectionchange', handleSelectionChange);
+  document.addEventListener('click', handleClickOutside);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('selectionchange', handleSelectionChange);
+  document.removeEventListener('click', handleClickOutside);
+});
+</script>
+
+<style scoped>
+.editor-content-area-container { display: flex; flex-direction: column; flex: 1; overflow: hidden; background-color: #FFFFFF; }
+.header { height: 4rem; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #F3F4F6; flex-shrink: 0; }
+.header-left { display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; }
+.item-icon { width: 1.25rem; text-align: center; }
+.item-title { font-weight: 500; color: #1F2937; }
+.item-status-badge { font-size: 0.75rem; font-weight: 500; padding: 0.125rem 0.5rem; border-radius: 9999px; color: #15803D; background-color: #DCFCE7; }
+.header-right { display: flex; align-items: center; gap: 1rem; }
+.stats { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #6B7280; }
+.stats .divider { color: #D1D5DB; }
+.actions { display: flex; align-items: center; gap: 0.25rem; }
+.action-btn { width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; color: #6B7280; border-radius: 0.5rem; transition: background-color 0.15s; }
+.action-btn:hover { background-color: #F3F4F6; }
+.editor-scroll-wrapper { flex: 1; overflow-y: auto; padding: 2rem 0; position: relative; }
+.editor-content-wrapper { max-width: 42rem; margin: 0 auto; }
+.placeholder { display: flex; align-items: center; justify-content: center; height: 100%; min-height: 200px; color: #6B7280; text-align: center; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\content\EditorContextMenu.vue
+//
+
+// =
+// 文件: ..\src\novel\editor\components\content\EditorContextMenu.vue
+//
+
+<template>
+  <div
+      v-if="visible"
+      class="context-menu"
+      :style="{ top: `${position.y}px`, left: `${position.x}px` }"
+      @click.stop
+  >
+    <p class="menu-title">AI生成任务</p>
+    <!-- [修复] 点击时调用 handleExecute 并传入任务类型 -->
+    <a @click="handleExecute('续写')" href="#" class="context-menu-item">
+      <i class="fa-solid fa-wand-magic-sparkles w-4 text-center text-[#4B5563]"></i>
+      <span>续写内容</span>
+    </a>
+    <a @click="handleExecute('润色')" href="#" class="context-menu-item">
+      <i class="fa-solid fa-palette w-4 text-center text-[#3B82F6]"></i>
+      <span>润色内容</span>
+    </a>
+    <div class="context-menu-divider"></div>
+    <p class="menu-title">分析任务</p>
+    <a @click="handleExecute('分析')" href="#" class="context-menu-item">
+      <i class="fa-solid fa-magnifying-glass-chart w-4 text-center text-[#F59E0B]"></i>
+      <span>分析内容</span>
+    </a>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+// [修复] 导入用于执行任务的 aiTaskStore
+import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
+
+const aiTaskStore = useAITaskStore();
+const visible = ref(false);
+const position = ref({ x: 0, y: 0 });
+
+// [修复] show 方法现在接收 MouseEvent 和一个可选的容器元素，用于计算相对位置
+const show = (event: MouseEvent, container: HTMLElement | null) => {
+  const containerRect = container?.getBoundingClientRect() || { top: 0, left: 0 };
+  visible.value = true;
+  position.value.x = event.clientX - containerRect.left;
+  position.value.y = event.clientY - containerRect.top;
+};
+
+const hide = () => {
+  visible.value = false;
+};
+
+// [修复] handleExecute 方法现在会调用 aiTaskStore.startNewTask
+const handleExecute = (taskType: '润色' | '续写' | '分析') => {
+  aiTaskStore.startNewTask(taskType);
+  hide(); // 执行后隐藏菜单
+}
+
+defineExpose({ show, hide });
+</script>
+
+<style scoped>
+.context-menu { position: absolute; z-index: 1000; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 0.5rem; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); width: 16rem; }
+.menu-title { padding: 0.25rem 0.75rem; font-size: 0.75rem; color: #9CA3AF; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+.context-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; cursor: pointer; user-select: none; transition: background-color 0.15s; text-decoration: none; }
+.context-menu-item:hover { background-color: #f3f4f6; }
+.context-menu-divider { height: 1px; background-color: #f3f4f6; margin: 0.5rem 0; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\content\FloatingToolbar.vue
+//
+
+<template>
+  <div
+      v-if="visible"
+      class="floating-toolbar"
+      :style="{ top: `${position.top}px`, left: `${position.left}px` }"
+  >
+    <button title="分析内容" class="toolbar-btn"><i class="fa-solid fa-magnifying-glass-chart"></i></button>
+    <button title="AI生成" class="toolbar-btn"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+    <button title="润色文本" class="toolbar-btn"><i class="fa-solid fa-spell-check"></i></button>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const visible = ref(false);
+const position = ref({ top: 0, left: 0 });
+
+const show = (rect: DOMRect, wrapperRect: DOMRect) => {
+  visible.value = true;
+  position.value = {
+    top: rect.top - wrapperRect.top - 48,
+    left: rect.left - wrapperRect.left + rect.width / 2 - 60,
+  };
+};
+
+const hide = () => {
+  visible.value = false;
+};
+
+defineExpose({ show, hide });
+</script>
+
+<style scoped>
+.floating-toolbar {
+  position: absolute;
+  z-index: 10;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.375rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  display: flex;
+  gap: 0.25rem;
+}
+.toolbar-btn {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4B5563;
+  border-radius: 0.375rem;
+  transition: background-color 0.15s;
+}
+.toolbar-btn:hover {
+  background-color: #f3f4f6;
+}
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\content\TiptapEditor.vue
+//
+
+// =
+// 文件: ..\src\novel\editor\components\content\TiptapEditor.vue
+//
+
+<template>
+  <div v-if="editor" class="editor-wrapper">
+    <!-- [修复] 将 contextmenu 事件绑定到 editor-content 上 -->
+    <editor-content
+        :editor="editor"
+        class="prose prose-lg max-w-none"
+        @contextmenu.prevent="emit('show-context-menu', $event)"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useEditor, EditorContent } from '@tiptap/vue-3'
+import StarterKit from '@tiptap/starter-kit'
+import { watch, onBeforeUnmount } from 'vue'
+
+// --- Props & Emits ---
+
+const props = defineProps<{
+  // 使用 v-model 接收和更新内容
+  modelValue: string
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: string): void;
+  // [新增] 定义 show-context-menu 事件，用于通知父组件显示右键菜单
+  (e: 'show-context-menu', event: MouseEvent): void;
+}>()
+
+// --- Tiptap Editor Instance ---
+
+const editor = useEditor({
+  content: props.modelValue,
+  extensions: [
+    StarterKit.configure({
+      // 配置以匹配 UI 设计
+      heading: { levels: [1, 2, 3] },
+    }),
+  ],
+  onUpdate: () => {
+    // 同步内容到父组件
+    emit('update:modelValue', editor.value?.getHTML() || '')
+  },
+  editorProps: {
+    attributes: {
+      class: 'prose-mirror-focus',
+    },
+  },
+})
+
+// --- Logic ---
+
+/**
+ * 监听外部 modelValue 的变化 (例如，用户切换了章节)
+ * 当外部数据变化时，需要同步更新编辑器内部的内容
+ */
+watch(() => props.modelValue, (newValue) => {
+  // 检查新值与编辑器当前值是否不同，防止不必要更新和光标跳动
+  const isSame = editor.value?.getHTML() === newValue
+  if (isSame) {
+    return
+  }
+  // 使用 setContent 更新编辑器内容
+  // 第二个参数 false 表示不触发 onUpdate 回调，避免无限循环
+  editor.value?.commands.setContent(newValue, false)
+})
+
+/**
+ * 组件卸载前，销毁编辑器实例，防止内存泄漏
+ */
+onBeforeUnmount(() => {
+  editor.value?.destroy()
+})
+</script>
+
+<style scoped>
+/*
+ * 使用 :deep() 来穿透 scoped CSS 的限制，
+ * 为 Tiptap 动态生成的 .ProseMirror 元素添加样式
+ */
+:deep(.ProseMirror) {
+  min-height: calc(100vh - 12rem); /* 确保编辑器区域足够高 */
+  outline: none;
+  /* 提供内边距，使文本不贴边 */
+  padding: 1rem;
+  /* 设置字体和行高，以获得更好的阅读体验 */
+  font-family: 'Georgia', 'Noto Serif SC', serif;
+  line-height: 1.75;
+  color: #374151;
+}
+
+/* 自定义编辑器获得焦点时的样式 */
+:deep(.prose-mirror-focus:focus-visible) {
+  /* box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); */
+}
+
+/* 覆盖 prose 插件的样式以匹配UI */
+:deep(.prose h1) {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1.875rem; /* 30px */
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+:deep(.prose p) {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+:deep(.prose h2) {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1.5rem; /* 24px */
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+:deep(.prose h3) {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1.25rem; /* 20px */
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\DirectoryContextMenu.vue
+//
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\DirectoryContextMenu.vue
+//
+
+<template>
+  <div
+      v-if="visible"
+      class="context-menu"
+      :style="{ top: `${position.y}px`, left: `${position.x}px` }"
+      @click.stop
+  >
+    <!-- [修复] 根据传入节点的类型 (volume or chapter) 显示不同的菜单 -->
+    <template v-if="node?.type === 'volume'">
+      <div class="context-menu-item"><i class="fa-solid fa-plus w-4"></i><span>新建章节</span></div>
+      <div class="context-menu-item"><i class="fa-solid fa-folder-plus w-4"></i><span>新建子卷</span></div>
+      <div class="context-menu-divider"></div>
+      <div class="context-menu-item"><i class="fa-solid fa-pencil w-4"></i><span>重命名</span></div>
+      <div class="context-menu-item danger"><i class="fa-solid fa-trash-can w-4"></i><span>删除卷</span></div>
+    </template>
+    <template v-else-if="node?.type === 'chapter'">
+      <div class="context-menu-item"><i class="fa-solid fa-copy w-4"></i><span>创建副本</span></div>
+      <div class="context-menu-item"><i class="fa-solid fa-pencil w-4"></i><span>重命名</span></div>
+      <div class="context-menu-divider"></div>
+      <div class="context-menu-item danger"><i class="fa-solid fa-trash-can w-4"></i><span>删除章节</span></div>
+    </template>
+    <!-- 可以为其他类型如 note, character_profile 等添加更多菜单项 -->
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount, type PropType } from 'vue';
+import type { TreeNode } from './TreeView.vue';
+
+const visible = ref(false);
+const position = ref({ x: 0, y: 0 });
+const node = ref<TreeNode | null>(null);
+
+// [修复] show 方法现在接收 TreeNode 和 MouseEvent
+const show = (event: MouseEvent, targetNode: TreeNode) => {
+  node.value = targetNode;
+  visible.value = true;
+  position.value.x = event.clientX;
+  position.value.y = event.clientY;
+};
+
+const hide = () => {
+  visible.value = false;
+  node.value = null;
+};
+
+// [修复] 添加点击和右键全局监听器来关闭菜单
+onMounted(() => {
+  window.addEventListener('click', hide);
+  window.addEventListener('contextmenu', (e) => {
+    // 只有当右键点击的不是菜单本身时才关闭
+    if (!(e.target as HTMLElement).closest('.context-menu')) {
+      hide();
+    }
+  });
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('click', hide);
+  window.removeEventListener('contextmenu', hide);
+});
+
+// Expose show/hide methods to parent component
+defineExpose({ show, hide });
+</script>
+
+<style scoped>
+.context-menu {
+  position: fixed;
+  z-index: 1000;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem; /* 12px */
+  padding: 0.5rem; /* 8px */
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  min-width: 14rem; /* 224px */
+}
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* 12px */
+  padding: 0.5rem 0.75rem; /* 8px 12px */
+  border-radius: 0.5rem; /* 8px */
+  font-size: 0.875rem; /* 14px */
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s, color 0.15s;
+}
+.context-menu-item:hover {
+  background-color: #f3f4f6;
+}
+.context-menu-item.danger:hover {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+.context-menu-divider {
+  height: 1px;
+  background-color: #f3f4f6;
+  margin: 0.5rem 0;
+}
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\DirectoryTab.vue
+//
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\DirectoryTab.vue
+//
+
+<template>
+  <div class="directory-tab-container">
+    <div class="header">
+      <h3 class="title">章节大纲</h3>
+      <div class="actions">
+        <button class="action-btn" title="添加新章节">
+          <i class="fa-solid fa-plus fa-xs"></i>
+        </button>
+        <button class="action-btn" title="折叠/展开全部">
+          <i class="fa-solid fa-folder-tree fa-xs"></i>
+        </button>
+      </div>
+    </div>
+
+    <TreeView
+        v-if="directoryTree.length > 0"
+        :nodes="directoryTree"
+        :active-node-id="editorStore.activeItemId"
+        :expanded-node-ids="editorStore.uiState.expandedNodeIds"
+        @select-node="handleSelectNode"
+        @toggle-expansion="handleToggleExpansion"
+        @context-menu="handleContextMenu"
+    />
+    <div v-else class="p-4 text-sm text-gray-500">
+      正在加载目录...
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import TreeView, { type TreeNode } from './TreeView.vue';
+import { useEditorStore, type Volume, type Chapter } from '@/novel/editor/stores/editorStore';
+
+// [修复] 定义 emit，以便可以向父组件发送事件
+const emit = defineEmits<{
+  (e: 'show-context-menu', payload: { node: TreeNode; event: MouseEvent }): void;
+}>();
+
+const editorStore = useEditorStore();
+
+// [修复] directoryTree 现在完全由 editorStore.directoryData 驱动
+const directoryTree = computed((): TreeNode[] => {
+  return editorStore.directoryData.map((volume: Volume) => ({
+    id: volume.id,
+    title: volume.title,
+    icon: 'fa-solid fa-book-open text-orange-500',
+    type: 'volume', // 添加类型以供右键菜单判断
+    originalData: volume, // 传递原始数据
+    children: volume.chapters.map((chapter: Chapter) => ({
+      id: chapter.id,
+      title: chapter.title,
+      icon: 'fa-solid fa-file-lines',
+      status: chapter.status,
+      type: 'chapter', // 添加类型以供右键菜单判断
+      originalData: chapter, // 传递原始数据
+      children: [],
+    })),
+  }));
+});
+
+// [修复] handleSelectNode 调用 editorStore 的 action 来设置激活项
+const handleSelectNode = (id: string) => {
+  editorStore.setActiveItem(id);
+};
+
+// [修复] handleToggleExpansion 调用 editorStore 的 action 来切换展开状态
+const handleToggleExpansion = (id:string) => {
+  editorStore.toggleNodeExpansion(id);
+};
+
+// [修复] handleContextMenu 将事件和数据向上 emit 给父组件
+const handleContextMenu = (payload: { node: TreeNode; event: MouseEvent }) => {
+  emit('show-context-menu', payload);
+};
+</script>
+
+<style scoped>
+.directory-tab-container { padding: 1rem; display: flex; flex-direction: column; height: 100%; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding: 0 0.5rem; }
+.title { font-size: 0.875rem; font-weight: 500; color: #4B5563; }
+.actions { display: flex; align-items: center; gap: 0.25rem; }
+.action-btn { width: 1.75rem; height: 1.75rem; display: flex; align-items: center; justify-content: center; color: #6B7280; border-radius: 0.375rem; transition: background-color 0.15s; }
+.action-btn:hover { background-color: #E5E7EB; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\EditorInternalSidebar.vue
+//
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\EditorInternalSidebar.vue
+//
+
+<template>
+  <aside class="editor-internal-sidebar-container">
+    <!-- Tabs for switching between different sidebar views -->
+    <div class="tabs-container">
+      <div class="tabs tabs-bordered">
+        <a
+            v-for="tab in internalTabs"
+            :key="tab.id"
+            role="tab"
+            :class="['tab', { 'tab-active text-blue-600': editorStore.uiState.activeInternalTab === tab.id }]"
+            @click="editorStore.setActiveInternalTab(tab.id)"
+        >
+          {{ tab.name }}
+        </a>
+      </div>
+    </div>
+
+    <!-- Content area for the active tab -->
+    <div class="tab-content-container">
+      <keep-alive>
+        <component :is="activeTabComponent" @show-context-menu="showDirectoryContextMenu" />
+      </keep-alive>
+    </div>
+
+    <!-- Directory Context Menu Component -->
+    <DirectoryContextMenu ref="directoryContextMenuRef" />
+
+  </aside>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, defineAsyncComponent, shallowRef } from 'vue';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+import DirectoryContextMenu from './DirectoryContextMenu.vue';
+import type { TreeNode } from './TreeView.vue';
+
+const editorStore = useEditorStore();
+const directoryContextMenuRef = ref<InstanceType<typeof DirectoryContextMenu> | null>(null);
+
+// --- Tab Definitions ---
+const internalTabs = ref([
+  { id: 'directory', name: '目录' },
+  { id: 'related', name: '相关' },
+  { id: 'notes', name: '笔记' },
+]);
+
+// --- Method to show context menu ---
+// [修复] 此方法现在正确接收来自子组件的 payload
+const showDirectoryContextMenu = (payload: { node: TreeNode, event: MouseEvent }) => {
+  // 调用子组件 DirectoryContextMenu 的 show 方法
+  directoryContextMenuRef.value?.show(payload.event, payload.node);
+};
+
+// --- Dynamic Component Loading ---
+const tabComponents = {
+  directory: defineAsyncComponent(() => import('./DirectoryTab.vue')),
+  related: defineAsyncComponent(() => import('./RelatedTab.vue')),
+  notes: defineAsyncComponent(() => import('./NotesTab.vue')),
+};
+
+const activeTabComponent = computed(() => {
+  const tabId = editorStore.uiState.activeInternalTab;
+  return tabComponents[tabId] || null;
+});
+</script>
+
+<style scoped>
+.editor-internal-sidebar-container {
+  width: 20rem; /* 320px */
+  border-right: 1px solid #F3F4F6; /* border-gray-100 */
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  background-color: #FAFBFC;
+  position: relative;
+}
+.tabs-container {
+  padding: 0 1rem;
+  padding-top: 1rem;
+  border-bottom: 1px solid #F3F4F6;
+  flex-shrink: 0;
+}
+.tab {
+  --tab-bg: transparent;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.tab-content-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  position: relative;
+}
+/* Custom scrollbar */
+.tab-content-container::-webkit-scrollbar { width: 6px; }
+.tab-content-container::-webkit-scrollbar-track { background: transparent; }
+.tab-content-container::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
+.tab-content-container::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\NotesTab.vue
+//
+
+<template>
+  <div class="notes-tab-container">
+    <div class="header">
+      <h3 class="title">章节笔记</h3>
+      <button class="action-btn" title="新建笔记"><i class="fa-solid fa-plus fa-xs"></i></button>
+    </div>
+    <div class="notes-list">
+      <div
+          v-for="note in editorStore.noteData"
+          :key="note.id"
+          @click="editorStore.setActiveItem(note.id)"
+          class="note-item"
+          :class="{ 'active': editorStore.activeItemId === note.id }"
+      >
+        <div class="note-header">
+          <p class="note-title">{{ note.title }}</p>
+          <span class="note-timestamp">{{ note.timestamp }}</span>
+        </div>
+        <p class="note-content">{{ note.content }}</p>
+      </div>
+    </div>
+    <div class="quick-add-footer">
+      <input type="text" placeholder="快速添加新笔记..." class="quick-add-input">
+      <button class="quick-add-btn"><i class="fa-solid fa-paper-plane fa-sm"></i></button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+const editorStore = useEditorStore();
+</script>
+
+<style scoped>
+.notes-tab-container { padding: 1rem; display: flex; flex-direction: column; height: 100%; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding: 0 0.5rem; flex-shrink: 0; }
+.title { font-size: 0.875rem; font-weight: 500; color: #4B5563; }
+.action-btn { width: 1.75rem; height: 1.75rem; display: flex; align-items: center; justify-content: center; color: #6B7280; border-radius: 0.375rem; transition: background-color 0.15s; }
+.action-btn:hover { background-color: #E5E7EB; }
+.notes-list { flex-grow: 1; space-y: 0.5rem; overflow-y: auto; padding-right: 4px; }
+.note-item { padding: 0.75rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; background-color: #FFFFFF; }
+.note-item:hover { background-color: #F9FAFB; border-color: #F3F4F6; }
+.note-item.active { background-color: #FEFCE8; border-color: #FDE047; }
+.note-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.note-title { font-size: 0.875rem; font-weight: 500; color: #1F2937; padding-right: 3rem; }
+.note-timestamp { font-size: 0.75rem; color: #CA8A04; flex-shrink: 0; }
+.note-content { font-size: 0.75rem; color: #4B5563; margin-top: 0.375rem; line-height: 1.6; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.quick-add-footer { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #F3F4F6; display: flex; gap: 0.5rem; flex-shrink: 0; }
+.quick-add-input { flex-grow: 1; background: white; border: 1px solid #D1D5DB; border-radius: 0.5rem; padding: 0.4rem 0.75rem; font-size: 0.875rem; outline: none; transition: all 0.2s; }
+.quick-add-input:focus { border-color: #3B82F6; box-shadow: 0 0 0 1px #3B82F6; }
+.quick-add-btn { flex-shrink: 0; width: 2rem; height: 2rem; background-color: #4B5563; color: white; border-radius: 0.5rem; transition: background-color 0.2s; }
+.quick-add-btn:hover { background-color: #374151; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\RelatedTab.vue
+//
+
+<template>
+  <div class="related-tab-container">
+    <div class="header">
+      <h3 class="title">相关内容</h3>
+      <button class="action-btn" title="添加新条目"><i class="fa-solid fa-plus fa-xs"></i></button>
+    </div>
+    <div class="search-bar">
+      <i class="fa-solid fa-magnifying-glass search-icon"></i>
+      <input type="text" placeholder="搜索角色、地点、设定..." class="search-input">
+    </div>
+    <ul class="item-list">
+      <li v-for="group in editorStore.relatedData" :key="group.type">
+        <a href="#" class="group-header">
+          <i class="fa-solid fa-chevron-down w-4 text-gray-400"></i>
+          <i class="w-4 text-center" :class="group.icon"></i>
+          <span>{{ group.title }}</span>
+          <span class="count-badge">{{ group.items.length }}</span>
+        </a>
+        <ul class="sub-item-list">
+          <li v-for="item in group.items" :key="item.id">
+            <a
+                href="#"
+                @click.prevent="editorStore.setActiveItem(item.id)"
+                class="sub-item"
+                :class="editorStore.activeItemId === item.id ? `active text-${group.color}-800 border-${group.color}-200 bg-${group.color}-100` : ''"
+            >
+              <i class="w-4" :class="[item.icon, editorStore.activeItemId === item.id ? `text-${group.color}-600` : 'text-gray-400']"></i>
+              <span class="truncate">{{ item.title }}</span>
+            </a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+const editorStore = useEditorStore();
+</script>
+
+<style scoped>
+.related-tab-container { padding: 1rem; overflow-y: auto; height: 100%; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding: 0 0.5rem; }
+.title { font-size: 0.875rem; font-weight: 500; color: #4B5563; }
+.action-btn { width: 1.75rem; height: 1.75rem; display: flex; align-items: center; justify-content: center; color: #6B7280; border-radius: 0.375rem; transition: background-color 0.15s; }
+.action-btn:hover { background-color: #E5E7EB; }
+.search-bar { position: relative; margin-bottom: 1rem; }
+.search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #9CA3AF; font-size: 0.875rem; }
+.search-input { width: 100%; background: white; border: 1px solid #D1D5DB; border-radius: 0.5rem; padding: 0.4rem 0.75rem 0.4rem 2.25rem; font-size: 0.875rem; outline: none; transition: all 0.2s; }
+.search-input:focus { border-color: #3B82F6; box-shadow: 0 0 0 1px #3B82F6; }
+.item-list, .sub-item-list { list-style: none; padding: 0; margin: 0; space-y: 0.25rem; }
+.group-header { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; border-radius: 0.5rem; font-weight: 500; font-size: 0.875rem; color: #374151; }
+.group-header:hover { background-color: #F3F4F6; }
+.count-badge { margin-left: auto; font-size: 0.75rem; color: #9CA3AF; font-weight: 400; }
+.sub-item-list { padding-left: 1.5rem; margin-left: 0.375rem; border-left: 1px solid #E5E7EB; }
+.sub-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; }
+.sub-item:hover { background-color: #F3F4F6; }
+.sub-item.active { font-weight: 500; border: 1px solid; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\TreeView.vue
+//
+
+<template>
+  <ul class="tree-view-list">
+    <li v-for="node in nodes" :key="node.id" class="tree-view-item">
+      <!-- 节点自身的渲染 -->
+      <div
+          class="node-content"
+          :class="{ 'active': node.id === activeNodeId }"
+          @click="emit('select-node', node.id)"
+          @contextmenu.prevent="emit('context-menu', { node, event: $event })"
+      >
+        <!-- 展开/折叠图标 -->
+        <div
+            class="expand-icon"
+            :class="{ 'invisible': !node.children || node.children.length === 0 }"
+            @click.stop="emit('toggle-expansion', node.id)"
+        >
+          <i class="fa-solid fa-chevron-right transition-transform" :class="{ 'rotate-90': expandedNodeIds.has(node.id) }"></i>
+        </div>
+
+        <!-- 节点类型图标 -->
+        <div class="node-type-icon">
+          <i :class="node.icon"></i>
+        </div>
+
+        <!-- 节点标题 -->
+        <span class="node-title truncate">{{ node.title }}</span>
+
+        <!-- 节点状态徽章 (可选) -->
+        <span v-if="node.status" class="node-status-badge">
+          {{ node.status === 'editing' ? '编辑中' : '' }}
+        </span>
+      </div>
+
+      <!-- 递归渲染子节点 -->
+      <div v-if="node.children && node.children.length > 0" class="children-container">
+        <TreeView
+            v-show="expandedNodeIds.has(node.id)"
+            :nodes="node.children"
+            :active-node-id="activeNodeId"
+            :expanded-node-ids="expandedNodeIds"
+            @select-node="emit('select-node', $event)"
+            @toggle-expansion="emit('toggle-expansion', $event)"
+            @context-menu="emit('context-menu', $event)"
+        />
+      </div>
+    </li>
+  </ul>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+
+// --- 类型定义 ---
+// TreeView组件期望接收的节点数据结构
+export interface TreeNode {
+  id: string;
+  title: string;
+  icon: string; // Font Awesome class
+  status?: string;
+  children?: TreeNode[];
+  // 可以包含原始数据以便在事件中传递
+  originalData: any;
+}
+
+// --- Props & Emits ---
+defineProps({
+  /**
+   * 要渲染的树节点数组
+   */
+  nodes: {
+    type: Array as PropType<TreeNode[]>,
+    required: true,
+  },
+  /**
+   * 当前激活的节点ID
+   */
+  activeNodeId: {
+    type: String as PropType<string | null>,
+    default: null,
+  },
+  /**
+   * 一个包含所有已展开节点ID的Set
+   */
+  expandedNodeIds: {
+    type: Set as PropType<Set<string>>,
+    required: true,
+  }
+});
+
+const emit = defineEmits<{
+  (e: 'select-node', id: string): void;
+  (e: 'toggle-expansion', id: string): void;
+  (e: 'context-menu', payload: { node: TreeNode, event: MouseEvent }): void;
+}>();
+</script>
+
+<style scoped>
+.tree-view-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+.node-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* 8px */
+  padding: 0.5rem 0.75rem; /* 8px 12px */
+  border-radius: 0.5rem; /* 8px */
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+  font-size: 0.875rem; /* 14px */
+  color: #374151; /* text-gray-700 */
+  user-select: none;
+}
+.node-content:hover {
+  background-color: #F3F4F6; /* hover:bg-gray-100 */
+}
+.node-content.active {
+  background-color: #E0E7FF; /* bg-indigo-100 */
+  color: #3730A3; /* text-indigo-800 */
+  font-weight: 500;
+}
+.expand-icon {
+  width: 1rem; /* 16px */
+  height: 1rem; /* 16px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9CA3AF; /* text-gray-400 */
+  flex-shrink: 0;
+}
+.expand-icon.invisible {
+  visibility: hidden;
+}
+.node-type-icon {
+  width: 1.25rem; /* 20px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B7280; /* text-gray-500 */
+}
+.node-content.active .node-type-icon {
+  color: #4338CA; /* active:text-indigo-700 */
+}
+.node-title {
+  flex-grow: 1;
+}
+.node-status-badge {
+  margin-left: auto;
+  font-size: 0.75rem; /* 12px */
+  padding: 0.125rem 0.5rem; /* 2px 8px */
+  background-color: #DCFCE7; /* bg-green-100 */
+  color: #166534; /* text-green-800 */
+  border-radius: 9999px;
+  font-weight: 500;
+}
+.children-container {
+  padding-left: 1.5rem; /* 24px */
+  margin-left: 0.5rem; /* 8px */
+  border-left: 1px solid #E5E7EB; /* border-gray-200 */
+}
+</style>
+
+// =
+// 文件: ..\src\novel\editor\layouts\NovelEditorLayout.vue
+//
+
+// =
+// 文件: ..\src\novel\editor\layouts\NovelEditorLayout.vue
+//
+
+<template>
+  <div class="h-screen w-screen flex bg-white design-frame-container">
+    <div class="design-frame">
+      <!-- 顶部导航栏: 严格遵循UI设计稿 -->
+      <header class="h-[56px] bg-white border-b border-gray-100 flex items-center px-6 flex-shrink-0">
+        <div class="flex items-center gap-2 flex-1">
+          <!-- 返回链接指向小说管理台 -->
+          <router-link to="/novel/dashboard" class="flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors p-2 -ml-2 rounded-lg">
+            <i class="fa-solid fa-chevron-left w-4 h-4"></i>
+            <span>返回</span>
+          </router-link>
+          <span class="text-gray-300">/</span>
+          <!-- 静态小说标题 -->
+          <span class="font-medium text-gray-800 text-sm">星际漫游者</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+            <i class="fa-solid fa-search w-5 h-5"></i>
+          </button>
+          <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors relative">
+            <i class="fa-solid fa-bell w-5 h-5"></i>
+            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+          </button>
+          <div class="ml-2 flex items-center gap-3">
+            <img src="https://i.pravatar.cc/150?u=creator" alt="Creator Avatar" class="w-9 h-9 rounded-full">
+            <div>
+              <p class="text-sm font-medium text-[#374151]">创作者</p>
+              <p class="text-xs text-[#9CA3AF]">在线</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- [修复] 使用 <router-view /> 来渲染子路由对应的组件 (EditorWorkspaceView) -->
+      <div class="h-[calc(100%-56px)]">
+        <router-view />
+      </div>
+    </div>
+    <!-- [修复] 将全局组件放在布局的顶层 -->
+    <GlobalAIAssistant />
+    <AITaskConfigModal />
+  </div>
+</template>
+
+<script setup lang="ts">
+import GlobalAIAssistant from '@/novel/shared/components/GlobalAIAssistant/index.vue';
+// [新增] 导入AI任务配置模态框
+import AITaskConfigModal from '@/novel/shared/components/GlobalAIAssistant/AITaskConfigModal.vue';
+import '@/novel/assets/styles/main.css';
+</script>
+
+<style scoped>
+.design-frame-container {
+  padding: 2rem;
+  background-color: #f5f5f7;
+}
+.design-frame {
+  width: 100%;
+  height: 100%;
+  max-width: 1800px;
+  margin: auto;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+}
+</style>
+
+// =
+// 文件: ..\src\novel\editor\router.ts
+//
+
+import type { RouteRecordRaw } from 'vue-router'
+
+export const editorRoutes: Array<RouteRecordRaw> = [
+    {
+        path: '/novel/editor',
+        component: () => import('@/novel/editor/layouts/NovelEditorLayout.vue'),
+        children: [
+            {
+                // 子路由，当路径为 /novel/editor 时，它会作为默认子路由被匹配
+                path: '',
+                name: 'NovelEditorWorkspace',
+                // 这个子路由负责渲染实际的工作区视图
+                component: () => import('@/novel/editor/views/EditorWorkspaceView.vue'),
+                meta: { title: '小说编辑器' }
+            }
+        ]
+    }
+]
+
+// =
+// 文件: ..\src\novel\editor\stores\aiTaskStore.ts
+//
+
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { useEditorStore } from './editorStore'
+
+// --- 类型定义 ---
+export type AITaskStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+export interface AITask {
+    id: string;
+    title: string;
+    status: AITaskStatus;
+    prompt: string;
+    originalContent: string;
+    generatedContent: string;
+    error?: string;
+    createdAt: Date;
+}
+
+// --- Store 定义 ---
+export const useAITaskStore = defineStore('aiTask', () => {
+    // --- State ---
+
+    /**
+     * 存储所有AI任务的队列
+     */
+    const tasks = ref<AITask[]>([]);
+
+    // --- Actions ---
+
+    /**
+     * 模拟AI流式响应
+     * @param taskId - 正在处理的任务ID
+     */
+    const _simulateAIStream = (taskId: string) => {
+        const task = tasks.value.find(t => t.id === taskId);
+        if (!task) return;
+
+        task.status = 'processing';
+        task.generatedContent = '';
+
+        // 模拟的流式文本
+        const mockResponseText = "警报的尖啸犹如一把利刃，划破了卡尔文短暂的假寐。他猛然挺直身躯，猩红的警示灯在他眼中投下不祥的光晕。'发现引力异常，' 艾拉的合成音毫无波澜，却字字千钧，'我们正迫近一个理论中的时空奇点——跃迁点。根据数据库推演，这或许是返回太阳系的唯一路径。'";
+        const words = mockResponseText.split(/(\s+)/); // 按单词和空格分割
+        let wordIndex = 0;
+
+        // 随机决定这次模拟是否会失败
+        const willFail = Math.random() < 0.1; // 10%的失败率
+
+        const intervalId = setInterval(() => {
+            if (wordIndex < words.length) {
+                task.generatedContent += words[wordIndex];
+                wordIndex++;
+
+                // 模拟中途失败
+                if (willFail && wordIndex > words.length / 2) {
+                    clearInterval(intervalId);
+                    task.status = 'failed';
+                    task.error = '生成超时，请检查网络后重试。';
+                    return;
+                }
+
+            } else {
+                clearInterval(intervalId);
+                task.status = 'completed';
+            }
+        }, 50); // 每50ms吐一个字
+    }
+
+    /**
+     * 创建并开始一个新AI任务
+     * @param taskType - 任务类型 (如 '润色', '续写')
+     */
+    const startNewTask = (taskType: '润色' | '续写' | '分析') => {
+        const editorStore = useEditorStore();
+        const currentItem = editorStore.activeItem;
+
+        if (!currentItem) {
+            console.error("无法启动AI任务：没有激活的文档。");
+            return;
+        }
+
+        const newTask: AITask = {
+            id: `task_${Date.now()}`,
+            title: `${taskType} "${currentItem.title}"`,
+            status: 'pending',
+            prompt: `请对以下内容进行"${taskType}"：`, // 简单的示例prompt
+            originalContent: currentItem.content,
+            generatedContent: '',
+            createdAt: new Date(),
+        };
+
+        // 将新任务添加到队列顶部
+        tasks.value.unshift(newTask);
+
+        // 立即开始模拟处理
+        _simulateAIStream(newTask.id);
+    };
+
+    /**
+     * 清除所有任务
+     */
+    const clearAllTasks = () => {
+        tasks.value = [];
+    };
+
+    return {
+        // State
+        tasks,
+        // Actions
+        startNewTask,
+        clearAllTasks
+    }
+})
+
+// =
+// 文件: ..\src\novel\editor\stores\editorStore.ts
+//
+
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+
+// --- 类型定义 ---
+export interface Chapter {
+    id: string;
+    type: 'chapter';
+    title: string;
+    wordCount: number;
+    content: string;
+    status: 'completed' | 'editing' | 'planned';
+}
+
+export interface Volume {
+    id: string;
+    type: 'volume';
+    title:string;
+    content: string;
+    chapters: Chapter[];
+}
+
+export interface RelatedItem {
+    id: string;
+    type: 'character_profile' | 'worldview_doc';
+    title: string;
+    icon: string;
+    content: string;
+}
+
+export interface RelatedItemGroup {
+    type: string;
+    title: string;
+    icon: string;
+    color: string;
+    items: RelatedItem[];
+}
+
+export interface NoteItem {
+    id: string;
+    type: 'note';
+    title: string;
+    timestamp: string;
+    content: string;
+}
+
+type ActiveItem = Volume | Chapter | RelatedItem | NoteItem | null;
+
+interface UIState {
+    activeInternalTab: 'directory' | 'related' | 'notes';
+    expandedNodeIds: Set<string>;
+}
+
+// --- Store 定义 ---
+export const useEditorStore = defineStore('editor', () => {
+    // --- State ---
+    const directoryData = ref<Volume[]>([]);
+    const relatedData = ref<RelatedItemGroup[]>([]); // [新增] 相关内容数据
+    const noteData = ref<NoteItem[]>([]); // [新增] 笔记数据
+    const activeItemId = ref<string | null>(null);
+    const uiState = ref<UIState>({
+        activeInternalTab: 'directory',
+        expandedNodeIds: new Set(),
+    });
+
+    // --- Getters ---
+    const activeItem = computed((): ActiveItem => {
+        if (!activeItemId.value) return null;
+
+        // 在所有数据源中查找激活项
+        for (const volume of directoryData.value) {
+            if (volume.id === activeItemId.value) return volume;
+            for (const chapter of volume.chapters) {
+                if (chapter.id === activeItemId.value) return chapter;
+            }
+        }
+        for (const group of relatedData.value) {
+            for (const item of group.items) {
+                if(item.id === activeItemId.value) return item;
+            }
+        }
+        for (const note of noteData.value) {
+            if(note.id === activeItemId.value) return note;
+        }
+        return null;
+    });
+
+    // --- Actions ---
+    const updateItemContentById = (id: string, content: string) => {
+        // 简化版，实际项目中可能需要更复杂的查找逻辑
+        const item = activeItem.value;
+        if (item && item.id === id) {
+            item.content = content;
+            if (item.type === 'chapter') {
+                item.wordCount = content.replace(/<[^>]+>/g, '').length;
+            }
+        }
+    }
+
+    const fetchNovelData = (novelId: string) => {
+        console.log(`Fetching data for novel: ${novelId}`);
+
+        // 目录数据
+        directoryData.value = [
+            { id: 'vol-1', type: 'volume', title: '第一卷：星尘之始', content: '<h1>第一卷大纲</h1>...', chapters: [
+                    { id: 'ch-4', type: 'chapter', title: '第四章: 跃迁点', wordCount: 2415, content: '<h1>第四章: 跃迁点</h1><p>控制台的警报声将卡尔文从浅眠中惊醒...</p>', status: 'editing' },
+                ]},
+        ];
+
+        relatedData.value = [
+            { type: 'character', title: '角色', icon: 'fa-solid fa-users text-teal-500', color: 'teal', items: [
+                    { id: 'char-calvin', type: 'character_profile', title: '卡尔文·里德', icon: 'fa-regular fa-user', content: '<h2>卡尔文·里德</h2><p><strong>年龄：</strong>35</p>...' },
+                    { id: 'char-aila', type: 'character_profile', title: '艾拉 (AILA)', icon: 'fa-regular fa-user', content: '<h2>艾拉 (AILA)</h2><p>第五代通用人工智能...</p>' },
+                ]},
+            { type: 'worldview', title: '世界观', icon: 'fa-solid fa-earth-americas text-sky-500', color: 'sky', items: [
+                    { id: 'world-overview', type: 'worldview_doc', title: '世界观总览', icon: 'fa-regular fa-file-lines', content: '<h3>时间背景</h3><p>公元2157年...</p>' },
+                ]}
+        ];
+
+        noteData.value = [
+            { id: 'note-1', type: 'note', title: '第四章情感转折点设计', timestamp: '今天 14:32', content: '卡尔文对"回家"的复杂情感需要更细腻的描写。目前的写法“心跳漏了一拍”有些 cliché...'},
+            { id: 'note-2', type: 'note', title: '跃迁点物理描述', timestamp: '今天 11:20', content: '查阅了相关资料，跃迁点可以描述为时空扭曲形成的漩涡状结构...'}
+        ];
+
+        activeItemId.value = 'ch-4';
+        uiState.value.expandedNodeIds.add('vol-1');
+    };
+
+    const setActiveItem = (id: string) => {
+        activeItemId.value = id;
+    };
+
+    const toggleNodeExpansion = (nodeId: string) => {
+        if (uiState.value.expandedNodeIds.has(nodeId)) {
+            uiState.value.expandedNodeIds.delete(nodeId);
+        } else {
+            uiState.value.expandedNodeIds.add(nodeId);
+        }
+    };
+
+    const setActiveInternalTab = (tabId: 'directory' | 'related' | 'notes') => {
+        uiState.value.activeInternalTab = tabId;
+    }
+
+    return {
+        directoryData,
+        relatedData,
+        noteData,
+        activeItemId,
+        uiState,
+        activeItem,
+        fetchNovelData,
+        setActiveItem,
+        updateItemContentById,
+        toggleNodeExpansion,
+        setActiveInternalTab,
+    }
+})
+
+// =
+// 文件: ..\src\novel\editor\views\EditorWorkspaceView.vue
+//
+
+// =
+// 文件: ..\src\novel\editor\views\EditorWorkspaceView.vue
+//
+
+<template>
+  <div class="editor-workspace-view">
+    <!-- Left Column: Internal Sidebar -->
+    <EditorInternalSidebar />
+
+    <!-- Center Column: Core Content Area -->
+    <EditorContentArea />
+
+    <!-- Right Column: AI Assistant Panel -->
+    <EditorAIPanel />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { onMounted } from 'vue';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+
+// --- Component Imports ---
+import EditorInternalSidebar from '@/novel/editor/components/sidebar/EditorInternalSidebar.vue';
+import EditorContentArea from '@/novel/editor/components/content/EditorContentArea.vue';
+import EditorAIPanel from '@/novel/editor/components/ai/EditorAIPanel.vue';
+
+// --- Hooks ---
+const editorStore = useEditorStore();
+
+/**
+ * onMounted: 当组件挂载后，执行初始化操作。
+ * 这是连接路由和store，加载数据的关键入口。
+ */
+onMounted(() => {
+  // 调用 action 加载数据。
+  // 传入一个虚拟的 novelId 以符合 action 的签名
+  editorStore.fetchNovelData('default-novel');
+});
+
+</script>
+
+<style scoped>
+.editor-workspace-view {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  background-color: #F9FAFB; /* 给工作区一个基础背景色 */
+}
 </style>
 
 // =
 // 文件: ..\src\novel\layouts\NovelDashboardLayout.vue
 //
 
-<!-- src/novel/layouts/NovelDashboardLayout.vue -->
+// =
+// 文件: ..\src\novel\layouts\NovelDashboardLayout.vue
+//
+
 <template>
   <div class="h-screen w-screen flex bg-white design-frame-container">
     <div class="design-frame">
@@ -675,24 +2508,25 @@ const deletedItems = ref([
       </div>
       <div class="h-[calc(100%-40px)] flex">
         <NovelDashboardSidebar />
-        <main class="flex-1 bg-white flex flex-col">
+        <main class="flex-1 bg-white flex flex-col overflow-hidden">
           <AppHeader />
           <router-view />
         </main>
       </div>
     </div>
-    <!-- [重构] 引入位于 shared 模块的全局AI助手组件 -->
+    <!-- [修复] 将全局组件放在布局的顶层 -->
     <GlobalAIAssistant />
+    <AITaskConfigModal />
   </div>
 </template>
 
 <script setup lang="ts">
 import AppHeader from '@/layouts/components/AppHeader.vue'
-// [重构] 导入路径更新为 dashboard 模块内部的侧边栏
 import NovelDashboardSidebar from '@/novel/dashboard/components/NovelDashboardSidebar.vue'
-// [重构] 导入路径更新为 shared 模块内部的全局AI助手
 import GlobalAIAssistant from '@/novel/shared/components/GlobalAIAssistant/index.vue'
-import '@/novel/assets/styles/main.css' // 稍后我们将创建此文件
+// [新增] 导入AI任务配置模态框
+import AITaskConfigModal from '@/novel/shared/components/GlobalAIAssistant/AITaskConfigModal.vue'
+import '@/novel/assets/styles/main.css'
 </script>
 
 <style scoped>
@@ -716,7 +2550,10 @@ import '@/novel/assets/styles/main.css' // 稍后我们将创建此文件
 // 文件: ..\src\novel\layouts\NovelManagementLayout.vue
 //
 
-<!-- src/novel/layouts/NovelManagementLayout.vue -->
+// =
+// 文件: ..\src\novel\layouts\NovelManagementLayout.vue
+//
+
 <template>
   <div class="h-screen w-screen flex bg-white design-frame-container">
     <div class="design-frame">
@@ -731,27 +2568,27 @@ import '@/novel/assets/styles/main.css' // 稍后我们将创建此文件
         </div>
       </div>
       <div class="h-[calc(100%-40px)] flex">
-        <!-- [重构] 使用 management 模块的统一侧边栏 -->
         <NovelManagementSidebar />
-        <main class="flex-1 bg-white flex flex-col">
+        <main class="flex-1 bg-white flex flex-col overflow-hidden">
           <!-- 使用与全局一致的 AppHeader -->
           <AppHeader />
           <router-view />
         </main>
       </div>
     </div>
-    <!-- [重构] 引入位于 shared 模块的全局AI助手组件 -->
+    <!-- [修复] 将全局组件放在布局的顶层 -->
     <GlobalAIAssistant />
+    <AITaskConfigModal />
   </div>
 </template>
 
 <script setup lang="ts">
 import AppHeader from '@/layouts/components/AppHeader.vue'
-// [重构] 导入路径更新为 management 模块内部的侧边栏
 import NovelManagementSidebar from '@/novel/management/components/NovelManagementSidebar.vue'
-// [重构] 导入路径更新为 shared 模块内部的全局AI助手
 import GlobalAIAssistant from "@/novel/shared/components/GlobalAIAssistant/index.vue";
-import '@/novel/assets/styles/main.css' // 稍后我们将创建此文件
+// [新增] 导入AI任务配置模态框
+import AITaskConfigModal from '@/novel/shared/components/GlobalAIAssistant/AITaskConfigModal.vue'
+import '@/novel/assets/styles/main.css'
 </script>
 
 <style scoped>
@@ -821,7 +2658,7 @@ import '@/novel/assets/styles/main.css' // 稍后我们将创建此文件
 <script setup lang="ts">
 import { ref } from 'vue';
 
-// 小说管理菜单项 (路径保持静态，因为它们都属于本模块)
+// [重构] "编辑章节"的路径现在明确指向新的静态路由
 const managementNav = ref([
   { name: '编辑章节', path: `/novel/editor`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>` },
   { name: '大纲视图', path: `/novel/manage/outline`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" /></svg>` },
@@ -829,7 +2666,6 @@ const managementNav = ref([
   { name: '世界观', path: `/novel/manage/worldview`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c1.356 0 2.673-.174 3.946-.512M12 21c-1.356 0-2.673-.174-3.946-.512M12 3a9.004 9.004 0 00-8.716 6.747M12 3a9.004 9.004 0 018.716 6.747M12 3c1.356 0 2.673.174 3.946.512M12 3c-1.356 0-2.673-.174-3.946-.512M3.284 15.842a9.002 9.002 0 000-7.684M20.716 15.842a9.002 9.002 0 000-7.684" /></svg>` },
 ]);
 
-// 工具菜单项
 const toolsNav = ref([
   { name: '上下文管理', path: `/novel/manage/context`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-1.621-1.621A3 3 0 0113.5 18.257V17.25m6-3.75V17.25a3 3 0 01-3 3h-6a3 3 0 01-3-3V13.5m12-3V10.5a3 3 0 00-3-3h-6a3 3 0 00-3 3v3.75m12-3V6.75a3 3 0 00-3-3h-6a3 3 0 00-3 3v6.75" /></svg>` },
   { name: '小说设置', path: `/novel/manage/settings`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-1.007 1.11-.95.542.057 1.007.56 1.061 1.11L12 8.583l.235-3.535c.057-.542.56-1.007 1.11-.95.542.057 1.007.56 1.061 1.11L15.417 8.583l3.536-.235c.542-.057 1.007.56 1.061 1.11.057.542-.42 1.007-.95 1.061l-3.536.235.235 3.536c.057.542-.42 1.007-.95 1.061-.542.057-1.007-.42-1.061-.95L12 15.417l-.235 3.536c-.057.542-.56 1.007-1.11.95-.542-.057-1.007-.56-1.061-1.11L9.417 15.417l-3.536.235c-.542-.057-1.007-.42-.95-1.061.057-.542.42-1.007.95-1.061l3.536-.235L9.417 8.583z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 14.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" /></svg>` },
@@ -841,559 +2677,6 @@ const toolsNav = ref([
 <style scoped>
 .router-link-active.router-link-exact-active {
   color: white !important;
-}
-</style>
-
-// =
-// 文件: ..\src\novel\management\components\editor\EditorAIPanel.vue
-//
-
-<template>
-  <aside class="w-96 bg-[#FAFAFA] border-l border-gray-100 flex flex-col flex-shrink-0">
-    <!-- AI 任务队列 -->
-    <div class="h-1/3 p-4 border-b border-gray-200 flex flex-col">
-      <div class="flex items-center justify-between mb-3 flex-shrink-0 px-2">
-        <h3 class="font-medium text-sm text-gray-700">AI任务队列</h3>
-        <span class="text-xs font-medium px-2 py-0.5 rounded-full text-blue-700 bg-blue-100">2个活跃</span>
-      </div>
-      <div class="flex-grow space-y-2 overflow-y-auto text-sm pr-1 hide-scrollbar">
-        <!-- 失败状态 -->
-        <div class="p-3 bg-red-50 rounded-lg border border-red-200">
-          <div class="flex justify-between items-center mb-1">
-            <p class="font-medium text-sm text-gray-800">润色"第四章"</p>
-            <span class="text-xs text-red-600 font-semibold flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
-              失败
-            </span>
-          </div>
-          <p class="text-xs text-red-700 mt-1">生成超时，请检查网络后 <a href="#" class="underline font-medium">重试</a>。</p>
-        </div>
-        <!-- 进行中状态 -->
-        <div class="p-3 bg-white rounded-lg border border-l-4 border-l-blue-500 shadow-sm">
-          <div class="flex justify-between items-center mb-1">
-            <p class="font-medium text-sm text-gray-800">扩写"第五章"大纲</p>
-            <span class="text-xs text-blue-600 font-semibold">进行中...</span>
-          </div>
-          <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-            <div class="bg-blue-500 h-1.5 rounded-full animate-pulse" style="width: 75%"></div>
-          </div>
-          <p class="text-xs text-gray-500 mt-1.5">预计还需 15秒</p>
-        </div>
-        <!-- 已完成状态 -->
-        <div class="p-3 bg-green-50 rounded-lg border border-green-200 cursor-pointer hover:bg-green-100 transition-colors">
-          <div class="flex justify-between items-center">
-            <p class="font-medium text-sm text-gray-800">角色对话分析</p>
-            <span class="text-xs text-green-600 font-semibold">已完成</span>
-          </div>
-          <p class="text-xs text-gray-500 mt-1">点击查看结果</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- AI 生成预览 (差异对比) -->
-    <div class="h-2/3 p-4 flex flex-col">
-      <div class="flex items-center justify-between mb-3 flex-shrink-0 px-2">
-        <h3 class="font-medium text-sm text-gray-700">AI生成预览 (差异对比)</h3>
-        <div class="flex items-center gap-2">
-          <button class="px-3 py-1 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 transition-colors flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-            应用修改
-          </button>
-        </div>
-      </div>
-      <div class="flex-grow bg-white rounded-lg border border-gray-200 p-4 overflow-y-auto text-sm leading-relaxed">
-        <p>
-          警报的<del class="diff-del">声将卡尔文从浅眠中惊醒</del><ins class="diff-add">尖啸犹如一把利刃，划破了卡尔文短暂的假寐</ins>。他猛<del class="diff-del">地坐直</del><ins class="diff-add">然挺直身躯</ins>，<ins class="diff-add">猩红的警示灯在他眼中投下不祥的光晕</ins>。<del class="diff-del">眼前的屏幕上一片红色闪烁</del>。"发现引力异常，"艾拉的<del class="diff-del">声音冷静得不带一丝情感</del><ins class="diff-add">合成音毫无波澜，却字字千钧</ins>，"我们正<del class="diff-del">在接近</del><ins class="diff-add">迫近一个</ins>理论中的<del class="diff-del">跃迁点。</del><ins class="diff-add">时空奇点——跃迁点。根据数据库推演，这或许是返回太阳系的唯一路径。</ins>"
-        </p>
-      </div>
-    </div>
-  </aside>
-</template>
-
-<script setup lang="ts">
-// AI panel logic will be added here in the future.
-</script>
-
-<style scoped>
-.diff-del {
-  background-color: #FEE2E2;
-  text-decoration: line-through;
-  text-decoration-color: #EF4444;
-  color: #B91C1C;
-  padding: 0 2px;
-  border-radius: 3px;
-}
-.diff-add {
-  background-color: #D1FAE5;
-  text-decoration: none;
-  color: #065F46;
-  padding: 0 2px;
-  border-radius: 3px;
-}
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-</style>
-
-// =
-// 文件: ..\src\novel\management\components\editor\EditorContentArea.vue
-//
-
-<template>
-  <main class="flex-1 flex flex-col overflow-hidden bg-white">
-    <!-- Header with all UI elements -->
-    <div class="h-16 px-6 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
-      <!-- Left side: Icon and Title -->
-      <div class="flex items-center gap-3 text-sm">
-        <span v-if="activeItem.icon" class="w-5 h-5 flex items-center justify-center" :class="typeToColorClass(activeItem.type)" v-html="renderIcon(activeItem.icon)"></span>
-        <span class="font-medium text-[#374151]">{{ activeItem.title }}</span>
-        <span v-if="activeItem.status === 'editing'" class="text-xs font-medium px-2 py-0.5 rounded-full text-green-700 bg-green-100">已保存</span>
-      </div>
-
-      <!-- Right side: Stats and Action Buttons -->
-      <div class="flex items-center gap-4">
-        <!-- Stats -->
-        <div class="flex items-center gap-2 text-sm text-gray-500">
-          <span v-if="activeItem.wordCount">字数: {{ activeItem.wordCount }}</span>
-          <template v-if="readingTime > 0">
-            <span class="text-gray-300">•</span>
-            <span>预计阅读: {{ readingTime }}分钟</span>
-          </template>
-        </div>
-        <!-- Action Buttons from UI Mockup -->
-        <div class="flex items-center gap-1">
-          <button class="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="阅读模式">
-            <i class="fa-solid fa-book-open-reader"></i>
-          </button>
-          <button class="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="历史版本">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-          </button>
-          <button class="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="更多选项">
-            <i class="fa-solid fa-ellipsis-vertical"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Content Area Wrapper for Events -->
-    <div
-        ref="editorWrapperRef"
-        @contextmenu.prevent="showContextMenu"
-        class="flex-1 p-8 overflow-y-auto hide-scrollbar relative"
-    >
-      <!-- Floating Toolbar for Text Selection -->
-      <div
-          v-if="isToolbarVisible"
-          :style="{ top: `${toolbarPosition.top}px`, left: `${toolbarPosition.left}px` }"
-          class="absolute z-10 bg-white border border-gray-200 rounded-lg p-1.5 shadow-md flex gap-1"
-      >
-        <button title="分析内容" class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-md transition-colors"><i class="fa-solid fa-magnifying-glass-chart"></i></button>
-        <button title="AI生成" class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-md transition-colors"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
-        <button title="润色文本" class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-md transition-colors"><i class="fa-solid fa-spell-check"></i></button>
-      </div>
-
-      <!-- Custom Context Menu -->
-      <div
-          v-if="isContextMenuVisible"
-          :style="{ top: `${contextMenuPosition.top}px`, left: `${contextMenuPosition.left}px` }"
-          class="absolute z-20 bg-white border border-gray-200 rounded-lg p-2 shadow-xl w-52"
-      >
-        <div @click="hideAllMenus" class="p-2 rounded-md hover:bg-gray-100 text-sm flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-magnifying-glass-chart w-4"></i><span>分析选中内容</span></div>
-        <div @click="hideAllMenus" class="p-2 rounded-md hover:bg-gray-100 text-sm flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-wand-magic-sparkles w-4"></i><span>AI续写</span></div>
-        <div @click="hideAllMenus" class="p-2 rounded-md hover:bg-gray-100 text-sm flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-spell-check w-4"></i><span>润色选中文本</span></div>
-        <div class="h-px bg-gray-100 my-1.5"></div>
-        <div @click="hideAllMenus" class="p-2 rounded-md hover:bg-gray-100 text-sm flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-expand w-4"></i><span>扩写</span></div>
-        <div @click="hideAllMenus" class="p-2 rounded-md hover:bg-gray-100 text-sm flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-compress w-4"></i><span>精简</span></div>
-      </div>
-
-      <!-- Rendered Content -->
-      <div class="max-w-prose mx-auto" ref="editorContentRef">
-        <div class="prose prose-lg max-w-none" v-html="activeItem.content"></div>
-      </div>
-    </div>
-  </main>
-</template>
-
-<script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
-
-const props = defineProps({
-  activeItem: {
-    type: Object,
-    required: true,
-    default: () => ({ title: '未选择', content: '请从左侧选择一个项目进行查看或编辑。' })
-  }
-});
-
-// --- Refs for DOM elements ---
-const editorWrapperRef = ref<HTMLElement | null>(null);
-const editorContentRef = ref<HTMLElement | null>(null);
-
-// --- Computed Property for Reading Time ---
-const readingTime = computed(() => {
-  if (!props.activeItem.wordCount || props.activeItem.wordCount === 0) return 0;
-  // Using an average reading speed of 300 words per minute
-  const time = Math.ceil(props.activeItem.wordCount / 300);
-  return time > 0 ? time : 1; // Show at least 1 minute for any content
-});
-
-// --- State for Toolbar and Context Menu ---
-const isToolbarVisible = ref(false);
-const toolbarPosition = ref({ top: 0, left: 0 });
-const isContextMenuVisible = ref(false);
-const contextMenuPosition = ref({ top: 0, left: 0 });
-
-// --- Event Handlers ---
-const handleSelectionChange = () => {
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0 || selection.isCollapsed || !editorContentRef.value) {
-    isToolbarVisible.value = false;
-    return;
-  }
-
-  const range = selection.getRangeAt(0);
-  if (!editorContentRef.value.contains(range.commonAncestorContainer)) {
-    isToolbarVisible.value = false;
-    return;
-  }
-
-  const rect = range.getBoundingClientRect();
-  const wrapperRect = editorWrapperRef.value!.getBoundingClientRect();
-
-  toolbarPosition.value = {
-    top: rect.top - wrapperRect.top - 48, // Position above the selection
-    left: rect.left - wrapperRect.left + rect.width / 2 - 60, // Center the toolbar
-  };
-  isToolbarVisible.value = true;
-  isContextMenuVisible.value = false; // Hide context menu if text is selected
-};
-
-const showContextMenu = (event: MouseEvent) => {
-  const wrapperRect = editorWrapperRef.value!.getBoundingClientRect();
-  contextMenuPosition.value = {
-    top: event.clientY - wrapperRect.top,
-    left: event.clientX - wrapperRect.left,
-  };
-  isContextMenuVisible.value = true;
-  isToolbarVisible.value = false; // Hide toolbar when context menu is shown
-};
-
-const hideAllMenus = () => {
-  isToolbarVisible.value = false;
-  isContextMenuVisible.value = false;
-};
-
-// --- Lifecycle Hooks for global listeners ---
-onMounted(() => {
-  document.addEventListener('selectionchange', handleSelectionChange);
-  document.addEventListener('click', (e) => {
-    if (editorWrapperRef.value && !editorWrapperRef.value.contains(e.target as Node)) {
-      hideAllMenus();
-    }
-  });
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener('selectionchange', handleSelectionChange);
-  // The click listener will be garbage collected with the component
-});
-
-// --- Helper Functions ---
-const renderIcon = (iconClass: string) => `<i class="${iconClass}"></i>`;
-const typeToColorClass = (type: string) => {
-  if (type?.startsWith('character')) return 'text-teal-500';
-  if (type?.startsWith('worldview')) return 'text-sky-500';
-  if (type?.startsWith('note')) return 'text-yellow-500';
-  return 'text-gray-500';
-};
-</script>
-
-<style scoped>
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-</style>
-
-// =
-// 文件: ..\src\novel\management\components\editor\EditorInternalSidebar.vue
-//
-
-<template>
-  <aside ref="sidebarRef" class="w-[320px] border-r border-gray-100 flex flex-col flex-shrink-0 bg-[#FAFAFA] relative">
-    <!-- Tab Navigation -->
-    <div class="px-4 pt-4 border-b border-gray-200">
-      <div class="tabs tabs-bordered">
-        <a
-            v-for="tab in internalTabs"
-            :key="tab.id"
-            @click="activeInternalTab = tab.id"
-            role="tab"
-            :class="['tab', { 'tab-active text-blue-600': activeInternalTab === tab.id }]"
-        >
-          {{ tab.name }}
-        </a>
-      </div>
-    </div>
-
-    <!-- Main Content Area with Overflow -->
-    <div class="flex-1 p-4 overflow-y-auto hide-scrollbar">
-      <!-- Directory Content (目录) -->
-      <div v-if="activeInternalTab === 'directory'" class="space-y-1">
-        <div class="flex items-center justify-between mb-3 px-2">
-          <h3 class="text-sm font-medium text-gray-600">章节大纲</h3>
-          <div class="flex items-center gap-1">
-            <button class="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-md transition-colors" title="添加新章节">
-              <i class="fa-solid fa-plus fa-xs"></i>
-            </button>
-            <button class="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-md transition-colors" title="折叠/展开全部">
-              <i class="fa-solid fa-folder-tree fa-xs"></i>
-            </button>
-          </div>
-        </div>
-        <!-- Chapter List with Context Menu Event -->
-        <ul v-for="volume in directory" :key="volume.id" class="space-y-1">
-          <li>
-            <a href="#" @click.prevent="setActiveItem(volume)" @contextmenu.prevent="showDirectoryContextMenu(volume, $event)" class="flex items-center gap-3 p-2 rounded-lg font-medium text-sm transition-colors" :class="activeItem.id === volume.id ? 'bg-gray-200 text-gray-800' : 'text-gray-700 hover:bg-gray-100'">
-              <i class="fa-solid fa-chevron-down w-4 text-gray-400"></i>
-              <i class="fa-solid fa-book-open w-4 text-orange-500"></i>
-              <span>{{ volume.title }}</span>
-            </a>
-            <ul class="pl-5 mt-1 space-y-1 border-l ml-3.5 border-gray-200">
-              <li v-for="chapter in volume.chapters" :key="chapter.id">
-                <a href="#" @click.prevent="setActiveItem(chapter)" @contextmenu.prevent="showDirectoryContextMenu(chapter, $event)" class="flex items-center gap-3 p-2 rounded-lg text-sm transition-colors" :class="activeItem.id === chapter.id ? 'bg-blue-100 text-blue-800 font-medium' : 'text-gray-600 hover:bg-gray-100'">
-                  <i class="fa-solid fa-file-lines w-4" :class="{'text-blue-600': activeItem.id === chapter.id, 'text-gray-400': activeItem.id !== chapter.id}"></i>
-                  <span class="truncate">{{ chapter.title }}</span>
-                  <span v-if="chapter.status === 'editing'" class="ml-auto text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-normal">编辑中</span>
-                </a>
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Related Content (相关) -->
-      <div v-if="activeInternalTab === 'related'" class="flex flex-col h-full">
-        <div class="flex items-center justify-between mb-3 px-2 flex-shrink-0">
-          <h3 class="text-sm font-medium text-gray-600">相关内容</h3>
-          <button class="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-md transition-colors" title="添加新条目"><i class="fa-solid fa-plus fa-xs"></i></button>
-        </div>
-        <div class="mb-4 relative flex-shrink-0">
-          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-          <input type="text" placeholder="搜索角色、地点、设定..." class="w-full bg-white border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-        </div>
-        <ul class="space-y-1 flex-grow overflow-y-auto">
-          <li v-for="group in relatedItems" :key="group.type">
-            <a href="#" class="flex items-center gap-3 p-2 rounded-lg font-medium text-sm text-gray-700 hover:bg-gray-100">
-              <i class="fa-solid fa-chevron-down w-4 text-gray-400"></i>
-              <i class="w-4 text-center" :class="group.icon"></i>
-              <span>{{ group.title }}</span>
-              <span class="ml-auto text-xs text-gray-400 font-normal">{{ group.items.length }}</span>
-            </a>
-            <ul class="pl-6 border-l ml-2.5 space-y-1 mt-1">
-              <li v-for="item in group.items" :key="item.id">
-                <a href="#" @click.prevent="setActiveItem(item)" class="flex items-center gap-3 p-2 rounded-lg text-sm" :class="activeItem.id === item.id ? `bg-${group.color}-100 text-${group.color}-800 font-medium border border-${group.color}-200` : 'text-gray-600 hover:bg-gray-100'">
-                  <i class="w-4" :class="[item.icon, activeItem.id === item.id ? `text-${group.color}-600` : 'text-gray-400']"></i>
-                  <span class="truncate">{{ item.title }}</span>
-                </a>
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Notes Content (笔记) -->
-      <div v-if="activeInternalTab === 'notes'" class="flex flex-col h-full">
-        <div class="flex items-center justify-between mb-3 px-2 flex-shrink-0">
-          <h3 class="text-sm font-medium text-gray-600">章节笔记</h3>
-          <button class="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-md transition-colors" title="新建笔记"><i class="fa-solid fa-plus fa-xs"></i></button>
-        </div>
-        <div class="flex-grow space-y-2 overflow-y-auto pr-1">
-          <div v-for="note in noteItems" :key="note.id" @click="setActiveItem(note)" class="p-3 rounded-lg cursor-pointer transition-colors" :class="activeItem.id === note.id ? 'bg-yellow-100 border border-yellow-300' : 'bg-white hover:bg-gray-50 border border-transparent'">
-            <div class="flex justify-between items-start">
-              <p class="text-sm font-medium text-gray-800 pr-12">{{ note.title }}</p>
-              <span class="text-xs text-yellow-800 flex-shrink-0">{{ note.timestamp }}</span>
-            </div>
-            <p class="text-xs text-gray-600 mt-1.5 leading-relaxed line-clamp-2">{{ note.content }}</p>
-          </div>
-        </div>
-        <div class="mt-4 pt-4 border-t border-gray-200 flex-shrink-0">
-          <div class="flex items-center gap-2">
-            <input type="text" placeholder="快速添加新笔记..." class="flex-1 w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-            <button class="w-8 h-8 flex-shrink-0 bg-[#4B5563] text-white rounded-lg hover:bg-[#374151] flex items-center justify-center"><i class="fa-solid fa-paper-plane fa-sm"></i></button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Directory Context Menu -->
-    <div
-        v-if="isDirectoryContextMenuVisible"
-        :style="{ top: `${contextMenuPosition.top}px`, left: `${contextMenuPosition.left}px` }"
-        class="absolute z-30 bg-white border border-gray-200 rounded-lg p-2 shadow-xl w-52"
-    >
-      <!-- Menu for Volumes -->
-      <template v-if="contextMenuItem?.type === 'volume'">
-        <div class="context-menu-item"><i class="fa-solid fa-plus w-4"></i><span>新建章</span></div>
-        <div class="context-menu-item"><i class="fa-solid fa-folder-plus w-4"></i><span>新建部</span></div>
-        <div class="context-menu-divider"></div>
-        <div class="context-menu-item"><i class="fa-solid fa-magnifying-glass-chart w-4"></i><span>批量分析</span></div>
-        <div class="context-menu-item"><i class="fa-solid fa-wand-magic-sparkles w-4"></i><span>批量生成</span></div>
-        <div class="context-menu-divider"></div>
-        <div class="context-menu-item"><i class="fa-solid fa-pencil w-4"></i><span>重命名</span></div>
-        <div class="context-menu-item danger"><i class="fa-solid fa-trash-can w-4"></i><span>删除卷</span></div>
-      </template>
-      <!-- Menu for Chapters -->
-      <template v-else-if="contextMenuItem?.type === 'chapter'">
-        <div class="context-menu-item"><i class="fa-solid fa-magnifying-glass-chart w-4"></i><span>分析章节</span></div>
-        <div class="context-menu-item"><i class="fa-solid fa-spell-check w-4"></i><span>润色章节</span></div>
-        <div class="context-menu-divider"></div>
-        <div class="context-menu-item"><i class="fa-solid fa-copy w-4"></i><span>创建副本</span></div>
-        <div class="context-menu-item"><i class="fa-solid fa-pencil w-4"></i><span>重命名</span></div>
-        <div class="context-menu-divider"></div>
-        <div class="context-menu-item danger"><i class="fa-solid fa-trash-can w-4"></i><span>删除章节</span></div>
-      </template>
-    </div>
-  </aside>
-</template>
-
-<script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-
-defineProps<{ activeItem: any }>();
-const emit = defineEmits(['update:activeItem']);
-
-// --- Ref for Sidebar element ---
-const sidebarRef = ref<HTMLElement | null>(null);
-
-// --- Tab State ---
-const activeInternalTab = ref('directory');
-const internalTabs = [
-  { id: 'directory', name: '目录' },
-  { id: 'related', name: '相关' },
-  { id: 'notes', name: '笔记' },
-];
-
-const setActiveItem = (item: any) => {
-  emit('update:activeItem', item);
-};
-
-// --- Context Menu State ---
-const isDirectoryContextMenuVisible = ref(false);
-const contextMenuPosition = ref({ top: 0, left: 0 });
-const contextMenuItem = ref<any>(null);
-
-// --- Context Menu Handlers ---
-const showDirectoryContextMenu = (item: any, event: MouseEvent) => {
-  const sidebarRect = sidebarRef.value!.getBoundingClientRect();
-  contextMenuItem.value = item;
-  // Position relative to the sidebar component
-  contextMenuPosition.value = { top: event.clientY - sidebarRect.top, left: event.clientX - sidebarRect.left };
-  isDirectoryContextMenuVisible.value = true;
-};
-
-const hideDirectoryContextMenu = () => {
-  isDirectoryContextMenuVisible.value = false;
-  contextMenuItem.value = null;
-};
-
-// --- Lifecycle for Global Listener ---
-onMounted(() => {
-  window.addEventListener('click', hideDirectoryContextMenu);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener('click', hideDirectoryContextMenu);
-});
-
-
-// --- Mock Data ---
-
-// 目录数据
-const directory = ref([
-  {
-    id: 'vol-1',
-    type: 'volume',
-    title: '第一卷：星尘之始',
-    content: '第一卷的大纲内容...',
-    icon: 'fa-solid fa-book-open text-orange-500',
-    chapters: [
-      { id: 'ch-11', type: 'chapter', title: '第三章: 意外的信号', wordCount: 2105, content: '在寂静的太空中...', status: 'completed' },
-      { id: 'ch-12', type: 'chapter', title: '第四章: 跃迁点', wordCount: 2415, content: '控制台的警报声...', status: 'editing' },
-    ]
-  }
-]);
-
-// 相关内容数据
-const relatedItems = ref([
-  {
-    type: 'character',
-    title: '角色',
-    icon: 'fa-solid fa-users text-teal-500',
-    color: 'teal',
-    items: [
-      { id: 'char-sheet', type: 'character_sheet', title: '角色大纲', icon: 'fa-regular fa-file-lines', content: '<h2>卡尔文·里德</h2><p><strong>定位：</strong>主角</p>...' },
-      { id: 'char-calvin', type: 'character_profile', title: '卡尔文·里德', icon: 'fa-regular fa-user', content: '<h2>卡尔文·里德</h2><p><strong>年龄：</strong>35</p>...' },
-      { id: 'char-aila', type: 'character_profile', title: '艾拉 (AILA)', icon: 'fa-regular fa-user', content: '<h2>艾拉 (AILA)</h2><p>第五代通用人工智能...</p>' },
-    ]
-  },
-  {
-    type: 'worldview',
-    title: '世界观',
-    icon: 'fa-solid fa-earth-americas text-sky-500',
-    color: 'sky',
-    items: [
-      { id: 'world-overview', type: 'worldview_doc', title: '世界观总览', icon: 'fa-regular fa-file-lines', content: '<h3>时间背景</h3><p>公元2157年...</p>' },
-    ]
-  }
-]);
-
-// 笔记数据
-const noteItems = ref([
-  {
-    id: 'note-1',
-    type: 'note',
-    title: '第四章情感转折点设计',
-    timestamp: '今天 14:32',
-    content: '卡尔文对"回家"的复杂情感需要更细腻的描写。目前的写法“心跳漏了一拍”有些 cliché，可以尝试更具体的生理和心理反应。思路1：通过回忆莉娜的片段来加强回家的渴望...'
-  },
-  {
-    id: 'note-2',
-    type: 'note',
-    title: '跃迁点物理描述',
-    timestamp: '今天 11:20',
-    content: '查阅了相关资料，跃迁点可以描述为时空扭曲形成的漩涡状结构，周围伴随着强烈的引力潮汐。'
-  }
-]);
-</script>
-
-<style scoped>
-.hide-scrollbar::-webkit-scrollbar { display: none; }
-.line-clamp-2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-.tab { --tab-bg: transparent; }
-
-/* Styles for Context Menu (as seen in UI mock) */
-.context-menu-item {
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #374151;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: background-color 0.15s;
-}
-.context-menu-item:hover {
-  background-color: #f3f4f6;
-}
-.context-menu-item.danger:hover {
-  background-color: #fee2e2;
-  color: #b91c1c;
-}
-.context-menu-divider {
-  height: 1px;
-  background-color: #e5e7eb;
-  margin: 4px 0;
 }
 </style>
 
@@ -1431,7 +2714,7 @@ export const managementRoutes: Array<RouteRecordRaw> = [
     {
         path: 'context',
         name: 'NovelContext',
-        component: () => import('@novel/management/views/ContextView.vue'),
+        component: () => import('@/novel/management/views/ContextView.vue'),
         meta: { title: '上下文管理' }
     },
     {
@@ -1452,7 +2735,6 @@ export const managementRoutes: Array<RouteRecordRaw> = [
 // 文件: ..\src\novel\management\views\CharacterSettingsView.vue
 //
 
-<!-- src/novel/management/views/CharacterSettingsView.vue -->
 <template>
   <div class="flex-1 flex overflow-hidden bg-[#FCFCFC]">
     <!-- 左侧角色列表 -->
@@ -1464,7 +2746,6 @@ export const managementRoutes: Array<RouteRecordRaw> = [
         </button>
       </div>
       <div class="flex-grow overflow-y-auto pr-1 space-y-2 hide-scrollbar">
-        <!-- 选中角色 -->
         <a href="#" class="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
           <div class="w-10 h-10 rounded-full flex-shrink-0">
             <img src="https://i.pravatar.cc/150?u=calvin" alt="Calvin" class="w-full h-full object-cover rounded-full">
@@ -1475,7 +2756,6 @@ export const managementRoutes: Array<RouteRecordRaw> = [
           </div>
           <span class="text-xs font-medium px-2 py-1 rounded-md text-blue-600 bg-blue-100">编辑中</span>
         </a>
-        <!-- 其他角色 -->
         <a href="#" class="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg group transition-colors">
           <div class="w-10 h-10 rounded-full flex-shrink-0 bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h.5A2.5 2.5 0 0020 5.5V3.935m-14 0A10.003 10.003 0 0112 2a10.003 10.003 0 017 1.935M6 21a2 2 0 01-2-2v-1a2 2 0 012-2h12a2 2 0 012 2v1a2 2 0 01-2 2H6z"/></svg>
@@ -1496,8 +2776,6 @@ export const managementRoutes: Array<RouteRecordRaw> = [
         </a>
       </div>
     </div>
-
-    <!-- 右侧角色详情 -->
     <div class="w-2/3 p-8 overflow-y-auto hide-scrollbar">
       <div class="space-y-6 max-w-3xl mx-auto">
         <div class="flex items-start gap-6">
@@ -1615,7 +2893,6 @@ export const managementRoutes: Array<RouteRecordRaw> = [
               </div>
             </div>
             <div class="collapse-content">
-              <!-- Collapsed Content -->
             </div>
           </div>
 
@@ -1639,11 +2916,8 @@ export const managementRoutes: Array<RouteRecordRaw> = [
               </div>
             </div>
             <div class="collapse-content">
-              <!-- Collapsed Content -->
             </div>
           </div>
-
-          <!-- 提示词 -->
           <div class="border border-gray-100 rounded-xl overflow-hidden">
             <div class="px-6 py-4 bg-[#FAFAFA] cursor-pointer hover:bg-[#F3F4F6] transition-colors flex items-center justify-between">
               <div class="flex items-center gap-3">
@@ -1679,7 +2953,6 @@ export const managementRoutes: Array<RouteRecordRaw> = [
           </div>
         </div>
 
-        <!-- 底部信息栏 -->
         <div class="px-8 py-4 bg-[#FAFAFA] border-t border-gray-100 flex items-center justify-between">
           <div class="flex items-center gap-6 text-xs text-[#9CA3AF]">
             <span>加载时间: 36ms</span>
@@ -1699,7 +2972,7 @@ export const managementRoutes: Array<RouteRecordRaw> = [
 </template>
 
 <script setup lang="ts">
-// Context preview logic will be implemented here
+
 </script>
 
 <style scoped>
@@ -2025,13 +3298,12 @@ const searchResults = ref([
   },
 ]);
 
-// --- 底部总览 Computed Properties ---
+
 const totalContextWords = computed(() => {
   const fixedWords = selectedItems.value.reduce((sum, item) => sum + (item.wordCount || 0), 0);
   const ragWords = searchResults.value
       .filter(r => r.isSelected)
       .reduce((sum, item) => sum + (item.wordCount || 0), 0);
-  // 假设动态上下文平均每章/卷有固定的字数，这里简化处理，只计算固定和RAG部分
   return fixedWords + customContentWordCount.value + ragWords;
 });
 
@@ -2320,7 +3592,6 @@ const selectedFormat = ref('pdf');
 
 <template>
   <div class="flex-1 flex overflow-hidden">
-    <!-- 左侧章节列表 -->
     <div class="w-80 border-r border-gray-100 bg-[#FCFCFC] flex flex-col flex-shrink-0">
       <header class="h-20 px-6 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
         <h2 class="font-medium text-[#374151]">选择章节</h2>
@@ -2333,7 +3604,6 @@ const selectedFormat = ref('pdf');
       </header>
 
       <div class="flex-1 p-4 overflow-y-auto space-y-2 custom-scrollbar">
-        <!-- 选中章节 -->
         <div class="bg-white rounded-lg border-2 border-[#4B5563] cursor-pointer p-4">
           <div class="flex items-center justify-between mb-2">
             <h3 class="font-medium text-sm text-[#374151]">第四章：跃迁点</h3>
@@ -2422,7 +3692,6 @@ const selectedFormat = ref('pdf');
 </template>
 
 <script setup lang="ts">
-// History page logic will be implemented here
 </script>
 
 <style scoped>
@@ -2643,7 +3912,6 @@ function toggleVolume(volumeId: string) {
 
 <template>
   <div class="h-screen w-screen bg-[#FDFCF9] text-[#3a2f2f] flex flex-col relative font-serif">
-    <!-- 顶部浮动控件 -->
     <header class="w-full p-4 flex justify-between items-center absolute top-0 left-0 z-10 opacity-0 hover:opacity-100 transition-opacity duration-300">
       <router-link to="/novel/editor" class="flex items-center gap-2 px-4 py-2 text-sm font-sans font-medium bg-white/60 backdrop-blur-md rounded-lg shadow-sm border border-gray-100 text-gray-700 hover:bg-white/90 transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"></path></svg>
@@ -2672,7 +3940,6 @@ function toggleVolume(volumeId: string) {
       </div>
     </main>
 
-    <!-- 底部浮动控件 -->
     <footer class="w-full p-4 text-center text-sm text-gray-500/80 absolute bottom-0 left-0 z-10 opacity-0 hover:opacity-100 transition-opacity duration-300 font-sans">
       <p class="mb-2">第四章: 跃迁点</p>
       <div class="w-full max-w-sm mx-auto flex items-center gap-3">
@@ -2700,7 +3967,7 @@ function toggleVolume(volumeId: string) {
 
 .reader-content h1 {
   font-family: 'Noto Serif SC', serif;
-  font-size: 2.25rem; /* 36px */
+  font-size: 2.25rem;
   font-weight: 600;
   margin-bottom: 2.5rem;
   color: #1f2937;
@@ -2710,7 +3977,7 @@ function toggleVolume(volumeId: string) {
 }
 .reader-content p {
   font-family: 'Noto Serif SC', serif;
-  font-size: 1.125rem; /* 18px */
+  font-size: 1.125rem;
   line-height: 2.2;
   color: #374151;
   margin-bottom: 1.75rem;
@@ -2818,7 +4085,6 @@ function toggleVolume(volumeId: string) {
 </template>
 
 <script setup lang="ts">
-// Component logic can be added here
 </script>
 
 <style scoped>
@@ -2845,7 +4111,6 @@ function toggleVolume(volumeId: string) {
 <template>
   <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] hide-scrollbar">
     <div class="space-y-8 max-w-7xl mx-auto">
-      <!-- 分类: 地点 -->
       <div>
         <div class="flex items-center gap-3 mb-4">
           <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -2915,119 +4180,6 @@ function toggleVolume(volumeId: string) {
 </style>
 
 // =
-// 文件: ..\src\novel\management\views\editor\EditorView.vue
-//
-
-<template>
-  <div class="h-screen w-screen flex bg-white design-frame-container">
-    <div class="design-frame">
-      <!-- Top Navbar from original file -->
-      <div class="h-[56px] bg-white border-b border-gray-100 flex items-center px-6 flex-shrink-0">
-        <div class="flex items-center gap-2 flex-1">
-          <router-link to="/novel/dashboard" class="flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors p-2 -ml-2 rounded-lg">
-            <span v-html="icons.arrowLeft" class="w-4 h-4"></span>
-            <span>返回</span>
-          </router-link>
-          <span class="text-gray-300">/</span>
-          <span class="font-medium text-gray-800 text-sm">星际漫游者</span>
-        </div>
-        <div class="flex items-center gap-4">
-          <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
-            <span v-html="icons.search" class="w-5 h-5"></span>
-          </button>
-          <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors relative">
-            <span v-html="icons.bell" class="w-5 h-5"></span>
-            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-          </button>
-          <div class="ml-2 flex items-center gap-3">
-            <img src="https://i.pravatar.cc/150?u=creator" alt="Creator Avatar" class="w-9 h-9 rounded-full">
-            <div>
-              <p class="text-sm font-medium text-[#374151]">创作者</p>
-              <p class="text-xs text-[#9CA3AF]">在线</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3-column Workspace -->
-      <div class="h-[calc(100%-56px)] flex">
-        <!-- 1st Column: Internal Sidebar -->
-        <EditorInternalSidebar
-            v-model:activeItem="activeItem"
-        />
-
-        <!-- 2nd Column: Core Content Area -->
-        <EditorContentArea :active-item="activeItem" />
-
-        <!-- 3rd Column: AI Assistant Panel -->
-        <EditorAIPanel />
-      </div>
-    </div>
-    <GlobalAIAssistant />
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref } from 'vue';
-import EditorInternalSidebar from '@/novel/management/components/editor/EditorInternalSidebar.vue';
-import EditorContentArea from '@/novel/management/components/editor/EditorContentArea.vue';
-import EditorAIPanel from '@/novel/management/components/editor/EditorAIPanel.vue';
-import GlobalAIAssistant from '@/novel/shared/components/GlobalAIAssistant/index.vue';
-import '@/novel/assets/styles/main.css';
-
-// --- Static Data (Mock) ---
-const icons = {
-  arrowLeft: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"></path></svg>`,
-  search: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21L16.65 16.65"/></svg>`,
-  bell: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z"/><path d="M13.73 21C13.5 21.6 12.8 22 12 22C11.2 22 10.5 21.6 10.27 21"/></svg>`,
-};
-
-// Default active chapter data
-const defaultChapter = {
-  id: 'ch-12',
-  type: 'chapter',
-  icon: 'fa-solid fa-file-lines',
-  title: '第四章: 跃迁点',
-  wordCount: 2415,
-  content: '<h1>第四章: 跃迁点</h1><p>控制台的警报声将卡尔文从浅眠中惊醒。他猛地坐直，眼前的屏幕上一片红色闪烁。"发现引力异常，"艾拉的声音冷静得不带一丝情感，"正在接近理论中的跃迁点。这是我们唯一的回家机会。"</p><p>卡尔文的心跳漏了一拍。回家。这个词既熟悉又陌生，像一颗深埋的种子，在这一刻突然破土而出，疯狂生长。他深吸一口气，双手稳稳地放在控制杆上。"艾拉，计算跃迁参数，准备进入。"</p>',
-  status: 'editing'
-};
-
-const activeItem = ref(defaultChapter);
-
-</script>
-
-<style scoped>
-/* Styles from the original file are preserved */
-.design-frame-container { padding: 2rem; background-color: #f5f5f7; }
-.design-frame { width: 100%; height: 100%; max-width: 1800px; margin: auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.08); }
-
-/* Additional styles to ensure prose looks good inside the content area */
-:deep(.prose h1) {
-  font-size: 1.875rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-}
-:deep(.prose p) {
-  line-height: 1.75;
-}
-:deep(.prose h2) {
-  font-size: 1.5rem;
-  font-weight: 600;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-}
-:deep(.prose h3) {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
-}
-</style>
-
-// =
 // 文件: ..\src\novel\router.ts
 //
 
@@ -3035,33 +4187,35 @@ import type { RouteRecordRaw } from 'vue-router'
 import { dashboardRoutes } from './dashboard/router'
 import { managementRoutes } from './management/router'
 import { chatRoutes } from './chat/router'
+import { editorRoutes } from './editor/router'
 
 export const novelRoutes: Array<RouteRecordRaw> = [
     {
+
         path: '/novel',
+
         component: () => import('@/novel/layouts/NovelDashboardLayout.vue'),
+
         redirect: '/novel/dashboard',
-        // Dashboard 模块的路由
+
         children: [
             ...dashboardRoutes
         ]
     },
     {
+        // 管理模块保持独立，因为它使用不同的布局
         path: '/novel/manage',
         component: () => import('@/novel/layouts/NovelManagementLayout.vue'),
         redirect: '/novel/manage/outline',
-        // Management 和 Chat 模块的路由都挂载在这个布局下
         children: [
             ...managementRoutes,
             ...chatRoutes
         ]
     },
-    {
-        path: '/novel/editor',
-        name: 'NovelEditor',
-        component: () => import('@novel/management/views/editor/EditorView.vue'),
-        meta: { title: '编辑章节' }
-    },
+    // 编辑器模块的路由保持独立顶级注册
+    ...editorRoutes,
+
+    // 其他独立页面路由
     {
         path: '/novel/read',
         name: 'NovelReader',
@@ -3077,113 +4231,8 @@ export const novelRoutes: Array<RouteRecordRaw> = [
 ]
 
 // =
-// 文件: ..\src\novel\shared\components\GlobalAIAssistant\AIAssistantMenu.vue
+// 文件: ..\src\novel\shared\components\GlobalAIAssistant\AITaskConfigModal.vue
 //
-
-<template>
-  <!-- 菜单卡片容器 -->
-  <div class="w-80 bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-100">
-    <!-- 顶部标题栏 -->
-    <div class="bg-gradient-to-r from-[#4B5563] to-[#374151] text-white p-5 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.43 2.43c-1.105 0-2.023-.918-2.023-2.023a3.75 3.75 0 013.75-3.75c.916 0 1.749.312 2.422.845l.005.004a.75.75 0 01.017 1.056l-1.06 1.06c-.24.24-.407.553-.407.896v.113a.75.75 0 001.5 0v-.058a1.5 1.5 0 01.447-1.087l.16-.16a1.5 1.5 0 00-2.122-2.122l-.16.16a1.5 1.5 0 01-1.087.447h-.058a.75.75 0 000 1.5h.113c.343 0 .656-.167.896-.407l1.06-1.06a.75.75 0 011.056.017z" /><path stroke-linecap="round" stroke-linejoin="round" d="M16.47 8.53a.75.75 0 011.06 0l3.75 3.75a.75.75 0 010 1.06l-3.75 3.75a.75.75 0 11-1.06-1.06l2.47-2.47H3a.75.75 0 010-1.5h15.94l-2.47-2.47a.75.75 0 010-1.06z" /></svg>
-        </div>
-        <div>
-          <h3 class="font-medium">AI 助手</h3>
-          <p class="text-xs text-white/80">智能创作伴侣</p>
-        </div>
-      </div>
-      <button @click="$emit('close')" class="w-8 h-8 hover:bg-white/10 rounded-lg flex items-center justify-center transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
-      </button>
-    </div>
-
-    <!-- 任务列表 -->
-    <div class="p-6 space-y-4 max-h-96 overflow-y-auto">
-      <div>
-        <p class="text-xs font-medium text-[#9CA3AF] uppercase tracking-wider mb-3">生成任务</p>
-        <div class="space-y-2">
-          <button @click="handleTaskClick('chapter-generation')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group text-left">
-            <div class="w-10 h-10 bg-[#F3F4F6] text-[#4B5563] rounded-lg flex items-center justify-center group-hover:bg-[#4B5563] group-hover:text-white transition-colors">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
-            </div>
-            <div class="flex-1">
-              <p class="font-medium text-sm text-[#374151]">章节生成</p>
-              <p class="text-xs text-[#9CA3AF]">根据大纲创建新章节</p>
-            </div>
-            <svg class="w-4 h-4 text-[#9CA3AF] group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
-          </button>
-
-          <button @click="handleTaskClick('chapter-polish')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group text-left">
-            <div class="w-10 h-10 bg-[#F3F4F6] text-[#4B5563] rounded-lg flex items-center justify-center group-hover:bg-[#4B5563] group-hover:text-white transition-colors">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.43 2.43c-1.105 0-2.023-.918-2.023-2.023a3.75 3.75 0 013.75-3.75c.916 0 1.749.312 2.422.845l.005.004a.75.75 0 01.017 1.056l-1.06 1.06c-.24.24-.407.553-.407.896v.113a.75.75 0 001.5 0v-.058a1.5 1.5 0 01.447-1.087l.16-.16a1.5 1.5 0 00-2.122-2.122l-.16.16a1.5 1.5 0 01-1.087.447h-.058a.75.75 0 000 1.5h.113c.343 0 .656-.167.896-.407l1.06-1.06a.75.75 0 011.056.017z" /></svg>
-            </div>
-            <div class="flex-1">
-              <p class="font-medium text-sm text-[#374151]">章节润色</p>
-              <p class="text-xs text-[#9CA3AF]">优化文字表达和风格</p>
-            </div>
-            <svg class="w-4 h-4 text-[#9CA3AF] group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
-          </button>
-        </div>
-      </div>
-
-      <div>
-        <p class="text-xs font-medium text-[#9CA3AF] uppercase tracking-wider mb-3">分析任务</p>
-        <div class="space-y-2">
-          <button @click="handleTaskClick('chapter-analysis')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group text-left">
-            <div class="w-10 h-10 bg-[#F3F4F6] text-[#4B5563] rounded-lg flex items-center justify-center group-hover:bg-[#4B5563] group-hover:text-white transition-colors">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 100 15 7.5 7.5 0 000-15zM21 21l-5.197-5.197" /></svg>
-            </div>
-            <div class="flex-1">
-              <p class="font-medium text-sm text-[#374151]">章节分析</p>
-              <p class="text-xs text-[#9CA3AF]">分析情节和人物</p>
-            </div>
-            <svg class="w-4 h-4 text-[#9CA3AF] group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
-          </button>
-
-          <button @click="handleTaskClick('stage-analysis')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F4F6] transition-colors group text-left">
-            <div class="w-10 h-10 bg-[#F3F4F6] text-[#4B5563] rounded-lg flex items-center justify-center group-hover:bg-[#4B5563] group-hover:text-white transition-colors">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1.125-1.5M13.5 16.5L12 21m-1.5-4.5L9 16.5" /></svg>
-            </div>
-            <div class="flex-1">
-              <p class="font-medium text-sm text-[#374151]">阶段分析</p>
-              <p class="text-xs text-[#9CA3AF]">评估故事节奏和结构</p>
-            </div>
-            <svg class="w-4 h-4 text-[#9CA3AF] group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 底部聊天入口 -->
-    <div class="border-t border-gray-100 p-4 bg-[#FAFAFA]">
-      <router-link
-          to="/novel/manage/chat"
-          @click="$emit('close')"
-          class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227l.173.013h9.24a2.708 2.708 0 002.707-3.227V6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.01z"></path></svg>
-        AI 聊天助手
-      </router-link>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { useAITaskStore } from '@/novel/shared/composables/useAITaskStore.ts';
-
-const emit = defineEmits(['close']);
-const { openTaskConfig } = useAITaskStore();
-
-const handleTaskClick = (taskType: string) => {
-  openTaskConfig(taskType);
-  emit('close');
-};
-</script>
-
-<style scoped>
-/* Scoped styles can be added here if needed */
-</style>
 
 // =
 // 文件: ..\src\novel\shared\components\GlobalAIAssistant\AITaskConfigModal.vue
@@ -3191,19 +4240,19 @@ const handleTaskClick = (taskType: string) => {
 
 <template>
   <!-- Modal-Backdrop -->
-  <!-- 使用 v-if 和全局状态来控制显示 -->
-  <div v-if="isConfigModalOpen" @click.self="closeTaskConfig" class="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-8">
+  <!-- 使用 v-if 和从 useAITaskStore 获取的全局状态来控制显示 -->
+  <div v-if="isConfigModalOpen" @click.self="closeTaskConfig" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-opacity duration-300">
 
     <!-- Modal-Container -->
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl border border-gray-100 flex flex-col max-h-full">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-gray-100 flex flex-col max-h-[90vh] transition-transform duration-300 scale-95 animate-fade-in-up">
       <div class="p-6 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
         <div>
-          <!-- 标题现在是动态的 -->
+          <!-- 标题现在是动态的, 从 computed property 'taskTitle' 获取 -->
           <h3 class="text-lg font-medium text-[#374151]">AI任务配置 - {{ taskTitle }}</h3>
           <p class="text-sm text-[#6B7280] mt-1">配置AI助手如何处理您的内容</p>
         </div>
         <!-- 点击关闭按钮时调用全局的关闭方法 -->
-        <button @click="closeTaskConfig" class="w-8 h-8 hover:bg-gray-100 rounded-lg flex items-center justify-center transition-colors">
+        <button @click="closeTaskConfig" class="w-9 h-9 hover:bg-gray-100 rounded-lg flex items-center justify-center transition-colors">
           <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
@@ -3318,13 +4367,28 @@ const handleTaskClick = (taskType: string) => {
 </template>
 
 <script setup lang="ts">
-// [重构] 导入路径已更新为新的共享模块位置
-import { useAITaskStore } from '@/novel/shared/composables/useAITaskStore.ts';
+// [修复] 导入路径已更新为正确的共享模块位置
+import { useAITaskStore } from '@/novel/shared/composables/useAITaskStore';
 
 const { isConfigModalOpen, taskTitle, closeTaskConfig } = useAITaskStore();
 </script>
 
 <style scoped>
+/* 添加一个简单的动画效果 */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out forwards;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   display: block;
   width: 6px;
@@ -3374,54 +4438,118 @@ input[type=range]:focus::-webkit-slider-thumb {
 // 文件: ..\src\novel\shared\components\GlobalAIAssistant\index.vue
 //
 
+
+
 <template>
-  <!-- 拖拽容器 -->
   <div
       class="fixed z-50"
       :style="{ top: `${position.y}px`, left: `${position.x}px` }"
-      ref="draggableContainer"
-  >
-    <!-- AI 菜单 (点击按钮后显示) -->
-    <div v-if="isAiMenuOpen" class="absolute bottom-20 right-0 transition-all duration-300 ease-in-out">
-      <!-- 菜单关闭后，同时关闭自身 -->
-      <AIAssistantMenu @close="isAiMenuOpen = false" />
+  />
+    <div class="absolute top-1/2 left-1/2 w-48 h-48 -mt-24 -ml-24 pointer-events-none">
+      <div
+          v-for="item in menuItems"
+          :key="item.id"
+          :class="['float-menu-item', { 'active': isAiMenuOpen }]"
+          :style="{ transform: isAiMenuOpen ? `rotate(${item.angle}deg) translate(80px) rotate(${-item.angle}deg) scale(1)` : 'scale(0.5)' }"
+      >
+        <component
+            :is="item.path ? 'router-link' : 'button'"
+            :to="item.path"
+            @click="item.action"
+            :class="[
+            'w-16 h-16 bg-white rounded-full shadow-lg flex flex-col items-center justify-center gap-1 transition-all border border-gray-100 pointer-events-auto',
+            item.color.hoverBg,
+            'text-[#374151]',
+            'hover:text-black'
+          ]"
+            :title="item.name"
+        >
+          <i :class="['fa-solid', item.icon, item.color.icon, 'text-xl']"></i>
+          <span class="text-xs font-medium">{{ item.name }}</span>
+        </component>
+      </div>
     </div>
 
-    <!-- 浮动按钮 -->
     <button
         @click="toggleMenu"
         @mousedown.stop="startDrag"
-        class="w-16 h-16 bg-gradient-to-br from-[#4B5563] to-[#374151] text-white rounded-full shadow-lg hover:scale-110 focus:scale-110 active:scale-100 transition-transform flex items-center justify-center cursor-grab active:cursor-grabbing"
+        class="w-16 h-16 text-white rounded-full shadow-xl hover:scale-110 focus:scale-110 active:scale-100 transition-all duration-300 flex items-center justify-center cursor-grab active:cursor-grabbing"
+        :class="isAiMenuOpen
+          ? 'bg-gradient-to-br from-gray-500 to-gray-600'
+          : 'bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'"
     >
-      <!-- 根据菜单状态切换图标 -->
-      <svg v-if="!isAiMenuOpen" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.43 2.43c-1.105 0-2.023-.918-2.023-2.023a3.75 3.75 0 013.75-3.75c.916 0 1.749.312 2.422.845l.005.004a.75.75 0 01.017 1.056l-1.06 1.06c-.24.24-.407.553-.407.896v.113a.75.75 0 001.5 0v-.058a1.5 1.5 0 01.447-1.087l.16-.16a1.5 1.5 0 00-2.122-2.122l-.16.16a1.5 1.5 0 01-1.087.447h-.058a.75.75 0 000 1.5h.113c.343 0 .656-.167.896-.407l1.06-1.06a.75.75 0 011.056.017z" /><path stroke-linecap="round" stroke-linejoin="round" d="M16.47 8.53a.75.75 0 011.06 0l3.75 3.75a.75.75 0 010 1.06l-3.75 3.75a.75.75 0 11-1.06-1.06l2.47-2.47H3a.75.75 0 010-1.5h15.94l-2.47-2.47a.75.75 0 010-1.06z" /></svg>
-      <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
+      <i
+          :class="['fa-solid', isAiMenuOpen ? 'fa-times' : 'fa-wand-magic-sparkles', 'text-2xl transition-transform duration-300 ease-in-out']"
+          :style="{ transform: isAiMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }"
+      ></i>
     </button>
-  </div>
 
-  <!-- AI 任务配置模态框 (全局单例) -->
-  <AITaskConfigModal />
+    <!-- [移除] 配置模态框已经被移到更顶层的布局中，以确保其全局性 -->
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-// [重构] 导入路径已更新为新的共享模块内部路径
-import AIAssistantMenu from './AIAssistantMenu.vue';
-import AITaskConfigModal from './AITaskConfigModal.vue';
-// [重构] 导入新创建的 useDraggable composable
+import { ref, computed } from 'vue';
 import { useDraggable } from '@/novel/shared/composables/useDraggable.ts';
+// [修复] 导入正确的 useAITaskStore，用于打开配置模态框
+import { useAITaskStore } from '@/novel/shared/composables/useAITaskStore.ts';
 
-// --- 菜单功能 ---
+const { openTaskConfig } = useAITaskStore();
+
 const isAiMenuOpen = ref(false);
 
 const toggleMenu = () => {
-  // 如果正在拖动，则不切换菜单 (dragging 来自 useDraggable)
   if (dragging.value) return;
   isAiMenuOpen.value = !isAiMenuOpen.value;
 };
 
-// --- 拖动功能 ---
-// [重构] 使用 useDraggable Composable，大大简化了组件内部逻辑
+// [修复] Actions 现在调用 openTaskConfig 来打开配置模态框，而不是直接执行任务
+const menuItems = computed(() => [
+  {
+    id: 'continue',
+    name: '续写',
+    icon: 'fa-wand-magic-sparkles',
+    angle: -165,
+    color: { icon: 'text-purple-500', hoverBg: 'hover:bg-purple-50' },
+    action: () => {
+      openTaskConfig('continue');
+      isAiMenuOpen.value = false;
+    }
+  },
+  {
+    id: 'polish',
+    name: '润色',
+    icon: 'fa-palette',
+    angle: -115,
+    color: { icon: 'text-teal-500', hoverBg: 'hover:bg-teal-50' },
+    action: () => {
+      openTaskConfig('polish');
+      isAiMenuOpen.value = false;
+    }
+  },
+  {
+    id: 'analyze',
+    name: '分析',
+    icon: 'fa-magnifying-glass-chart',
+    angle: -65,
+    color: { icon: 'text-amber-500', hoverBg: 'hover:bg-amber-50' },
+    action: () => {
+      openTaskConfig('analyze');
+      isAiMenuOpen.value = false;
+    }
+  },
+  {
+    id: 'chat',
+    name: '聊天',
+    icon: 'fa-comments',
+    angle: -15,
+    color: { icon: 'text-blue-500', hoverBg: 'hover:bg-blue-50' },
+    path: '/novel/chat', // 跳转到聊天页面，这是一个特例
+    action: () => {
+      isAiMenuOpen.value = false;
+    }
+  }
+]);
+
 const { position, dragging, startDrag } = useDraggable({
   initialPosition: { x: window.innerWidth - 100, y: window.innerHeight - 100 },
   padding: 16
@@ -3429,8 +4557,20 @@ const { position, dragging, startDrag } = useDraggable({
 </script>
 
 <style scoped>
-/* Scoped styles can be added here if needed */
+.float-menu-item {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-left: -2rem; /* -32px */
+  margin-top: -2rem; /* -32px */
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+.float-menu-item.active {
+  opacity: 1;
+}
 </style>
+
 
 // =
 // 文件: ..\src\novel\shared\composables\useAITaskStore.ts
@@ -3445,15 +4585,15 @@ const currentTaskType = ref('');
 
 // 定义一个任务类型到中文标题的映射
 const taskTitles: { [key: string]: string } = {
-    'chapter-generation': '章节生成',
-    'chapter-polish': '章节润色',
-    'chapter-analysis': '章节分析',
-    'stage-analysis': '阶段分析'
+    'continue': '续写内容',
+    'polish': '润色内容',
+    'analyze': '分析内容',
+    'chat': 'AI聊天助手'
 };
 
 /**
  * 打开任务配置模态框的函数
- * @param taskType - 要配置的任务类型 (e.g., 'chapter-polish')
+ * @param taskType - 要配置的任务类型 (e.g., 'polish')
  */
 const openTaskConfig = (taskType: string) => {
     currentTaskType.value = taskType;
@@ -3471,7 +4611,7 @@ const closeTaskConfig = () => {
 const taskTitle = computed(() => taskTitles[currentTaskType.value] || 'AI任务配置');
 
 /**
- * AI任务状态管理 Composable
+ * AI任务状态管理 Composable (用于全局配置模态框)
  * @returns 返回一个包含状态和方法的对象，供组件使用
  */
 export function useAITaskStore() {
@@ -3488,6 +4628,11 @@ export function useAITaskStore() {
 // 文件: ..\src\novel\shared\composables\useDraggable.ts
 //
 
+// =
+// 文件: ..\src\novel\shared\composables\useDraggable.ts
+//
+
+
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 
 interface Position {
@@ -3501,7 +4646,7 @@ interface DraggableOptions {
 }
 
 /**
- * 一个封装了拖拽逻辑的 Vue Composable
+ * 拖拽逻辑的 Vue Composable
  * @param options - 拖拽选项，如初始位置和边界填充
  * @returns 包含位置、拖拽状态和事件处理函数的对象
  */
@@ -3514,16 +4659,18 @@ export function useDraggable(options: DraggableOptions = {}) {
     const position = ref<Position>({ ...initialPosition });
     const dragging = ref(false);
     const offset = ref({ x: 0, y: 0 });
+    // [修复] 用于存储 setTimeout 的 ID，以便可以清除它
+    const dragTimeout = ref<number | undefined>(undefined);
 
     // 鼠标按下，开始拖动
     const startDrag = (event: MouseEvent) => {
         // 只响应鼠标左键
         if (event.button !== 0) return;
 
-        // 延迟一小段时间来区分点击和拖动
-        setTimeout(() => {
+        // [修复] 设置一个延迟来区分点击和拖拽
+        dragTimeout.value = window.setTimeout(() => {
             dragging.value = true;
-        }, 150);
+        }, 150); // 150ms 的延迟，如果用户按住超过这个时间才算开始拖拽
 
         offset.value.x = event.clientX - position.value.x;
         offset.value.y = event.clientY - position.value.y;
@@ -3532,11 +4679,8 @@ export function useDraggable(options: DraggableOptions = {}) {
         document.addEventListener('mouseup', stopDrag);
     };
 
-    // 鼠标移动，更新位置
     const onDrag = (event: MouseEvent) => {
         if (!dragging.value) return;
-
-        // 阻止默认行为，如文本选择
         event.preventDefault();
 
         const buttonWidth = 64; // 假设按钮宽度为 64px
@@ -3556,23 +4700,28 @@ export function useDraggable(options: DraggableOptions = {}) {
 
     // 鼠标松开，停止拖动
     const stopDrag = () => {
+        // [修复] 无论如何都清除定时器。如果 mouseup 发生在150ms内，拖拽就不会开始。
+        window.clearTimeout(dragTimeout.value);
+
         if (dragging.value) {
+            // 使用 setTimeout 确保 dragging 状态在 click 事件处理后改变
             setTimeout(() => {
                 dragging.value = false;
             }, 0);
         }
+
         document.removeEventListener('mousemove', onDrag);
         document.removeEventListener('mouseup', stopDrag);
     };
 
-    // 窗口大小改变时，调整按钮位置以防超出边界
     const updatePositionOnResize = () => {
         const buttonWidth = 64;
+        const buttonHeight = 64; // 在此定义，以保持一致
         if (position.value.x > window.innerWidth - buttonWidth - padding) {
             position.value.x = window.innerWidth - buttonWidth - padding;
         }
-        if (position.value.y > window.innerHeight - buttonWidth - padding) {
-            position.value.y = window.innerHeight - buttonWidth - padding;
+        if (position.value.y > window.innerHeight - buttonHeight - padding) {
+            position.value.y = window.innerHeight - buttonHeight - padding;
         }
     };
 
@@ -3582,7 +4731,6 @@ export function useDraggable(options: DraggableOptions = {}) {
 
     onBeforeUnmount(() => {
         window.removeEventListener('resize', updatePositionOnResize);
-        // 清理可能残留的事件监听器
         document.removeEventListener('mousemove', onDrag);
         document.removeEventListener('mouseup', stopDrag);
     });

@@ -1,9 +1,7 @@
 <template>
   <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
-    <!-- 页面操作/筛选栏 (原Header内容) -->
     <div class="flex items-center justify-between mb-8">
       <div class="flex items-center gap-4">
-        <!-- 分类筛选 -->
         <select class="text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none transition-all py-2 px-3">
           <option>所有分类</option>
           <option>内容创作</option>

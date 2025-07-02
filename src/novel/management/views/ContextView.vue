@@ -277,13 +277,12 @@ const searchResults = ref([
   },
 ]);
 
-// --- 底部总览 Computed Properties ---
+
 const totalContextWords = computed(() => {
   const fixedWords = selectedItems.value.reduce((sum, item) => sum + (item.wordCount || 0), 0);
   const ragWords = searchResults.value
       .filter(r => r.isSelected)
       .reduce((sum, item) => sum + (item.wordCount || 0), 0);
-  // 假设动态上下文平均每章/卷有固定的字数，这里简化处理，只计算固定和RAG部分
   return fixedWords + customContentWordCount.value + ragWords;
 });
 

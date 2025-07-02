@@ -1,4 +1,7 @@
-<!-- src/novel/layouts/NovelManagementLayout.vue -->
+// =
+// 文件: ..\src\novel\layouts\NovelManagementLayout.vue
+//
+
 <template>
   <div class="h-screen w-screen flex bg-white design-frame-container">
     <div class="design-frame">
@@ -13,27 +16,27 @@
         </div>
       </div>
       <div class="h-[calc(100%-40px)] flex">
-        <!-- [重构] 使用 management 模块的统一侧边栏 -->
         <NovelManagementSidebar />
-        <main class="flex-1 bg-white flex flex-col">
+        <main class="flex-1 bg-white flex flex-col overflow-hidden">
           <!-- 使用与全局一致的 AppHeader -->
           <AppHeader />
           <router-view />
         </main>
       </div>
     </div>
-    <!-- [重构] 引入位于 shared 模块的全局AI助手组件 -->
+    <!-- [修复] 将全局组件放在布局的顶层 -->
     <GlobalAIAssistant />
+    <AITaskConfigModal />
   </div>
 </template>
 
 <script setup lang="ts">
 import AppHeader from '@/layouts/components/AppHeader.vue'
-// [重构] 导入路径更新为 management 模块内部的侧边栏
 import NovelManagementSidebar from '@/novel/management/components/NovelManagementSidebar.vue'
-// [重构] 导入路径更新为 shared 模块内部的全局AI助手
 import GlobalAIAssistant from "@/novel/shared/components/GlobalAIAssistant/index.vue";
-import '@/novel/assets/styles/main.css' // 稍后我们将创建此文件
+// [新增] 导入AI任务配置模态框
+import AITaskConfigModal from '@/novel/shared/components/GlobalAIAssistant/AITaskConfigModal.vue'
+import '@/novel/assets/styles/main.css'
 </script>
 
 <style scoped>

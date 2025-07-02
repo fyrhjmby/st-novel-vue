@@ -1,4 +1,3 @@
-<!-- src/settings/views/ApiManagement.vue -->
 <template>
   <main class="flex-1 bg-white flex flex-col">
     <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white flex-shrink-0">
@@ -6,7 +5,6 @@
     </header>
 
     <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] space-y-6">
-      <!-- Supported API Providers -->
       <div class="bg-white rounded-xl p-6 border border-gray-100">
         <h3 class="text-base font-medium text-[#374151] mb-6">支持的API服务商</h3>
 

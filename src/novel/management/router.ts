@@ -28,7 +28,7 @@ export const managementRoutes: Array<RouteRecordRaw> = [
     {
         path: 'context',
         name: 'NovelContext',
-        component: () => import('@novel/management/views/ContextView.vue'),
+        component: () => import('@/novel/management/views/ContextView.vue'),
         meta: { title: '上下文管理' }
     },
     {

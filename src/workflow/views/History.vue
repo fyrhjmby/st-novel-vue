@@ -1,7 +1,3 @@
-// =
-// 文件: ..\src\workflow\views\History.vue
-//
-
 <template>
   <div class="flex-1 overflow-auto bg-[#FCFCFC] p-8">
     <!-- 页面操作/筛选栏 (原Header内容) -->

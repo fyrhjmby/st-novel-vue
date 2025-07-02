@@ -91,7 +91,6 @@
 </template>
 
 <script setup lang="ts">
-// Component logic can be added here
 </script>
 
 <style scoped>

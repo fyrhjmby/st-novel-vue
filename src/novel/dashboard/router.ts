@@ -2,7 +2,6 @@ import type { RouteRecordRaw } from 'vue-router'
 
 export const dashboardRoutes: Array<RouteRecordRaw> = [
     {
-        // 注意：这里的路径是相对于父路由的，父路由将定义为 /novel
         path: 'dashboard',
         name: 'NovelDashboard',
         component: () => import('@/novel/dashboard/views/DashboardView.vue'),

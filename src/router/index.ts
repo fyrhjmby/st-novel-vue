@@ -1,4 +1,3 @@
-// src/router/index.ts
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import { settingsRoutes } from '@/settings/router'

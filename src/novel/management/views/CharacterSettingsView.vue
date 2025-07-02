@@ -1,4 +1,3 @@
-<!-- src/novel/management/views/CharacterSettingsView.vue -->
 <template>
   <div class="flex-1 flex overflow-hidden bg-[#FCFCFC]">
     <!-- 左侧角色列表 -->
@@ -10,7 +9,6 @@
         </button>
       </div>
       <div class="flex-grow overflow-y-auto pr-1 space-y-2 hide-scrollbar">
-        <!-- 选中角色 -->
         <a href="#" class="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
           <div class="w-10 h-10 rounded-full flex-shrink-0">
             <img src="https://i.pravatar.cc/150?u=calvin" alt="Calvin" class="w-full h-full object-cover rounded-full">
@@ -21,7 +19,6 @@
           </div>
           <span class="text-xs font-medium px-2 py-1 rounded-md text-blue-600 bg-blue-100">编辑中</span>
         </a>
-        <!-- 其他角色 -->
         <a href="#" class="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg group transition-colors">
           <div class="w-10 h-10 rounded-full flex-shrink-0 bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h.5A2.5 2.5 0 0020 5.5V3.935m-14 0A10.003 10.003 0 0112 2a10.003 10.003 0 017 1.935M6 21a2 2 0 01-2-2v-1a2 2 0 012-2h12a2 2 0 012 2v1a2 2 0 01-2 2H6z"/></svg>
@@ -42,8 +39,6 @@
         </a>
       </div>
     </div>
-
-    <!-- 右侧角色详情 -->
     <div class="w-2/3 p-8 overflow-y-auto hide-scrollbar">
       <div class="space-y-6 max-w-3xl mx-auto">
         <div class="flex items-start gap-6">

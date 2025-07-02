@@ -1,11 +1,6 @@
-// =
-// 文件: ..\src\workflow\layouts\WorkflowLayout.vue
-//
-
 <template>
   <div class="h-screen w-screen flex bg-white design-frame-container">
     <div class="design-frame">
-      <!-- 统一的macOS风格窗口标题栏 -->
       <div class="h-10 px-5 flex items-center border-b border-gray-100 bg-gray-50 flex-shrink-0">
         <div class="flex items-center gap-2">
           <div class="w-3 h-3 rounded-full bg-[#FF5F57]"></div>
@@ -17,7 +12,6 @@
         </div>
       </div>
       <div class="h-[calc(100%-40px)] flex">
-        <!-- 工作流专用侧边栏 -->
         <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
           <div class="p-4 space-y-4 border-b border-gray-100">
             <div class="flex items-center gap-3 px-2">
@@ -30,7 +24,6 @@
               </div>
             </div>
           </div>
-
           <nav class="flex-1 px-4 py-6">
             <div class="mb-8">
               <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">工作流管理</p>
@@ -54,8 +47,6 @@
               </div>
             </div>
           </nav>
-
-          <!-- 用户信息区域 -->
           <div class="p-4 border-t border-gray-100">
             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 mb-3">
               <p class="text-xs font-semibold text-gray-700 mb-1">使用量统计</p>
@@ -73,8 +64,6 @@
             </router-link>
           </div>
         </aside>
-
-        <!-- 主内容区 -->
         <main class="flex-1 bg-white flex flex-col overflow-hidden">
           <AppHeader />
           <div class="flex-1 overflow-auto hide-scrollbar">
@@ -88,7 +77,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import AppHeader from '@/layouts/components/AppHeader.vue' // 引入公用Header
+import AppHeader from '@/layouts/components/AppHeader.vue'
 import '@workflow/index.css';
 
 const managementNav = ref([
@@ -107,7 +96,6 @@ const configNav = ref([
 </script>
 
 <style scoped>
-/* 复制自 DefaultLayout.vue 以确保视觉一致性 */
 .design-frame-container {
   padding: 2rem;
   background-color: #f5f5f7;
@@ -124,6 +112,6 @@ const configNav = ref([
 }
 .router-link-exact-active {
   color: white !important;
-  background-color: #4B5563; /* active-class in template is better but this is a fallback */
+  background-color: #4B5563;
 }
 </style>

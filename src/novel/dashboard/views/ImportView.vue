@@ -42,9 +42,9 @@
 </template>
 
 <script setup lang="ts">
-// Import logic will be implemented here
+
 </script>
 
 <style scoped>
-/* Scoped styles can be added here if needed */
+
 </style>

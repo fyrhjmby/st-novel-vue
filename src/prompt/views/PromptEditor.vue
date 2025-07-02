@@ -3,7 +3,7 @@
     <!-- 顶部栏 -->
     <header class="h-20 px-6 flex items-center justify-between border-b border-gray-200/70 bg-white flex-shrink-0">
       <div class="flex items-center gap-4">
-        <button @click="$router.back()" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition">
+        <button @click="router.back()" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition">
           <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M15 19l-7-7 7-7"/>
           </svg>
@@ -212,6 +212,7 @@
 <script setup lang="ts">
 // This script block is intentionally left empty.
 // You can add logic for data binding and methods here.
+import router from "@/router";
 </script>
 
 <style scoped>

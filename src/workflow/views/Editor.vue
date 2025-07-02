@@ -1,6 +1,5 @@
 <template>
   <div class="flex flex-col h-full w-full bg-white">
-
     <div class="px-8 py-3 flex items-center justify-between border-b border-gray-100 bg-white flex-shrink-0">
       <div>
         <p class="text-sm text-[#9CA3AF]">我的工作流 / 编辑中</p>
@@ -8,7 +7,6 @@
       </div>
       <div class="flex items-center gap-2">
         <span class="text-xs text-gray-400 mr-2">所有更改已保存</span>
-        <!-- 撤销/重做按钮 -->
         <button class="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
@@ -25,7 +23,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v11.494m-9-5.747h18"/>
           </svg>
         </button>
-        <!-- 调试模式开关 -->
         <label class="relative inline-flex items-center cursor-pointer ml-4">
           <input type="checkbox" class="sr-only peer">
           <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
@@ -43,7 +40,6 @@
     </div>
 
     <div class="flex-1 flex overflow-hidden">
-      <!-- 左侧节点工具箱 -->
       <aside class="w-72 bg-white border-r border-gray-100 flex flex-col p-4">
         <div class="relative mb-4">
           <input type="text" placeholder="搜索组件..." class="w-full pl-9 pr-4 py-2 text-sm bg-[#F3F4F6] border-transparent rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none">

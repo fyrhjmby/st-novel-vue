@@ -1,18 +1,22 @@
+// =
+// 文件: ..\src\novel\shared\components\GlobalAIAssistant\AITaskConfigModal.vue
+//
+
 <template>
   <!-- Modal-Backdrop -->
-  <!-- 使用 v-if 和全局状态来控制显示 -->
-  <div v-if="isConfigModalOpen" @click.self="closeTaskConfig" class="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-8">
+  <!-- 使用 v-if 和从 useAITaskStore 获取的全局状态来控制显示 -->
+  <div v-if="isConfigModalOpen" @click.self="closeTaskConfig" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-opacity duration-300">
 
     <!-- Modal-Container -->
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl border border-gray-100 flex flex-col max-h-full">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-gray-100 flex flex-col max-h-[90vh] transition-transform duration-300 scale-95 animate-fade-in-up">
       <div class="p-6 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
         <div>
-          <!-- 标题现在是动态的 -->
+          <!-- 标题现在是动态的, 从 computed property 'taskTitle' 获取 -->
           <h3 class="text-lg font-medium text-[#374151]">AI任务配置 - {{ taskTitle }}</h3>
           <p class="text-sm text-[#6B7280] mt-1">配置AI助手如何处理您的内容</p>
         </div>
         <!-- 点击关闭按钮时调用全局的关闭方法 -->
-        <button @click="closeTaskConfig" class="w-8 h-8 hover:bg-gray-100 rounded-lg flex items-center justify-center transition-colors">
+        <button @click="closeTaskConfig" class="w-9 h-9 hover:bg-gray-100 rounded-lg flex items-center justify-center transition-colors">
           <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
@@ -127,13 +131,28 @@
 </template>
 
 <script setup lang="ts">
-// [重构] 导入路径已更新为新的共享模块位置
-import { useAITaskStore } from '@/novel/shared/composables/useAITaskStore.ts';
+// [修复] 导入路径已更新为正确的共享模块位置
+import { useAITaskStore } from '@/novel/shared/composables/useAITaskStore';
 
 const { isConfigModalOpen, taskTitle, closeTaskConfig } = useAITaskStore();
 </script>
 
 <style scoped>
+/* 添加一个简单的动画效果 */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out forwards;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   display: block;
   width: 6px;

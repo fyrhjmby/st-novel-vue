@@ -1,6 +1,5 @@
 <template>
   <div class="flex-1 flex overflow-hidden">
-    <!-- 左侧章节列表 -->
     <div class="w-80 border-r border-gray-100 bg-[#FCFCFC] flex flex-col flex-shrink-0">
       <header class="h-20 px-6 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
         <h2 class="font-medium text-[#374151]">选择章节</h2>
@@ -13,7 +12,6 @@
       </header>
 
       <div class="flex-1 p-4 overflow-y-auto space-y-2 custom-scrollbar">
-        <!-- 选中章节 -->
         <div class="bg-white rounded-lg border-2 border-[#4B5563] cursor-pointer p-4">
           <div class="flex items-center justify-between mb-2">
             <h3 class="font-medium text-sm text-[#374151]">第四章：跃迁点</h3>
@@ -102,7 +100,6 @@
 </template>
 
 <script setup lang="ts">
-// History page logic will be implemented here
 </script>
 
 <style scoped>

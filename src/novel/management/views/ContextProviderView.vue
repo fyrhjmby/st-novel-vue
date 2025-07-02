@@ -63,7 +63,6 @@
               </div>
             </div>
             <div class="collapse-content">
-              <!-- Collapsed Content -->
             </div>
           </div>
 
@@ -87,11 +86,8 @@
               </div>
             </div>
             <div class="collapse-content">
-              <!-- Collapsed Content -->
             </div>
           </div>
-
-          <!-- 提示词 -->
           <div class="border border-gray-100 rounded-xl overflow-hidden">
             <div class="px-6 py-4 bg-[#FAFAFA] cursor-pointer hover:bg-[#F3F4F6] transition-colors flex items-center justify-between">
               <div class="flex items-center gap-3">
@@ -127,7 +123,6 @@
           </div>
         </div>
 
-        <!-- 底部信息栏 -->
         <div class="px-8 py-4 bg-[#FAFAFA] border-t border-gray-100 flex items-center justify-between">
           <div class="flex items-center gap-6 text-xs text-[#9CA3AF]">
             <span>加载时间: 36ms</span>
@@ -147,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-// Context preview logic will be implemented here
+
 </script>
 
 <style scoped>

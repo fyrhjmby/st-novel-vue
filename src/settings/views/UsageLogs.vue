@@ -1,4 +1,3 @@
-<!-- src/settings/views/UsageLogs.vue -->
 <template>
   <main class="flex-1 bg-white flex flex-col">
     <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
@@ -17,7 +16,6 @@
       </div>
     </header>
     <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] space-y-6">
-      <!-- Stats Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div v-for="stat in stats" :key="stat.label" class="bg-white rounded-xl p-4 border border-gray-100">
           <div class="flex items-center justify-between mb-3">
@@ -33,8 +31,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Usage Trend Chart -->
       <div class="bg-white rounded-xl p-6 border border-gray-100">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-base font-medium text-[#374151]">使用趋势</h3>
@@ -53,8 +49,6 @@
           <p class="text-gray-400 text-sm">[交互式图表 - 展示30天使用趋势]</p>
         </div>
       </div>
-
-      <!-- API Call Logs -->
       <div class="bg-white rounded-xl p-6 border border-gray-100">
         <div class="flex items-center justify-between mb-4 flex-wrap gap-4">
           <h3 class="text-base font-medium text-[#374151]">API 调用日志</h3>

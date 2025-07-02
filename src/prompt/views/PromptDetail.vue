@@ -4,7 +4,7 @@
     <header class="px-8 pt-6 pb-0">
       <div class="flex items-start justify-between mb-6">
         <div class="flex items-start gap-4">
-          <button @click="$router.back()" class="p-2 hover:bg-gray-50 rounded-lg transition-colors mt-1"><svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg></button>
+          <button @click="router.back()" class="p-2 hover:bg-gray-50 rounded-lg transition-colors mt-1"><svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg></button>
           <div>
             <div class="flex items-center gap-3 mb-2">
               <h1 class="text-2xl font-medium text-[#374151]">高情商沟通大师</h1>
@@ -163,6 +163,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import router from "@/router";
 
 const activeTab = ref('概览');
 const tabs = ref([

@@ -1,4 +1,3 @@
-<!-- src/settings/views/DataPrivacy.vue -->
 <template>
   <main class="flex-1 bg-white flex flex-col">
     <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">

@@ -1,4 +1,7 @@
-<!-- src/novel/layouts/NovelDashboardLayout.vue -->
+// =
+// 文件: ..\src\novel\layouts\NovelDashboardLayout.vue
+//
+
 <template>
   <div class="h-screen w-screen flex bg-white design-frame-container">
     <div class="design-frame">
@@ -14,24 +17,25 @@
       </div>
       <div class="h-[calc(100%-40px)] flex">
         <NovelDashboardSidebar />
-        <main class="flex-1 bg-white flex flex-col">
+        <main class="flex-1 bg-white flex flex-col overflow-hidden">
           <AppHeader />
           <router-view />
         </main>
       </div>
     </div>
-    <!-- [重构] 引入位于 shared 模块的全局AI助手组件 -->
+    <!-- [修复] 将全局组件放在布局的顶层 -->
     <GlobalAIAssistant />
+    <AITaskConfigModal />
   </div>
 </template>
 
 <script setup lang="ts">
 import AppHeader from '@/layouts/components/AppHeader.vue'
-// [重构] 导入路径更新为 dashboard 模块内部的侧边栏
 import NovelDashboardSidebar from '@/novel/dashboard/components/NovelDashboardSidebar.vue'
-// [重构] 导入路径更新为 shared 模块内部的全局AI助手
 import GlobalAIAssistant from '@/novel/shared/components/GlobalAIAssistant/index.vue'
-import '@/novel/assets/styles/main.css' // 稍后我们将创建此文件
+// [新增] 导入AI任务配置模态框
+import AITaskConfigModal from '@/novel/shared/components/GlobalAIAssistant/AITaskConfigModal.vue'
+import '@/novel/assets/styles/main.css'
 </script>
 
 <style scoped>

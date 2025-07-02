@@ -1,7 +1,3 @@
-// =
-// 文件: ..\src\workflow\views\Schedules.vue
-//
-
 <template>
   <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
     <!-- 页面头部 -->
@@ -15,8 +11,6 @@
         创建调度任务
       </button>
     </div>
-
-    <!-- 调度任务列表表格 -->
     <div class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
       <table class="min-w-full divide-y divide-gray-100">
         <thead class="bg-gray-50">

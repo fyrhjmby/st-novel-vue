@@ -86,5 +86,4 @@ const deletedItems = ref([
 </script>
 
 <style scoped>
-/* Scoped styles can be added here if needed, but Tailwind CSS covers most cases. */
 </style>

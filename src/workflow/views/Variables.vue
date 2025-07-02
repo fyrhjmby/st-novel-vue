@@ -1,7 +1,3 @@
-// =
-// 文件: ..\src\workflow\views\Variables.vue
-//
-
 <template>
   <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
     <!-- 页面头部 -->

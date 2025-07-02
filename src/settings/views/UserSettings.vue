@@ -1,4 +1,3 @@
-<!-- src/settings/views/UserSettings.vue -->
 <template>
   <main class="flex-1 bg-white flex flex-col">
     <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
@@ -21,8 +20,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Basic Info -->
       <div class="bg-white rounded-xl p-6 border border-gray-100">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-base font-medium text-[#374151]">基本信息</h3>

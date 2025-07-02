@@ -1,7 +1,3 @@
-// =
-// 文件: ..\src\workflow\views\MyWorkflows.vue
-//
-
 <template>
   <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
     <!-- 页面操作栏 -->
@@ -20,7 +16,6 @@
             <path d="M21 21L16.65 16.65"/>
           </svg>
         </div>
-        <!-- 排序和视图切换 -->
         <select class="text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none transition-all py-2 px-3">
           <option>按修改日期排序</option>
           <option>按创建日期排序</option>

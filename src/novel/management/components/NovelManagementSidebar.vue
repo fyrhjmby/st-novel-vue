@@ -44,7 +44,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-// 小说管理菜单项 (路径保持静态，因为它们都属于本模块)
+// [重构] "编辑章节"的路径现在明确指向新的静态路由
 const managementNav = ref([
   { name: '编辑章节', path: `/novel/editor`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>` },
   { name: '大纲视图', path: `/novel/manage/outline`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" /></svg>` },
@@ -52,7 +52,6 @@ const managementNav = ref([
   { name: '世界观', path: `/novel/manage/worldview`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c1.356 0 2.673-.174 3.946-.512M12 21c-1.356 0-2.673-.174-3.946-.512M12 3a9.004 9.004 0 00-8.716 6.747M12 3a9.004 9.004 0 018.716 6.747M12 3c1.356 0 2.673.174 3.946.512M12 3c-1.356 0-2.673-.174-3.946-.512M3.284 15.842a9.002 9.002 0 000-7.684M20.716 15.842a9.002 9.002 0 000-7.684" /></svg>` },
 ]);
 
-// 工具菜单项
 const toolsNav = ref([
   { name: '上下文管理', path: `/novel/manage/context`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-1.621-1.621A3 3 0 0113.5 18.257V17.25m6-3.75V17.25a3 3 0 01-3 3h-6a3 3 0 01-3-3V13.5m12-3V10.5a3 3 0 00-3-3h-6a3 3 0 00-3 3v3.75m12-3V6.75a3 3 0 00-3-3h-6a3 3 0 00-3 3v6.75" /></svg>` },
   { name: '小说设置', path: `/novel/manage/settings`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-1.007 1.11-.95.542.057 1.007.56 1.061 1.11L12 8.583l.235-3.535c.057-.542.56-1.007 1.11-.95.542.057 1.007.56 1.061 1.11L15.417 8.583l3.536-.235c.542-.057 1.007.56 1.061 1.11.057.542-.42 1.007-.95 1.061l-3.536.235.235 3.536c.057.542-.42 1.007-.95 1.061-.542.057-1.007-.42-1.061-.95L12 15.417l-.235 3.536c-.057.542-.56 1.007-1.11.95-.542-.057-1.007-.56-1.061-1.11L9.417 15.417l-3.536.235c-.542-.057-1.007-.42-.95-1.061.057-.542.42-1.007.95-1.061l3.536-.235L9.417 8.583z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 14.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" /></svg>` },

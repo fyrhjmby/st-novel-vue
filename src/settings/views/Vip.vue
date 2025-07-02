@@ -1,12 +1,10 @@
-<!-- src/settings/views/Vip.vue -->
 <template>
   <div class="min-h-screen bg-[#F5F5F7]">
-    <!-- Top Navigation -->
     <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <div class="flex items-center gap-8">
-            <button @click="$router.back()" class="text-gray-600 hover:text-gray-900">
+            <button @click="router.back()" class="text-gray-600 hover:text-gray-900">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
               </svg>
@@ -60,8 +58,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Feature Comparison Table -->
         <div class="mb-16">
           <h2 class="text-2xl font-semibold text-gray-900 text-center mb-8">功能对比</h2>
           <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -89,8 +85,6 @@
             </div>
           </div>
         </div>
-
-        <!-- FAQ -->
         <div class="mb-16">
           <h2 class="text-2xl font-semibold text-gray-900 text-center mb-8">常见问题</h2>
           <div class="max-w-3xl mx-auto space-y-4">

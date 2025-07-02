@@ -2,33 +2,35 @@ import type { RouteRecordRaw } from 'vue-router'
 import { dashboardRoutes } from './dashboard/router'
 import { managementRoutes } from './management/router'
 import { chatRoutes } from './chat/router'
+import { editorRoutes } from './editor/router'
 
 export const novelRoutes: Array<RouteRecordRaw> = [
     {
+
         path: '/novel',
+
         component: () => import('@/novel/layouts/NovelDashboardLayout.vue'),
+
         redirect: '/novel/dashboard',
-        // Dashboard 模块的路由
+
         children: [
             ...dashboardRoutes
         ]
     },
     {
+        // 管理模块保持独立，因为它使用不同的布局
         path: '/novel/manage',
         component: () => import('@/novel/layouts/NovelManagementLayout.vue'),
         redirect: '/novel/manage/outline',
-        // Management 和 Chat 模块的路由都挂载在这个布局下
         children: [
             ...managementRoutes,
             ...chatRoutes
         ]
     },
-    {
-        path: '/novel/editor',
-        name: 'NovelEditor',
-        component: () => import('@novel/management/views/editor/EditorView.vue'),
-        meta: { title: '编辑章节' }
-    },
+    // 编辑器模块的路由保持独立顶级注册
+    ...editorRoutes,
+
+    // 其他独立页面路由
     {
         path: '/novel/read',
         name: 'NovelReader',
