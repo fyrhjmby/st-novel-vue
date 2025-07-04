@@ -23,19 +23,33 @@ export const novelRoutes: Array<RouteRecordRaw> = [
         component: () => import('@/novel/layouts/NovelManagementLayout.vue'),
         redirect: '/novel/manage/outline',
         children: [
-            ...managementRoutes,
-            ...chatRoutes
+            ...managementRoutes
         ]
     },
     // 编辑器模块的路由保持独立顶级注册
     ...editorRoutes,
 
+    // 将聊天路由作为顶级模块进行注册
+    ...chatRoutes,
+
     // 其他独立页面路由
     {
         path: '/novel/read',
         name: 'NovelReader',
-        component: () => import('@/novel/management/views/ReaderView.vue'),
+        component: () => import('@novel/editor/views/ReaderView.vue'),
         meta: { title: '阅读模式' }
+    },
+    {
+        path: '/novel/history',
+        component: () => import('@novel/editor/layouts/NovelHistoryLayout.vue'),
+        children: [
+            {
+                path: '',
+                name: 'NovelHistory',
+                component: () => import('@novel/editor/views/HistoryView.vue'),
+                meta: { title: '版本历史' }
+            }
+        ]
     },
     {
         path: '/novel/context-provider',

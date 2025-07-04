@@ -37,10 +37,4 @@ export const managementRoutes: Array<RouteRecordRaw> = [
         component: () => import('@/novel/management/views/ExportView.vue'),
         meta: { title: '导出小说' }
     },
-    {
-        path: 'history',
-        name: 'NovelHistory',
-        component: () => import('@/novel/management/views/HistoryView.vue'),
-        meta: { title: '版本历史' }
-    },
 ]

@@ -1,22 +1,18 @@
-// =
-// 文件: ..\src\novel\shared\components\GlobalAIAssistant\AITaskConfigModal.vue
-//
-
 <template>
   <!-- Modal-Backdrop -->
-  <!-- 使用 v-if 和从 useAITaskStore 获取的全局状态来控制显示 -->
-  <div v-if="isConfigModalOpen" @click.self="closeTaskConfig" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-opacity duration-300">
+  <!-- 使用 v-if 和从 useAIAssistantStore 获取的全局状态来控制显示 -->
+  <div v-if="aiAssistantStore.isConfigModalOpen" @click.self="aiAssistantStore.closeTaskConfig" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-opacity duration-300">
 
     <!-- Modal-Container -->
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-gray-100 flex flex-col max-h-[90vh] transition-transform duration-300 scale-95 animate-fade-in-up">
       <div class="p-6 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
         <div>
           <!-- 标题现在是动态的, 从 computed property 'taskTitle' 获取 -->
-          <h3 class="text-lg font-medium text-[#374151]">AI任务配置 - {{ taskTitle }}</h3>
+          <h3 class="text-lg font-medium text-[#374151]">AI任务配置 - {{ aiAssistantStore.taskTitle }}</h3>
           <p class="text-sm text-[#6B7280] mt-1">配置AI助手如何处理您的内容</p>
         </div>
         <!-- 点击关闭按钮时调用全局的关闭方法 -->
-        <button @click="closeTaskConfig" class="w-9 h-9 hover:bg-gray-100 rounded-lg flex items-center justify-center transition-colors">
+        <button @click="aiAssistantStore.closeTaskConfig" class="w-9 h-9 hover:bg-gray-100 rounded-lg flex items-center justify-center transition-colors">
           <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
@@ -120,10 +116,10 @@
       </div>
 
       <div class="p-6 bg-[#FAFAFA] border-t border-gray-100 flex justify-end gap-3 flex-shrink-0">
-        <button @click="closeTaskConfig" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50 transition-colors">取消</button>
-        <button @click="closeTaskConfig" class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors flex items-center gap-2">
+        <button @click="aiAssistantStore.closeTaskConfig" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50 transition-colors">取消</button>
+        <button @click="aiAssistantStore.closeTaskConfig" class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.5 12.75l6 6 9-13.5" /></svg>
-          保存配置并执行
+          保存配置
         </button>
       </div>
     </div>
@@ -131,14 +127,12 @@
 </template>
 
 <script setup lang="ts">
-// [修复] 导入路径已更新为正确的共享模块位置
-import { useAITaskStore } from '@/novel/shared/composables/useAITaskStore';
+import { useAIAssistantStore } from '@/novel/shared/composables/useAIAssistantStore';
 
-const { isConfigModalOpen, taskTitle, closeTaskConfig } = useAITaskStore();
+const aiAssistantStore = useAIAssistantStore();
 </script>
 
 <style scoped>
-/* 添加一个简单的动画效果 */
 @keyframes fade-in-up {
   from {
     opacity: 0;
@@ -168,7 +162,6 @@ const { isConfigModalOpen, taskTitle, closeTaskConfig } = useAITaskStore();
   background: #9ca3af;
 }
 
-/* Custom range input style */
 input[type=range] {
   -webkit-appearance: none;
   appearance: none;

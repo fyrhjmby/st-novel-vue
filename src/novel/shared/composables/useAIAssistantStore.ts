@@ -1,9 +1,4 @@
-import { ref, computed } from 'vue';
-
-// 定义一个响应式的状态变量，用于控制模态框的显示与隐藏
-const isConfigModalOpen = ref(false);
-// 定义一个响应式的状态变量，用于存储当前正在配置的任务类型
-const currentTaskType = ref('');
+import { defineStore } from 'pinia';
 
 // 定义一个任务类型到中文标题的映射
 const taskTitles: { [key: string]: string } = {
@@ -14,34 +9,34 @@ const taskTitles: { [key: string]: string } = {
 };
 
 /**
- * 打开任务配置模态框的函数
- * @param taskType - 要配置的任务类型 (e.g., 'polish')
+ * AI 助手全局状态管理 Store
  */
-const openTaskConfig = (taskType: string) => {
-    currentTaskType.value = taskType;
-    isConfigModalOpen.value = true;
-};
+export const useAIAssistantStore = defineStore('aiAssistant', {
+    state: () => ({
+        isConfigModalOpen: false,
+        currentTaskType: '',
+    }),
+    getters: {
+        /**
+         * 根据当前任务类型动态生成模态框标题
+         */
+        taskTitle: (state): string => taskTitles[state.currentTaskType] || 'AI任务配置',
+    },
+    actions: {
+        /**
+         * 打开任务配置模态框
+         * @param taskType - 要配置的任务类型 (e.g., 'polish')
+         */
+        openTaskConfig(taskType: string) {
+            this.currentTaskType = taskType;
+            this.isConfigModalOpen = true;
+        },
 
-/**
- * 关闭任务配置模态框的函数
- */
-const closeTaskConfig = () => {
-    isConfigModalOpen.value = false;
-};
-
-// 计算属性，根据当前任务类型动态生成模态框标题
-const taskTitle = computed(() => taskTitles[currentTaskType.value] || 'AI任务配置');
-
-/**
- * AI任务状态管理 Composable (用于全局配置模态框)
- * @returns 返回一个包含状态和方法的对象，供组件使用
- */
-export function useAITaskStore() {
-    return {
-        isConfigModalOpen,
-        currentTaskType,
-        taskTitle,
-        openTaskConfig,
-        closeTaskConfig,
-    };
-}
+        /**
+         * 关闭任务配置模态框
+         */
+        closeTaskConfig() {
+            this.isConfigModalOpen = false;
+        },
+    },
+});

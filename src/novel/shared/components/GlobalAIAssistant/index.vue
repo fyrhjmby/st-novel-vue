@@ -1,11 +1,14 @@
-
-
 <template>
   <div
-      class="fixed z-50"
-      :style="{ top: `${position.y}px`, left: `${position.x}px` }"
-  />
-    <div class="absolute top-1/2 left-1/2 w-48 h-48 -mt-24 -ml-24 pointer-events-none">
+      class="fixed z-50 flex items-center justify-center cursor-grab active:cursor-grabbing"
+      :style="{ top: `${position.y}px`, left: `${position.x}px`, width: '12rem', height: '12rem', marginLeft: '-6rem', marginTop: '-6rem' }"
+      @mousedown="startDrag"
+      @click="handleClick"
+  >
+    <!-- Radial Menu Items Container -->
+    <div
+        class="absolute inset-0 pointer-events-none"
+    >
       <div
           v-for="item in menuItems"
           :key="item.id"
@@ -15,7 +18,7 @@
         <component
             :is="item.path ? 'router-link' : 'button'"
             :to="item.path"
-            @click="item.action"
+            @click.stop="item.action"
             :class="[
             'w-16 h-16 bg-white rounded-full shadow-lg flex flex-col items-center justify-center gap-1 transition-all border border-gray-100 pointer-events-auto',
             item.color.hoverBg,
@@ -30,10 +33,9 @@
       </div>
     </div>
 
+    <!-- Main Floating Button -->
     <button
-        @click="toggleMenu"
-        @mousedown.stop="startDrag"
-        class="w-16 h-16 text-white rounded-full shadow-xl hover:scale-110 focus:scale-110 active:scale-100 transition-all duration-300 flex items-center justify-center cursor-grab active:cursor-grabbing"
+        class="w-16 h-16 text-white rounded-full shadow-xl hover:scale-110 focus:scale-110 active:scale-100 transition-all duration-300 flex items-center justify-center pointer-events-auto absolute"
         :class="isAiMenuOpen
           ? 'bg-gradient-to-br from-gray-500 to-gray-600'
           : 'bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'"
@@ -44,25 +46,21 @@
       ></i>
     </button>
 
-    <!-- [移除] 配置模态框已经被移到更顶层的布局中，以确保其全局性 -->
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useDraggable } from '@/novel/shared/composables/useDraggable.ts';
-// [修复] 导入正确的 useAITaskStore，用于打开配置模态框
-import { useAITaskStore } from '@/novel/shared/composables/useAITaskStore.ts';
+import { useDraggable } from '@/novel/shared/composables/useDraggable';
+import { useAIAssistantStore } from '@/novel/shared/composables/useAIAssistantStore';
 
-const { openTaskConfig } = useAITaskStore();
-
+const aiAssistantStore = useAIAssistantStore();
 const isAiMenuOpen = ref(false);
 
 const toggleMenu = () => {
-  if (dragging.value) return;
   isAiMenuOpen.value = !isAiMenuOpen.value;
 };
 
-// [修复] Actions 现在调用 openTaskConfig 来打开配置模态框，而不是直接执行任务
 const menuItems = computed(() => [
   {
     id: 'continue',
@@ -71,7 +69,7 @@ const menuItems = computed(() => [
     angle: -165,
     color: { icon: 'text-purple-500', hoverBg: 'hover:bg-purple-50' },
     action: () => {
-      openTaskConfig('continue');
+      aiAssistantStore.openTaskConfig('continue');
       isAiMenuOpen.value = false;
     }
   },
@@ -82,7 +80,7 @@ const menuItems = computed(() => [
     angle: -115,
     color: { icon: 'text-teal-500', hoverBg: 'hover:bg-teal-50' },
     action: () => {
-      openTaskConfig('polish');
+      aiAssistantStore.openTaskConfig('polish');
       isAiMenuOpen.value = false;
     }
   },
@@ -93,7 +91,7 @@ const menuItems = computed(() => [
     angle: -65,
     color: { icon: 'text-amber-500', hoverBg: 'hover:bg-amber-50' },
     action: () => {
-      openTaskConfig('analyze');
+      aiAssistantStore.openTaskConfig('analyze');
       isAiMenuOpen.value = false;
     }
   },
@@ -103,7 +101,7 @@ const menuItems = computed(() => [
     icon: 'fa-comments',
     angle: -15,
     color: { icon: 'text-blue-500', hoverBg: 'hover:bg-blue-50' },
-    path: '/novel/chat', // 跳转到聊天页面，这是一个特例
+    path: '/novel/chat',
     action: () => {
       isAiMenuOpen.value = false;
     }
@@ -114,6 +112,14 @@ const { position, dragging, startDrag } = useDraggable({
   initialPosition: { x: window.innerWidth - 100, y: window.innerHeight - 100 },
   padding: 16
 });
+
+const handleClick = () => {
+  if (dragging.value) {
+    return;
+  }
+  toggleMenu();
+};
+
 </script>
 
 <style scoped>
@@ -125,6 +131,7 @@ const { position, dragging, startDrag } = useDraggable({
   margin-top: -2rem; /* -32px */
   opacity: 0;
   transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transform: scale(0.5);
 }
 .float-menu-item.active {
   opacity: 1;

@@ -67,7 +67,7 @@
       </header>
 
       <div class="flex-1 p-6 overflow-y-auto">
-        <div class="max-w-3xl mx-auto space-y-6">
+        <div class="max-w-5xl mx-auto space-y-6">
           <!-- 用户消息 -->
           <div class="flex justify-end">
             <div class="bg-[#3B82F6] text-white p-4 rounded-xl rounded-br-lg max-w-[70%] text-sm">
@@ -94,7 +94,7 @@
 
       <!-- 输入区域 -->
       <div class="p-4 border-t border-gray-100 bg-[#FAFAFA]">
-        <div class="flex gap-3 items-end max-w-3xl mx-auto">
+        <div class="flex gap-3 items-end max-w-5xl mx-auto">
           <button class="w-9 h-9 flex-shrink-0 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-lg transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3.375 3.375 0 1118.375 12.74z" /></svg>
           </button>

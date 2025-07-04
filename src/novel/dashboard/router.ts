@@ -10,19 +10,25 @@ export const dashboardRoutes: Array<RouteRecordRaw> = [
     {
         path: 'recent',
         name: 'NovelRecent',
-        component: () => import('@/novel/dashboard/views/RecentView.vue'), // 路径已更新
+        component: () => import('@/novel/dashboard/views/RecentView.vue'),
         meta: { title: '最近编辑' }
     },
     {
         path: 'trash',
         name: 'NovelTrash',
-        component: () => import('@/novel/dashboard/views/TrashView.vue'), // 路径已更新
+        component: () => import('@/novel/dashboard/views/TrashView.vue'),
         meta: { title: '回收站' }
     },
     {
         path: 'import',
         name: 'NovelImport',
-        component: () => import('@/novel/dashboard/views/ImportView.vue'), // 路径已更新
+        component: () => import('@/novel/dashboard/views/ImportView.vue'),
         meta: { title: '导入小说' }
+    },
+    {
+        path: 'new',
+        name: 'NovelNew',
+        component: () => import('@/novel/dashboard/views/NewNovelView.vue'),
+        meta: { title: '新建小说' }
     },
 ]

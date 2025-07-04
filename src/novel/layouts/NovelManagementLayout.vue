@@ -1,7 +1,3 @@
-// =
-// 文件: ..\src\novel\layouts\NovelManagementLayout.vue
-//
-
 <template>
   <div class="h-screen w-screen flex bg-white design-frame-container">
     <div class="design-frame">
@@ -34,7 +30,6 @@
 import AppHeader from '@/layouts/components/AppHeader.vue'
 import NovelManagementSidebar from '@/novel/management/components/NovelManagementSidebar.vue'
 import GlobalAIAssistant from "@/novel/shared/components/GlobalAIAssistant/index.vue";
-// [新增] 导入AI任务配置模态框
 import AITaskConfigModal from '@/novel/shared/components/GlobalAIAssistant/AITaskConfigModal.vue'
 import '@/novel/assets/styles/main.css'
 </script>

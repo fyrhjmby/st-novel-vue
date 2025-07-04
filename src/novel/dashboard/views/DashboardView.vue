@@ -16,14 +16,14 @@
         </select>
       </div>
       <div class="flex items-center gap-4">
-        <button class="text-sm text-[#6B7280] hover:text-[#374151] transition-colors flex items-center gap-2">
+        <router-link to="/novel/import" class="text-sm text-[#6B7280] hover:text-[#374151] transition-colors flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 18C4.5 18 3 16.5 3 14C3 11.5 5 10 7 10C7.3 10 7.5 10 7.8 10.1C8.5 7.2 11 5 14 5C17.3 5 20 7.7 20 11C20 11.3 20 11.7 19.9 12C21.1 12.5 22 13.6 22 15C22 16.9 20.4 18.5 18.5 18.5"/><path d="M12 13V21M15 16L12 13L9 16"/></svg>
           <span>导入小说</span>
-        </button>
-        <button class="text-sm font-medium text-white bg-[#4B5563] hover:bg-gray-700 transition-colors flex items-center gap-2 px-4 py-2 rounded-lg">
+        </router-link>
+        <router-link to="/novel/new" class="text-sm font-medium text-white bg-[#4B5563] hover:bg-gray-700 transition-colors flex items-center gap-2 px-4 py-2 rounded-lg">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5V19M5 12H19"/></svg>
           <span>新建小说</span>
-        </button>
+        </router-link>
       </div>
     </div>
 
@@ -34,7 +34,7 @@
           :key="index"
           class="group bg-white rounded-xl border border-gray-100 p-4 flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1"
       >
-        <router-link to="/novel/manage/outline" class="block aspect-[2/3] relative w-full mb-4 rounded-lg overflow-hidden">
+        <router-link to="/novel/manage/outline" class="block aspect-[4/5] relative w-full mb-4 rounded-lg overflow-hidden">
           <img :src="novel.cover" class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Book Cover">
           <div class="absolute top-0 left-0 w-full h-full bg-black/5 group-hover:bg-black/10 transition-colors"></div>
         </router-link>
