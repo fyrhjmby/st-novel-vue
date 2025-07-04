@@ -1,7 +1,3 @@
-// =
-// 文件: ..\src\novel\shared\composables\useAITaskStore.ts
-//
-
 import { ref, computed } from 'vue';
 
 // 定义一个响应式的状态变量，用于控制模态框的显示与隐藏
