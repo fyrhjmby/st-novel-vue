@@ -1,3 +1,6 @@
+// 文件: src\novel\editor\components\sidebar\RelatedTab.vue
+//
+
 <template>
   <div class="related-tab-container">
     <div class="header">
@@ -48,24 +51,24 @@ const emit = defineEmits<{
 const editorStore = useEditorStore();
 const relatedContentStore = useRelatedContentStore();
 
-const mapToTreeNode = (nodes: RelatedTree[]): TreeNode[] => {
-  return nodes.map(node => ({
+
+const relatedTree = computed((): TreeNode[] => {
+  const mapNode = (node: RelatedTree): TreeNode => ({
     id: node.id,
     title: node.title,
     icon: node.icon,
     type: node.type,
-    originalData: node,
-    children: node.children ? mapToTreeNode(node.children) : [],
-  }));
-};
-
-const relatedTree = computed((): TreeNode[] => {
-  return mapToTreeNode(relatedContentStore.relatedData);
+    originalData: node, // 保留原始数据引用
+    children: node.children ? node.children.map(mapNode) : []
+  });
+  return relatedContentStore.relatedData.map(mapNode);
 });
 
 // --- 事件处理 ---
+
 const handleSelectNode = (id: string) => {
   const { node } = editorStore.findItemById(id);
+  // 如果节点没有内容属性，点击行为变为展开/折叠，而不是激活
   if (node && 'content' in node && node.content !== undefined) {
     editorStore.setActiveItem(id);
   } else {

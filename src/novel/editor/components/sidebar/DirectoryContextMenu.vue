@@ -1,5 +1,4 @@
-// ..\src\novel\editor\components\sidebar\DirectoryContextMenu.vue
-
+// 文件: src/novel/editor/components/sidebar/DirectoryContextMenu.vue
 <template>
   <div
       v-if="visible"
@@ -89,21 +88,20 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-// 移除：不再需要 useRouter
 import type { TreeNode } from './TreeView.vue';
 import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
 import { useNotesStore } from '@/novel/editor/stores/notesStore';
-import { useUIStateStore } from '@/novel/editor/stores/uiStateStore'; // 新增
+import { useContextMenuStore } from '@/novel/context_preview/stores/contextPreviewStore';
 
 const aiTaskStore = useAITaskStore();
 const editorStore = useEditorStore();
 const directoryStore = useDirectoryStore();
 const relatedContentStore = useRelatedContentStore();
 const notesStore = useNotesStore();
-const uiStore = useUIStateStore(); // 新增
+const contextPreviewStore = useContextMenuStore();
 
 const visible = ref(false);
 const position = ref({ x: 0, y: 0 });
@@ -124,28 +122,30 @@ const hide = () => {
 const handleAIAction = (taskType: '续写' | '润色' | '分析', targetNode: TreeNode, isBatch = false) => {
   if (!targetNode) return;
 
-  if (isBatch && targetNode.type === 'volume') {
-    // 批量任务不预览，直接执行
+  hide();
+
+  if (isBatch && targetNode.type === 'volume' && 'chapters' in targetNode.originalData) {
     aiTaskStore.startBatchTaskForVolume(taskType, targetNode.originalData);
   } else {
-    // 单个任务，需要检查是否预览
     editorStore.setActiveItem(targetNode.id);
-    // 使用setTimeout确保activeItem已在store中更新
     setTimeout(() => {
-      // 再次确认 activeItem
-      if (editorStore.activeItemId !== targetNode.id) return;
+      const activeItem = editorStore.activeItem;
+      if (!activeItem || activeItem.id !== targetNode.id) {
+        console.warn('Active item did not update as expected.');
+        return;
+      }
 
       if (editorStore.uiState.needsPreview) {
-        // 准备预览并打开模态框
-        aiTaskStore.prepareTaskForPreview(taskType, targetNode.id);
-        uiStore.openContextPreviewModal();
+        contextPreviewStore.show({
+          type: taskType,
+          targetItemId: activeItem.id,
+          title: activeItem.title
+        });
       } else {
-        // 直接执行
-        aiTaskStore.startNewTask(taskType, targetNode.id);
+        aiTaskStore.startNewTask(taskType, activeItem.id);
       }
-    }, 50); // 50ms延迟，通常足够store更新
+    }, 50);
   }
-  hide();
 }
 
 const handleAction = (action: 'newChapter' | 'newVolume' | 'rename' | 'delete') => {
@@ -207,10 +207,12 @@ const handleNoteAction = (action: 'rename' | 'delete') => {
   hide();
 };
 
+// [Bug修复] 添加全局点击事件监听器来隐藏菜单
 onMounted(() => {
   window.addEventListener('click', hide);
 });
 
+// [Bug修复] 移除监听器以防止内存泄漏
 onBeforeUnmount(() => {
   window.removeEventListener('click', hide);
 });
@@ -232,10 +234,10 @@ defineExpose({ show, hide });
 .context-menu-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem; /* 12px */
-  padding: 0.5rem 0.75rem; /* 8px 12px */
-  border-radius: 0.5rem; /* 8px */
-  font-size: 0.875rem; /* 14px */
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
   color: #374151;
   cursor: pointer;
   user-select: none;

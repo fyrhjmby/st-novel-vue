@@ -1,16 +1,18 @@
+// =
+// 文件: ..\src\novel\layouts\NovelChatLayout.vue
+//
+
 <template>
   <div class="h-screen w-screen flex bg-white design-frame-container">
     <div class="design-frame">
-      <!-- 顶部导航栏: 恢复标准页头 -->
+      <!-- 顶部导航栏: 恢复为与其他模块一致的标准页头 -->
       <header class="h-[56px] bg-white border-b border-gray-100 flex items-center px-6 flex-shrink-0">
         <div class="flex items-center gap-2 flex-1">
-          <!-- 返回链接，通常指向一个高级别页面如 Dashboard -->
           <router-link to="/novel/dashboard" class="flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors p-2 -ml-2 rounded-lg">
             <i class="fa-solid fa-chevron-left w-4 h-4"></i>
             <span>返回</span>
           </router-link>
           <span class="text-gray-300">/</span>
-          <!-- 适配为聊天模块的标题 -->
           <span class="font-medium text-gray-800 text-sm">AI 聊天助手</span>
         </div>
         <div class="flex items-center gap-4">
@@ -36,6 +38,8 @@
         <router-view />
       </div>
     </div>
+
+    <!-- 全局组件 -->
     <GlobalAIAssistant />
     <AITaskConfigModal />
   </div>
@@ -48,6 +52,7 @@ import '@/novel/assets/styles/main.css';
 </script>
 
 <style scoped>
+/* 恢复为与其他模块一致的标准外部框架样式 */
 .design-frame-container {
   padding: 2rem;
   background-color: #f5f5f7;

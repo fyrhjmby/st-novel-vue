@@ -1,4 +1,4 @@
-// ..\src\novel\editor\components\content\EditorContextMenu.vue
+// 文件路径: src\novel\editor\components\content\EditorContextMenu.vue
 
 <template>
   <div
@@ -27,14 +27,14 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-// 移除：不再需要 useRouter
 import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import { useUIStateStore } from '@/novel/editor/stores/uiStateStore'; // 新增：引入UI状态管理器
+import { useContextMenuStore } from '@/novel/context_preview/stores/contextPreviewStore';
 
 const aiTaskStore = useAITaskStore();
 const editorStore = useEditorStore();
-const uiStore = useUIStateStore(); // 新增
+const contextPreviewStore = useContextMenuStore();
+
 const visible = ref(false);
 const position = ref({ x: 0, y: 0 });
 
@@ -50,19 +50,21 @@ const hide = () => {
 };
 
 const handleExecute = (taskType: '润色' | '续写' | '分析') => {
-  const activeId = editorStore.activeItemId;
-  if (!activeId) {
+  const activeItem = editorStore.activeItem;
+  if (!activeItem) {
     console.error("无法执行AI任务：没有激活的文档。");
     hide();
     return;
   }
 
-  // 修改：根据是否需要预览来决定是直接执行还是打开模态框
   if (editorStore.uiState.needsPreview) {
-    aiTaskStore.prepareTaskForPreview(taskType, activeId);
-    uiStore.openContextPreviewModal(); // 打开模态框
+    contextPreviewStore.show({
+      type: taskType,
+      targetItemId: activeItem.id,
+      title: activeItem.title
+    });
   } else {
-    aiTaskStore.startNewTask(taskType, activeId);
+    aiTaskStore.startNewTask(taskType, activeItem.id);
   }
 
   hide();

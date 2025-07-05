@@ -1,3 +1,6 @@
+// 文件: src\novel\editor\components\content\EditorContentArea.vue
+//
+
 <template>
   <main class="editor-content-area-container" ref="editorWrapperRef">
     <!-- Header: 使用新拆分出的组件 -->
@@ -37,7 +40,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import EditorHeader from './EditorHeader.vue'; // 引入新组件
+import EditorHeader from './EditorHeader.vue';
 import TiptapEditor from './TiptapEditor.vue';
 import FloatingToolbar from './FloatingToolbar.vue';
 import EditorContextMenu from './EditorContextMenu.vue';
@@ -101,6 +104,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* [修正] 恢复原始样式，移除卡片化布局 */
 .editor-content-area-container { display: flex; flex-direction: column; flex: 1; overflow: hidden; background-color: #F9FAFB; }
 .editor-scroll-wrapper { flex: 1; overflow-y: auto; padding: 2rem 0; position: relative; }
 .editor-content-wrapper { max-width: 42rem; margin: 0 auto; }

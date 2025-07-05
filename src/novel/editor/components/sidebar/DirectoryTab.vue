@@ -1,8 +1,14 @@
+// 文件: src\novel\editor\components\sidebar\DirectoryTab.vue
+//
+
 <template>
   <div class="directory-tab-container">
     <div class="header">
       <h3 class="title">章节大纲</h3>
       <div class="actions">
+        <router-link to="/novel/manage/character-settings" class="action-btn" title="管理小说">
+          <i class="fa-solid fa-gear fa-xs"></i>
+        </router-link>
         <button @click="handleAddNewVolume" class="action-btn" title="添加新卷">
           <i class="fa-solid fa-folder-plus fa-xs"></i>
         </button>
@@ -43,6 +49,7 @@ const emit = defineEmits<{
 
 const editorStore = useEditorStore();
 const directoryStore = useDirectoryStore();
+
 
 const directoryTree = computed((): TreeNode[] => {
   return directoryStore.directoryData.map(volume => ({

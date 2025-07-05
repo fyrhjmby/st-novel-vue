@@ -1,4 +1,5 @@
-// ..\src\novel\editor\components\ai\EditorAIPanel.vue
+// 文件: src\novel\editor\components\ai\EditorAIPanel.vue
+//
 
 <template>
   <aside class="editor-ai-panel-container">
@@ -26,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue';
+import { ref, computed } from 'vue';
 import AITaskQueue from './AITaskQueue.vue';
 import AIDiffPreview from './AIDiffPreview.vue';
 import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
@@ -60,19 +61,12 @@ const needsPreview = computed({
 
 const handleSelectTask = (task: AITask) => {
   selectedTaskId.value = task.id;
-  aiTaskStore.setPreviewTaskId(task.id);
 };
 
 const handleApplyChanges = (taskId: string) => {
   aiTaskStore.applyChanges(taskId);
-  selectedTaskId.value = null;
-  aiTaskStore.setPreviewTaskId(null);
+  selectedTaskId.value = null; // 清空选择，预览区返回默认状态
 };
-
-onUnmounted(() => {
-  aiTaskStore.setPreviewTaskId(null);
-  selectedTaskId.value = null;
-});
 </script>
 
 <style scoped>
@@ -87,14 +81,14 @@ onUnmounted(() => {
 
 .task-queue-section {
   height: 40%;
-  min-height: 200px; /* 保证即使在小屏幕下也有足够空间 */
+  min-height: 200px;
   flex-shrink: 0;
 }
 
 .divider {
   height: 1px;
-  background-color: #E5E7EB; /* gray-200, a bit darker */
-  margin: 0 1rem; /* 在两侧留出边距 */
+  background-color: #E5E7EB;
+  margin: 0 1rem;
 }
 
 .diff-preview-section {

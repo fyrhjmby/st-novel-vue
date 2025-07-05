@@ -1,3 +1,6 @@
+// 文件: src\novel\editor\components\sidebar\NotesTab.vue
+//
+
 <template>
   <div class="notes-tab-container">
     <div class="header">
@@ -67,8 +70,9 @@ const renameInputs = ref<HTMLInputElement[]>([]);
 
 const editingNodeId = computed(() => editorStore.editingNodeId);
 
-watch(editingNodeId, (newId, oldId) => {
-  if (newId && newId !== oldId && newId.startsWith('note-')) {
+// 确保重命名输入框在变为可见时能自动聚焦
+watch(editingNodeId, (newId) => {
+  if (newId && newId.startsWith('note-')) {
     nextTick(() => {
       const noteIndex = notesStore.notes.findIndex(n => n.id === newId);
       if (noteIndex !== -1 && renameInputs.value[noteIndex]) {
@@ -95,6 +99,7 @@ const handleQuickAdd = () => {
   quickAddValue.value = '';
 };
 
+// [重构] 确保传递给上下文菜单的是标准化的 TreeNode 对象
 const handleContextMenu = (note: NoteItem, event: MouseEvent) => {
   const nodePayload: TreeNode = {
     id: note.id,
@@ -132,7 +137,7 @@ const handleCancelRename = () => {
 .note-item:hover { background-color: #F9FAFB; border-color: #F3F4F6; }
 .note-item.active { background-color: #FEFCE8; border-color: #FDE047; }
 .note-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
-.note-title { font-size: 0.875rem; font-weight: 500; color: #1F2937; flex-grow: 1; }
+.note-title { font-size: 0.875rem; font-weight: 500; color: #1F2937; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .note-timestamp { font-size: 0.75rem; color: #CA8A04; flex-shrink: 0; }
 .note-content { font-size: 0.75rem; color: #4B5563; margin-top: 0.375rem; line-height: 1.6; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .quick-add-footer { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #F3F4F6; display: flex; gap: 0.5rem; flex-shrink: 0; }

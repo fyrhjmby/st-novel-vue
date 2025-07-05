@@ -1,6 +1,8 @@
+// 文件路径: src\novel\editor\components\sidebar\EditorInternalSidebar.vue
+
 <template>
   <aside class="editor-internal-sidebar-container">
-    <!-- Tabs for switching between different sidebar views -->
+    <!-- Tabs for switching -->
     <div class="tabs-container">
       <div class="tabs tabs-bordered">
         <a
@@ -8,7 +10,7 @@
             :key="tab.id"
             role="tab"
             :class="['tab', { 'tab-active text-blue-600': editorStore.uiState.activeInternalTab === tab.id }]"
-            @click="editorStore.setActiveInternalTab(tab.id)"
+            @click="editorStore.setActiveInternalTab(tab.id as 'directory' | 'related' | 'notes')"
         >
           <i :class="[tab.icon, 'mr-2']"></i>
           <span>{{ tab.name }}</span>
@@ -44,10 +46,6 @@ const internalTabs = ref([
   { id: 'notes', name: '笔记', icon: 'fa-solid fa-book-medical' },
 ]);
 
-const showDirectoryContextMenu = (payload: { node: TreeNode, event: MouseEvent }) => {
-  directoryContextMenuRef.value?.show(payload.event, payload.node);
-};
-
 const tabComponents = {
   directory: defineAsyncComponent(() => import('./DirectoryTab.vue')),
   related: defineAsyncComponent(() => import('./RelatedTab.vue')),
@@ -55,9 +53,12 @@ const tabComponents = {
 };
 
 const activeTabComponent = computed(() => {
-  const tabId = editorStore.uiState.activeInternalTab;
-  return tabComponents[tabId as keyof typeof tabComponents] || null;
+  return tabComponents[editorStore.uiState.activeInternalTab] || null;
 });
+
+const showDirectoryContextMenu = (payload: { node: TreeNode, event: MouseEvent }) => {
+  directoryContextMenuRef.value?.show(payload.event, payload.node);
+};
 </script>
 
 <style scoped>

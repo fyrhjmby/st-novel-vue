@@ -1,4 +1,4 @@
-// ..\src\novel\editor\layouts\NovelEditorLayout.vue
+// 文件路径: src\novel\editor\layouts\NovelEditorLayout.vue
 
 <template>
   <div class="h-screen w-screen flex bg-white design-frame-container">
@@ -38,17 +38,18 @@
         <router-view />
       </div>
     </div>
+
     <!-- 全局组件 -->
     <GlobalAIAssistant />
-    <!-- 修改：引入编辑器专用的上下文预览模态框 -->
-    <AIContextPreviewModal />
+    <!-- [重构] 引入解耦后的上下文预览模块视图 -->
+    <ContextPreviewView />
   </div>
 </template>
 
 <script setup lang="ts">
 import GlobalAIAssistant from '@/novel/shared/components/GlobalAIAssistant/index.vue';
-// 修改：引入新的模态框，并移除旧的
-import AIContextPreviewModal from '@/novel/editor/components/ai/AIContextPreviewModal.vue';
+// [重构] 引入新模块的视图，而不是 editor 内部的组件
+import ContextPreviewView from '@/novel/context_preview/views/ContextPreviewView.vue';
 import '@/novel/assets/styles/main.css';
 </script>
 
@@ -66,5 +67,7 @@ import '@/novel/assets/styles/main.css';
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
 }
 </style>

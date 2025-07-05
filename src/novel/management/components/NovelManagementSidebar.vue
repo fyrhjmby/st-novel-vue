@@ -2,7 +2,7 @@
   <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
     <!-- 顶部小说信息区域 -->
     <div class="p-4 space-y-4 border-b border-gray-100 h-20 flex items-center">
-      <router-link to="/novel/manage/outline" class="flex items-center gap-3 px-2 group w-full">
+      <router-link to="/novel/manage/character-settings" class="flex items-center gap-3 px-2 group w-full">
         <div class="w-10 h-10 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center bg-gradient-to-br from-indigo-100 to-purple-100 group-hover:scale-105 transition-transform">
           <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/></svg>
         </div>
@@ -44,10 +44,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-// [重构] "编辑章节"的路径现在明确指向新的静态路由
+// [重构] 移除了大纲视图，调整了编辑器的链接
 const managementNav = ref([
-  { name: '编辑章节', path: `/novel/editor`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>` },
-  { name: '大纲视图', path: `/novel/manage/outline`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" /></svg>` },
+  { name: '小说编辑器', path: `/novel/editor`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>` },
   { name: '角色设定', path: `/novel/manage/character-settings`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-2.438c.155-.19.315-.386.44-1.251l-2.07-1.758a4.5 4.5 0 00-6.364-6.364l-2.07-1.758a9.337 9.337 0 00-4.12 2.438c-1.128 1.406-1.666 3.146-1.666 4.884 0 1.738.538 3.478 1.666 4.884a9.337 9.337 0 004.12 2.438zM15 19.128L12 12.586l-3 3.001" /></svg>` },
   { name: '世界观', path: `/novel/manage/worldview`, icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c1.356 0 2.673-.174 3.946-.512M12 21c-1.356 0-2.673-.174-3.946-.512M12 3a9.004 9.004 0 00-8.716 6.747M12 3a9.004 9.004 0 018.716 6.747M12 3c1.356 0 2.673.174 3.946.512M12 3c-1.356 0-2.673-.174-3.946-.512M3.284 15.842a9.002 9.002 0 000-7.684M20.716 15.842a9.002 9.002 0 000-7.684" /></svg>` },
 ]);

@@ -3,6 +3,7 @@ import { dashboardRoutes } from './dashboard/router'
 import { managementRoutes } from './management/router'
 import { chatRoutes } from './chat/router'
 import { editorRoutes } from './editor/router'
+import { contextPreviewRoutes } from './context_preview/router'
 
 export const novelRoutes: Array<RouteRecordRaw> = [
     {
@@ -21,7 +22,8 @@ export const novelRoutes: Array<RouteRecordRaw> = [
         // 管理模块保持独立，因为它使用不同的布局
         path: '/novel/manage',
         component: () => import('@/novel/layouts/NovelManagementLayout.vue'),
-        redirect: '/novel/manage/outline',
+        // 修改：重定向到角色设定页面
+        redirect: '/novel/manage/character-settings',
         children: [
             ...managementRoutes
         ]
@@ -31,6 +33,9 @@ export const novelRoutes: Array<RouteRecordRaw> = [
 
     // 将聊天路由作为顶级模块进行注册
     ...chatRoutes,
+
+    // 注册新的上下文预览模块路由
+    ...contextPreviewRoutes,
 
     // 其他独立页面路由
     {
@@ -50,11 +55,5 @@ export const novelRoutes: Array<RouteRecordRaw> = [
                 meta: { title: '版本历史' }
             }
         ]
-    },
-    {
-        path: '/novel/context-provider',
-        name: 'NovelContextProvider',
-        component: () => import('@/novel/management/views/ContextProviderView.vue'),
-        meta: { title: '上下文预览' }
     }
 ]

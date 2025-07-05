@@ -2,12 +2,6 @@ import type { RouteRecordRaw } from 'vue-router'
 
 export const managementRoutes: Array<RouteRecordRaw> = [
     {
-        path: 'outline',
-        name: 'NovelOutline',
-        component: () => import('@/novel/management/views/OutlineView.vue'),
-        meta: { title: '大纲视图' }
-    },
-    {
         path: 'character-settings',
         name: 'NovelCharacterSettings',
         component: () => import('@/novel/management/views/CharacterSettingsView.vue'),

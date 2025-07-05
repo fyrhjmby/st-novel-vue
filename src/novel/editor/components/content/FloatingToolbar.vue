@@ -1,27 +1,26 @@
-// ..\src\novel\editor\components\content\FloatingToolbar.vue
-
+// 文件: src/novel/editor/components/content/FloatingToolbar.vue
 <template>
   <div
       v-if="visible"
       class="floating-toolbar"
       :style="{ top: `${position.top}px`, left: `${position.left}px` }"
+      @mousedown.prevent 
   >
-    <button @click="handleExecute('分析')" title="分析内容" class="toolbar-btn"><i class="fa-solid fa-magnifying-glass-chart"></i></button>
-    <button @click="handleExecute('续写')" title="AI续写" class="toolbar-btn"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
-    <button @click="handleExecute('润色')" title="润色文本" class="toolbar-btn"><i class="fa-solid fa-spell-check"></i></button>
+  <button @click="handleExecute('分析', $event)" title="分析内容" class="toolbar-btn"><i class="fa-solid fa-magnifying-glass-chart"></i></button>
+  <button @click="handleExecute('续写', $event)" title="AI续写" class="toolbar-btn"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+  <button @click="handleExecute('润色', $event)" title="润色文本" class="toolbar-btn"><i class="fa-solid fa-spell-check"></i></button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-// 移除：不再需要 useRouter
 import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import { useUIStateStore } from '@/novel/editor/stores/uiStateStore'; // 新增
+import { useContextMenuStore } from '@/novel/context_preview/stores/contextPreviewStore';
 
 const aiTaskStore = useAITaskStore();
 const editorStore = useEditorStore();
-const uiStore = useUIStateStore(); // 新增
+const contextPreviewStore = useContextMenuStore();
 
 const visible = ref(false);
 const position = ref({ top: 0, left: 0 });
@@ -38,20 +37,25 @@ const hide = () => {
   visible.value = false;
 };
 
-const handleExecute = (taskType: '润色' | '续写' | '分析') => {
-  const activeId = editorStore.activeItemId;
-  if (!activeId) {
+// [Bug修复] 接收 event 对象并调用 preventDefault
+const handleExecute = (taskType: '润色' | '续写' | '分析', event: MouseEvent) => {
+  event.preventDefault(); // 关键修复：阻止点击按钮时导致文本失去选中的默认行为
+
+  const activeItem = editorStore.activeItem;
+  if (!activeItem) {
     console.error("无法执行AI任务：没有激活的文档。");
     hide();
     return;
   }
 
-  // 修改：根据是否需要预览来决定是直接执行还是打开模态框
   if (editorStore.uiState.needsPreview) {
-    aiTaskStore.prepareTaskForPreview(taskType, activeId);
-    uiStore.openContextPreviewModal();
+    contextPreviewStore.show({
+      type: taskType,
+      targetItemId: activeItem.id,
+      title: activeItem.title
+    });
   } else {
-    aiTaskStore.startNewTask(taskType, activeId);
+    aiTaskStore.startNewTask(taskType, activeItem.id);
   }
 
   hide();

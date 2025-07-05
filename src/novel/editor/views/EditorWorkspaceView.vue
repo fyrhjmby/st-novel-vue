@@ -1,3 +1,4 @@
+
 <template>
   <div class="editor-workspace-view">
     <!-- Left Column: Internal Sidebar -->
@@ -24,6 +25,8 @@ import EditorAIPanel from '@/novel/editor/components/ai/EditorAIPanel.vue';
 const editorStore = useEditorStore();
 
 onMounted(() => {
+  // [重构] 该方法现在是所有编辑器数据的初始化入口
+  // 它会获取数据并分发给 directoryStore, notesStore 等
   editorStore.fetchNovelData('default-novel');
 });
 

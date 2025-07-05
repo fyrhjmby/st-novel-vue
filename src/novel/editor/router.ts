@@ -1,5 +1,3 @@
-// ..\src\novel\editor\router.ts
-
 import type { RouteRecordRaw } from 'vue-router'
 
 export const editorRoutes: Array<RouteRecordRaw> = [
