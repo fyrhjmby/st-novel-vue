@@ -19,17 +19,12 @@
         </main>
       </div>
     </div>
-    <!-- [修复] 将全局组件放在布局的顶层 -->
-    <GlobalAIAssistant />
-    <AITaskConfigModal />
   </div>
 </template>
 
 <script setup lang="ts">
 import AppHeader from '@/layouts/components/AppHeader.vue'
 import NovelDashboardSidebar from '@/novel/dashboard/components/NovelDashboardSidebar.vue'
-import GlobalAIAssistant from '@/novel/shared/components/GlobalAIAssistant/index.vue'
-import AITaskConfigModal from '@/novel/shared/components/GlobalAIAssistant/AITaskConfigModal.vue'
 import '@/novel/assets/styles/main.css'
 </script>
 

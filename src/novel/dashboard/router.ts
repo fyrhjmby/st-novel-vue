@@ -31,4 +31,10 @@ export const dashboardRoutes: Array<RouteRecordRaw> = [
         component: () => import('@/novel/dashboard/views/NewNovelView.vue'),
         meta: { title: '新建小说' }
     },
+    {
+        path: 'export',
+        name: 'NovelExport',
+        component: () => import('@/novel/dashboard/views/ExportView.vue'),
+        meta: { title: '导出小说' }
+    },
 ]
