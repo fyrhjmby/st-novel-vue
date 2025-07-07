@@ -23,7 +23,9 @@ export const SYSTEM_VIEWS: Record<string, SystemViewInfo> = {
     'system:settings_context': { id: 'system:settings_context', type: 'system', component: 'ContextSettings', title: '上下文管理', icon: 'fa-solid fa-book-open-reader' },
     'system:settings_tasks': { id: 'system:settings_tasks', type: 'system', component: 'TaskSettings', title: '任务管理', icon: 'fa-solid fa-list-check' },
     'system:settings_ai_config': { id: 'system:settings_ai_config', type: 'system', component: 'AIConfigSettings', title: 'AI 任务配置', icon: 'fa-solid fa-microchip' },
-    'system:settings_novel': { id: 'system:settings_novel', type: 'system', component: 'NovelSettings', title: '小说设置', icon: 'fa-solid fa-swatchbook' }
+    'system:settings_novel': { id: 'system:settings_novel', type: 'system', component: 'NovelSettings', title: '小说设置', icon: 'fa-solid fa-swatchbook' },
+    'system:history': { id: 'system:history', type: 'system', component: 'HistoryPanel', title: '版本历史', icon: 'fa-solid fa-code-compare' },
+    'system:reader': { id: 'system:reader', type: 'system', component: 'ReaderPanel', title: '阅读模式', icon: 'fa-solid fa-book-open' },
 };
 
 export interface EditorPane {
@@ -46,8 +48,29 @@ export const useEditorStore = defineStore('editor', () => {
 
     const findItemById = (id: string): { node: EditorItem | null; source: 'directory' | 'related' | 'notes' | 'system' | null } => {
         if (id.startsWith('system:')) {
-            const systemView = SYSTEM_VIEWS[id];
-            return systemView ? { node: systemView, source: 'system' } : { node: null, source: null };
+            const parts = id.split(':');
+            const baseId = parts.slice(0, 2).join(':'); // e.g., "system:history"
+            const systemView = SYSTEM_VIEWS[baseId];
+
+            if (systemView) {
+                if (parts.length > 2) { // Dynamic system view like history:ch-1
+                    const targetId = parts[2];
+                    const { node: targetNode } = findItemById(targetId);
+                    if (targetNode) {
+                        return {
+                            node: {
+                                ...systemView,
+                                id: id, // Use the full dynamic ID
+                                title: `《${targetNode.title}》 ${systemView.title}`,
+                                targetItemId: targetId,
+                            },
+                            source: 'system'
+                        };
+                    }
+                }
+                return { node: systemView, source: 'system' };
+            }
+            return { node: null, source: null };
         }
 
         const directoryStore = useDirectoryStore();
@@ -178,6 +201,33 @@ export const useEditorStore = defineStore('editor', () => {
         }
     };
 
+    const toggleHistoryPanel = (sourcePaneId: string) => {
+        const sourcePane = panes.value.find(p => p.id === sourcePaneId);
+        if (!sourcePane || !sourcePane.activeTabId) return;
+
+        const targetDocId = sourcePane.activeTabId;
+        const historyTabId = `system:history:${targetDocId}`;
+        const historyPane = panes.value.find(p => p.openTabIds.includes(historyTabId));
+
+        if (historyPane) {
+            closePane(historyPane.id);
+        } else {
+            const newPaneId = splitPane(sourcePaneId);
+            if (newPaneId) {
+                openTab(historyTabId, newPaneId);
+                setActivePane(sourcePaneId);
+            }
+        }
+    };
+
+    const openReaderView = (sourcePaneId: string) => {
+        const sourcePane = panes.value.find(p => p.id === sourcePaneId);
+        if (!sourcePane || !sourcePane.activeTabId) return;
+        const targetDocId = sourcePane.activeTabId;
+        const readerTabId = `system:reader:${targetDocId}`;
+        openTab(readerTabId, sourcePaneId);
+    };
+
     const updateItemContentById = (id: string, content: string) => {
         const { node, source } = findItemById(id);
         if (!node) return;
@@ -244,7 +294,7 @@ export const useEditorStore = defineStore('editor', () => {
     return {
         panes, activePaneId, activePane, activeTabId, activeTab, novelMetadata,
         fetchNovelData, findItemById,
-        openTab, closeTab, splitPane, closePane, toggleAIPanel,
+        openTab, closeTab, splitPane, closePane, toggleAIPanel, toggleHistoryPanel, openReaderView,
         setActivePane,
         getTabsForPane, getActiveTabForPane,
         updateItemContentById, appendContentToItem,

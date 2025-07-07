@@ -12,23 +12,5 @@ export const editorRoutes: Array<RouteRecordRaw> = [
                 meta: { title: '小说编辑器' }
             }
         ]
-    },
-    {
-        path: '/novel/read',
-        name: 'NovelReader',
-        component: () => import('@/novel/editor/views/ReaderView.vue'),
-        meta: { title: '阅读模式' }
-    },
-    {
-        path: '/novel/history',
-        component: () => import('@/novel/editor/layouts/NovelHistoryLayout.vue'),
-        children: [
-            {
-                path: '',
-                name: 'NovelHistory',
-                component: () => import('@/novel/editor/views/HistoryView.vue'),
-                meta: { title: '版本历史' }
-            }
-        ]
     }
 ]

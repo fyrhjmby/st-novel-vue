@@ -143,10 +143,11 @@ export interface NovelMetadata {
 export interface SystemViewInfo {
     id: string; // e.g., 'system:search'
     type: 'system';
-    component: 'SearchView' | 'AIChatView' | 'AITaskPanel' | 'EditorSettings' | 'ContextSettings' | 'TaskSettings' | 'AIConfigSettings' | 'NovelSettings';
+    component: 'SearchView' | 'AIChatView' | 'AITaskPanel' | 'EditorSettings' | 'ContextSettings' | 'TaskSettings' | 'AIConfigSettings' | 'NovelSettings' | 'HistoryPanel' | 'ReaderPanel';
     title: string;
     icon: string;
     content?: null; // 系统视图没有 content 属性
+    targetItemId?: string; // For dynamic views like history
 }
 
 /**

@@ -8,7 +8,7 @@
       </div>
     </template>
     <template v-else-if="activeTab.item.type === 'system'">
-      <component :is="systemViewComponent" class="system-view-wrapper" />
+      <component :is="systemViewComponent" :key="activeTab.id" :active-tab="activeTab" class="system-view-wrapper" />
     </template>
     <template v-else>
       <div class="content-area-wrapper" ref="wrapperRef" @scroll="handleScroll">
@@ -41,6 +41,8 @@ import ContextSettings from '@/novel/editor/components/system/settings/ContextSe
 import TaskSettings from '@/novel/editor/components/system/settings/TaskSettings.vue';
 import AIConfigSettings from '@/novel/editor/components/system/settings/AIConfigSettings.vue';
 import NovelSettings from '@/novel/editor/components/system/settings/NovelSettings.vue';
+import HistoryPanel from '@/novel/editor/components/system/HistoryPanel.vue';
+import ReaderPanel from '@/novel/editor/components/system/ReaderPanel.vue';
 
 const props = defineProps({
   activeTab: {
@@ -70,7 +72,9 @@ const systemViewMap = shallowRef({
   ContextSettings,
   TaskSettings,
   AIConfigSettings,
-  NovelSettings
+  NovelSettings,
+  HistoryPanel,
+  ReaderPanel,
 });
 
 const systemViewComponent = computed(() => {

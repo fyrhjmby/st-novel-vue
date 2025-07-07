@@ -3,7 +3,7 @@
     <button @click="editorStore.toggleAIPanel(paneId)" class="toolbar-btn" title="AI 任务面板">
       <i class="fa-solid fa-list-check"></i>
     </button>
-    <button class="toolbar-btn" title="版本对比">
+    <button @click="handleShowHistory" class="toolbar-btn" title="版本历史">
       <i class="fa-solid fa-code-compare"></i>
     </button>
     <div class="divider"></div>
@@ -13,8 +13,8 @@
     <button v-if="editorStore.panes.length > 1" @click="editorStore.closePane(paneId)" class="toolbar-btn" title="关闭窗格">
       <i class="fa-solid fa-xmark"></i>
     </button>
-    <button class="toolbar-btn" title="更多">
-      <i class="fa-solid fa-ellipsis"></i>
+    <button @click="handleShowReader" class="toolbar-btn" title="阅读模式">
+      <i class="fa-solid fa-book-open"></i>
     </button>
   </div>
 </template>
@@ -31,6 +31,14 @@ const editorStore = useEditorStore();
 const handleSplitPane = () => {
   editorStore.splitPane(props.paneId);
 }
+
+const handleShowHistory = () => {
+  editorStore.toggleHistoryPanel(props.paneId);
+};
+
+const handleShowReader = () => {
+  editorStore.openReaderView(props.paneId);
+};
 </script>
 <style scoped>
 .pane-actions-container {
