@@ -2060,7 +2060,7 @@ const startResize = (event: MouseEvent, paneIndex: number) => {
       </div>
     </template>
     <template v-else-if="activeTab.item.type === 'system'">
-      <component :is="systemViewComponent" class="system-view-wrapper" />
+      <component :is="systemViewComponent" :key="activeTab.id" :active-tab="activeTab" class="system-view-wrapper" />
     </template>
     <template v-else>
       <div class="content-area-wrapper" ref="wrapperRef" @scroll="handleScroll">
@@ -2093,6 +2093,8 @@ import ContextSettings from '@/novel/editor/components/system/settings/ContextSe
 import TaskSettings from '@/novel/editor/components/system/settings/TaskSettings.vue';
 import AIConfigSettings from '@/novel/editor/components/system/settings/AIConfigSettings.vue';
 import NovelSettings from '@/novel/editor/components/system/settings/NovelSettings.vue';
+import HistoryPanel from '@/novel/editor/components/system/HistoryPanel.vue';
+import ReaderPanel from '@/novel/editor/components/system/ReaderPanel.vue';
 
 const props = defineProps({
   activeTab: {
@@ -2122,7 +2124,9 @@ const systemViewMap = shallowRef({
   ContextSettings,
   TaskSettings,
   AIConfigSettings,
-  NovelSettings
+  NovelSettings,
+  HistoryPanel,
+  ReaderPanel,
 });
 
 const systemViewComponent = computed(() => {
@@ -2679,7 +2683,7 @@ defineExpose({ show, hide });
     <button @click="editorStore.toggleAIPanel(paneId)" class="toolbar-btn" title="AI 任务面板">
       <i class="fa-solid fa-list-check"></i>
     </button>
-    <button class="toolbar-btn" title="版本对比">
+    <button @click="handleShowHistory" class="toolbar-btn" title="版本历史">
       <i class="fa-solid fa-code-compare"></i>
     </button>
     <div class="divider"></div>
@@ -2689,8 +2693,8 @@ defineExpose({ show, hide });
     <button v-if="editorStore.panes.length > 1" @click="editorStore.closePane(paneId)" class="toolbar-btn" title="关闭窗格">
       <i class="fa-solid fa-xmark"></i>
     </button>
-    <button class="toolbar-btn" title="更多">
-      <i class="fa-solid fa-ellipsis"></i>
+    <button @click="handleShowReader" class="toolbar-btn" title="阅读模式">
+      <i class="fa-solid fa-book-open"></i>
     </button>
   </div>
 </template>
@@ -2707,6 +2711,14 @@ const editorStore = useEditorStore();
 const handleSplitPane = () => {
   editorStore.splitPane(props.paneId);
 }
+
+const handleShowHistory = () => {
+  editorStore.toggleHistoryPanel(props.paneId);
+};
+
+const handleShowReader = () => {
+  editorStore.openReaderView(props.paneId);
+};
 </script>
 <style scoped>
 .pane-actions-container {
@@ -4078,6 +4090,202 @@ const handleRenameCancel = () => {
 </style>
 
 // =
+// 文件: ..\src\novel\editor\components\system\HistoryPanel.vue
+//
+
+<template>
+  <div class="flex-1 flex flex-col bg-white h-full">
+    <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+      <div>
+        <h1 class="text-lg font-medium text-[#374151] truncate" :title="headerTitle">{{ headerTitle }}</h1>
+        <p class="text-sm text-[#6B7280] mt-1">当前版本 vs AI润色版本 (1小时前)</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50 transition-colors flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 12h-4m0 0H8m4 0V8m0 4v4m-4-8l8 8"></path></svg>
+          切换
+        </button>
+        <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors">
+          恢复
+        </button>
+      </div>
+    </header>
+
+    <div class="px-8 py-3 border-b border-gray-100 bg-[#F9FAFB]">
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar-horizontal">
+        <button class="w-7 h-7 flex-shrink-0 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors">
+          <svg class="w-4 h-4 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"></path></svg>
+        </button>
+        <div class="flex gap-2">
+          <div class="text-xs font-medium px-2.5 py-1 rounded-md bg-blue-100 text-blue-700 flex items-center gap-1.5 cursor-pointer flex-shrink-0">
+            <svg class="w-2 h-2" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4"/></svg>
+            当前版本
+          </div>
+          <div class="text-xs font-medium px-2.5 py-1 rounded-md bg-gray-100 text-gray-700 cursor-pointer hover:bg-gray-200 transition-colors flex-shrink-0">
+            AI润色 • 1小时前
+          </div>
+        </div>
+        <button class="w-7 h-7 flex-shrink-0 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors">
+          <svg class="w-4 h-4 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="flex-1 p-8 overflow-y-auto custom-scrollbar">
+      <div v-if="targetDocument" class="max-w-3xl mx-auto">
+        <div class="text-[#374151] leading-relaxed text-base">
+          <p>
+            <del class="diff-del">控制台的警报声将卡尔文从浅眠中惊醒。</del>
+            <ins class="diff-add">警报的尖啸犹如一把利刃，划破了卡尔文短暂的假寐。</ins>
+            他猛地坐直，眼前的屏幕上一片红色闪烁。
+          </p>
+        </div>
+      </div>
+      <div v-else class="text-center text-gray-500 py-10">
+        无法加载文档历史记录。
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, type PropType } from 'vue';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+import type { TabInfo, EditorItem } from '@/novel/editor/types';
+
+const props = defineProps({
+  activeTab: {
+    type: Object as PropType<TabInfo | null>,
+    required: true,
+  },
+});
+
+const editorStore = useEditorStore();
+
+const targetDocumentId = computed(() => {
+  if (!props.activeTab) return null;
+  const parts = props.activeTab.id.split(':');
+  return parts.length === 3 ? parts[2] : null;
+});
+
+const targetDocument = computed((): EditorItem | null => {
+  if (!targetDocumentId.value) return null;
+  return editorStore.findItemById(targetDocumentId.value).node;
+});
+
+const headerTitle = computed(() => {
+  if (!targetDocument.value) return '版本对比';
+  return `《${targetDocument.value.title}》版本对比`;
+});
+
+</script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  display: block;
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.custom-scrollbar-horizontal::-webkit-scrollbar {
+  height: 4px;
+}
+
+.diff-del {
+  background-color: #FEE2E2;
+  text-decoration: line-through;
+  text-decoration-color: #F87171;
+  padding: 2px 1px;
+}
+.diff-add {
+  background-color: #D1FAE5;
+  text-decoration: none;
+  padding: 2px 1px;
+}
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\system\ReaderPanel.vue
+//
+
+<template>
+  <div class="h-full w-full bg-[#FDFCF9] text-[#3a2f2f] flex flex-col relative font-serif overflow-hidden">
+    <main class="flex-1 overflow-y-auto px-4 py-8 pt-16">
+      <div v-if="targetDocument && 'content' in targetDocument" class="max-w-3xl mx-auto reader-content" v-html="targetDocument.content">
+      </div>
+      <div v-else class="max-w-3xl mx-auto text-center py-20 text-gray-500">
+        <h1 class="text-2xl font-bold mb-4">无法加载阅读内容</h1>
+        <p>此内容不支持阅读模式，或文档不存在。</p>
+      </div>
+    </main>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, type PropType } from 'vue';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+import type { TabInfo, EditorItem } from '@/novel/editor/types';
+
+const props = defineProps({
+  activeTab: {
+    type: Object as PropType<TabInfo | null>,
+    required: true,
+  },
+});
+
+const editorStore = useEditorStore();
+
+const targetDocumentId = computed(() => {
+  if (!props.activeTab) return null;
+  const parts = props.activeTab.id.split(':');
+  return parts.length === 3 ? parts[2] : null;
+});
+
+const targetDocument = computed((): EditorItem | null => {
+  if (!targetDocumentId.value) return null;
+  return editorStore.findItemById(targetDocumentId.value).node;
+});
+
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&display=swap');
+
+.reader-content h1 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 2.25rem;
+  font-weight: 600;
+  margin-bottom: 2.5rem;
+  color: #1f2937;
+  letter-spacing: 0.05em;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  text-align: center;
+}
+.reader-content p {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1.125rem;
+  line-height: 2.2;
+  color: #374151;
+  margin-bottom: 1.75rem;
+  text-align: justify;
+}
+.font-sans {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+</style>
+
+// =
 // 文件: ..\src\novel\editor\components\system\SearchView.vue
 //
 
@@ -5188,74 +5396,6 @@ import ContextPreviewModal from '@/novel/editor/components/modals/ContextPreview
 </style>
 
 // =
-// 文件: ..\src\novel\editor\layouts\NovelHistoryLayout.vue
-//
-
-<template>
-  <div class="h-screen w-screen flex bg-white design-frame-container">
-    <div class="design-frame">
-      <!-- 顶部导航栏 -->
-      <header class="h-[56px] bg-white border-b border-gray-100 flex items-center px-6 flex-shrink-0">
-        <div class="flex items-center gap-2 flex-1">
-          <!-- 返回链接，可以指向小说管理首页 -->
-          <router-link to="/novel/editor" class="flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors p-2 -ml-2 rounded-lg">
-            <i class="fa-solid fa-chevron-left w-4 h-4"></i>
-            <span>返回</span>
-          </router-link>
-          <span class="text-gray-300">/</span>
-          <!-- 静态标题 -->
-          <span class="font-medium text-gray-800 text-sm">版本历史</span>
-        </div>
-        <div class="flex items-center gap-4">
-          <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
-            <i class="fa-solid fa-search w-5 h-5"></i>
-          </button>
-          <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors relative">
-            <i class="fa-solid fa-bell w-5 h-5"></i>
-            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-          </button>
-          <div class="ml-2 flex items-center gap-3">
-            <img src="https://i.pravatar.cc/150?u=creator" alt="Creator Avatar" class="w-9 h-9 rounded-full">
-            <div>
-              <p class="text-sm font-medium text-[#374151]">创作者</p>
-              <p class="text-xs text-[#9CA3AF]">在线</p>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <!-- 内容区域 -->
-      <div class="h-[calc(100%-56px)]">
-        <router-view />
-      </div>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import '@novel/assets/styles/main.css';
-</script>
-
-<style scoped>
-.design-frame-container {
-  padding: 2rem;
-  background-color: #f5f5f7;
-}
-.design-frame {
-  width: 100%;
-  height: 100%;
-  max-width: 1800px;
-  margin: auto;
-  background: white;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-}
-</style>
-
-// =
 // 文件: ..\src\novel\editor\router.ts
 //
 
@@ -5271,24 +5411,6 @@ export const editorRoutes: Array<RouteRecordRaw> = [
                 name: 'NovelEditorWorkspace',
                 component: () => import('@/novel/editor/views/EditorWorkspaceView.vue'),
                 meta: { title: '小说编辑器' }
-            }
-        ]
-    },
-    {
-        path: '/novel/read',
-        name: 'NovelReader',
-        component: () => import('@/novel/editor/views/ReaderView.vue'),
-        meta: { title: '阅读模式' }
-    },
-    {
-        path: '/novel/history',
-        component: () => import('@/novel/editor/layouts/NovelHistoryLayout.vue'),
-        children: [
-            {
-                path: '',
-                name: 'NovelHistory',
-                component: () => import('@/novel/editor/views/HistoryView.vue'),
-                meta: { title: '版本历史' }
             }
         ]
     }
@@ -5572,6 +5694,7 @@ export const useChatStore = defineStore('editorChat', () => {
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
 
 interface PreviewTask {
     type: '润色' | '续写' | '分析';
@@ -5597,7 +5720,12 @@ export const useContextMenuStore = defineStore('editorContextPreview', () => {
         if (!task.value) return;
 
         const aiTaskStore = useAITaskStore();
+        const editorStore = useEditorStore();
         aiTaskStore.startNewTask(task.value.type, task.value.targetItemId);
+
+        if (editorStore.activePaneId) {
+            editorStore.ensureAIPanelIsOpen(editorStore.activePaneId);
+        }
 
         hide();
     };
@@ -5803,7 +5931,9 @@ export const SYSTEM_VIEWS: Record<string, SystemViewInfo> = {
     'system:settings_context': { id: 'system:settings_context', type: 'system', component: 'ContextSettings', title: '上下文管理', icon: 'fa-solid fa-book-open-reader' },
     'system:settings_tasks': { id: 'system:settings_tasks', type: 'system', component: 'TaskSettings', title: '任务管理', icon: 'fa-solid fa-list-check' },
     'system:settings_ai_config': { id: 'system:settings_ai_config', type: 'system', component: 'AIConfigSettings', title: 'AI 任务配置', icon: 'fa-solid fa-microchip' },
-    'system:settings_novel': { id: 'system:settings_novel', type: 'system', component: 'NovelSettings', title: '小说设置', icon: 'fa-solid fa-swatchbook' }
+    'system:settings_novel': { id: 'system:settings_novel', type: 'system', component: 'NovelSettings', title: '小说设置', icon: 'fa-solid fa-swatchbook' },
+    'system:history': { id: 'system:history', type: 'system', component: 'HistoryPanel', title: '版本历史', icon: 'fa-solid fa-code-compare' },
+    'system:reader': { id: 'system:reader', type: 'system', component: 'ReaderPanel', title: '阅读模式', icon: 'fa-solid fa-book-open' },
 };
 
 export interface EditorPane {
@@ -5826,8 +5956,29 @@ export const useEditorStore = defineStore('editor', () => {
 
     const findItemById = (id: string): { node: EditorItem | null; source: 'directory' | 'related' | 'notes' | 'system' | null } => {
         if (id.startsWith('system:')) {
-            const systemView = SYSTEM_VIEWS[id];
-            return systemView ? { node: systemView, source: 'system' } : { node: null, source: null };
+            const parts = id.split(':');
+            const baseId = parts.slice(0, 2).join(':'); // e.g., "system:history"
+            const systemView = SYSTEM_VIEWS[baseId];
+
+            if (systemView) {
+                if (parts.length > 2) { // Dynamic system view like history:ch-1
+                    const targetId = parts[2];
+                    const { node: targetNode } = findItemById(targetId);
+                    if (targetNode) {
+                        return {
+                            node: {
+                                ...systemView,
+                                id: id, // Use the full dynamic ID
+                                title: `《${targetNode.title}》 ${systemView.title}`,
+                                targetItemId: targetId,
+                            },
+                            source: 'system'
+                        };
+                    }
+                }
+                return { node: systemView, source: 'system' };
+            }
+            return { node: null, source: null };
         }
 
         const directoryStore = useDirectoryStore();
@@ -5958,6 +6109,49 @@ export const useEditorStore = defineStore('editor', () => {
         }
     };
 
+    const ensureAIPanelIsOpen = (sourcePaneId: string | null) => {
+        if (!sourcePaneId) return;
+
+        const aiTaskPane = panes.value.find(p => p.openTabIds.includes('system:ai_tasks'));
+
+        if (aiTaskPane) {
+            return;
+        }
+
+        const newPaneId = splitPane(sourcePaneId);
+        if (newPaneId) {
+            openTab('system:ai_tasks', newPaneId);
+            setActivePane(sourcePaneId);
+        }
+    };
+
+    const toggleHistoryPanel = (sourcePaneId: string) => {
+        const sourcePane = panes.value.find(p => p.id === sourcePaneId);
+        if (!sourcePane || !sourcePane.activeTabId) return;
+
+        const targetDocId = sourcePane.activeTabId;
+        const historyTabId = `system:history:${targetDocId}`;
+        const historyPane = panes.value.find(p => p.openTabIds.includes(historyTabId));
+
+        if (historyPane) {
+            closePane(historyPane.id);
+        } else {
+            const newPaneId = splitPane(sourcePaneId);
+            if (newPaneId) {
+                openTab(historyTabId, newPaneId);
+                setActivePane(sourcePaneId);
+            }
+        }
+    };
+
+    const openReaderView = (sourcePaneId: string) => {
+        const sourcePane = panes.value.find(p => p.id === sourcePaneId);
+        if (!sourcePane || !sourcePane.activeTabId) return;
+        const targetDocId = sourcePane.activeTabId;
+        const readerTabId = `system:reader:${targetDocId}`;
+        openTab(readerTabId, sourcePaneId);
+    };
+
     const updateItemContentById = (id: string, content: string) => {
         const { node, source } = findItemById(id);
         if (!node) return;
@@ -6024,7 +6218,7 @@ export const useEditorStore = defineStore('editor', () => {
     return {
         panes, activePaneId, activePane, activeTabId, activeTab, novelMetadata,
         fetchNovelData, findItemById,
-        openTab, closeTab, splitPane, closePane, toggleAIPanel,
+        openTab, closeTab, splitPane, closePane, toggleAIPanel, toggleHistoryPanel, openReaderView, ensureAIPanelIsOpen,
         setActivePane,
         getTabsForPane, getActiveTabForPane,
         updateItemContentById, appendContentToItem,
@@ -6419,7 +6613,6 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
 // 文件: ..\src\novel\editor\stores\uiStore.ts
 //
 
-// 文件: src\novel\editor\stores\uiStore.ts
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
@@ -6751,10 +6944,11 @@ export interface NovelMetadata {
 export interface SystemViewInfo {
     id: string; // e.g., 'system:search'
     type: 'system';
-    component: 'SearchView' | 'AIChatView' | 'AITaskPanel' | 'EditorSettings' | 'ContextSettings' | 'TaskSettings' | 'AIConfigSettings' | 'NovelSettings';
+    component: 'SearchView' | 'AIChatView' | 'AITaskPanel' | 'EditorSettings' | 'ContextSettings' | 'TaskSettings' | 'AIConfigSettings' | 'NovelSettings' | 'HistoryPanel' | 'ReaderPanel';
     title: string;
     icon: string;
     content?: null; // 系统视图没有 content 属性
+    targetItemId?: string; // For dynamic views like history
 }
 
 /**
