@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	rootDirs := []string{"../src/novel"}
+	rootDirs := []string{"../src/core"}
 	outputFileName := "editor.txt"
 	// 定义要屏蔽（不进行递归读取）的目录名称列表。
 	excludedDirs := []string{""}
@@ -69,7 +69,9 @@ func main() {
 			if strings.HasSuffix(d.Name(), ".ts")||strings.HasSuffix(d.Name(), ".vue")||strings.HasSuffix(d.Name(), ".css")  {
 				targetFiles = append(targetFiles, path)
 			}
-
+// if strings.HasSuffix(d.Name(), ".vue") {
+// 				targetFiles = append(targetFiles, path)
+// 			}
 			return nil
 		})
 
