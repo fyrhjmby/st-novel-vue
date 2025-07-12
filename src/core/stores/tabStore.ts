@@ -1,121 +1,155 @@
-
+// 文件: src/core/stores/tabStore.ts
 
 import { defineStore } from 'pinia';
+import { ref } from 'vue';
 import { usePaneStore } from './paneStore';
 import { useNotificationStore } from './notificationStore';
-import type { ItemProvider } from '@/core/types/providers';
-import type { Tab, CoreItem } from '@/core/types';
+import type { ItemProvider, CoreItem } from '@/core/types/providers';
+import type { Tab } from '@/core/types';
 import { eventBus } from '@/core/services/EventBusService';
-
-let _itemProvider: ItemProvider | null = null;
+import { commandService } from '@/core/services/CommandService';
+import { uiService } from '@/core/services/UIService';
 
 export const useTabStore = defineStore('core-tab', () => {
     const paneStore = usePaneStore();
     const notificationStore = useNotificationStore();
+    let itemProvider: ItemProvider | null = null;
+
+    const tabsById = ref<Map<string, Tab>>(new Map());
+
+    const findPaneIdForTab = (tabId: string): string | undefined => {
+        const pane = paneStore.root ? paneStore.findLeafContainingTab(paneStore.root, tabId) : undefined;
+        return pane?.id;
+    };
+
+    const getTabById = (tabId: string) => tabsById.value.get(tabId);
+
+    const getTabsForPane = (paneId: string) => {
+        const pane = paneStore.root ? paneStore.findNodeAndParent(paneStore.root, paneId)?.node : undefined;
+        if (!pane || pane.type !== 'leaf') return [];
+        return pane.tabIds.map(id => getTabById(id)).filter((t): t is Tab => !!t);
+    };
 
     function setItemProvider(provider: ItemProvider) {
-        _itemProvider = provider;
+        itemProvider = provider;
     }
 
-    async function activateTab(paneId: string, tabId: string | null) {
-        const pane = paneStore.panes.find(p => p.id === paneId);
-        if (!pane) return;
-
-        pane.activeTabId = tabId;
-
-        if (tabId && _itemProvider) {
-            pane.activeItem = await _itemProvider.getItem(tabId);
-        } else {
-            pane.activeItem = null;
+    async function loadCoreItemForTab(tabId: string): Promise<CoreItem | null> {
+        if (!itemProvider) {
+            console.error('[TabStore] ItemProvider not set.');
+            return null;
         }
+        const tab = getTabById(tabId);
+        if (!tab) return null;
 
+        try {
+            const item = await itemProvider.getItem(tab.itemId);
+            if (!item) {
+                notificationStore.add(`Item for tab '${tab.title}' not found. It may have been deleted.`, 'error');
+                await closeTab(tabId);
+            }
+            return item;
+        } catch (error) {
+            console.error(`Error loading item ${tab.itemId}`, error);
+            notificationStore.add(`An error occurred while loading '${tab.title}'.`, 'error');
+            await closeTab(tabId);
+            return null;
+        }
+    }
+
+    function activateTab(tabId: string) {
+        const paneId = findPaneIdForTab(tabId);
+        if (!paneId) return;
         paneStore.setActivePane(paneId);
+        paneStore.setActiveTab(paneId, tabId);
         eventBus.emit('core:tab.activated', { tabId, paneId });
     }
 
     async function openTab(itemId: string, targetPaneId?: string) {
-        if (!_itemProvider) {
-            throw new Error('[TabStore] ItemProvider has not been set. Cannot open tab.');
-        }
-
         const paneId = targetPaneId || paneStore.activePaneId;
         if (!paneId) {
-            notificationStore.add('No active pane to open the tab in.', 'error');
-            return;
+            notificationStore.add('No active pane to open the tab in.', 'error'); return;
         }
-
-        for (const p of paneStore.panes) {
-            if (p.tabs.some(t => t.id === itemId)) {
-                await activateTab(p.id, itemId);
-                return;
-            }
+        const existingTab = Array.from(tabsById.value.values()).find(t => t.itemId === itemId);
+        if (existingTab) {
+            activateTab(existingTab.id); return;
         }
-
-        const item = await _itemProvider.getItem(itemId);
+        if (!itemProvider) throw new Error('[TabStore] ItemProvider has not been set.');
+        const item = await itemProvider.getItem(itemId);
         if (!item) {
-            notificationStore.add(`Failed to open: Item with ID "${itemId}" not found.`, 'error');
-            return;
+            notificationStore.add(`Failed to open: Item "${itemId}" not found.`, 'error'); return;
         }
-
-        const pane = paneStore.panes.find(p => p.id === paneId);
-        if (!pane) {
-            notificationStore.add(`Target pane with ID "${paneId}" not found.`, 'error');
-            return;
-        }
-
         const newTab: Tab = {
-            id: item.id,
-            title: item.title,
-            icon: item.icon,
-            isDirty: false,
+            id: `tab-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            itemId: item.id, title: item.title, icon: item.icon, isDirty: false,
         };
-
-        pane.tabs.push(newTab);
-        await activateTab(pane.id, item.id);
-        eventBus.emit('core:tab.opened', { tab: newTab, paneId: pane.id });
+        tabsById.value.set(newTab.id, newTab);
+        paneStore.addTabToPane(newTab.id, paneId);
+        activateTab(newTab.id);
+        eventBus.emit('core:tab.opened', { tab: newTab, paneId });
+        eventBus.emit('core:state-changed', { store: 'tab' });
     }
 
-    async function closeTab(itemId: string, paneId?: string) {
-        const targetPane = paneId
-            ? paneStore.panes.find(p => p.id === paneId)
-            : paneStore.panes.find(p => p.tabs.some(t => t.id === itemId));
-
-        if (!targetPane) return;
-
-        const tabIndex = targetPane.tabs.findIndex(t => t.id === itemId);
-        if (tabIndex === -1) return;
-
-        const closedTab = targetPane.tabs[tabIndex];
-        if (closedTab.isDirty) {
-            const confirmed = confirm(`Changes to "${closedTab.title}" will be lost. Are you sure you want to close?`);
-            if (!confirmed) return;
+    async function forceCloseTab(tabId: string) {
+        if (!tabsById.value.has(tabId)) return;
+        const closedTab = tabsById.value.get(tabId)!;
+        const paneId = findPaneIdForTab(tabId);
+        tabsById.value.delete(tabId);
+        if (paneId) {
+            paneStore.removeTabFromPane(tabId);
         }
+        eventBus.emit('core:tab.closed', { tab: closedTab, paneId });
+        eventBus.emit('core:state-changed', { store: 'tab' });
+    }
 
-        targetPane.tabs.splice(tabIndex, 1);
-        eventBus.emit('core:tab.closed', { tab: closedTab, paneId: targetPane.id });
-
-        if (targetPane.activeTabId === itemId) {
-            const newActiveIndex = Math.max(0, tabIndex - 1);
-            const newActiveTabId = targetPane.tabs[newActiveIndex]?.id || null;
-            await activateTab(targetPane.id, newActiveTabId);
-        }
+    async function closeTab(tabId: string) {
+        const tabToClose = getTabById(tabId);
+        if (!tabToClose) return;
+        if (tabToClose.isDirty) {
+            const userChoice = await uiService.requestConfirmation({
+                title: 'Unsaved Changes',
+                message: `Do you want to save the changes for '${tabToClose.title}'?`,
+                confirmText: 'Save', cancelText: 'Don\'t Save',
+            });
+            if (userChoice) {
+                await commandService.execute('core.saveTab', { tabId });
+                if (!getTabById(tabId)?.isDirty) await forceCloseTab(tabId);
+                else notificationStore.add(`Failed to save '${tabToClose.title}'. Close aborted.`, 'error');
+            } else await forceCloseTab(tabId);
+        } else await forceCloseTab(tabId);
     }
 
     function updateTabState(tabId: string, state: Partial<Pick<Tab, 'isDirty' | 'title' | 'icon'>>) {
-        for (const pane of paneStore.panes) {
-            const tab = pane.tabs.find(t => t.id === tabId);
-            if (tab) {
-                Object.assign(tab, state);
-                eventBus.emit('core:tab.stateChanged', { tabId, newState: state });
-                break;
-            }
+        const tab = getTabById(tabId);
+        if (tab) {
+            Object.assign(tab, state);
+            eventBus.emit('core:tab.stateChanged', { tabId, newState: state });
+            eventBus.emit('core:state-changed', { store: 'tab' });
+        }
+    }
+
+    eventBus.on('core:pane.closed', ({ tabIds }: { tabIds: string[] }) => {
+        tabIds.forEach(id => {
+            if (tabsById.value.has(id)) tabsById.value.delete(id);
+        });
+        eventBus.emit('core:state-changed', { store: 'tab' });
+    });
+
+    function dehydrate() {
+        return {
+            tabs: Array.from(tabsById.value.entries()),
+        };
+    }
+
+    function hydrate(state: { tabs: [string, Tab][] }) {
+        if (state.tabs) {
+            tabsById.value = new Map(state.tabs);
         }
     }
 
     return {
-        setItemProvider,
-        openTab,
-        closeTab,
-        updateTabState,
+        getTabById, getTabsForPane, setItemProvider, loadCoreItemForTab,
+        openTab, closeTab, activateTab, updateTabState,
+        hydrate, dehydrate,
     };
 });

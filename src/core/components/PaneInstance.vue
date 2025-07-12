@@ -1,24 +1,34 @@
+// 文件: src/core/components/PaneInstance.vue
 
 <template>
   <div class="pane-instance-container" @click="paneStore.setActivePane(pane.id)">
-    <TabBar :tabs="pane.tabs" :active-tab-id="pane.activeTabId" :pane-id="pane.id" :is-active-pane="isActive" />
+    <TabBar :tabs="tabsForPane" :active-tab-id="pane.activeTabId" :pane-id="pane.id" :is-active-pane="isActive" />
     <div class="content-area">
-      <template v-if="activeItem">
-        <component :is="resolvedView" :key="activeItem.id" :item="activeItem" />
-      </template>
-      <div v-else class="welcome-screen">
-        <p>No file is open</p>
+      <div v-if="isLoading" class="loading-screen">
+        <p>Loading...</p>
       </div>
+      <template v-else-if="activeCoreItem && activeTab">
+        <component
+            :is="resolvedView"
+            :key="activeTab.id"
+            :tab="activeTab"
+            :item="activeCoreItem"
+        />
+      </template>
+      <!-- 使用真正的 WelcomeScreen 组件 -->
+      <WelcomeScreen v-else />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, type PropType } from 'vue';
+import { ref, computed, watch, type PropType } from 'vue';
 import { usePaneStore } from '@/core/stores/paneStore';
+import { useTabStore } from '@/core/stores/tabStore';
 import { viewRegistry } from '@/core/services/ViewRegistry';
-import type { Pane } from '@/core/types';
+import type { Pane, CoreItem, Tab } from '@/core/types';
 import TabBar from './TabBar.vue';
+import WelcomeScreen from './WelcomeScreen.vue'; // <-- 导入组件
 
 const props = defineProps({
   pane: {
@@ -32,16 +42,56 @@ const props = defineProps({
 });
 
 const paneStore = usePaneStore();
+const tabStore = useTabStore();
 
-const activeItem = computed(() => props.pane.activeItem);
+const activeCoreItem = ref<CoreItem | null>(null);
+const isLoading = ref(false);
+
+const activeTab = computed((): Tab | undefined => {
+  return props.pane.activeTabId ? tabStore.getTabById(props.pane.activeTabId) : undefined;
+});
+
+const tabsForPane = computed((): Tab[] => {
+  return tabStore.getTabsForPane(props.pane.id);
+});
 
 const resolvedView = computed(() => {
-  if (activeItem.value?.viewType) {
-    return viewRegistry.resolve(activeItem.value.viewType);
+  if (activeCoreItem.value?.viewType) {
+    return viewRegistry.resolve(activeCoreItem.value.viewType);
   }
   return null;
 });
 
+watch(
+    () => props.pane.activeTabId,
+    async (newTabId) => {
+      if (newTabId) {
+        const loadingTabId = newTabId;
+        isLoading.value = true;
+        activeCoreItem.value = null;
+
+        try {
+          const item = await tabStore.loadCoreItemForTab(loadingTabId);
+          if (props.pane.activeTabId === loadingTabId) {
+            activeCoreItem.value = item;
+          }
+        } catch (error) {
+          console.error(`Failed to load content for tab ${loadingTabId}`, error);
+          if (props.pane.activeTabId === loadingTabId) {
+            activeCoreItem.value = null;
+          }
+        } finally {
+          if (props.pane.activeTabId === loadingTabId) {
+            isLoading.value = false;
+          }
+        }
+      } else {
+        activeCoreItem.value = null;
+        isLoading.value = false;
+      }
+    },
+    { immediate: true }
+);
 </script>
 
 <style scoped>
@@ -58,8 +108,9 @@ const resolvedView = computed(() => {
 .content-area {
   flex-grow: 1;
   overflow: auto;
+  position: relative;
 }
-.welcome-screen {
+.loading-screen {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -67,4 +118,5 @@ const resolvedView = computed(() => {
   color: #9CA3AF;
   user-select: none;
 }
+/* WelcomeScreen has its own styles, so we remove the generic one */
 </style>

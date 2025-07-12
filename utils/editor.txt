@@ -181,8 +181,6 @@ defineExpose({ show, hide });
 // 文件: ..\src\core\components\ContextMenu.vue
 //
 
-<!-- 文件: src/core/components/ContextMenu.vue -->
-<!-- 描述: 一个通用的、由命令驱动的右键菜单。 -->
 <template>
   <div
       v-if="visible"
@@ -192,19 +190,17 @@ defineExpose({ show, hide });
       @contextmenu.prevent
   >
     <ul class="menu-list">
-      <li v-for="item in items" :key="item.id">
-        <div v-if="item.isDivider" class="menu-divider"></div>
-        <a
-            v-else
-            href="#"
-            class="menu-item"
-            :class="{ 'disabled': !canExecute(item.commandId, item.commandContext) }"
-            @click.prevent="executeCommand(item)"
+      <template v-for="item in menuItems" :key="item.commandId || `divider-${Math.random()}`">
+        <li v-if="item.isDivider" class="menu-divider"></li>
+        <li
+            v-else-if="getCommand(item.commandId)"
+            :class="['menu-item', { 'disabled': !canExecute(item) }]"
+            @click.prevent="execute(item)"
         >
-          <i v-if="item.icon" :class="[item.icon, 'menu-icon']"></i>
-          <span>{{ item.label }}</span>
-        </a>
-      </li>
+          <i v-if="getCommand(item.commandId).icon" :class="[getCommand(item.commandId).icon, 'menu-icon']"></i>
+          <span>{{ getLabel(item) }}</span>
+        </li>
+      </template>
     </ul>
   </div>
 </template>
@@ -212,14 +208,14 @@ defineExpose({ show, hide });
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { commandService } from '@/core/services/CommandService';
-import type { ContextMenuItem, CommandContext } from '@/core/types';
+import type { ContextMenuItem, Command, CommandContext } from '@/core/types';
 
 const visible = ref(false);
 const position = ref({ x: 0, y: 0 });
-const items = ref<ContextMenuItem[]>([]);
+const menuItems = ref<ContextMenuItem[]>([]);
 
-const show = (event: MouseEvent, menuItems: ContextMenuItem[]) => {
-  items.value = menuItems;
+const show = (event: MouseEvent, items: ContextMenuItem[]) => {
+  menuItems.value = items;
   visible.value = true;
   position.value.x = event.clientX;
   position.value.y = event.clientY;
@@ -227,26 +223,33 @@ const show = (event: MouseEvent, menuItems: ContextMenuItem[]) => {
 
 const hide = () => {
   visible.value = false;
-  items.value = [];
+  menuItems.value = [];
 };
 
-const canExecute = (commandId: string, context?: CommandContext) => {
-  const command = commandService.get(commandId);
-  if (!command) return false;
-  if (command.canExecute) {
-    return command.canExecute(context);
-  }
-  return true;
+const getCommand = (commandId: string): Command | undefined => {
+  return commandService.find(commandId);
 };
 
-const executeCommand = (item: ContextMenuItem) => {
-  if (canExecute(item.commandId, item.commandContext)) {
-    commandService.execute(item.commandId, item.commandContext);
+const canExecute = (item: ContextMenuItem): boolean => {
+  return commandService.canExecute(item.commandId, item.context);
+};
+
+const getLabel = (item: ContextMenuItem): string => {
+  const command = getCommand(item.commandId);
+  if (!command) return '';
+  return typeof command.label === 'function'
+      ? command.label({ ...item.context })
+      : command.label;
+};
+
+const execute = (item: ContextMenuItem) => {
+  if (canExecute(item)) {
+    commandService.execute(item.commandId, item.context);
     hide();
   }
 };
 
-const handleClickOutside = (event: MouseEvent) => hide();
+const handleClickOutside = () => hide();
 
 onMounted(() => window.addEventListener('click', handleClickOutside));
 onBeforeUnmount(() => window.removeEventListener('click', handleClickOutside));
@@ -265,7 +268,7 @@ defineExpose({ show, hide });
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
   min-width: 14rem;
 }
-.menu-list { list-style: none; }
+.menu-list { list-style: none; padding: 0; margin: 0; }
 .menu-item {
   display: flex;
   align-items: center;
@@ -276,11 +279,11 @@ defineExpose({ show, hide });
   color: #374151;
   cursor: pointer;
   user-select: none;
-  text-decoration: none;
 }
 .menu-item:not(.disabled):hover { background-color: #f3f4f6; }
 .menu-item.disabled { color: #9ca3af; cursor: not-allowed; }
-.menu-icon { width: 1rem; text-align: center; }
+.menu-icon { width: 1rem; text-align: center; color: #6B7280; }
+.menu-item:not(.disabled):hover .menu-icon { color: #374151; }
 .menu-divider { height: 1px; background-color: #f3f4f6; margin: 0.5rem 0; }
 </style>
 
@@ -377,29 +380,37 @@ const startResize = (event: MouseEvent, paneIndex: number) => {
 // 文件: ..\src\core\components\PaneInstance.vue
 //
 
-<!-- 文件: src/core/components/PaneInstance.vue -->
-<!-- 描述: 单个窗格的UI实现，包含标签栏和动态渲染的内容区域。 -->
+// 文件: src/core/components/PaneInstance.vue
+
 <template>
   <div class="pane-instance-container" @click="paneStore.setActivePane(pane.id)">
-    <TabBar :tabs="pane.tabs" :active-tab-id="pane.activeTabId" :pane-id="pane.id" />
+    <TabBar :tabs="tabsForPane" :active-tab-id="pane.activeTabId" :pane-id="pane.id" :is-active-pane="isActive" />
     <div class="content-area">
-      <template v-if="activeItem">
-        <component :is="resolvedView" :key="activeItem.id" :item="activeItem" />
-      </template>
-      <div v-else class="welcome-screen">
-        <p>No file is open</p>
+      <div v-if="isLoading" class="loading-screen">
+        <p>Loading...</p>
       </div>
+      <template v-else-if="activeCoreItem && activeTab">
+        <component
+            :is="resolvedView"
+            :key="activeTab.id"
+            :tab="activeTab"
+            :item="activeCoreItem"
+        />
+      </template>
+      <!-- 使用真正的 WelcomeScreen 组件 -->
+      <WelcomeScreen v-else />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, type PropType } from 'vue';
+import { ref, computed, watch, type PropType } from 'vue';
 import { usePaneStore } from '@/core/stores/paneStore';
 import { useTabStore } from '@/core/stores/tabStore';
 import { viewRegistry } from '@/core/services/ViewRegistry';
-import type { Pane, CoreItem } from '@/core/types';
+import type { Pane, CoreItem, Tab } from '@/core/types';
 import TabBar from './TabBar.vue';
+import WelcomeScreen from './WelcomeScreen.vue'; // <-- 导入组件
 
 const props = defineProps({
   pane: {
@@ -415,11 +426,20 @@ const props = defineProps({
 const paneStore = usePaneStore();
 const tabStore = useTabStore();
 
-const activeItem = ref<CoreItem | null>(null);
+const activeCoreItem = ref<CoreItem | null>(null);
+const isLoading = ref(false);
+
+const activeTab = computed((): Tab | undefined => {
+  return props.pane.activeTabId ? tabStore.getTabById(props.pane.activeTabId) : undefined;
+});
+
+const tabsForPane = computed((): Tab[] => {
+  return tabStore.getTabsForPane(props.pane.id);
+});
 
 const resolvedView = computed(() => {
-  if (activeItem.value?.viewType) {
-    return viewRegistry.resolve(activeItem.value.viewType);
+  if (activeCoreItem.value?.viewType) {
+    return viewRegistry.resolve(activeCoreItem.value.viewType);
   }
   return null;
 });
@@ -428,14 +448,28 @@ watch(
     () => props.pane.activeTabId,
     async (newTabId) => {
       if (newTabId) {
-        // 通过 tabStore 间接访问 itemProvider
-        // @ts-ignore - _itemProvider 是私有的，但这里我们需要它
-        const provider = tabStore._itemProvider;
-        if (provider) {
-          activeItem.value = await provider.getItem(newTabId);
+        const loadingTabId = newTabId;
+        isLoading.value = true;
+        activeCoreItem.value = null;
+
+        try {
+          const item = await tabStore.loadCoreItemForTab(loadingTabId);
+          if (props.pane.activeTabId === loadingTabId) {
+            activeCoreItem.value = item;
+          }
+        } catch (error) {
+          console.error(`Failed to load content for tab ${loadingTabId}`, error);
+          if (props.pane.activeTabId === loadingTabId) {
+            activeCoreItem.value = null;
+          }
+        } finally {
+          if (props.pane.activeTabId === loadingTabId) {
+            isLoading.value = false;
+          }
         }
       } else {
-        activeItem.value = null;
+        activeCoreItem.value = null;
+        isLoading.value = false;
       }
     },
     { immediate: true }
@@ -456,8 +490,9 @@ watch(
 .content-area {
   flex-grow: 1;
   overflow: auto;
+  position: relative;
 }
-.welcome-screen {
+.loading-screen {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -465,6 +500,7 @@ watch(
   color: #9CA3AF;
   user-select: none;
 }
+/* WelcomeScreen has its own styles, so we remove the generic one */
 </style>
 
 // =
@@ -615,6 +651,7 @@ const tabStore = useTabStore();
 // 文件: ..\src\core\components\layout\CoreLayout.vue
 //
 
+// 文件: src/core/components/layout/CoreLayout.vue
 
 <template>
   <div class="core-layout-container" :class="{'sidebar-hidden': !isSidebarVisible}">
@@ -623,7 +660,6 @@ const tabStore = useTabStore();
     </div>
     <div v-if="isSidebarVisible" class="sidebar-area" :style="{ width: `${sidebarWidth}px` }">
       <slot name="sidebar">
-        <!-- Default sidebar content if app doesn't provide one -->
         <SidebarPanel />
       </slot>
     </div>
@@ -633,7 +669,6 @@ const tabStore = useTabStore();
       <MainPane />
     </div>
 
-    <!-- Status bar is now part of the main content area for better layout control -->
     <div class="status-bar-area">
       <slot name="status-bar"></slot>
     </div>
@@ -641,75 +676,47 @@ const tabStore = useTabStore();
     <div class="global-components-area">
       <slot name="global">
         <NotificationCenter />
-        <CommandPalette ref="commandPaletteRef" />
+        <CommandPalette />
+        <!-- 添加 ContextMenu 并获取其引用 -->
+        <ContextMenu ref="contextMenuRef" />
       </slot>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { usePaneStore } from '@/core/stores/paneStore';
+import { ref, onMounted, onUnmounted, type ComponentPublicInstance } from 'vue';
 import { useLayoutStore } from '@/core/stores/layoutStore';
-import { useTabStore } from '@/core/stores/tabStore';
-import { keybindingService } from '@/core/services/KeybindingService';
-import { workspaceService } from '@/core/services/WorkspaceService';
-import { commandService } from '@/core/services/CommandService';
-import type { ItemProvider } from '@/core/types/providers';
+import { storeToRefs } from 'pinia';
+import type { EditorKernel } from '@/core/services/EditorKernel';
+import { contextMenuService } from '@/core/services/ContextMenuService';
 
 import MainPane from '../MainPane.vue';
 import SidebarPanel from './SidebarPanel.vue';
 import NotificationCenter from './NotificationCenter.vue';
 import CommandPalette from '../CommandPalette.vue';
-import { storeToRefs } from 'pinia';
+import ContextMenu from '../ContextMenu.vue'; // <-- 导入组件
 
 const props = defineProps<{
-  itemProvider: ItemProvider;
+  kernel: EditorKernel;
 }>();
 
-const paneStore = usePaneStore();
 const layoutStore = useLayoutStore();
-const tabStore = useTabStore();
 const { isSidebarVisible, sidebarWidth } = storeToRefs(layoutStore);
-const commandPaletteRef = ref<InstanceType<typeof CommandPalette> | null>(null);
+const contextMenuRef = ref<ComponentPublicInstance | null>(null);
 
-// --- Core Initialization ---
-onMounted(async () => {
-  // 1. Inject dependencies
-  tabStore.setItemProvider(props.itemProvider);
-
-  // 2. Register core commands
-  commandService.register({
-    id: 'core.commandPalette.toggle',
-    label: 'Toggle Command Palette',
-    execute: () => commandPaletteRef.value?.toggle(), // CommandPalette需要一个toggle方法
-  });
-  keybindingService.register({ key: 'ctrl+shift+p', commandId: 'core.commandPalette.toggle'});
-
-  // 3. Initialize services
-  keybindingService.initialize();
-
-  // 4. Hydrate workspace state from localStorage
-  await workspaceService.hydrate();
-
-  // 5. If no state was hydrated, initialize default state
-  paneStore.initializePanes();
-
-  // 6. Watch for state changes to persist them
-  watch(
-      [paneStore.$state, layoutStore.$state],
-      () => {
-        workspaceService.persist();
-      },
-      { deep: true }
-  );
+onMounted(() => {
+  props.kernel.startup();
+  // 注册 ContextMenu 组件实例
+  if (contextMenuRef.value) {
+    contextMenuService.registerComponent(contextMenuRef.value as any);
+  }
 });
 
 onUnmounted(() => {
-  keybindingService.destroy();
+  props.kernel.shutdown();
 });
 
-// --- Sidebar Resizing Logic ---
 const startResize = (event: MouseEvent) => {
   const startWidth = sidebarWidth.value;
   const startX = event.clientX;
@@ -748,9 +755,13 @@ const startResize = (event: MouseEvent) => {
   position: relative;
 }
 .status-bar-area {
-  flex-shrink: 0;
-  height: 28px; /* Example height */
-  border-top: 1px solid #E5E7EB;
+  position: relative; z-index: 20; flex-shrink: 0;
+  height: 28px; border-top: 1px solid #E5E7EB;
+  background-color: #F3F4F6;
+}
+/* ContextMenu 和 CommandPalette 都需要能够接收事件 */
+.global-components-area > :deep(*) {
+  pointer-events: all;
 }
 .global-components-area {
   position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 9999; pointer-events: none;
@@ -877,60 +888,189 @@ const notifications = computed(() => notificationStore.notifications);
 </style>
 
 // =
+// 文件: ..\src\core\composables\useEditableView.ts
+//
+
+// 文件: src/core/composables/useEditableView.ts
+
+import { onMounted, onUnmounted, watch, ref, computed, type Ref } from 'vue';
+import { activeEditorService } from '@/core/services/ActiveEditorService';
+import { useTabStore } from '@/core/stores/tabStore';
+import type { CoreItem, Tab } from '@/core/types';
+
+interface UseEditableViewOptions {
+    tab: Ref<Tab>;
+    coreItem: Ref<CoreItem>;
+    content: Ref<string>;
+}
+
+export function useEditableView({ tab, coreItem, content }: UseEditableViewOptions) {
+    const tabStore = useTabStore();
+    const initialContent = ref('');
+
+    const isDirty = computed(() => initialContent.value !== content.value);
+
+    const initializeContent = () => {
+        const newInitialContent = coreItem.value.metadata?.content || '';
+        initialContent.value = newInitialContent;
+        if (content.value !== newInitialContent) {
+            content.value = newInitialContent;
+        }
+    };
+
+    onMounted(() => {
+        initializeContent();
+
+        activeEditorService.register(tab.value.id, {
+            getContent: () => content.value,
+            setContent: (newContent: string) => {
+                content.value = newContent;
+                initialContent.value = newContent; // Mark as saved by resetting the baseline
+            },
+        });
+    });
+
+    onUnmounted(() => {
+        activeEditorService.unregister(tab.value.id);
+    });
+
+    watch(isDirty, (newValue) => {
+        tabStore.updateTabState(tab.value.id, { isDirty: newValue });
+    });
+
+    // This is no longer called internally, but triggered via activeEditorService.setContent
+    function markAsSaved() {
+        initialContent.value = content.value;
+    }
+
+    // This watcher handles cases where the underlying file is changed externally
+    // (e.g., git pull, external editor save) and reloaded.
+    watch(() => coreItem.value.metadata?.content, (newContent) => {
+        if (newContent !== undefined && content.value !== newContent) {
+            initializeContent();
+        }
+    });
+
+    return {
+        isDirty,
+        // markAsSaved is now an internal-only concept, handled by setContent
+    };
+}
+
+// =
+// 文件: ..\src\core\services\ActiveEditorService.ts
+//
+
+// 文件: src/core/services/ActiveEditorService.ts
+
+interface EditorAPI {
+    getContent: () => string;
+    setContent: (newContent: string) => void;
+}
+
+class ActiveEditorService {
+    // The key is now the unique Tab ID, not the Item ID.
+    private activeEditors: Map<string, EditorAPI> = new Map();
+
+    public register(tabId: string, api: EditorAPI): void {
+        this.activeEditors.set(tabId, api);
+    }
+
+    public unregister(tabId: string): void {
+        this.activeEditors.delete(tabId);
+    }
+
+    public getContent(tabId: string): string | null {
+        const editor = this.activeEditors.get(tabId);
+        if (editor && typeof editor.getContent === 'function') {
+            return editor.getContent();
+        }
+        return null;
+    }
+
+    public setContent(tabId: string, newContent: string): boolean {
+        const editor = this.activeEditors.get(tabId);
+        if (editor && typeof editor.setContent === 'function') {
+            editor.setContent(newContent);
+            return true;
+        }
+        return false;
+    }
+}
+
+export const activeEditorService = new ActiveEditorService();
+
+// =
 // 文件: ..\src\core\services\CommandService.ts
 //
 
-// 文件: src/core/services/CommandService.ts
-// 描述: 命令服务，负责注册、管理和执行所有命令。
-
 import type { Command, CommandContext } from '@/core/types';
+import { usePaneStore } from '@/core/stores/paneStore';
 
 class CommandService {
     private commands: Map<string, Command> = new Map();
 
-    /**
-     * 注册一个命令。
-     * 应用层在启动时调用此方法，将所有业务操作封装成命令并注入内核。
-     * @param command - 要注册的命令对象。
-     */
     public register(command: Command): void {
         if (this.commands.has(command.id)) {
-            console.warn(`[CommandService] Command ID "${command.id}" is already registered. Overwriting.`);
+            console.warn(`[CommandService] Command "${command.id}" is already registered. Overwriting.`);
         }
         this.commands.set(command.id, command);
     }
 
-    /**
-     * 执行一个命令。
-     * @param commandId - 要执行的命令的ID。
-     * @param context - 执行命令时传递的上下文。
-     */
-    public execute(commandId: string, context?: CommandContext): void {
-        const command = this.commands.get(commandId);
+    public find(commandId: string): Command | undefined {
+        return this.commands.get(commandId);
+    }
+
+    private getGlobalContext(): CommandContext {
+        const paneStore = usePaneStore();
+        return {
+            activePaneId: paneStore.activePaneId,
+            activeTabId: paneStore.activePane?.activeTabId,
+        };
+    }
+
+    public canExecute(commandId: string, specificContext?: CommandContext): boolean {
+        const command = this.find(commandId);
+        if (!command) return false;
+
+        const context = { ...this.getGlobalContext(), ...specificContext };
+
+        if (command.when && !command.when(context)) {
+            return false;
+        }
+        return true;
+    }
+
+    public execute(commandId: string, specificContext?: CommandContext): void {
+        const command = this.find(commandId);
         if (!command) {
             console.error(`[CommandService] Command "${commandId}" not found.`);
             return;
         }
 
-        if (command.canExecute && !command.canExecute(context)) {
-            console.warn(`[CommandService] Execution of command "${commandId}" was prevented by its 'canExecute' condition.`);
+        const context = { ...this.getGlobalContext(), ...specificContext };
+
+        if (!this.canExecute(commandId, context)) {
+            console.warn(`[CommandService] Execution of command "${commandId}" was prevented by its 'when' condition.`);
             return;
         }
 
         command.execute(context);
     }
 
-    /**
-     * 获取一个命令的定义。
-     * @param commandId - 命令的ID。
-     * @returns 返回命令对象，如果不存在则返回undefined。
-     */
-    public get(commandId: string): Command | undefined {
-        return this.commands.get(commandId);
+    public *getAllCommands(context?: CommandContext) {
+        for (const command of this.commands.values()) {
+            if (this.canExecute(command.id, context)) {
+                yield {
+                    id: command.id,
+                    label: typeof command.label === 'function' ? command.label(context || {}) : command.label,
+                    icon: command.icon
+                };
+            }
+        }
     }
 }
 
-// 导出一个单例，确保整个应用共享同一个命令中心。
 export const commandService = new CommandService();
 
 // =
@@ -975,20 +1115,23 @@ export const configService = new ConfigService();
 // 文件: ..\src\core\services\ContextMenuService.ts
 //
 
-// 文件: src/core/services/ContextMenuService.ts
-
 import type { ContextMenuItem, CommandContext } from '@/core/types';
+import type { ComponentPublicInstance } from 'vue';
+
+type ContextMenuComponent = ComponentPublicInstance<{
+    show: (event: MouseEvent, items: ContextMenuItem[]) => void;
+}>;
 
 type ContextMenuProvider = (context: CommandContext) => ContextMenuItem[];
 
 class ContextMenuService {
     private providers: Map<string, ContextMenuProvider[]> = new Map();
+    private menuComponent: ContextMenuComponent | null = null;
 
-    /**
-     * 注册一个上下文菜单提供者。
-     * @param contextType - 上下文类型，如 'pane.background', 'tab.item'。
-     * @param provider - 一个返回菜单项数组的函数。
-     */
+    public registerComponent(component: ContextMenuComponent): void {
+        this.menuComponent = component;
+    }
+
     public registerProvider(contextType: string, provider: ContextMenuProvider): void {
         if (!this.providers.has(contextType)) {
             this.providers.set(contextType, []);
@@ -996,20 +1139,147 @@ class ContextMenuService {
         this.providers.get(contextType)!.push(provider);
     }
 
-    /**
-     * 根据上下文类型和具体信息获取所有菜单项。
-     * @param contextType - 上下文类型。
-     * @param context - 具体的上下文数据，如 { paneId: '...' }。
-     * @returns 一个合并后的菜单项数组。
-     */
-    public getItems(contextType: string, context: CommandContext): ContextMenuItem[] {
+    private getItemsForContext(contextType: string, context: CommandContext): ContextMenuItem[] {
         const providers = this.providers.get(contextType) || [];
-        // 将所有提供者返回的菜单项数组扁平化成一个数组
-        return providers.flatMap(provider => provider(context));
+        let allItems: ContextMenuItem[] = [];
+
+        providers.forEach((provider, index) => {
+            const items = provider(context);
+            if (items.length > 0) {
+                if (index > 0 && allItems.length > 0 && !allItems[allItems.length - 1].isDivider) {
+                    // Add a divider between different providers if needed
+                    allItems.push({ id: `divider-${index}`, isDivider: true });
+                }
+                allItems = allItems.concat(items);
+            }
+        });
+
+        return allItems;
+    }
+
+    public show(event: MouseEvent, contextType: string, context: CommandContext): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!this.menuComponent) {
+            console.error("[ContextMenuService] Menu component is not registered.");
+            return;
+        }
+
+        const items = this.getItemsForContext(contextType, context);
+        if (items.length > 0) {
+            this.menuComponent.show(event, items);
+        }
     }
 }
 
 export const contextMenuService = new ContextMenuService();
+
+// =
+// 文件: ..\src\core\services\EditorKernel.ts
+//
+
+import type { ItemProvider } from '@/core/types/providers';
+import { useTabStore } from '@/core/stores/tabStore';
+import { usePaneStore } from '@/core/stores/paneStore';
+import { commandService } from './CommandService';
+import { keybindingService } from './KeybindingService';
+import { workspaceService } from './WorkspaceService';
+import { activeEditorService } from './ActiveEditorService';
+import { useNotificationStore } from '../stores/notificationStore';
+
+export class EditorKernel {
+    private itemProvider: ItemProvider;
+
+    constructor(provider: ItemProvider) {
+        this.itemProvider = provider;
+    }
+
+    public async startup(): Promise<void> {
+        console.log('[EditorKernel] Starting up...');
+
+        this.setupStores();
+        this.registerCoreCommands();
+
+        keybindingService.initialize();
+        workspaceService.initialize();
+        workspaceService.loadAndHydrateStores();
+        usePaneStore().initializePanes();
+
+        console.log('[EditorKernel] Startup complete.');
+    }
+
+    public shutdown(): void {
+        keybindingService.destroy();
+        workspaceService.destroy();
+        console.log('[EditorKernel] Shutdown complete.');
+    }
+
+    private setupStores(): void {
+        const tabStore = useTabStore();
+        tabStore.setItemProvider(this.itemProvider);
+    }
+
+    private registerCoreCommands(): void {
+        const paneStore = usePaneStore();
+        const tabStore = useTabStore();
+        const notificationStore = useNotificationStore();
+
+        commandService.register({
+            id: 'core.pane.split',
+            label: 'Pane: Split Pane',
+            icon: 'fa-solid fa-columns',
+            execute: (context) => {
+                const paneId = context?.paneId || paneStore.activePaneId;
+                if (paneId) paneStore.splitPane(paneId);
+            },
+        });
+
+        commandService.register({
+            id: 'core.pane.close',
+            label: 'Pane: Close Pane',
+            icon: 'fa-solid fa-xmark',
+            when: () => paneStore.panes.length > 1,
+            execute: (context) => {
+                const paneId = context?.paneId || paneStore.activePaneId;
+                if (paneId) paneStore.closePane(paneId);
+            },
+        });
+
+        commandService.register({
+            id: 'core.saveTab',
+            label: 'File: Save',
+            icon: 'fa-solid fa-save',
+            when: (context) => {
+                const tabId = context?.tabId || paneStore.activePane?.activeTabId;
+                if (!tabId) return false;
+                const tab = tabStore.getTabById(tabId);
+                return tab?.isDirty || false;
+            },
+            execute: async (context) => {
+                const tabId = context?.tabId || paneStore.activePane?.activeTabId;
+                if (!tabId) return;
+
+                const tab = tabStore.getTabById(tabId);
+                if (!tab || !tab.isDirty) return;
+
+                const content = activeEditorService.getContent(tabId);
+                if (content === null) return;
+
+                try {
+                    await this.itemProvider.updateItem(tab.itemId, content);
+                    // This is the key: update the editor's baseline content.
+                    // The useEditableView composable will see this and mark the tab as not dirty.
+                    activeEditorService.setContent(tabId, content);
+                    notificationStore.add(`'${tab.title}' saved.`, 'success', 2000);
+                } catch (error) {
+                    console.error(`Failed to save item ${tab.itemId}`, error);
+                    notificationStore.add(`Error saving '${tab.title}'.`, 'error');
+                }
+            },
+        });
+    }
+}
 
 // =
 // 文件: ..\src\core\services\EventBusService.ts
@@ -1076,7 +1346,7 @@ import { commandService } from './CommandService';
 interface Keybinding {
     key: string;
     commandId: string;
-    when?: () => boolean;
+    when?: () => boolean; // Optional, specific condition for this keybinding
 }
 
 class KeybindingService {
@@ -1090,10 +1360,6 @@ class KeybindingService {
         window.removeEventListener('keydown', this.handleKeyDown.bind(this));
     }
 
-    /**
-     * 注册一个快捷键。
-     * @param keybinding - 快捷键定义对象。
-     */
     public register(keybinding: Keybinding): void {
         const key = this.normalizeKey(keybinding.key);
         this.keybindings.set(key, keybinding);
@@ -1104,7 +1370,11 @@ class KeybindingService {
         const binding = this.keybindings.get(key);
 
         if (binding) {
-            if (!binding.when || binding.when()) {
+            // Check both the keybinding's specific 'when' and the command's global 'when'
+            const isKeybindingConditionMet = !binding.when || binding.when();
+            const isCommandConditionMet = commandService.canExecute(binding.commandId);
+
+            if (isKeybindingConditionMet && isCommandConditionMet) {
                 event.preventDefault();
                 event.stopPropagation();
                 commandService.execute(binding.commandId);
@@ -1113,7 +1383,10 @@ class KeybindingService {
     }
 
     private normalizeKey(key: string): string {
-        return key.toLowerCase().split('+').sort().join('+');
+        const parts = key.toLowerCase().split('+').map(part => part.trim());
+        const modifiers = parts.filter(p => ['ctrl', 'shift', 'alt', 'meta'].includes(p)).sort();
+        const mainKey = parts.find(p => !['ctrl', 'shift', 'alt', 'meta'].includes(p));
+        return [...modifiers, mainKey].join('+');
     }
 
     private eventToKey(event: KeyboardEvent): string {
@@ -1121,14 +1394,14 @@ class KeybindingService {
         if (event.ctrlKey) parts.push('ctrl');
         if (event.shiftKey) parts.push('shift');
         if (event.altKey) parts.push('alt');
-        if (event.metaKey) parts.push('meta'); // Cmd on Mac
+        if (event.metaKey) parts.push('meta');
 
         const key = event.key.toLowerCase();
         if (!['control', 'shift', 'alt', 'meta'].includes(key)) {
             parts.push(key);
         }
 
-        return parts.sort().join('+');
+        return this.normalizeKey(parts.join('+'));
     }
 }
 
@@ -1181,94 +1454,85 @@ export const viewRegistry = new ViewRegistry();
 // 文件: ..\src\core\services\WorkspaceService.ts
 //
 
-
-import { toRaw } from 'vue';
-import { usePaneStore } from '@/core/stores/paneStore';
+import { eventBus } from './EventBusService';
 import { useLayoutStore } from '@/core/stores/layoutStore';
+import { usePaneStore } from '@/core/stores/paneStore';
 
 const WORKSPACE_STORAGE_KEY = 'editorCoreWorkspaceState';
 
 class WorkspaceService {
-    private paneStore = usePaneStore();
-    private layoutStore = useLayoutStore();
-
     constructor() {
-        this.persist = this.debounce(this.persist.bind(this), 1000);
+        // Debounce persist function to avoid frequent writes
+        this.persistState = this.debounce(this.persistState.bind(this), 500);
     }
 
-    /**
-     * 将当前工作区状态保存到localStorage。
-     */
-    public persist(): void {
-        const state = {
+    public initialize() {
+        // Listen for state changes from any store
+        eventBus.on('core:state-changed', this.persistState);
+        console.log('[WorkspaceService] Initialized and listening for state changes.');
+    }
+
+    public destroy() {
+        eventBus.off('core:state-changed', this.persistState);
+        console.log('[WorkspaceService] Destroyed event listener.');
+    }
+
+    private getStoresState() {
+        const layoutStore = useLayoutStore();
+        const paneStore = usePaneStore();
+
+        return {
+            layout: {
+                isSidebarVisible: layoutStore.isSidebarVisible,
+                sidebarWidth: layoutStore.sidebarWidth,
+            },
             panes: {
-                panes: toRaw(this.paneStore.panes).map(p => ({
+                panes: paneStore.panes.map(p => ({
                     id: p.id,
                     activeTabId: p.activeTabId,
-                    tabs: p.tabs.map(t => ({ id: t.id })) // 只保存tab的ID
+                    tabs: p.tabs, // Tabs are already simple objects
                 })),
-                activePaneId: this.paneStore.activePaneId,
-            },
-            layout: {
-                isSidebarVisible: this.layoutStore.isSidebarVisible,
-                sidebarWidth: this.layoutStore.sidebarWidth,
-            },
+                activePaneId: paneStore.activePaneId,
+            }
         };
-        localStorage.setItem(WORKSPACE_STORAGE_KEY, JSON.stringify(state));
-        console.log('[WorkspaceService] State persisted.');
     }
 
-    /**
-     * 从localStorage恢复工作区状态。
-     * 应用启动时调用。
-     */
-    public async hydrate(): Promise<void> {
+    private persistState(): void {
+        try {
+            const state = this.getStoresState();
+            const stateJSON = JSON.stringify(state);
+            localStorage.setItem(WORKSPACE_STORAGE_KEY, stateJSON);
+            console.log('[WorkspaceService] Workspace state persisted.');
+        } catch (error) {
+            console.error('[WorkspaceService] Failed to persist state:', error);
+        }
+    }
+
+    public loadAndHydrateStores(): void {
         const savedStateJSON = localStorage.getItem(WORKSPACE_STORAGE_KEY);
         if (!savedStateJSON) {
-            console.log('[WorkspaceService] No saved state found.');
+            console.log('[WorkspaceService] No saved workspace state found.');
             return;
         }
 
         try {
             const savedState = JSON.parse(savedStateJSON);
+            const layoutStore = useLayoutStore();
+            const paneStore = usePaneStore();
 
-            // 恢复布局状态
             if (savedState.layout) {
-                this.layoutStore.hydrate(savedState.layout);
+                layoutStore.hydrate(savedState.layout);
             }
-
-            // 恢复窗格和标签页状态
-            if (savedState.panes && savedState.panes.panes.length > 0) {
-                // 直接恢复窗格结构
-                this.paneStore.panes = []; // 清空默认窗格
-                this.paneStore.activePaneId = savedState.panes.activePaneId;
-
-                for (const savedPane of savedState.panes.panes) {
-                    const newPane = { id: savedPane.id, activeTabId: savedPane.activeTabId, tabs: [] };
-                    this.paneStore.panes.push(newPane);
-                    // 异步恢复每个标签页
-                    for (const savedTab of savedPane.tabs) {
-                        // 这里我们不直接创建Tab对象，而是调用openTab
-                        // openTab会从ItemProvider获取最新的title和icon
-                        await useTabStore().openTab(savedTab.id, newPane.id);
-                    }
-                    // 确保恢复后的activeTabId是正确的
-                    newPane.activeTabId = savedPane.activeTabId;
-                }
-
-                console.log('[WorkspaceService] State hydrated.');
+            if (savedState.panes) {
+                paneStore.hydrate(savedState.panes);
             }
+            console.log('[WorkspaceService] Stores hydrated from saved state.');
         } catch (error) {
-            console.error('[WorkspaceService] Failed to hydrate state:', error);
+            console.error('[WorkspaceService] Failed to hydrate stores:', error);
             localStorage.removeItem(WORKSPACE_STORAGE_KEY);
         }
     }
 
-    /**
-     * 简单的debounce函数，防止过于频繁地写入localStorage。
-     * @param func - 要节流的函数。
-     * @param delay - 延迟时间（毫秒）。
-     */
     private debounce<T extends (...args: any[]) => any>(func: T, delay: number): (...args: Parameters<T>) => void {
         let timeoutId: number | undefined;
         return (...args: Parameters<T>) => {
@@ -1284,47 +1548,43 @@ export const workspaceService = new WorkspaceService();
 // 文件: ..\src\core\stores\layoutStore.ts
 //
 
+// 文件: src/core/stores/layoutStore.ts
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { configService } from '@/core/services/ConfigService';
+import { eventBus } from '@/core/services/EventBusService';
 
 export const useLayoutStore = defineStore('core-layout', () => {
-    // --- State ---
     const isSidebarVisible = ref(true);
     const sidebarWidth = ref(configService.get('layout.sidebar.defaultWidth', 320));
 
-    // --- Actions ---
-
-    /**
-     * 切换侧边栏的可见性。
-     */
     function toggleSidebar() {
         isSidebarVisible.value = !isSidebarVisible.value;
+        eventBus.emit('core:state-changed', { store: 'layout' });
     }
 
-    /**
-     * 设置侧边栏的宽度。
-     * @param width - 新的宽度值。
-     */
     function setSidebarWidth(width: number) {
         const min = configService.get('layout.sidebar.minWidth', 240);
         const max = configService.get('layout.sidebar.maxWidth', 600);
-        sidebarWidth.value = Math.max(min, Math.min(width, max));
+        const newWidth = Math.max(min, Math.min(width, max));
+        if (sidebarWidth.value !== newWidth) {
+            sidebarWidth.value = newWidth;
+            eventBus.emit('core:state-changed', { store: 'layout' });
+        }
     }
 
-    /**
-     * (用于工作区恢复) 设置整个布局的状态。
-     * @param state - 包含布局状态的对象。
-     */
     function hydrate(state: { isSidebarVisible?: boolean; sidebarWidth?: number; }) {
         if (typeof state.isSidebarVisible === 'boolean') {
             isSidebarVisible.value = state.isSidebarVisible;
         }
         if (typeof state.sidebarWidth === 'number') {
+            // Use the setter to respect min/max constraints during hydration
             setSidebarWidth(state.sidebarWidth);
         }
     }
+
+    // $subscribe logic is removed to centralize persistence in WorkspaceService
 
     return {
         isSidebarVisible,
@@ -1398,81 +1658,90 @@ export const useNotificationStore = defineStore('core-notification', () => {
 // 文件: ..\src\core\stores\paneStore.ts
 //
 
-// 文件: src/core/stores/paneStore.ts
-// 描述: 管理编辑器所有窗格（Pane）的布局和状态。(增强版)
-
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Pane } from '@/core/types';
 import { eventBus } from '@/core/services/EventBusService';
 import { useNotificationStore } from './notificationStore';
+import { workspaceService } from '@/core/services/WorkspaceService';
 
 export const usePaneStore = defineStore('core-pane', () => {
-    // --- State ---
     const panes = ref<Pane[]>([]);
     const activePaneId = ref<string | null>(null);
 
-    // --- Getters ---
     const activePane = computed(() => {
         if (!activePaneId.value) return null;
         return panes.value.find(p => p.id === activePaneId.value) || null;
     });
 
-    // --- Actions ---
-
-    /**
-     * 初始化窗格，确保至少有一个窗格存在。
-     * 应用启动时必须调用此方法。
-     */
     function initializePanes() {
         if (panes.value.length === 0) {
             const initialPaneId = `pane-${Date.now()}`;
-            panes.value.push({ id: initialPaneId, tabs: [], activeTabId: null });
+            panes.value.push({ id: initialPaneId, tabIds: [], activeTabId: null });
             activePaneId.value = initialPaneId;
             eventBus.emit('core:pane.initialized', { initialPaneId });
+            eventBus.emit('core:state-changed', { store: 'pane' });
         }
     }
 
-    /**
-     * 设置激活的窗格。
-     * @param paneId - 要激活的窗格ID。
-     */
     function setActivePane(paneId: string) {
         if (panes.value.some(p => p.id === paneId) && activePaneId.value !== paneId) {
             activePaneId.value = paneId;
             eventBus.emit('core:pane.activated', { paneId });
+            eventBus.emit('core:state-changed', { store: 'pane' });
         }
     }
 
-    /**
-     * 在指定窗格旁边分割出一个新窗格。
-     * @param sourcePaneId - 作为分割源的窗格ID。
-     * @returns 新创建的窗格ID。
-     */
+    function setActiveTab(paneId: string, tabId: string | null) {
+        const pane = panes.value.find(p => p.id === paneId);
+        if (pane && pane.activeTabId !== tabId) {
+            pane.activeTabId = tabId;
+            eventBus.emit('core:state-changed', { store: 'pane' });
+        }
+    }
+
+    function addTabToPane(tabId: string, paneId: string) {
+        const pane = panes.value.find(p => p.id === paneId);
+        if (pane && !pane.tabIds.includes(tabId)) {
+            pane.tabIds.push(tabId);
+            eventBus.emit('core:state-changed', { store: 'pane' });
+        }
+    }
+
+    function removeTabFromPane(tabId: string) {
+        for (const pane of panes.value) {
+            const index = pane.tabIds.indexOf(tabId);
+            if (index > -1) {
+                pane.tabIds.splice(index, 1);
+                if (pane.activeTabId === tabId) {
+                    const newActiveIndex = Math.max(0, index - 1);
+                    pane.activeTabId = pane.tabIds[newActiveIndex] || null;
+                }
+                eventBus.emit('core:state-changed', { store: 'pane' });
+                return;
+            }
+        }
+    }
+
     function splitPane(sourcePaneId: string): string {
         const sourcePaneIndex = panes.value.findIndex(p => p.id === sourcePaneId);
         if (sourcePaneIndex === -1) {
-            const notificationStore = useNotificationStore();
-            notificationStore.add(`Cannot split: pane with ID "${sourcePaneId}" not found.`, 'error');
+            useNotificationStore().add(`Cannot split: pane with ID "${sourcePaneId}" not found.`, 'error');
             return '';
         }
 
         const newPaneId = `pane-${Date.now()}`;
-        const newPane: Pane = { id: newPaneId, tabs: [], activeTabId: null };
+        const newPane: Pane = { id: newPaneId, tabIds: [], activeTabId: null };
         panes.value.splice(sourcePaneIndex + 1, 0, newPane);
 
         eventBus.emit('core:pane.splitted', { sourcePaneId, newPaneId });
+        eventBus.emit('core:state-changed', { store: 'pane' });
         return newPaneId;
     }
 
-    /**
-     * 关闭一个窗格。
-     * @param paneId - 要关闭的窗格ID。
-     */
     function closePane(paneId: string) {
         if (panes.value.length <= 1) {
-            const notificationStore = useNotificationStore();
-            notificationStore.add('Cannot close the last pane.', 'warning');
+            useNotificationStore().add('Cannot close the last pane.', 'warning');
             return;
         }
 
@@ -1489,8 +1758,16 @@ export const usePaneStore = defineStore('core-pane', () => {
             eventBus.emit('core:pane.activated', { paneId: newActivePaneId });
         }
 
-        eventBus.emit('core:pane.closed', { closedPaneId: paneId, tabs: closedPane.tabs });
+        eventBus.emit('core:pane.closed', { closedPaneId: paneId, tabIds: closedPane.tabIds });
+        eventBus.emit('core:state-changed', { store: 'pane' });
     }
+
+    function hydrate(state: { panes: Pane[], activePaneId: string | null }) {
+        panes.value = state.panes;
+        activePaneId.value = state.activePaneId;
+    }
+
+
 
     return {
         panes,
@@ -1498,8 +1775,12 @@ export const usePaneStore = defineStore('core-pane', () => {
         activePane,
         initializePanes,
         setActivePane,
+        setActiveTab,
+        addTabToPane,
+        removeTabFromPane,
         splitPane,
         closePane,
+        hydrate,
     };
 });
 
@@ -1507,132 +1788,169 @@ export const usePaneStore = defineStore('core-pane', () => {
 // 文件: ..\src\core\stores\tabStore.ts
 //
 
-
 import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
 import { usePaneStore } from './paneStore';
 import { useNotificationStore } from './notificationStore';
-import type { ItemProvider } from '@/core/types/providers';
-import type { Tab, CoreItem } from '@/core/types';
+import type { ItemProvider, CoreItem } from '@/core/types/providers';
+import type { Tab } from '@/core/types';
 import { eventBus } from '@/core/services/EventBusService';
-
-let _itemProvider: ItemProvider | null = null;
+import { commandService } from '@/core/services/CommandService';
 
 export const useTabStore = defineStore('core-tab', () => {
     const paneStore = usePaneStore();
     const notificationStore = useNotificationStore();
+    let itemProvider: ItemProvider | null = null;
+
+    const tabsById = ref<Map<string, Tab>>(new Map()); // Key: unique tab.id
+    const tabPaneMap = ref<Map<string, string>>(new Map()); // Key: unique tab.id, Value: paneId
+
+    const getTabById = (tabId: string) => tabsById.value.get(tabId);
+
+    const getTabsForPane = (paneId: string) => {
+        const pane = paneStore.panes.find(p => p.id === paneId);
+        if (!pane) return [];
+        return pane.tabIds.map(id => getTabById(id)).filter((t): t is Tab => !!t);
+    };
 
     function setItemProvider(provider: ItemProvider) {
-        _itemProvider = provider;
+        itemProvider = provider;
     }
 
-    // getActiveItem, openTab, closeTab 保持不变...
-    async function getActiveItem(paneId: string): Promise<CoreItem | null> {
-        if (!_itemProvider) {
-            console.error('[TabStore] Cannot get active item: ItemProvider not set.');
+    async function loadCoreItemForTab(tabId: string): Promise<CoreItem | null> {
+        if (!itemProvider) {
+            console.error('[TabStore] ItemProvider not set.');
             return null;
         }
-        const pane = paneStore.panes.find(p => p.id === paneId);
-        if (pane && pane.activeTabId) {
-            return await _itemProvider.getItem(pane.activeTabId);
+        const tab = getTabById(tabId);
+        if (!tab) {
+            console.error(`[TabStore] Cannot load CoreItem, tab with id ${tabId} not found.`);
+            return null;
         }
-        return null;
+
+        try {
+            const item = await itemProvider.getItem(tab.itemId);
+            if (!item) {
+                notificationStore.add(`Item for tab '${tab.title}' not found. It may have been deleted.`, 'error');
+                await closeTab(tabId);
+            }
+            return item;
+        } catch (error) {
+            console.error(`Error loading item ${tab.itemId}`, error);
+            notificationStore.add(`An error occurred while loading '${tab.title}'.`, 'error');
+            await closeTab(tabId);
+            return null;
+        }
+    }
+
+    function activateTab(tabId: string) {
+        const paneId = tabPaneMap.value.get(tabId);
+        if (!paneId) return;
+
+        paneStore.setActivePane(paneId);
+        paneStore.setActiveTab(paneId, tabId);
+        eventBus.emit('core:tab.activated', { tabId, paneId });
     }
 
     async function openTab(itemId: string, targetPaneId?: string) {
-        if (!_itemProvider) {
-            throw new Error('[TabStore] ItemProvider has not been set. Cannot open tab.');
-        }
-
         const paneId = targetPaneId || paneStore.activePaneId;
         if (!paneId) {
             notificationStore.add('No active pane to open the tab in.', 'error');
             return;
         }
 
-        for (const p of paneStore.panes) {
-            if (p.tabs.some(t => t.id === itemId)) {
-                p.activeTabId = itemId;
-                paneStore.setActivePane(p.id);
-                eventBus.emit('core:tab.activated', { tabId: itemId, paneId: p.id });
-                return;
-            }
-        }
-
-        const item = await _itemProvider.getItem(itemId);
-        if (!item) {
-            notificationStore.add(`Failed to open: Item with ID "${itemId}" not found.`, 'error');
+        const paneTabs = getTabsForPane(paneId);
+        const existingTab = paneTabs.find(t => t.itemId === itemId);
+        if (existingTab) {
+            activateTab(existingTab.id);
             return;
         }
 
-        const pane = paneStore.panes.find(p => p.id === paneId);
-        if (!pane) {
-            notificationStore.add(`Target pane with ID "${paneId}" not found.`, 'error');
+        if (!itemProvider) throw new Error('[TabStore] ItemProvider has not been set.');
+
+        const item = await itemProvider.getItem(itemId);
+        if (!item) {
+            notificationStore.add(`Failed to open: Item "${itemId}" not found.`, 'error');
             return;
         }
 
         const newTab: Tab = {
-            id: item.id,
+            id: `tab-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            itemId: item.id,
             title: item.title,
             icon: item.icon,
-            isDirty: false, // 初始为未修改状态
+            isDirty: false,
         };
 
-        pane.tabs.push(newTab);
-        pane.activeTabId = itemId;
-        paneStore.setActivePane(paneId);
-        eventBus.emit('core:tab.opened', { tab: newTab, paneId: pane.id });
+        tabsById.value.set(newTab.id, newTab);
+        tabPaneMap.value.set(newTab.id, paneId);
+
+        paneStore.addTabToPane(newTab.id, paneId);
+        activateTab(newTab.id);
+
+        eventBus.emit('core:tab.opened', { tab: newTab, paneId });
+        eventBus.emit('core:state-changed', { store: 'tab' });
     }
 
-    function closeTab(itemId: string, paneId?: string) {
-        const targetPane = paneId
-            ? paneStore.panes.find(p => p.id === paneId)
-            : paneStore.panes.find(p => p.tabs.some(t => t.id === itemId));
+    async function forceCloseTab(tabId: string) {
+        if (!tabsById.value.has(tabId)) return;
 
-        if (!targetPane) return;
+        const closedTab = tabsById.value.get(tabId)!;
+        const paneId = tabPaneMap.value.get(tabId)!;
 
-        const tabIndex = targetPane.tabs.findIndex(t => t.id === itemId);
-        if (tabIndex === -1) return;
+        tabsById.value.delete(tabId);
+        tabPaneMap.value.delete(tabId);
 
-        const closedTab = targetPane.tabs[tabIndex];
+        paneStore.removeTabFromPane(tabId);
 
-        // 如果标签是“脏”的，可以阻止关闭（此逻辑应由应用层通过监听事件实现）
-        if (closedTab.isDirty) {
-            const confirmed = confirm(`Changes to "${closedTab.title}" will be lost. Are you sure you want to close?`);
-            if (!confirmed) return;
-        }
-
-        targetPane.tabs.splice(tabIndex, 1);
-        eventBus.emit('core:tab.closed', { tab: closedTab, paneId: targetPane.id });
-
-        if (targetPane.activeTabId === itemId) {
-            const newActiveIndex = Math.max(0, tabIndex - 1);
-            const newActiveTabId = targetPane.tabs[newActiveIndex]?.id || null;
-            targetPane.activeTabId = newActiveTabId;
-            eventBus.emit('core:tab.activated', { tabId: newActiveTabId, paneId: targetPane.id });
-        }
+        eventBus.emit('core:tab.closed', { tab: closedTab, paneId });
+        eventBus.emit('core:state-changed', { store: 'tab' });
     }
 
-    /**
-     * (新增) 更新一个标签页的UI状态。
-     * @param tabId - 要更新的标签页ID。
-     * @param state - 要更新的状态，如 { isDirty: true }。
-     */
-    function updateTabState(tabId: string, state: Partial<Pick<Tab, 'isDirty' | 'title' | 'icon'>>) {
-        for (const pane of paneStore.panes) {
-            const tab = pane.tabs.find(t => t.id === tabId);
-            if (tab) {
-                Object.assign(tab, state);
-                eventBus.emit('core:tab.stateChanged', { tabId, newState: state });
-                break;
+    async function closeTab(tabId: string) {
+        const tabToClose = tabsById.value.get(tabId);
+        if (!tabToClose) return;
+
+        if (tabToClose.isDirty) {
+            // A more modern approach than window.confirm/prompt
+            const userChoice = confirm(`Save changes for '${tabToClose.title}' before closing? \n\n'OK' to Save, 'Cancel' to Discard.`);
+            if (userChoice) { // Save
+                await commandService.execute('core.saveTab', { tabId });
+                const stillDirty = tabsById.value.get(tabId)?.isDirty;
+                if (!stillDirty) {
+                    await forceCloseTab(tabId);
+                } else {
+                    notificationStore.add(`Failed to save '${tabToClose.title}'. Close aborted.`, 'error');
+                }
+            } else { // Discard
+                await forceCloseTab(tabId);
             }
+        } else {
+            await forceCloseTab(tabId);
         }
     }
+
+    function updateTabState(tabId: string, state: Partial<Pick<Tab, 'isDirty' | 'title' | 'icon'>>) {
+        const tab = tabsById.value.get(tabId);
+        if (tab) {
+            Object.assign(tab, state);
+            eventBus.emit('core:tab.stateChanged', { tabId, newState: state });
+            eventBus.emit('core:state-changed', { store: 'tab' });
+        }
+    }
+
+    eventBus.on('core:pane.closed', ({ tabIds }: { tabIds: string[] }) => {
+        tabIds.forEach(id => forceCloseTab(id));
+    });
 
     return {
+        getTabById,
+        getTabsForPane,
         setItemProvider,
-        getActiveItem,
+        loadCoreItemForTab,
         openTab,
         closeTab,
+        activateTab,
         updateTabState,
     };
 });
@@ -1642,53 +1960,46 @@ export const useTabStore = defineStore('core-tab', () => {
 //
 
 
+
 export interface CoreItem {
     id: string;
     title: string;
     icon: string;
     viewType: string;
-    metadata?: Record<string, any>;
+    metadata: Record<string, any>;
 }
 
-/**
- * 标签页的UI状态表示。
- */
 export interface Tab {
-    id: string;
+    id: string; // <-- 唯一的标签页实例ID
+    itemId: string; // <-- 所代表的CoreItem的ID
     title: string;
     icon: string;
-    isDirty?: boolean; // 新增：内容是否“变脏”
+    isDirty: boolean;
 }
 
-// Pane 保持不变
 export interface Pane {
     id:string;
-    tabs: Tab[];
+    tabIds: string[];
     activeTabId: string | null;
 }
 
-// CommandContext, Command, ContextMenuItem 保持不变
 export interface CommandContext {
-    targetId?: string;
-    paneId?: string;
     [key: string]: any;
 }
 
 export interface Command {
     id: string;
-    label: string;
+    label: string | ((context: CommandContext) => string);
     icon?: string;
-    execute: (context?: CommandContext) => void;
-    canExecute?: (context?: CommandContext) => boolean;
+    when?: (context: CommandContext) => boolean;
+    execute: (context: CommandContext) => void;
 }
 
 export interface ContextMenuItem {
-    id: string;
-    label: string;
-    icon?: string;
     commandId: string;
-    commandContext?: CommandContext;
+    context?: CommandContext;
     isDivider?: boolean;
+
 }
 
 // =
@@ -1696,13 +2007,13 @@ export interface ContextMenuItem {
 //
 
 
+
 import type { CoreItem } from './index';
+
 /**
  * 数据提供者接口 (ItemProvider Interface)。
- * 内核自身不实现它，但它依赖这个接口来获取任何需要展示的数据。
- * 应用层（如小说编辑器）必须提供一个实现了此接口的对象，并将其注入到内核中。
- *
- * 这种设计将内核的数据获取逻辑与具体的数据源（如Pinia Store、本地文件、API）完全解耦。
+ * 内核依赖此接口来获取和更新数据。
+ * 应用层必须提供一个实现了此接口的对象，并将其注入到内核中。
  */
 export interface ItemProvider {
     /**
@@ -1711,5 +2022,13 @@ export interface ItemProvider {
      * @returns 返回一个Promise，解析为CoreItem对象或在找不到时解析为null。
      */
     getItem(id: string): Promise<CoreItem | null>;
+
+    /**
+     * 根据ID和新内容更新一个项目。
+     * @param id - 要更新的项目的唯一ID。
+     * @param content - 项目的新内容。
+     * @returns 返回一个Promise，在更新完成后解析。可用于处理保存失败的情况。
+     */
+    updateItem(id: string, content: string): Promise<void>;
 }
 

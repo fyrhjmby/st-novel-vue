@@ -1,74 +1,80 @@
 <!-- 文件: src/core/components/ContextMenu.vue -->
-<!-- 描述: 一个通用的、由命令驱动的右键菜单。 -->
 <template>
   <div
-      v-if="visible"
+      v-if="isVisible"
       class="context-menu"
       :style="{ top: `${position.y}px`, left: `${position.x}px` }"
       @click.stop
       @contextmenu.prevent
   >
     <ul class="menu-list">
-      <li v-for="item in items" :key="item.id">
-        <div v-if="item.isDivider" class="menu-divider"></div>
-        <a
+      <template v-for="(item, index) in processedItems" :key="item.id">
+        <li v-if="item.isDivider" class="menu-divider"></li>
+        <li
             v-else
-            href="#"
-            class="menu-item"
-            :class="{ 'disabled': !canExecute(item.commandId, item.commandContext) }"
-            @click.prevent="executeCommand(item)"
+            :class="['menu-item', { 'disabled': item.isDisabled }]"
+            @click.prevent="execute(item)"
         >
           <i v-if="item.icon" :class="[item.icon, 'menu-icon']"></i>
           <span>{{ item.label }}</span>
-        </a>
-      </li>
+        </li>
+      </template>
     </ul>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { computed, onMounted, onBeforeUnmount } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useContextMenuStore } from '@/core/stores/contextMenuStore';
 import { commandService } from '@/core/services/CommandService';
-import type { ContextMenuItem, CommandContext } from '@/core/types';
+import type { ContextMenuItem } from '@/core/types';
 
-const visible = ref(false);
-const position = ref({ x: 0, y: 0 });
-const items = ref<ContextMenuItem[]>([]);
+interface ProcessedMenuItem {
+  id: string;
+  isDivider: boolean;
+  isDisabled: boolean;
+  label: string;
+  icon?: string;
+  originalItem: ContextMenuItem;
+}
 
-const show = (event: MouseEvent, menuItems: ContextMenuItem[]) => {
-  items.value = menuItems;
-  visible.value = true;
-  position.value.x = event.clientX;
-  position.value.y = event.clientY;
-};
+const contextMenuStore = useContextMenuStore();
+const { isVisible, position, items } = storeToRefs(contextMenuStore);
 
-const hide = () => {
-  visible.value = false;
-  items.value = [];
-};
+const processedItems = computed<ProcessedMenuItem[]>(() => {
+  return items.value.map((item, index) => {
+    if (item.isDivider) {
+      return { id: `d-${index}`, isDivider: true, isDisabled: true, label: '', originalItem: item };
+    }
+    const command = commandService.find(item.commandId);
+    const isDisabled = !command || !commandService.canExecute(item.commandId, item.context);
+    const label = command
+        ? (typeof command.label === 'function' ? command.label({ ...item.context }) : command.label)
+        : 'Unknown Command';
 
-const canExecute = (commandId: string, context?: CommandContext) => {
-  const command = commandService.get(commandId);
-  if (!command) return false;
-  if (command.canExecute) {
-    return command.canExecute(context);
+    return {
+      id: item.commandId,
+      isDivider: false,
+      isDisabled,
+      label,
+      icon: command?.icon,
+      originalItem: item,
+    };
+  });
+});
+
+const execute = (item: ProcessedMenuItem) => {
+  if (!item.isDisabled) {
+    commandService.execute(item.originalItem.commandId, item.originalItem.context);
+    contextMenuStore.hideMenu();
   }
-  return true;
 };
 
-const executeCommand = (item: ContextMenuItem) => {
-  if (canExecute(item.commandId, item.commandContext)) {
-    commandService.execute(item.commandId, item.commandContext);
-    hide();
-  }
-};
-
-const handleClickOutside = (event: MouseEvent) => hide();
+const handleClickOutside = () => contextMenuStore.hideMenu();
 
 onMounted(() => window.addEventListener('click', handleClickOutside));
 onBeforeUnmount(() => window.removeEventListener('click', handleClickOutside));
-
-defineExpose({ show, hide });
 </script>
 
 <style scoped>
@@ -82,7 +88,7 @@ defineExpose({ show, hide });
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
   min-width: 14rem;
 }
-.menu-list { list-style: none; }
+.menu-list { list-style: none; padding: 0; margin: 0; }
 .menu-item {
   display: flex;
   align-items: center;
@@ -93,10 +99,10 @@ defineExpose({ show, hide });
   color: #374151;
   cursor: pointer;
   user-select: none;
-  text-decoration: none;
 }
 .menu-item:not(.disabled):hover { background-color: #f3f4f6; }
 .menu-item.disabled { color: #9ca3af; cursor: not-allowed; }
-.menu-icon { width: 1rem; text-align: center; }
+.menu-icon { width: 1rem; text-align: center; color: #6B7280; }
+.menu-item:not(.disabled):hover .menu-icon { color: #374151; }
 .menu-divider { height: 1px; background-color: #f3f4f6; margin: 0.5rem 0; }
 </style>

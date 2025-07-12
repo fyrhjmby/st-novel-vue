@@ -1,52 +1,72 @@
 // 文件: src/core/services/CommandService.ts
-// 描述: 命令服务，负责注册、管理和执行所有命令。
 
 import type { Command, CommandContext } from '@/core/types';
+import { usePaneStore } from '@/core/stores/paneStore';
+import { contextService } from './ContextService';
 
 class CommandService {
     private commands: Map<string, Command> = new Map();
 
-    /**
-     * 注册一个命令。
-     * 应用层在启动时调用此方法，将所有业务操作封装成命令并注入内核。
-     * @param command - 要注册的命令对象。
-     */
     public register(command: Command): void {
         if (this.commands.has(command.id)) {
-            console.warn(`[CommandService] Command ID "${command.id}" is already registered. Overwriting.`);
+            console.warn(`[CommandService] Command "${command.id}" is already registered. Overwriting.`);
         }
         this.commands.set(command.id, command);
     }
 
-    /**
-     * 执行一个命令。
-     * @param commandId - 要执行的命令的ID。
-     * @param context - 执行命令时传递的上下文。
-     */
-    public execute(commandId: string, context?: CommandContext): void {
-        const command = this.commands.get(commandId);
+    public find(commandId: string): Command | undefined {
+        return this.commands.get(commandId);
+    }
+
+    private getGlobalContext(): CommandContext {
+        const paneStore = usePaneStore();
+        return {
+            activePaneId: paneStore.activePaneId,
+            activeTabId: paneStore.activePane?.activeTabId,
+        };
+    }
+
+    public canExecute(commandId: string, specificContext?: CommandContext): boolean {
+        const command = this.find(commandId);
+        if (!command) return false;
+
+        const context = { ...this.getGlobalContext(), ...specificContext };
+
+        if (typeof command.when === 'string') {
+            return contextService.check(command.when);
+        }
+        if (typeof command.when === 'function') {
+            return command.when(context);
+        }
+
+        return true;
+    }
+
+    public execute(commandId: string, specificContext?: CommandContext): void {
+        if (!this.canExecute(commandId, specificContext)) {
+            console.warn(`[CommandService] Execution of command "${commandId}" was prevented by its 'when' condition.`);
+            return;
+        }
+
+        const command = this.find(commandId);
         if (!command) {
             console.error(`[CommandService] Command "${commandId}" not found.`);
             return;
         }
 
-        if (command.canExecute && !command.canExecute(context)) {
-            console.warn(`[CommandService] Execution of command "${commandId}" was prevented by its 'canExecute' condition.`);
-            return;
-        }
-
+        const context = { ...this.getGlobalContext(), ...specificContext };
         command.execute(context);
     }
 
     /**
-     * 获取一个命令的定义。
-     * @param commandId - 命令的ID。
-     * @returns 返回命令对象，如果不存在则返回undefined。
+     * Returns an iterator for all registered commands.
+     * The availability of the command is not checked here.
      */
-    public get(commandId: string): Command | undefined {
-        return this.commands.get(commandId);
+    public *getAllCommands() {
+        for (const command of this.commands.values()) {
+            yield command;
+        }
     }
 }
 
-// 导出一个单例，确保整个应用共享同一个命令中心。
 export const commandService = new CommandService();

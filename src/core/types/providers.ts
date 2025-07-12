@@ -1,11 +1,11 @@
 
+
 import type { CoreItem } from './index';
+
 /**
  * 数据提供者接口 (ItemProvider Interface)。
- * 内核自身不实现它，但它依赖这个接口来获取任何需要展示的数据。
- * 应用层（如小说编辑器）必须提供一个实现了此接口的对象，并将其注入到内核中。
- *
- * 这种设计将内核的数据获取逻辑与具体的数据源（如Pinia Store、本地文件、API）完全解耦。
+ * 内核依赖此接口来获取和更新数据。
+ * 应用层必须提供一个实现了此接口的对象，并将其注入到内核中。
  */
 export interface ItemProvider {
     /**
@@ -14,4 +14,12 @@ export interface ItemProvider {
      * @returns 返回一个Promise，解析为CoreItem对象或在找不到时解析为null。
      */
     getItem(id: string): Promise<CoreItem | null>;
+
+    /**
+     * 根据ID和新内容更新一个项目。
+     * @param id - 要更新的项目的唯一ID。
+     * @param content - 项目的新内容。
+     * @returns 返回一个Promise，在更新完成后解析。可用于处理保存失败的情况。
+     */
+    updateItem(id: string, content: string): Promise<void>;
 }

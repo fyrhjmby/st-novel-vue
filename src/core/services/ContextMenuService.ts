@@ -1,21 +1,12 @@
 // 文件: src/core/services/ContextMenuService.ts
 
 import type { ContextMenuItem, CommandContext } from '@/core/types';
-import type { ComponentPublicInstance } from 'vue';
-
-type ContextMenuComponent = ComponentPublicInstance<{
-    show: (event: MouseEvent, items: ContextMenuItem[]) => void;
-}>;
+import { useContextMenuStore } from '@/core/stores/contextMenuStore';
 
 type ContextMenuProvider = (context: CommandContext) => ContextMenuItem[];
 
 class ContextMenuService {
     private providers: Map<string, ContextMenuProvider[]> = new Map();
-    private menuComponent: ContextMenuComponent | null = null;
-
-    public registerComponent(component: ContextMenuComponent): void {
-        this.menuComponent = component;
-    }
 
     public registerProvider(contextType: string, provider: ContextMenuProvider): void {
         if (!this.providers.has(contextType)) {
@@ -24,11 +15,20 @@ class ContextMenuService {
         this.providers.get(contextType)!.push(provider);
     }
 
-    private getItems(contextType: string, context: CommandContext): ContextMenuItem[] {
+    private getItemsForContext(contextType: string, context: CommandContext): ContextMenuItem[] {
         const providers = this.providers.get(contextType) || [];
-        const allItems = providers.flatMap(provider => provider(context));
+        let allItems: ContextMenuItem[] = [];
 
-        // 可以在此处理分隔符，例如如果两个提供者之间需要分隔符
+        providers.forEach((provider, index) => {
+            const items = provider(context);
+            if (items.length > 0) {
+                if (index > 0 && allItems.length > 0 && !allItems[allItems.length - 1].isDivider) {
+                    allItems.push({ commandId: `divider-${index}`, isDivider: true });
+                }
+                allItems = allItems.concat(items);
+            }
+        });
+
         return allItems;
     }
 
@@ -36,14 +36,13 @@ class ContextMenuService {
         event.preventDefault();
         event.stopPropagation();
 
-        if (!this.menuComponent) {
-            console.error("[ContextMenuService] Menu component is not registered.");
-            return;
-        }
+        const contextMenuStore = useContextMenuStore();
+        const items = this.getItemsForContext(contextType, context);
 
-        const items = this.getItems(contextType, context);
         if (items.length > 0) {
-            this.menuComponent.show(event, items);
+            contextMenuStore.showMenu(event, items);
+        } else {
+            contextMenuStore.hideMenu();
         }
     }
 }

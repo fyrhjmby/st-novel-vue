@@ -1,4 +1,4 @@
-
+<!-- 文件: src/core/components/layout/CoreLayout.vue -->
 <template>
   <div class="core-layout-container" :class="{'sidebar-hidden': !isSidebarVisible}">
     <div class="activity-bar-area">
@@ -6,11 +6,10 @@
     </div>
     <div v-if="isSidebarVisible" class="sidebar-area" :style="{ width: `${sidebarWidth}px` }">
       <slot name="sidebar">
-        <!-- Default sidebar content if app doesn't provide one -->
         <SidebarPanel />
       </slot>
     </div>
-    <div v-if="isSidebarVisible" class="sidebar-resizer" @mousedown.prevent="startResize"></div>
+    <div v-if="isSidebarVisible" class="sidebar-resizer" @mousedown="startResizeWrapper"></div>
 
     <div class="main-content-area">
       <MainPane />
@@ -23,101 +22,51 @@
     <div class="global-components-area">
       <slot name="global">
         <NotificationCenter />
-        <CommandPalette ref="commandPaletteRef" />
-      </slot>
-    </div>
-    <div class="global-components-area">
-      <slot name="global">
-        <NotificationCenter />
-        <CommandPalette ref="commandPaletteRef" />
-        <ContextMenu ref="contextMenuRef" />
+        <CommandPalette />
+        <ContextMenu />
       </slot>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { usePaneStore } from '@/core/stores/paneStore';
+import { onMounted, onUnmounted } from 'vue';
 import { useLayoutStore } from '@/core/stores/layoutStore';
-import { useTabStore } from '@/core/stores/tabStore';
-import { keybindingService } from '@/core/services/KeybindingService';
-import { workspaceService } from '@/core/services/WorkspaceService';
-import { commandService } from '@/core/services/CommandService';
-import type { ItemProvider } from '@/core/types/providers';
+import { storeToRefs } from 'pinia';
+import type { EditorKernel } from '@/core/services/EditorKernel';
+import { useResizable } from '@/core/composables/useResizable';
 
 import MainPane from '../MainPane.vue';
 import SidebarPanel from './SidebarPanel.vue';
 import NotificationCenter from './NotificationCenter.vue';
-import ContextMenu from '../ContextMenu.vue';
 import CommandPalette from '../CommandPalette.vue';
-import { storeToRefs } from 'pinia';
+import ContextMenu from '../ContextMenu.vue';
 
 const props = defineProps<{
-  itemProvider: ItemProvider;
+  kernel: EditorKernel;
 }>();
 
-const paneStore = usePaneStore();
 const layoutStore = useLayoutStore();
-const tabStore = useTabStore();
 const { isSidebarVisible, sidebarWidth } = storeToRefs(layoutStore);
-const commandPaletteRef = ref<InstanceType<typeof CommandPalette> | null>(null);
 
-// --- Core Initialization ---
-onMounted(async () => {
-  // 1. Inject dependencies
-  tabStore.setItemProvider(props.itemProvider);
-
-  // 2. Register core commands
-  commandService.register({
-    id: 'core.commandPalette.toggle',
-    label: 'Toggle Command Palette',
-    execute: () => commandPaletteRef.value?.toggle(),
-  });
-  keybindingService.register({ key: 'ctrl+shift+p', commandId: 'core.commandPalette.toggle'});
-
-  // 3. Initialize services
-  keybindingService.initialize();
-
-  // 4. Hydrate workspace state from localStorage
-  await workspaceService.hydrate();
-
-  // 5. If no state was hydrated, initialize default state
-  paneStore.initializePanes();
-
-  // 6. Watch for state changes to persist them
-  watch(
-      [paneStore.$state, layoutStore.$state],
-      () => {
-        workspaceService.persist();
-      },
-      { deep: true }
-  );
+onMounted(() => {
+  props.kernel.startup();
 });
 
 onUnmounted(() => {
-  keybindingService.destroy();
+  props.kernel.shutdown();
 });
 
-// --- Sidebar Resizing Logic ---
-const startResize = (event: MouseEvent) => {
-  const startWidth = sidebarWidth.value;
-  const startX = event.clientX;
+let initialWidth = 0;
+const { startResize } = useResizable({
+  onResize: ({ dx }) => {
+    layoutStore.setSidebarWidth(initialWidth + dx);
+  },
+});
 
-  const handleResize = (e: MouseEvent) => {
-    const dx = e.clientX - startX;
-    layoutStore.setSidebarWidth(startWidth + dx);
-  };
-
-  const stopResize = () => {
-    document.removeEventListener('mousemove', handleResize);
-    document.removeEventListener('mouseup', stopResize);
-    document.body.style.cursor = 'default';
-  };
-
-  document.addEventListener('mousemove', handleResize);
-  document.addEventListener('mouseup', stopResize);
-  document.body.style.cursor = 'col-resize';
+const startResizeWrapper = (event: MouseEvent) => {
+  initialWidth = sidebarWidth.value;
+  startResize(event);
 };
 </script>
 
@@ -138,9 +87,12 @@ const startResize = (event: MouseEvent) => {
   position: relative;
 }
 .status-bar-area {
-  flex-shrink: 0;
-  height: 28px; /* Example height */
-  border-top: 1px solid #E5E7EB;
+  position: relative; z-index: 20; flex-shrink: 0;
+  height: 28px; border-top: 1px solid #E5E7EB;
+  background-color: #F3F4F6;
+}
+.global-components-area > :deep(*) {
+  pointer-events: all;
 }
 .global-components-area {
   position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 9999; pointer-events: none;

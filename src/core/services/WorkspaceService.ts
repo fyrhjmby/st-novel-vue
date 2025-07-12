@@ -1,96 +1,91 @@
+// 文件: src/core/services/WorkspaceService.ts
 
-import { toRaw } from 'vue';
-import { usePaneStore } from '@/core/stores/paneStore';
+import { eventBus } from './EventBusService';
 import { useLayoutStore } from '@/core/stores/layoutStore';
+import { usePaneStore } from '@/core/stores/paneStore';
+import { useTabStore } from '@/core/stores/tabStore';
 
-const WORKSPACE_STORAGE_KEY = 'editorCoreWorkspaceState';
+const WORKSPACE_STORAGE_KEY = 'editorCoreWorkspaceState_v2';
 
 class WorkspaceService {
-    private paneStore = usePaneStore();
-    private layoutStore = useLayoutStore();
+    private debouncedPersistState: () => void;
 
     constructor() {
-        this.persist = this.debounce(this.persist.bind(this), 1000);
+        this.debouncedPersistState = this.debounce(this.persistState.bind(this), 500);
     }
 
-    /**
-     * 将当前工作区状态保存到localStorage。
-     */
-    public persist(): void {
-        const state = {
-            panes: {
-                panes: toRaw(this.paneStore.panes).map(p => ({
-                    id: p.id,
-                    activeTabId: p.activeTabId,
-                    tabs: p.tabs.map(t => ({ id: t.id })) // 只保存tab的ID
-                })),
-                activePaneId: this.paneStore.activePaneId,
-            },
+    public initialize() {
+        eventBus.on('core:state-changed', this.debouncedPersistState);
+        console.log('[WorkspaceService] Initialized and listening for state changes.');
+    }
+
+    public destroy() {
+        eventBus.off('core:state-changed', this.debouncedPersistState);
+        console.log('[WorkspaceService] Destroyed event listener.');
+    }
+
+    private getStoresState() {
+        const layoutStore = useLayoutStore();
+        const paneStore = usePaneStore();
+        const tabStore = useTabStore();
+
+        return {
             layout: {
-                isSidebarVisible: this.layoutStore.isSidebarVisible,
-                sidebarWidth: this.layoutStore.sidebarWidth,
+                isSidebarVisible: layoutStore.isSidebarVisible,
+                sidebarWidth: layoutStore.sidebarWidth,
             },
+            paneLayout: {
+                root: paneStore.root,
+                activePaneId: paneStore.activePaneId,
+            },
+            tabs: tabStore.dehydrate(),
         };
-        localStorage.setItem(WORKSPACE_STORAGE_KEY, JSON.stringify(state));
-        console.log('[WorkspaceService] State persisted.');
     }
 
-    /**
-     * 从localStorage恢复工作区状态。
-     * 应用启动时调用。
-     */
-    public async hydrate(): Promise<void> {
+    private persistState(): void {
+        try {
+            const state = this.getStoresState();
+            const stateJSON = JSON.stringify(state);
+            localStorage.setItem(WORKSPACE_STORAGE_KEY, stateJSON);
+        } catch (error) {
+            console.error('[WorkspaceService] Failed to persist state:', error);
+        }
+    }
+
+    public loadAndHydrateStores(): void {
         const savedStateJSON = localStorage.getItem(WORKSPACE_STORAGE_KEY);
         if (!savedStateJSON) {
-            console.log('[WorkspaceService] No saved state found.');
+            console.log('[WorkspaceService] No saved workspace state found.');
             return;
         }
 
         try {
             const savedState = JSON.parse(savedStateJSON);
+            const layoutStore = useLayoutStore();
+            const paneStore = usePaneStore();
+            const tabStore = useTabStore();
 
-            // 恢复布局状态
             if (savedState.layout) {
-                this.layoutStore.hydrate(savedState.layout);
+                layoutStore.hydrate(savedState.layout);
             }
-
-            // 恢复窗格和标签页状态
-            if (savedState.panes && savedState.panes.panes.length > 0) {
-                // 直接恢复窗格结构
-                this.paneStore.panes = []; // 清空默认窗格
-                this.paneStore.activePaneId = savedState.panes.activePaneId;
-
-                for (const savedPane of savedState.panes.panes) {
-                    const newPane = { id: savedPane.id, activeTabId: savedPane.activeTabId, tabs: [] };
-                    this.paneStore.panes.push(newPane);
-                    // 异步恢复每个标签页
-                    for (const savedTab of savedPane.tabs) {
-                        // 这里我们不直接创建Tab对象，而是调用openTab
-                        // openTab会从ItemProvider获取最新的title和icon
-                        await useTabStore().openTab(savedTab.id, newPane.id);
-                    }
-                    // 确保恢复后的activeTabId是正确的
-                    newPane.activeTabId = savedPane.activeTabId;
-                }
-
-                console.log('[WorkspaceService] State hydrated.');
+            if (savedState.paneLayout) {
+                paneStore.hydrate(savedState.paneLayout);
             }
+            if (savedState.tabs) {
+                tabStore.hydrate(savedState.tabs);
+            }
+            console.log('[WorkspaceService] Stores hydrated from saved state.');
         } catch (error) {
-            console.error('[WorkspaceService] Failed to hydrate state:', error);
+            console.error('[WorkspaceService] Failed to hydrate stores:', error);
             localStorage.removeItem(WORKSPACE_STORAGE_KEY);
         }
     }
 
-    /**
-     * 简单的debounce函数，防止过于频繁地写入localStorage。
-     * @param func - 要节流的函数。
-     * @param delay - 延迟时间（毫秒）。
-     */
-    private debounce<T extends (...args: any[]) => any>(func: T, delay: number): (...args: Parameters<T>) => void {
+    private debounce<T extends (...args: any[]) => any>(func: T, delay: number): () => void {
         let timeoutId: number | undefined;
-        return (...args: Parameters<T>) => {
+        return () => {
             clearTimeout(timeoutId);
-            timeoutId = window.setTimeout(() => func(...args), delay);
+            timeoutId = window.setTimeout(() => func(), delay);
         };
     }
 }

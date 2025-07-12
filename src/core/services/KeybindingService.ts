@@ -3,7 +3,7 @@ import { commandService } from './CommandService';
 interface Keybinding {
     key: string;
     commandId: string;
-    when?: () => boolean;
+    when?: () => boolean; // Optional, specific condition for this keybinding
 }
 
 class KeybindingService {
@@ -17,10 +17,6 @@ class KeybindingService {
         window.removeEventListener('keydown', this.handleKeyDown.bind(this));
     }
 
-    /**
-     * 注册一个快捷键。
-     * @param keybinding - 快捷键定义对象。
-     */
     public register(keybinding: Keybinding): void {
         const key = this.normalizeKey(keybinding.key);
         this.keybindings.set(key, keybinding);
@@ -31,7 +27,11 @@ class KeybindingService {
         const binding = this.keybindings.get(key);
 
         if (binding) {
-            if (!binding.when || binding.when()) {
+            // Check both the keybinding's specific 'when' and the command's global 'when'
+            const isKeybindingConditionMet = !binding.when || binding.when();
+            const isCommandConditionMet = commandService.canExecute(binding.commandId);
+
+            if (isKeybindingConditionMet && isCommandConditionMet) {
                 event.preventDefault();
                 event.stopPropagation();
                 commandService.execute(binding.commandId);
@@ -40,7 +40,10 @@ class KeybindingService {
     }
 
     private normalizeKey(key: string): string {
-        return key.toLowerCase().split('+').sort().join('+');
+        const parts = key.toLowerCase().split('+').map(part => part.trim());
+        const modifiers = parts.filter(p => ['ctrl', 'shift', 'alt', 'meta'].includes(p)).sort();
+        const mainKey = parts.find(p => !['ctrl', 'shift', 'alt', 'meta'].includes(p));
+        return [...modifiers, mainKey].join('+');
     }
 
     private eventToKey(event: KeyboardEvent): string {
@@ -48,14 +51,14 @@ class KeybindingService {
         if (event.ctrlKey) parts.push('ctrl');
         if (event.shiftKey) parts.push('shift');
         if (event.altKey) parts.push('alt');
-        if (event.metaKey) parts.push('meta'); // Cmd on Mac
+        if (event.metaKey) parts.push('meta');
 
         const key = event.key.toLowerCase();
         if (!['control', 'shift', 'alt', 'meta'].includes(key)) {
             parts.push(key);
         }
 
-        return parts.sort().join('+');
+        return this.normalizeKey(parts.join('+'));
     }
 }
 
