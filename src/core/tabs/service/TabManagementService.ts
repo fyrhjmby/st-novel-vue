@@ -1,3 +1,5 @@
+
+import { nextTick } from 'vue';
 import { useTabStore } from '@core/tabs/stores/tabStore.ts';
 import { usePaneStore } from '@core/panes/stores/paneStore.ts';
 import { useNotificationStore } from '@core/layout/stores/notificationStore.ts';
@@ -10,12 +12,37 @@ import type { ItemProvider, CoreItem, Tab } from '@core/types.ts';
 
 class TabManagementService {
     private itemProvider: ItemProvider | null = null;
+    // [FIX] A map to track items currently being opened to prevent race conditions.
+    private openingPromises: Map<string, Promise<void>> = new Map();
 
     public setItemProvider(provider: ItemProvider) {
         this.itemProvider = provider;
     }
 
     public async openTab(itemId: string, targetPaneId?: string) {
+        // [FIX] If the item is already being opened, wait for the existing promise to resolve.
+        if (this.openingPromises.has(itemId)) {
+            return this.openingPromises.get(itemId);
+        }
+
+        const tabStore = useTabStore();
+        const existingTab = tabStore.findTabByItemId(itemId);
+        if (existingTab) {
+            this.activateTab(existingTab.id);
+            return;
+        }
+
+        const promise = this._doOpenTab(itemId, targetPaneId);
+        this.openingPromises.set(itemId, promise);
+
+        try {
+            await promise;
+        } finally {
+            this.openingPromises.delete(itemId);
+        }
+    }
+
+    private async _doOpenTab(itemId: string, targetPaneId?: string) {
         const tabStore = useTabStore();
         const paneStore = usePaneStore();
         const notificationStore = useNotificationStore();
@@ -23,12 +50,6 @@ class TabManagementService {
         const paneId = targetPaneId || paneStore.activePaneId;
         if (!paneId) {
             notificationStore.add('No active pane to open the tab in.', 'error');
-            return;
-        }
-
-        const existingTab = tabStore.findTabByItemId(itemId);
-        if (existingTab) {
-            this.activateTab(existingTab.id);
             return;
         }
 
@@ -71,7 +92,10 @@ class TabManagementService {
 
             if (userChoice) {
                 await commandService.execute(CoreCommand.SAVE_TAB, { tabId });
-                if (!tabStore.getTabById(tabId)?.isDirty) {
+                await nextTick();
+
+                const potentiallyUpdatedTab = tabStore.getTabById(tabId);
+                if (potentiallyUpdatedTab && !potentiallyUpdatedTab.isDirty) {
                     this._forceCloseTab(tabId);
                 } else {
                     notificationStore.add(`Failed to save '${tabToClose.title}'. Close aborted.`, 'error');

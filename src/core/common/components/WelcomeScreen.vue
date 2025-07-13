@@ -1,13 +1,10 @@
-<!-- 文件: src/core/components/WelcomeScreen.vue -->
-<!-- 描述: 空窗格的欢迎界面，提供更友好的用户体验。 -->
 <template>
   <div class="welcome-screen">
-    <i class="fa-solid fa-feather-pointed welcome-icon"></i>
-    <h1 class="welcome-title">Editor Core</h1>
-    <p class="welcome-subtitle">Select a file from the sidebar to begin.</p>
+    <i class="fa-solid fa-feather-pointed text-6xl text-gray-300"></i>
+    <h1 class="text-2xl font-medium text-gray-600 mt-6">星尘编辑器</h1>
+    <p class="text-gray-500 mt-2">从左侧面板选择一个文件开始创作。</p>
   </div>
 </template>
-
 <style scoped>
 .welcome-screen {
   display: flex;
@@ -17,19 +14,5 @@
   height: 100%;
   user-select: none;
   background-color: #FFFFFF;
-}
-.welcome-icon {
-  font-size: 4rem; /* 64px */
-  color: #E5E7EB; /* gray-200 */
-}
-.welcome-title {
-  font-size: 1.5rem; /* 24px */
-  font-weight: 500;
-  color: #4B5563; /* gray-600 */
-  margin-top: 1.5rem;
-}
-.welcome-subtitle {
-  color: #9CA3AF; /* gray-400 */
-  margin-top: 0.5rem;
 }
 </style>

@@ -1,4 +1,6 @@
-// 文件: src/core/services/PaneTreeService.ts
+// 文件: src/core/panes/service/PaneTreeService.ts
+// ---------------------------------------------
+// 描述: 提供操作和查询窗格树（PaneNode）的底层静态方法。此版本修复了 closePane 方法中的一个布局尺寸计算 Bug。
 
 import type { PaneNode, LeafPaneNode, SplitPaneNode } from '@core/panes/types/pane.ts';
 
@@ -79,23 +81,21 @@ class PaneTreeService {
         const { node: closedPane, parent } = findResult;
         const siblingIndex = parent.children.findIndex(c => c.id === paneId);
 
-        // Distribute the size of the closed pane to its sibling
         const sizeToDistribute = parent.sizes[siblingIndex];
         parent.children.splice(siblingIndex, 1);
         parent.sizes.splice(siblingIndex, 1);
         parent.sizes[siblingIndex > 0 ? siblingIndex - 1 : 0] += sizeToDistribute;
 
-        // If the parent split pane has only one child left, it should be replaced by that child.
         if (parent.children.length === 1) {
             const remainingChild = parent.children[0];
-            const grandparent = this.findNodeAndParent(root, parent.id)?.parent;
-            if (grandparent) {
+            const grandparentResult = this.findNodeAndParent(root, parent.id);
+            if (grandparentResult && grandparentResult.parent) {
+                const grandparent = grandparentResult.parent;
                 const parentIndex = grandparent.children.findIndex(p => p.id === parent.id);
                 grandparent.children[parentIndex] = remainingChild;
-                // Distribute size up to the grandparent
-                grandparent.sizes[parentIndex] = grandparent.sizes.reduce((a, b) => a + b, 0);
+
             } else {
-                root = remainingChild; // The parent was the root
+                root = remainingChild;
             }
         }
 

@@ -1,3 +1,5 @@
+
+
 import { commandService } from '../../services/CommandService.ts';
 
 interface Keybinding {
@@ -8,13 +10,19 @@ interface Keybinding {
 
 class KeybindingService {
     private keybindings: Map<string, Keybinding> = new Map();
+    // [FIX] Store the bound event handler to ensure it can be removed.
+    private readonly boundHandleKeyDown: (event: KeyboardEvent) => void;
+
+    constructor() {
+        this.boundHandleKeyDown = this.handleKeyDown.bind(this);
+    }
 
     public initialize(): void {
-        window.addEventListener('keydown', this.handleKeyDown.bind(this));
+        window.addEventListener('keydown', this.boundHandleKeyDown);
     }
 
     public destroy(): void {
-        window.removeEventListener('keydown', this.handleKeyDown.bind(this));
+        window.removeEventListener('keydown', this.boundHandleKeyDown);
     }
 
     public register(keybinding: Keybinding): void {
@@ -27,7 +35,6 @@ class KeybindingService {
         const binding = this.keybindings.get(key);
 
         if (binding) {
-            // Check both the keybinding's specific 'when' and the command's global 'when'
             const isKeybindingConditionMet = !binding.when || binding.when();
             const isCommandConditionMet = commandService.canExecute(binding.commandId);
 

@@ -24,7 +24,6 @@
 import type { PropType } from 'vue';
 import { tabManagementService } from '@core/tabs/service/TabManagementService.ts';
 import type { Tab } from '@core/types.ts';
-
 defineProps({
   tabs: { type: Array as PropType<Tab[]>, required: true },
   activeTabId: { type: String as PropType<string | null>, required: true },
@@ -32,35 +31,75 @@ defineProps({
   isActivePane: { type: Boolean, required: true },
 });
 </script>
-
 <style scoped>
 .tab-bar-container {
-  display: flex; flex-shrink: 0; background-color: #F3F4F6;
-  border-bottom: 1px solid #E5E7EB; padding-top: 0.5rem; padding-left: 0.5rem;
+  display: flex;
+  flex-shrink: 0;
+  padding-top: 0.5rem;
+  padding-left: 0.5rem;
   overflow-x: auto;
+  min-width: 0;
+}
+.tab-bar-container::-webkit-scrollbar {
+  display: none;
+}
+.tab-bar-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 .tab-item {
-  display: flex; align-items: center; padding: 0.6rem 0.5rem 0.6rem 1rem;
-  font-size: 0.875rem; color: #6B7280; cursor: pointer;
-  border: 1px solid transparent; border-bottom: none;
-  border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem;
-  background-color: #E5E7EB; white-space: nowrap; transition: background-color 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  font-size: 0.875rem;
+  color: #6B7280;
+  cursor: pointer;
+  position: relative;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  background-color: #E5E7EB;
+  white-space: nowrap;
+  transition: background-color 0.2s, color 0.2s;
 }
-.tab-item:not(:first-child) { margin-left: -1px; }
-.tab-item:hover { background-color: #FFFFFF; }
+.tab-item:not(:first-child) {
+  margin-left: -1px;
+}
+.tab-item:hover {
+  background-color: #FFFFFF;
+}
 .tab-item.active {
-  background-color: #FFFFFF; color: #1F2937;
-  border-color: #E5E7EB; z-index: 2; margin-bottom: -1px;
+  background-color: #FFFFFF;
+  color: #1F2937;
+  border-color: #E5E7EB;
+  z-index: 2;
+  margin-bottom: -1px;
   padding-bottom: calc(0.6rem + 1px);
 }
-.inactive-pane-tab { background-color: #F3F4F6; color: #9CA3AF; }
-.inactive-pane-tab:hover { background-color: #E5E7EB; }
-.inactive-pane-tab.active { background-color: #F9FAFB; color: #6B7280; }
-.tab-icon { margin-right: 0.5rem; }
-.active .tab-icon { color: #3B82F6; }
-.inactive-pane-tab.active .tab-icon { color: inherit; }
-.tab-title { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
-
+.inactive-pane-tab {
+  background-color: #F3F4F6;
+  color: #9CA3AF;
+}
+.inactive-pane-tab.active {
+  background-color: #FFFFFF;
+  color: #6B7280;
+  border-color: #E5E7EB;
+}
+.tab-icon {
+  margin-right: 0.5rem;
+}
+.tab-item.active .tab-icon {
+  color: #3B82F6;
+}
+.inactive-pane-tab.active .tab-icon {
+  color: inherit;
+}
+.tab-title {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .close-icon-wrapper {
   margin-left: 0.75rem;
   width: 1rem;
@@ -77,9 +116,13 @@ defineProps({
   transition: all 0.2s;
   padding: 0.25rem;
 }
-.tab-item:hover .close-icon { opacity: 1; }
-.close-icon:hover { background-color: #E5E7EB; border-radius: 99px; }
-
+.tab-item:hover .close-icon {
+  opacity: 1;
+}
+.close-icon:hover {
+  background-color: #E5E7EB;
+  border-radius: 99px;
+}
 .dirty-indicator {
   width: 0.5rem;
   height: 0.5rem;

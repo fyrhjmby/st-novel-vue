@@ -1,4 +1,4 @@
-// 文件: src/core/composables/useEditableView.ts
+
 
 import { onMounted, onUnmounted, watch, ref, computed, type Ref } from 'vue';
 import { activeEditorService } from '@core/tabs/service/ActiveEditorService.ts';
@@ -8,7 +8,7 @@ import type { CoreItem, Tab } from '@core/types.ts';
 
 interface UseEditableViewOptions {
     tab: Ref<Tab>;
-    coreItem: Ref<CoreItem>;
+    coreItem: Ref<CoreItem | null>;
     content: Ref<string>;
 }
 
@@ -20,7 +20,7 @@ export function useEditableView({ tab, coreItem, content }: UseEditableViewOptio
     const isDirty = computed(() => initialContent.value !== content.value);
 
     const initializeContent = () => {
-        const newInitialContent = coreItem.value.metadata?.content || '';
+        const newInitialContent = coreItem.value?.metadata?.content || '';
         initialContent.value = newInitialContent;
         if (content.value !== newInitialContent) {
             content.value = newInitialContent;
@@ -34,7 +34,7 @@ export function useEditableView({ tab, coreItem, content }: UseEditableViewOptio
             getContent: () => content.value,
             setContent: (newContent: string) => {
                 content.value = newContent;
-                initialContent.value = newContent; // Mark as saved by resetting the baseline
+                initialContent.value = newContent;
             },
         });
     });
@@ -47,20 +47,15 @@ export function useEditableView({ tab, coreItem, content }: UseEditableViewOptio
         tabStore.updateTabState(tab.value.id, { isDirty: newValue });
     });
 
-    // This watcher handles cases where the underlying file is changed externally
-    // (e.g., git pull, external editor save) and reloaded.
-    watch(() => coreItem.value.metadata?.content, (newContent) => {
+    watch(() => coreItem.value?.metadata?.content, (newContent) => {
         if (newContent !== undefined && content.value !== newContent) {
             if (isDirty.value) {
-                // If the editor has unsaved changes, do not overwrite them.
-                // Instead, notify the user about the conflict.
                 notificationStore.add(
                     `'${tab.value.title}' has been modified on disk. Your version has unsaved changes.`,
                     'warning',
-                    0 // Persistent notification
+                    0
                 );
             } else {
-                // The editor is clean, so it's safe to update the content.
                 initializeContent();
             }
         }
