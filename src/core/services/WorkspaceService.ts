@@ -1,27 +1,38 @@
-// 文件: src/core/services/WorkspaceService.ts
+import { useLayoutStore } from '@core/layout/stores/layoutStore.ts';
+import { usePaneStore } from '@core/panes/stores/paneStore.ts';
+import { useTabStore } from '@core/tabs/stores/tabStore.ts';
 
-import { eventBus } from './EventBusService';
-import { useLayoutStore } from '@/core/stores/layoutStore';
-import { usePaneStore } from '@/core/stores/paneStore';
-import { useTabStore } from '@/core/stores/tabStore';
+const WORKSPACE_STORAGE_KEY = 'editorCoreWorkspaceState';
+const WORKSPACE_STATE_VERSION = 'v2.1';
 
-const WORKSPACE_STORAGE_KEY = 'editorCoreWorkspaceState_v2';
+type Unsubscribe = () => void;
 
 class WorkspaceService {
     private debouncedPersistState: () => void;
+    private subscriptions: Unsubscribe[] = [];
 
     constructor() {
         this.debouncedPersistState = this.debounce(this.persistState.bind(this), 500);
     }
 
     public initialize() {
-        eventBus.on('core:state-changed', this.debouncedPersistState);
-        console.log('[WorkspaceService] Initialized and listening for state changes.');
+        const layoutStore = useLayoutStore();
+        const paneStore = usePaneStore();
+        const tabStore = useTabStore();
+
+        // Subscribe to each store and save the unsubscribe function
+        this.subscriptions.push(layoutStore.$subscribe(this.debouncedPersistState));
+        this.subscriptions.push(paneStore.$subscribe(this.debouncedPersistState));
+        this.subscriptions.push(tabStore.$subscribe(this.debouncedPersistState));
+
+        console.log('[WorkspaceService] Initialized and subscribed to stores.');
     }
 
     public destroy() {
-        eventBus.off('core:state-changed', this.debouncedPersistState);
-        console.log('[WorkspaceService] Destroyed event listener.');
+        // Unsubscribe from all stores to prevent memory leaks
+        this.subscriptions.forEach(unsubscribe => unsubscribe());
+        this.subscriptions = [];
+        console.log('[WorkspaceService] Destroyed store subscriptions.');
     }
 
     private getStoresState() {
@@ -30,22 +41,19 @@ class WorkspaceService {
         const tabStore = useTabStore();
 
         return {
-            layout: {
-                isSidebarVisible: layoutStore.isSidebarVisible,
-                sidebarWidth: layoutStore.sidebarWidth,
-            },
-            paneLayout: {
-                root: paneStore.root,
-                activePaneId: paneStore.activePaneId,
-            },
-            tabs: tabStore.dehydrate(),
+            version: WORKSPACE_STATE_VERSION,
+            state: {
+                layout: layoutStore.dehydrate(),
+                paneLayout: paneStore.dehydrate(),
+                tabs: tabStore.dehydrate(),
+            }
         };
     }
 
     private persistState(): void {
         try {
-            const state = this.getStoresState();
-            const stateJSON = JSON.stringify(state);
+            const statePayload = this.getStoresState();
+            const stateJSON = JSON.stringify(statePayload);
             localStorage.setItem(WORKSPACE_STORAGE_KEY, stateJSON);
         } catch (error) {
             console.error('[WorkspaceService] Failed to persist state:', error);
@@ -60,7 +68,17 @@ class WorkspaceService {
         }
 
         try {
-            const savedState = JSON.parse(savedStateJSON);
+            const savedPayload = JSON.parse(savedStateJSON);
+
+            if (savedPayload.version !== WORKSPACE_STATE_VERSION) {
+                console.warn(
+                    `[WorkspaceService] Mismatch in workspace state version. Expected '${WORKSPACE_STATE_VERSION}', found '${savedPayload.version}'. Discarding saved state.`
+                );
+                localStorage.removeItem(WORKSPACE_STORAGE_KEY);
+                return;
+            }
+
+            const savedState = savedPayload.state;
             const layoutStore = useLayoutStore();
             const paneStore = usePaneStore();
             const tabStore = useTabStore();

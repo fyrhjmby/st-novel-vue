@@ -1,10 +1,8 @@
-// 文件: src/core/services/CommandService.ts
+import type { Command, CommandContext } from '@core/types.ts';
+import { usePaneStore } from '@core/panes/stores/paneStore.ts';
+import { contextService } from '../common/services/ContextService.ts';
 
-import type { Command, CommandContext } from '@/core/types';
-import { usePaneStore } from '@/core/stores/paneStore';
-import { contextService } from './ContextService';
-
-class CommandService {
+export class CommandService {
     private commands: Map<string, Command> = new Map();
 
     public register(command: Command): void {
@@ -58,10 +56,6 @@ class CommandService {
         command.execute(context);
     }
 
-    /**
-     * Returns an iterator for all registered commands.
-     * The availability of the command is not checked here.
-     */
     public *getAllCommands() {
         for (const command of this.commands.values()) {
             yield command;

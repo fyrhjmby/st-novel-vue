@@ -1,4 +1,4 @@
-// 文件: src/novel/editor/types/index.ts
+// 文件: src/novel/editor/types/types.ts
 
 /**
  * 卷（目录的一级）

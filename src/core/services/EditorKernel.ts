@@ -1,14 +1,11 @@
-// 文件: src/core/services/EditorKernel.ts
-
-import type { ItemProvider } from '@/core/types/providers';
-import { useTabStore } from '@/core/stores/tabStore';
-import { usePaneStore } from '@/core/stores/paneStore';
-import { useNotificationStore } from '../stores/notificationStore';
-import { useCommandPaletteStore } from '../stores/commandPaletteStore';
-import { commandService } from './CommandService';
-import { keybindingService } from './KeybindingService';
+import type { ItemProvider } from '@core/common/types/providers.ts';
+import { usePaneStore } from '@core/panes/stores/paneStore.ts';
+import { keybindingService } from '../common/services/KeybindingService.ts';
 import { workspaceService } from './WorkspaceService';
-import { activeEditorService } from './ActiveEditorService';
+import { tabManagementService } from '../tabs/service/TabManagementService.ts';
+import { PaneManagementModule } from '../panes/features/pane.module.ts';
+import { FileOperationsModule } from '../tabs/features/file.module.ts';
+import { CommandPaletteModule } from '../palette/features/palette.module.ts';
 
 export class EditorKernel {
     private itemProvider: ItemProvider;
@@ -20,9 +17,8 @@ export class EditorKernel {
     public async startup(): Promise<void> {
         console.log('[EditorKernel] Starting up...');
 
-        this.setupStores();
-        this.registerCoreCommands();
-        this.registerCoreKeybindings();
+        this.setupServices();
+        this.registerCoreModules();
 
         keybindingService.initialize();
         workspaceService.initialize();
@@ -38,104 +34,13 @@ export class EditorKernel {
         console.log('[EditorKernel] Shutdown complete.');
     }
 
-    private setupStores(): void {
-        const tabStore = useTabStore();
-        tabStore.setItemProvider(this.itemProvider);
+    private setupServices(): void {
+        tabManagementService.setItemProvider(this.itemProvider);
     }
 
-    private registerCoreCommands(): void {
-        const paneStore = usePaneStore();
-        const tabStore = useTabStore();
-        const notificationStore = useNotificationStore();
-        const commandPaletteStore = useCommandPaletteStore();
-
-        commandService.register({
-            id: 'core.commandPalette.show',
-            label: 'View: Show Command Palette',
-            execute: () => commandPaletteStore.show(),
-        });
-
-        commandService.register({
-            id: 'core.pane.split-horizontal',
-            label: 'Pane: Split Horizontal',
-            icon: 'fa-solid fa-columns',
-            execute: (context) => {
-                const paneId = context?.paneId || paneStore.activePaneId;
-                if (paneId) paneStore.splitPane(paneId, 'horizontal');
-            },
-        });
-
-        commandService.register({
-            id: 'core.pane.split-vertical',
-            label: 'Pane: Split Vertical',
-            icon: 'fa-solid fa-grip-lines',
-            execute: (context) => {
-                const paneId = context?.paneId || paneStore.activePaneId;
-                if (paneId) paneStore.splitPane(paneId, 'vertical');
-            },
-        });
-
-        commandService.register({
-            id: 'core.pane.close',
-            label: 'Pane: Close Pane',
-            icon: 'fa-solid fa-xmark',
-            when: "root.type == 'split'", // Example of new when clause
-            execute: (context) => {
-                const paneId = context?.paneId || paneStore.activePaneId;
-                if (paneId) paneStore.closePane(paneId);
-            },
-        });
-
-        commandService.register({
-            id: 'core.saveTab',
-            label: 'File: Save',
-            icon: 'fa-solid fa-save',
-            when: (context) => { // Function-based when still works
-                const tabId = context?.tabId || paneStore.activePane?.activeTabId;
-                if (!tabId) return false;
-                const tab = tabStore.getTabById(tabId);
-                return tab?.isDirty || false;
-            },
-            execute: async (context) => {
-                const tabId = context?.tabId || paneStore.activePane?.activeTabId;
-                if (!tabId) return;
-
-                const tab = tabStore.getTabById(tabId);
-                if (!tab || !tab.isDirty) return;
-
-                const content = activeEditorService.getContent(tabId);
-                if (content === null) return;
-
-                try {
-                    await this.itemProvider.updateItem(tab.itemId, content);
-                    activeEditorService.setContent(tabId, content);
-                    notificationStore.add(`'${tab.title}' saved.`, 'success', 2000);
-                } catch (error) {
-                    console.error(`Failed to save item ${tab.itemId}`, error);
-                    notificationStore.add(`Error saving '${tab.title}'.`, 'error');
-                }
-            },
-        });
-
-        // After all commands are registered, clear the cache so it rebuilds on next request
-        commandService.clearCache();
-    }
-
-    private registerCoreKeybindings(): void {
-        keybindingService.register({
-            key: 'ctrl+shift+p',
-            commandId: 'core.commandPalette.show',
-        });
-
-        keybindingService.register({
-            key: 'ctrl+s',
-            commandId: 'core.saveTab',
-            when: () => {
-                const paneStore = usePaneStore();
-                const tabStore = useTabStore();
-                const tabId = paneStore.activePane?.activeTabId;
-                return tabStore.getTabById(tabId || '')?.isDirty || false;
-            }
-        });
+    private registerCoreModules(): void {
+        new PaneManagementModule().install();
+        new FileOperationsModule().install(this.itemProvider);
+        new CommandPaletteModule().install();
     }
 }

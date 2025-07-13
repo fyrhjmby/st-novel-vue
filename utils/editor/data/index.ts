@@ -1,4 +1,4 @@
-// 文件: src/novel/editor/data/index.ts
+// 文件: src/novel/editor/data/types.ts
 import type { Volume, RelatedTree, NoteItem, NovelMetadata, NovelCharacter } from '@/novel/editor/types';
 
 export const mockDirectoryData: Volume[] = [

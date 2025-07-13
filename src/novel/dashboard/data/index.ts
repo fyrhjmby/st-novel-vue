@@ -1,4 +1,4 @@
-// 文件: src/novel/dashboard/data/index.ts
+// 文件: src/novel/dashboard/data/types.ts
 import type { Novel, NovelCategory } from '@/novel/types';
 import type { RecentActivityItem, DeletedItem } from '@/novel/dashboard/types';
 

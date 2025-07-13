@@ -315,10 +315,10 @@ app.use(router)
 app.mount('#app')
 
 // =
-// 文件: ..\src\router\index.ts
+// 文件: ..\src\router\types.ts
 //
 
-// src/router/index.ts
+// src/router/types.ts
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import { settingsRoutes } from '@/settings/router'
