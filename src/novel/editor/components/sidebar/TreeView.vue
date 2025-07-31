@@ -1,3 +1,5 @@
+// 文件: src/novel/editor/components/sidebar/TreeView.vue
+
 <template>
   <ul class="tree-view-list">
     <li v-for="node in nodes" :key="node.id" class="tree-view-item">
@@ -5,7 +7,7 @@
       <div
           class="node-content"
           :class="{ 'active': node.id === activeNodeId }"
-          @click="handleNodeClick(node.id)"
+          @click="handleNodeClick(node)"
           @contextmenu.prevent="emit('context-menu', { node, event: $event })"
       >
         <!-- 展开/折叠图标 -->
@@ -40,7 +42,7 @@
         </template>
 
         <!-- 节点状态徽章 (可选) -->
-        <span v-if="node.status" class="node-status-badge">
+        <span v-if="'status' in node && node.status" class="node-status-badge">
           {{ node.status === 'editing' ? '编辑中' : '' }}
         </span>
       </div>
@@ -67,17 +69,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue';
 import type { PropType } from 'vue';
-
-// --- 类型定义 ---
-export interface TreeNode {
-  id: string;
-  title: string;
-  icon: string;
-  status?: string;
-  type: string;
-  children?: TreeNode[];
-  originalData: any;
-}
+import type { TreeNode } from '@/novel/editor/types';
 
 // --- Props & Emits ---
 const props = defineProps({
@@ -100,7 +92,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'select-node', id: string): void;
+  (e: 'select-node', node: TreeNode): void;
   (e: 'toggle-expansion', id: string): void;
   (e: 'context-menu', payload: { node: TreeNode, event: MouseEvent }): void;
   (e: 'commit-rename', payload: { nodeId: string, newTitle: string }): void;
@@ -120,9 +112,9 @@ watch(() => props.editingNodeId, (newId, oldId) => {
   }
 });
 
-const handleNodeClick = (id: string) => {
-  if (props.editingNodeId === id) return;
-  emit('select-node', id);
+const handleNodeClick = (node: TreeNode) => {
+  if (props.editingNodeId === node.id) return;
+  emit('select-node', node);
 };
 
 const handleRenameCommit = (event: Event, nodeId: string) => {
