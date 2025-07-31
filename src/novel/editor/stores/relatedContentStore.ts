@@ -1,91 +1,60 @@
 // 文件: src/novel/editor/stores/relatedContentStore.ts
-
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { RelatedTree, Volume } from '@/novel/editor/types';
+import type { RelatedTree, PlotAnalysisItem } from '@/novel/editor/types';
 import { useEditorStore } from './editorStore';
 import { useUIStore } from './uiStore';
 import { useDirectoryStore } from './directoryStore';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
 
+const _findNodeInTreeRecursive = (nodes: RelatedTree[], nodeId: string): { node: RelatedTree; parent: RelatedTree | null; siblings: RelatedTree[] } | null => {
+    for (const node of nodes) {
+        if (node.id === nodeId) {
+            return { node, parent: null, siblings: nodes };
+        }
+        if (node.children) {
+            const foundInChild = _findNodeInTreeRecursive(node.children, nodeId);
+            if (foundInChild) {
+                if (!foundInChild.parent) {
+                    foundInChild.parent = node;
+                }
+                return foundInChild;
+            }
+        }
+    }
+    return null;
+};
+
+const _findAndRemoveNodeInTree = (nodes: RelatedTree[], nodeId: string): boolean => {
+    for (let i = 0; i < nodes.length; i++) {
+        if (nodes[i].id === nodeId) {
+            nodes.splice(i, 1);
+            return true;
+        }
+        if (nodes[i].children && _findAndRemoveNodeInTree(nodes[i].children, nodeId)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 export const useRelatedContentStore = defineStore('relatedContent', () => {
-    // --- State ---
+    const directoryStore = useDirectoryStore();
+
     const settingsData = ref<RelatedTree[]>([]);
     const plotCustomData = ref<RelatedTree[]>([]);
     const analysisCustomData = ref<RelatedTree[]>([]);
+    const plotData = ref<Map<string, PlotAnalysisItem>>(new Map());
+    const analysisData = ref<Map<string, PlotAnalysisItem>>(new Map());
 
-    // --- Private Helpers ---
-    const _findNodeRecursive = (nodes: RelatedTree[], nodeId: string): { node: RelatedTree; parent: RelatedTree | null; siblings: RelatedTree[] } | null => {
-        for (let i = 0; i < nodes.length; i++) {
-            const node = nodes[i];
-            if (node.id === nodeId) {
-                return { node, parent: null, siblings: nodes };
-            }
-            if (node.children) {
-                const foundInChild = _findNodeRecursive(node.children, nodeId);
-                if (foundInChild) {
-                    if (!foundInChild.parent) {
-                        foundInChild.parent = node;
-                    }
-                    return foundInChild;
-                }
-            }
-        }
-        return null;
-    };
-
-    // BUG FIX: New helper to find node in the actual state, not in computed properties.
-    const _findNodeInState = (nodeId: string): RelatedTree | null => {
+    const _findNodeInSettingsOrCustom = (nodeId: string): { node: RelatedTree; parent: RelatedTree | null; siblings: RelatedTree[] } | null => {
         const sources = [settingsData.value, plotCustomData.value, analysisCustomData.value];
         for (const source of sources) {
-            const result = _findNodeRecursive(source, nodeId);
-            if (result) return result.node;
+            const result = _findNodeInTreeRecursive(source, nodeId);
+            if (result) return result;
         }
         return null;
     }
-
-    const _findAndRemoveNode = (nodes: RelatedTree[], nodeId: string): boolean => {
-        for (let i = 0; i < nodes.length; i++) {
-            if (nodes[i].id === nodeId) {
-                nodes.splice(i, 1);
-                return true;
-            }
-            if (nodes[i].children) {
-                if (_findAndRemoveNode(nodes[i].children!, nodeId)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    const _generateMirroredTree = (sourceNodes: Volume[], prefix: string, suffix: string, iconMap: { volume: string; chapter: string }): RelatedTree[] => {
-        return sourceNodes.map(volume => ({
-            id: `${prefix}_vol_${volume.id}`,
-            title: `${volume.title}${suffix}`,
-            type: `${prefix}_volume`,
-            icon: iconMap.volume,
-            content: `<h1>${volume.title}${suffix}</h1><p>这是对整个卷的派生内容占位符。</p>`,
-            children: volume.chapters.map(chapter => ({
-                id: `${prefix}_ch_${chapter.id}`,
-                title: `${chapter.title}${suffix}`,
-                type: `${prefix}_chapter`,
-                icon: iconMap.chapter,
-                content: `<h1>${chapter.title}${suffix}</h1><p>这是对章节的派生内容占位符，可以用于撰写相关剧情或进行分析。</p>`,
-            }))
-        }));
-    };
-
-    // --- Getters & Computed ---
-    const mirroredPlotTree = computed(() => {
-        const directoryStore = useDirectoryStore();
-        return _generateMirroredTree(directoryStore.directoryData, 'plot', ' 剧情', { volume: getIconByNodeType('plot_volume'), chapter: getIconByNodeType('plot_chapter') });
-    });
-
-    const mirroredAnalysisTree = computed(() => {
-        const directoryStore = useDirectoryStore();
-        return _generateMirroredTree(directoryStore.directoryData, 'analysis', ' 分析', { volume: getIconByNodeType('analysis_volume'), chapter: getIconByNodeType('analysis_chapter') });
-    });
 
     const processedSettingsData = computed(() => {
         const clonedData: RelatedTree[] = JSON.parse(JSON.stringify(settingsData.value));
@@ -121,19 +90,12 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
                     }).filter(Boolean);
 
                     const overviewContent = `<h1>${group.title}总览</h1>` + itemContents.join('<hr>');
-
                     const overviewId = `${group.id}-overview`;
                     const overviewType = `${group.id}_overview`;
                     let overviewNode = group.children.find(child => child.id === overviewId);
 
                     const overviewNodeData: RelatedTree = {
-                        id: overviewId,
-                        title: `${group.title}总览`,
-                        type: overviewType,
-                        icon: getIconByNodeType(overviewType),
-                        content: overviewContent,
-                        isOverview: true,
-                        isReadOnly: true,
+                        id: overviewId, title: `${group.title}总览`, type: overviewType, icon: getIconByNodeType(overviewType), content: overviewContent, isOverview: true, isReadOnly: true,
                     };
 
                     if (overviewNode) {
@@ -152,63 +114,144 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
     });
 
     const relatedData = computed((): RelatedTree[] => {
+        const allChapterIds = new Set(directoryStore.directoryData.flatMap(v => v.chapters.map(c => c.id)));
+        for (const key of plotData.value.keys()) {
+            if (!allChapterIds.has(key)) plotData.value.delete(key);
+        }
+        for (const key of analysisData.value.keys()) {
+            if (!allChapterIds.has(key)) analysisData.value.delete(key);
+        }
+
+        const buildDerivedTree = (
+            type: 'plot' | 'analysis',
+            dataMap: Map<string, PlotAnalysisItem>
+        ): RelatedTree[] => {
+            return directoryStore.directoryData.map(volume => ({
+                id: `${type}_vol_${volume.id}`,
+                title: volume.title,
+                type: `${type}_volume`,
+                icon: getIconByNodeType(`${type}_volume`),
+                isReadOnly: true,
+                children: volume.chapters
+                    .filter(chapter => dataMap.has(chapter.id))
+                    .map(chapter => {
+                        const item = dataMap.get(chapter.id)!;
+                        return {
+                            id: item.id,
+                            title: item.title,
+                            type: `${type}_chapter`,
+                            icon: getIconByNodeType(`${type}_chapter`),
+                            isReadOnly: true,
+                            originalData: item
+                        };
+                    })
+            })).filter(vol => vol.children.length > 0);
+        };
+
         const plotTree: RelatedTree = {
             id: 'plot', title: '剧情', type: 'root', icon: getIconByNodeType('plot'),
-            children: [...plotCustomData.value, ...mirroredPlotTree.value]
+            children: [...plotCustomData.value, ...buildDerivedTree('plot', plotData.value)]
         };
         const analysisTree: RelatedTree = {
             id: 'analysis', title: '分析', type: 'root', icon: getIconByNodeType('analysis'),
-            children: [...analysisCustomData.value, ...mirroredAnalysisTree.value]
+            children: [...analysisCustomData.value, ...buildDerivedTree('analysis', analysisData.value)]
         };
+
         return [...processedSettingsData.value, plotTree, analysisTree];
     });
 
-    // --- Actions ---
-
-    const fetchRelatedData = (settings: RelatedTree[], plot: RelatedTree[], analysis: RelatedTree[]) => {
+    function fetchRelatedData(settings: RelatedTree[], plot: RelatedTree[], analysis: RelatedTree[]) {
         settingsData.value = settings;
         plotCustomData.value = plot;
         analysisCustomData.value = analysis;
-    };
+    }
 
-    const findNodeById = (nodeId: string) => {
-        return _findNodeRecursive(relatedData.value, nodeId);
-    };
+    function ensureDerivedItemExists(itemId: string) {
+        const [type, sourceChapterId] = itemId.split(/_(.+)/);
+        if (!type || !sourceChapterId) return;
 
-    // BUG FIX: This function now correctly mutates the state.
-    const updateNodeContent = (nodeId: string, content: string) => {
-        const node = _findNodeInState(nodeId);
-        if (node && 'content' in node) {
-            node.content = content;
+        const dataMap = type === 'plot' ? plotData.value : analysisData.value;
+        if (dataMap.has(sourceChapterId)) return;
+
+        const chapterResult = directoryStore.findNodeById(sourceChapterId);
+        if (!chapterResult || chapterResult.node.type !== 'chapter') return;
+        const chapter = chapterResult.node;
+
+        const suffix = type === 'plot' ? ' 剧情' : ' 分析';
+        const newItem: PlotAnalysisItem = {
+            id: itemId,
+            sourceChapterId: sourceChapterId,
+            title: `${chapter.title}${suffix}`,
+            content: `<h1>${chapter.title}${suffix}</h1><p>AI正在生成内容，请稍候...</p>`
+        };
+        dataMap.set(sourceChapterId, newItem);
+    }
+
+    function findItemFromDerivedMaps(nodeId: string): PlotAnalysisItem | null {
+        const [type, sourceChapterId] = nodeId.split(/_(.+)/);
+        if (!type || !sourceChapterId) return null;
+
+        const dataMap = type === 'plot' ? plotData.value : (type === 'analysis' ? analysisData.value : null);
+        return dataMap?.get(sourceChapterId) ?? null;
+    }
+
+    function updateNodeContent(nodeId: string, content: string) {
+        const derivedItem = findItemFromDerivedMaps(nodeId);
+        if (derivedItem) {
+            derivedItem.content = content;
             const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
-            const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
-            if (newTitle && newTitle !== node.title) {
-                node.title = newTitle;
+            const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : derivedItem.title;
+            if (newTitle) {
+                derivedItem.title = newTitle;
+            }
+            return;
+        }
+
+        const result = _findNodeInSettingsOrCustom(nodeId);
+        if (result?.node && 'content' in result.node) {
+            result.node.content = content;
+            if(!result.node.isReadOnly) {
+                const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
+                const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
+                if (newTitle && newTitle !== result.node.title) {
+                    result.node.title = newTitle;
+                }
             }
         }
-    };
+    }
 
-    const appendNodeContent = (nodeId: string, contentToAppend: string, isAutoApplied: boolean) => {
-        const node = _findNodeInState(nodeId);
-        if (node && 'content' in node) {
+    function appendNodeContent(nodeId: string, contentToAppend: string, isAutoApplied: boolean) {
+        const derivedItem = findItemFromDerivedMaps(nodeId);
+        if (derivedItem) {
             const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
             let htmlToAppend = paragraphs;
             if (isAutoApplied) {
-                htmlToAppend += `<p class="ai-applied-marker">--- AI生成内容已应用 ---</p>`;
+                htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
             }
-            if (!node.content) {
-                node.content = "";
-            }
-            node.content += htmlToAppend;
+            if (!derivedItem.content) derivedItem.content = "";
+            derivedItem.content += htmlToAppend;
+            return;
         }
-    };
+
+        const result = _findNodeInSettingsOrCustom(nodeId);
+        if (result?.node && 'content' in result.node) {
+            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
+            let htmlToAppend = paragraphs;
+            if (isAutoApplied) {
+                htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
+            }
+            if (!result.node.content) result.node.content = "";
+            result.node.content += htmlToAppend;
+        }
+    }
 
     const addRelatedNode = (parentId: string, type: 'group' | 'item') => {
         const editorStore = useEditorStore();
         const uiStore = useUIStore();
-        const parentNode = _findNodeInState(parentId);
-        if (!parentNode) return;
+        const result = _findNodeInSettingsOrCustom(parentId);
+        if (!result?.node) return;
 
+        const parentNode = result.node;
         if (!parentNode.children) parentNode.children = [];
         const itemTypePrefix = parentNode.id.replace(/s$/, '');
         const newNodeType = type === 'group' ? 'group' : `${itemTypePrefix}_item`;
@@ -227,7 +270,6 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         if (newNode.content !== undefined) editorStore.openTab(newNode.id);
     };
 
-    // BUG FIX: This function now correctly mutates the state.
     const renameRelatedNode = (nodeId: string, newTitle: string) => {
         const uiStore = useUIStore();
         if (!newTitle.trim()) {
@@ -235,12 +277,12 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
             return;
         }
 
-        const node = _findNodeInState(nodeId);
-        if (node) {
+        const result = _findNodeInSettingsOrCustom(nodeId);
+        if (result?.node && !result.node.isReadOnly) {
             const trimmedTitle = newTitle.trim();
-            node.title = trimmedTitle;
-            if (node.content && node.content.includes('<h1>')) {
-                node.content = node.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
+            result.node.title = trimmedTitle;
+            if (result.node.content && result.node.content.includes('<h1>')) {
+                result.node.content = result.node.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
             }
         }
         uiStore.setEditingNodeId(null);
@@ -249,11 +291,11 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
     const deleteRelatedNode = (nodeId: string) => {
         const editorStore = useEditorStore();
         const uiStore = useUIStore();
-        const nodeToDelete = _findNodeInState(nodeId);
-        if (!nodeToDelete) return;
-        if (!window.confirm(`您确定要删除 "${nodeToDelete.title}" 吗？此操作无法撤销。`)) return;
+        const result = _findNodeInSettingsOrCustom(nodeId);
+        if (!result?.node) return;
+        if (!window.confirm(`您确定要删除 "${result.node.title}" 吗？此操作无法撤销。`)) return;
 
-        const wasRemoved = _findAndRemoveNode(settingsData.value, nodeId);
+        const wasRemoved = _findAndRemoveNodeInTree(settingsData.value, nodeId);
         if (wasRemoved) {
             editorStore.closeTab(nodeId);
             if (uiStore.editingNodeId === nodeId) uiStore.setEditingNodeId(null);
@@ -285,11 +327,11 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
     const deleteCustomRelatedNode = (nodeId: string) => {
         const editorStore = useEditorStore();
         const uiStore = useUIStore();
-        const nodeToDelete = _findNodeInState(nodeId);
-        if (!nodeToDelete) return;
-        if (!window.confirm(`您确定要删除 "${nodeToDelete.title}" 吗？此操作无法撤销。`)) return;
+        const result = _findNodeInSettingsOrCustom(nodeId);
+        if (!result?.node) return;
+        if (!window.confirm(`您确定要删除 "${result.node.title}" 吗？此操作无法撤销。`)) return;
 
-        let wasRemoved = _findAndRemoveNode(plotCustomData.value, nodeId) || _findAndRemoveNode(analysisCustomData.value, nodeId);
+        const wasRemoved = _findAndRemoveNodeInTree(plotCustomData.value, nodeId) || _findAndRemoveNodeInTree(analysisCustomData.value, nodeId);
 
         if (wasRemoved) {
             editorStore.closeTab(nodeId);
@@ -301,11 +343,14 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         settingsData,
         plotCustomData,
         analysisCustomData,
+        plotData,
+        analysisData,
         relatedData,
         fetchRelatedData,
-        findNodeById,
         updateNodeContent,
         appendNodeContent,
+        ensureDerivedItemExists,
+        findItemFromDerivedMaps,
         addRelatedNode,
         renameRelatedNode,
         deleteRelatedNode,

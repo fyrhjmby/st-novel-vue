@@ -1,3 +1,5 @@
+// 文件: src/novel/editor/components/content/FloatingToolbar.vue
+
 <template>
   <div
       v-if="visible"
@@ -17,6 +19,7 @@ import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
 import { useContextMenuStore } from '@/novel/editor/stores/contextPreviewStore';
+import type { AITask } from '@/novel/editor/types';
 
 const aiTaskStore = useAITaskStore();
 const editorStore = useEditorStore();
@@ -38,7 +41,7 @@ const hide = () => {
   visible.value = false;
 };
 
-const handleExecute = (taskType: '润色' | '续写' | '分析', event: MouseEvent) => {
+const handleExecute = (taskType: AITask['type'], event: MouseEvent) => {
   event.preventDefault();
 
   const activeItem = editorStore.activeTab?.item;
@@ -55,7 +58,7 @@ const handleExecute = (taskType: '润色' | '续写' | '分析', event: MouseEve
       title: activeItem.title
     });
   } else {
-    aiTaskStore.startNewTask(taskType, activeItem.id);
+    aiTaskStore.startTask(taskType, activeItem.id);
   }
 
   hide();

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { EditorUIState, SearchResult, EditorItem, RelatedTree, ContextItem, NovelMetadata } from '@/novel/editor/types';
+import type { EditorUIState, SearchResult, EditorItem, RelatedTree, ContextItem } from '@/novel/editor/types';
 import { useDirectoryStore } from './directoryStore';
 import { useRelatedContentStore } from './relatedContentStore';
 import { useNotesStore } from './notesStore';
@@ -15,6 +15,10 @@ export const useUIStore = defineStore('ui', () => {
         needsPreview: false,
         autoOpenAIPanel: true,
         activeTheme: 'default',
+        taskApplicationStrategy: {
+            mode: 'manual', // 'manual', 'auto', 'delayed'
+            delaySeconds: 3,
+        },
         customContextContent: '',
         dynamicContextSettings: { prevChapters: 3, nextChapters: 2, prevVolumes: 1, nextVolumes: 1 },
         isRagEnabled: true,
@@ -39,6 +43,10 @@ export const useUIStore = defineStore('ui', () => {
 
     const setTheme = (theme: 'default' | 'eye-care' | 'dark') => {
         uiState.value.activeTheme = theme;
+    };
+
+    const setTaskApplicationStrategy = (strategy: EditorUIState['taskApplicationStrategy']) => {
+        uiState.value.taskApplicationStrategy = strategy;
     };
 
     const setCustomContextContent = (content: string) => {
@@ -161,6 +169,7 @@ export const useUIStore = defineStore('ui', () => {
         setNeedsPreview,
         setAutoOpenAIPanel,
         setTheme,
+        setTaskApplicationStrategy,
         setCustomContextContent,
         setDynamicContextSettings,
         setRagEnabled,

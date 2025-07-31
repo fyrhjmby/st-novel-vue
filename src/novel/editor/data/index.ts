@@ -1,5 +1,5 @@
-// 文件: src/novel/editor/data/types.ts
-import type { Volume, RelatedTree, NoteItem, NovelMetadata, NovelCharacter } from '@/novel/editor/types';
+// 文件: src/novel/editor/data/index.ts
+import type { Volume, RelatedTree, NoteItem, NovelMetadata, NovelCharacter, AITask } from '@/novel/editor/types';
 
 export const mockDirectoryData: Volume[] = [
     {
@@ -76,10 +76,11 @@ export const mockNoteData: NoteItem[] = [
     { id: 'note-1', type: 'note', title: '第四章情感转折点设计', timestamp: '今天 14:32', content: '<h1>第四章情感转折点设计</h1><p>需要重点描写卡尔文在面对跃迁点时，希望与恐惧交织的复杂心理。</p>' },
 ];
 
-export const mockAIResponses: Record<'润色' | '续写' | '分析', string> = {
+export const mockAIResponses: Record<AITask['type'], string> = {
     '续写': "警报的尖啸犹如一把利刃，划破了卡尔文短暂的假寐。他猛然挺直身躯，猩红的警示灯在他眼中投下不祥的光晕。'发现引力异常，' 艾拉的合成音毫无波澜，却字字千钧，'我们正迫近一个理论中的时空奇点——跃迁点。根据数据库推演，这或许是返回太阳系的唯一路径。'",
     '润色': "控制台的警报声，如同一道惊雷，将卡尔文从混沌的浅眠中劈醒。他霍然坐直，闪烁的红色警告灯在视网膜上烙下灼热的印记。",
     '分析': "从文本来看，主角卡尔文此刻的情绪是震惊与希望的混合体。'浅眠'暗示了他长期的精神疲惫，而警报则是一个外部冲突的触发器。'回家'是核心动机，为后续情节发展提供了强大的驱动力。建议在后续描写中，可以加入更多关于他过去的回忆闪现，以丰富人物形象。",
+    '剧情生成': "卡尔文发现的跃迁点并非自然形成。一个古老的、早已消亡的文明建造了它，作为星际高速公路网络的一部分。这个文明的遗迹散布在跃迁点周围的星系中，每一个遗迹都像一个面包屑，引导着后来者。但同时，守护这些遗迹的古老自动化系统依然在运作，它们会将任何未经授权的闯入者视为威胁。"
 };
 
 export const mockNovelMetadata: NovelMetadata = {

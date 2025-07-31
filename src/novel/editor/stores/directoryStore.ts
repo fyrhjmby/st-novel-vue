@@ -1,13 +1,16 @@
+// 文件: src/novel/editor/stores/directoryStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { Volume, Chapter } from '@/novel/editor/types';
 import { useEditorStore } from './editorStore';
 import { useUIStore } from './uiStore';
+import { useRelatedContentStore } from './relatedContentStore';
 
 type DirectoryNode = Volume | Chapter;
 
 export const useDirectoryStore = defineStore('directory', () => {
     const directoryData = ref<Volume[]>([]);
+
     const _findNodeRecursive = (nodes: DirectoryNode[], nodeId: string): { node: DirectoryNode; parent: Volume | null; siblings: DirectoryNode[] } | null => {
         for (const node of nodes) {
             if (node.id === nodeId) {
@@ -23,12 +26,6 @@ export const useDirectoryStore = defineStore('directory', () => {
         return null;
     };
 
-
-    // --- Actions ---
-
-    /**
-     *  从 editorStore 接收目录数据。
-     */
     const fetchDirectoryData = (data: Volume[]) => {
         directoryData.value = data;
     };
@@ -60,7 +57,7 @@ export const useDirectoryStore = defineStore('directory', () => {
             const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
             let htmlToAppend = paragraphs;
             if (isAutoApplied) {
-                htmlToAppend += `<p class="ai-applied-marker">--- AI生成内容已应用 ---</p>`;
+                htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
             }
             chapter.content += htmlToAppend;
             const tempDiv = document.createElement('div');
@@ -71,6 +68,7 @@ export const useDirectoryStore = defineStore('directory', () => {
 
     const addNewVolume = () => {
         const uiStore = useUIStore();
+        const editorStore = useEditorStore();
         const newVolume: Volume = {
             id: `vol-${Date.now()}`,
             type: 'volume',
@@ -79,7 +77,7 @@ export const useDirectoryStore = defineStore('directory', () => {
             chapters: [],
         };
         directoryData.value.push(newVolume);
-        uiStore.setEditingNodeId(newVolume.id);
+        editorStore.setEditingNodeId(newVolume.id);
         uiStore.toggleNodeExpansion(newVolume.id);
     };
 
@@ -99,14 +97,14 @@ export const useDirectoryStore = defineStore('directory', () => {
             volume.chapters.push(newChapter);
             uiStore.toggleNodeExpansion(volume.id);
             editorStore.openTab(newChapter.id);
-            uiStore.setEditingNodeId(newChapter.id);
+            editorStore.setEditingNodeId(newChapter.id);
         }
     };
 
     const renameNode = (nodeId: string, newTitle: string) => {
-        const uiStore = useUIStore();
+        const editorStore = useEditorStore();
         if (!newTitle.trim()) {
-            uiStore.setEditingNodeId(null);
+            editorStore.setEditingNodeId(null);
             return;
         }
         const result = findNodeById(nodeId);
@@ -121,22 +119,36 @@ export const useDirectoryStore = defineStore('directory', () => {
                 }
             }
         }
-        uiStore.setEditingNodeId(null);
+        editorStore.setEditingNodeId(null);
     };
 
     const deleteNode = (nodeId: string) => {
         const result = findNodeById(nodeId);
         if (!result) return;
         if (!window.confirm(`您确定要删除 "${result.node.title}" 吗？此操作无法撤销。`)) return;
+
         const editorStore = useEditorStore();
-        const uiStore = useUIStore();
+
+        // 删除章节时，也删除关联的派生数据
+        if (result.node.type === 'chapter') {
+            const relatedContentStore = useRelatedContentStore();
+            relatedContentStore.plotData.delete(nodeId);
+            relatedContentStore.analysisData.delete(nodeId);
+        }
+
         if (result.parent && result.node.type === 'chapter') {
             result.parent.chapters = result.parent.chapters.filter(c => c.id !== nodeId);
         } else if (!result.parent && result.node.type === 'volume') {
             directoryData.value = directoryData.value.filter(v => v.id !== nodeId);
+            // 删除卷时，删除其下所有章节的派生数据
+            result.node.chapters.forEach(chapter => {
+                const relatedContentStore = useRelatedContentStore();
+                relatedContentStore.plotData.delete(chapter.id);
+                relatedContentStore.analysisData.delete(chapter.id);
+            });
         }
         editorStore.closeTab(nodeId);
-        if (uiStore.editingNodeId === nodeId) uiStore.setEditingNodeId(null);
+        if (editorStore.editingNodeId === nodeId) editorStore.setEditingNodeId(null);
     };
 
     return {

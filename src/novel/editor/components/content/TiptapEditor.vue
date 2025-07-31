@@ -1,5 +1,3 @@
-// 文件: src/novel/editor/components/content/TiptapEditor.vue
-
 <template>
   <div v-if="editor" class="editor-wrapper">
     <editor-content
@@ -77,7 +75,6 @@ onBeforeUnmount(() => {
 }
 
 :deep(.ProseMirror[contenteditable="false"]) {
-  /* background-color: #f9fafb; <-- 这行是错误的，已删除 */
   cursor: default;
 }
 
@@ -85,11 +82,11 @@ onBeforeUnmount(() => {
 
 :deep(.prose h1) {
   font-family: 'Noto Serif SC', serif;
-  font-size: 1.875rem; /* 30px */
+  font-size: 1.875rem;
   font-weight: 600;
-  margin-bottom: 2.5rem; /* 增加大标题下的间距 */
-  text-align: center; /* 标题居中 */
-  border-bottom: none; /* 确保h1没有下划线 */
+  margin-bottom: 2.5rem;
+  text-align: center;
+  border-bottom: none;
 }
 :deep(.prose p) {
   margin-top: 1em;
@@ -99,10 +96,10 @@ onBeforeUnmount(() => {
   font-family: 'Noto Serif SC', serif;
   font-size: 1.5rem; /* 24px */
   font-weight: 600;
-  padding-bottom: 0; /* 移除内边距 */
-  border-bottom: none; /* 移除下划线 */
-  margin-top: 2.5rem; /* 增加条目标题上的间距 */
-  margin-bottom: 1rem; /* 调整条目标题下的间距 */
+  padding-bottom: 0;
+  border-bottom: none;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
 }
 :deep(.prose h3) {
   font-family: 'Noto Serif SC', serif;
@@ -112,15 +109,15 @@ onBeforeUnmount(() => {
   margin-bottom: 0.75rem;
 }
 :deep(.prose hr) {
-  border-top: 1px solid #e5e7eb; /* 细的、浅灰色的线 */
-  margin: 3rem 0; /* 增加分隔线上下的间距 */
+  border-top: 1px solid #e5e7eb;
+  margin: 3rem 0;
 }
 :deep(.prose p.overview-placeholder) {
   text-align: center;
-  color: #9ca3af; /* text-gray-400 */
+  color: #9ca3af;
   font-style: italic;
   margin-top: 2rem;
-  border: 1px dashed #e5e7eb; /* border-gray-200 */
+  border: 1px dashed #e5e7eb;
   padding: 2rem;
   border-radius: 0.5rem;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;

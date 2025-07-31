@@ -1,3 +1,4 @@
+<!-- 文件: src/novel/editor/components/sidebar/RelatedTab.vue -->
 <template>
   <div class="related-tab-container">
     <div class="header">
@@ -20,7 +21,7 @@
         :nodes="relatedTree"
         :active-node-id="activeNodeId"
         :expanded-node-ids="uiStore.uiState.expandedRelatedNodeIds"
-        :editing-node-id="uiStore.editingNodeId"
+        :editing-node-id="editorStore.editingNodeId"
         @select-node="handleSelectNode"
         @toggle-expansion="handleToggleExpansion"
         @context-menu="handleContextMenu"
@@ -38,7 +39,6 @@ import TreeView, { type TreeNode } from './TreeView.vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
-import type { RelatedTree } from '@/novel/editor/types';
 
 const emit = defineEmits<{
   (e: 'show-context-menu', payload: { node: TreeNode; event: MouseEvent }): void;
@@ -51,15 +51,7 @@ const uiStore = useUIStore();
 const activeNodeId = computed(() => editorStore.activeTabId);
 
 const relatedTree = computed((): TreeNode[] => {
-  const mapNode = (node: RelatedTree): TreeNode => ({
-    id: node.id,
-    title: node.title,
-    icon: node.icon,
-    type: node.type,
-    originalData: node,
-    children: node.children ? node.children.map(mapNode) : []
-  });
-  return relatedContentStore.relatedData.map(mapNode);
+  return relatedContentStore.relatedData;
 });
 
 const handleSelectNode = (id: string) => {
@@ -83,7 +75,7 @@ const handleCommitRename = (payload: { nodeId: string; newTitle: string }) => {
 };
 
 const handleCancelRename = () => {
-  uiStore.setEditingNodeId(null);
+  editorStore.setEditingNodeId(null);
 };
 
 const handleAddNewCustomPlot = () => {

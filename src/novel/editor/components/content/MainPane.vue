@@ -1,5 +1,3 @@
-// 文件: src\novel\editor\components\content\MainPane.vue
-
 <template>
   <div class="main-pane-container" ref="containerRef">
     <template v-for="(pane, index) in panes" :key="pane.id">

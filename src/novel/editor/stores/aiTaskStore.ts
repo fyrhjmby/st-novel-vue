@@ -1,14 +1,25 @@
-// 文件: src\novel\editor\stores\aiTaskStore.ts
-
+// 文件: src/novel/editor/stores/aiTaskStore.ts
 import { defineStore } from 'pinia'
 import { ref, nextTick, computed } from 'vue'
 import { useEditorStore } from './editorStore'
 import { useUIStore } from './uiStore'
-import type { AITask, AITaskStatus, Volume } from '@/novel/editor/types';
+import { useRelatedContentStore } from './relatedContentStore';
+import type { AITask, Volume } from '@/novel/editor/types';
 import { mockAIResponses } from '@/novel/editor/data';
+
+const isReplaceTask = (type: AITask['type']) => {
+    return type === '分析' || type === '剧情生成';
+};
+
+const formatContentForEditor = (rawContent: string): string => {
+    return rawContent.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p}</p>`).join('');
+};
 
 export const useAITaskStore = defineStore('aiTask', () => {
     const tasks = ref<AITask[]>([]);
+    const editorStore = useEditorStore();
+    const uiStore = useUIStore();
+    const relatedContentStore = useRelatedContentStore();
 
     const activeTasksCount = computed(() => {
         return tasks.value.filter(t => t.status === 'processing' || t.status === 'pending').length;
@@ -18,11 +29,8 @@ export const useAITaskStore = defineStore('aiTask', () => {
         const task = tasks.value.find(t => t.id === taskId);
         if (!task || task.status !== 'pending') return;
 
-        const editorStore = useEditorStore();
-        const uiStore = useUIStore();
         task.status = 'processing';
         task.generatedContent = '';
-
         const mockResponseText = mockAIResponses[task.type];
         const words = mockResponseText.split('');
         let wordIndex = 0;
@@ -42,15 +50,31 @@ export const useAITaskStore = defineStore('aiTask', () => {
                     clearInterval(intervalId);
                     currentTask.status = 'failed';
                     currentTask.error = '生成超时，请检查网络后重试。';
+                    _processQueue();
                     return;
                 }
             } else {
                 clearInterval(intervalId);
                 currentTask.status = 'completed';
-                if (!uiStore.uiState.needsPreview) {
-                    editorStore.appendContentToItem(currentTask.targetItemId, currentTask.generatedContent, true);
-                    currentTask.status = 'applied';
+
+                const strategy = uiStore.uiState.taskApplicationStrategy;
+                switch (strategy.mode) {
+                    case 'auto':
+                        applyChanges(currentTask.id, true);
+                        break;
+                    case 'delayed':
+                        setTimeout(() => {
+                            const taskAfterDelay = tasks.value.find(t => t.id === taskId);
+                            if (taskAfterDelay && taskAfterDelay.status === 'completed') {
+                                applyChanges(taskId, true);
+                            }
+                        }, strategy.delaySeconds * 1000);
+                        break;
+                    case 'manual':
+                        break;
                 }
+
+                _processQueue();
             }
         }, 30);
     }
@@ -58,65 +82,65 @@ export const useAITaskStore = defineStore('aiTask', () => {
     const _processQueue = () => {
         const processingCount = tasks.value.filter(t => t.status === 'processing').length;
         if (processingCount > 0) return;
-
         const pendingTask = tasks.value.find(t => t.status === 'pending');
-        if (pendingTask) {
-            _simulateAIStream(pendingTask.id);
-        }
+        if (pendingTask) _simulateAIStream(pendingTask.id);
     };
 
-    const _addTask = (taskType: '润色' | '续写' | '分析', targetItemId: string) => {
-        const editorStore = useEditorStore();
-        const uiStore = useUIStore();
-        const { node: item } = editorStore.findItemById(targetItemId);
-
-        if (!item || !('content' in item)) {
-            console.error("无法启动AI任务：找不到目标文档或文档没有内容属性。", targetItemId);
-            return null;
+    const startTask = (taskType: AITask['type'], sourceItemId: string) => {
+        const { node: sourceItem } = editorStore.findItemById(sourceItemId);
+        if (!sourceItem || !('content' in sourceItem) || typeof sourceItem.content !== 'string') {
+            console.error("AI Task Error: Source item not found or has no content.", sourceItemId);
+            return;
         }
+
+        const sourceContent = sourceItem.content;
+        const baseTitle = sourceItem.title;
+        let targetItemId = sourceItemId;
+
+        if (isReplaceTask(taskType)) {
+            const prefix = taskType === '分析' ? 'analysis' : 'plot';
+            targetItemId = `${prefix}_${sourceItemId}`;
+            relatedContentStore.ensureDerivedItemExists(targetItemId);
+        }
+
+        editorStore.openTab(targetItemId);
 
         const newTask: AITask = {
             id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            title: `${taskType}《${item.title}》`,
+            title: `${taskType}《${baseTitle}》`,
             type: taskType,
             targetItemId: targetItemId,
             status: 'pending',
-            originalContent: item.content || '',
+            sourceContent: sourceContent,
             generatedContent: '',
             createdAt: new Date(),
         };
 
         tasks.value.unshift(newTask);
-
-        // 新增逻辑：检查设置并自动打开AI面板
         if (uiStore.uiState.autoOpenAIPanel && editorStore.activePaneId) {
             editorStore.ensureAIPanelIsOpen(editorStore.activePaneId);
-        }
-
-        return newTask;
-    };
-
-    const startNewTask = (taskType: '润色' | '续写' | '分析', targetItemId: string) => {
-        const task = _addTask(taskType, targetItemId);
-        if (task) {
-            nextTick(_processQueue);
-        }
-    };
-
-    const startBatchTaskForVolume = (taskType: '润色' | '续写' | '分析', volume: Volume) => {
-        if (!volume || !volume.chapters) return;
-
-        for (const chapter of volume.chapters) {
-            _addTask(taskType, chapter.id);
         }
         nextTick(_processQueue);
     };
 
-    const applyChanges = (taskId: string) => {
+    const startBatchTaskForVolume = (taskType: AITask['type'], volume: Volume) => {
+        if (!volume || !volume.chapters) return;
+        volume.chapters.forEach(chapter => startTask(taskType, chapter.id));
+    };
+
+    const applyChanges = (taskId: string, isAutoApplied: boolean = false) => {
         const task = tasks.value.find(t => t.id === taskId);
         if (task && task.status === 'completed') {
-            const editorStore = useEditorStore();
-            editorStore.appendContentToItem(task.targetItemId, task.generatedContent, false);
+            const { node: targetNode } = editorStore.findItemById(task.targetItemId);
+            if (!targetNode) return;
+
+            if (isReplaceTask(task.type)) {
+                const newBody = formatContentForEditor(task.generatedContent);
+                const newContent = `<h1>${targetNode.title}</h1>${newBody}`;
+                editorStore.updateItemContentById(task.targetItemId, newContent);
+            } else {
+                editorStore.appendContentToItem(task.targetItemId, task.generatedContent, isAutoApplied);
+            }
             task.status = 'applied';
         }
     };
@@ -140,13 +164,6 @@ export const useAITaskStore = defineStore('aiTask', () => {
     };
 
     return {
-        tasks,
-        activeTasksCount,
-        startNewTask,
-        startBatchTaskForVolume,
-        applyChanges,
-        retryTask,
-        clearCompletedTasks,
-        clearAllTasks,
-    }
+        tasks, activeTasksCount, startTask, startBatchTaskForVolume, applyChanges, retryTask, clearCompletedTasks, clearAllTasks
+    };
 });

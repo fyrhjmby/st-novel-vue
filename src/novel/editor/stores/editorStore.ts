@@ -5,6 +5,7 @@ import { useTabStore } from './modules/tabStore';
 import { useItemStore } from './modules/itemStore';
 import { useSystemViewStore } from './modules/systemViewStore';
 import { useMetadataStore } from './modules/metadataStore';
+import { useUIStore } from './uiStore';
 import type { TabInfo } from '@/novel/editor/types';
 
 export { EditorPane };
@@ -15,10 +16,12 @@ export const useEditorStore = defineStore('editor-facade', () => {
     const itemStore = useItemStore();
     const systemViewStore = useSystemViewStore();
     const metadataStore = useMetadataStore();
+    const uiStore = useUIStore();
 
     const panes = computed(() => paneStore.panes);
     const activePaneId = computed(() => paneStore.activePaneId);
     const novelMetadata = computed(() => metadataStore.novelMetadata);
+    const editingNodeId = computed(() => uiStore.editingNodeId);
 
     const activePane = computed(() => panes.value.find(p => p.id === activePaneId.value));
     const activeTabId = computed(() => activePane.value?.activeTabId ?? null);
@@ -49,40 +52,28 @@ export const useEditorStore = defineStore('editor-facade', () => {
         return getActiveTabForPane(activePane.value.id);
     });
 
-    /**
-     * Splits a pane and duplicates its active tab into the new pane.
-     * This is specifically for the user-facing split button.
-     * @param sourcePaneId The ID of the pane to split.
-     */
     const splitPane = (sourcePaneId: string) => {
         const sourcePane = paneStore.panes.find(p => p.id === sourcePaneId);
         if (!sourcePane) {
             console.warn(`splitPane failed: source pane with id ${sourcePaneId} not found.`);
             return;
         }
-
-        // This just creates the pane and inserts it.
         const newPaneId = paneStore.splitPane(sourcePaneId);
-
-        // This is the new logic to avoid empty panes by duplicating the active tab
         if (sourcePane.activeTabId) {
             tabStore.openTab(sourcePane.activeTabId, newPaneId);
         }
     };
 
-
     return {
         panes,
         activePaneId,
         novelMetadata,
+        editingNodeId,
         activePane,
         activeTabId,
         activeTab,
-
-        // The smart splitPane is now exposed
         splitPane,
-
-        // Direct pass-throughs for other modules
+        setEditingNodeId: uiStore.setEditingNodeId,
         setActivePane: paneStore.setActivePane,
         closePane: paneStore.closePane,
         openTab: tabStore.openTab,

@@ -1,5 +1,3 @@
-// 文件: src\novel\editor\components\layout\BreadcrumbsBar.vue
-
 <template>
   <div class="breadcrumbs-bar-container" :class="{'is-active-pane': isActive}">
     <div class="breadcrumbs">

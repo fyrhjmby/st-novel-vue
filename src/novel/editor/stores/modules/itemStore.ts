@@ -1,8 +1,9 @@
+// 文件: src/novel/editor/stores/modules/itemStore.ts
 import { defineStore } from 'pinia';
 import { useDirectoryStore } from '../directoryStore';
 import { useRelatedContentStore } from '../relatedContentStore';
 import { useNotesStore } from '../notesStore';
-import type { EditorItem, SystemViewInfo } from '@/novel/editor/types';
+import type { EditorItem, SystemViewInfo, RelatedTree } from '@/novel/editor/types';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
 
 export const SYSTEM_VIEWS: Record<string, SystemViewInfo> = {
@@ -24,6 +25,7 @@ export const useItemStore = defineStore('editor-item', () => {
     const notesStore = useNotesStore();
 
     function findItemById(id: string): { node: EditorItem | null; source: string | null } {
+        // 1. Check for System Views
         if (id.startsWith('system:')) {
             const parts = id.split(':');
             const baseId = parts.length > 2 && (parts[1] === 'history') ? parts.slice(0, 2).join(':') : id;
@@ -41,12 +43,42 @@ export const useItemStore = defineStore('editor-item', () => {
             }
         }
 
+        // 2. Check for AI Derived Items (Plot/Analysis)
+        const derivedItem = relatedContentStore.findItemFromDerivedMaps(id);
+        if (derivedItem) {
+            const type = id.startsWith('plot_') ? 'plot_chapter' : 'analysis_chapter';
+            const treeNode: RelatedTree = {
+                id: derivedItem.id,
+                title: derivedItem.title,
+                type: type,
+                icon: getIconByNodeType(type),
+                content: derivedItem.content,
+                isReadOnly: true,
+                originalData: derivedItem
+            };
+            return { node: treeNode, source: 'related' };
+        }
+
+        // 3. Check Directory
         let result = directoryStore.findNodeById(id);
         if (result?.node) return { node: result.node, source: 'directory' };
 
-        result = relatedContentStore.findNodeById(id);
-        if (result?.node) return { node: result.node, source: 'related' };
+        // 4. Check Related Content (Settings & Custom Items)
+        const findInRelatedTree = (nodes: RelatedTree[]): RelatedTree | undefined => {
+            for (const node of nodes) {
+                if (node.id === id) return node;
+                if (node.children) {
+                    const found = findInRelatedTree(node.children);
+                    if (found) return found;
+                }
+            }
+            return undefined;
+        };
+        const relatedNode = findInRelatedTree(relatedContentStore.relatedData);
+        if(relatedNode) return { node: relatedNode, source: 'related' };
 
+
+        // 5. Check Notes
         const note = notesStore.findNoteById(id);
         if (note) return { node: note, source: 'notes' };
 

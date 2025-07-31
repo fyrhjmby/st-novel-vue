@@ -1,11 +1,13 @@
+
+
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
-
+import type { AITask } from '@/novel/editor/types';
 
 interface PreviewTask {
-    type: '润色' | '续写' | '分析';
-    targetItemId: string;
+    type: AITask['type'];
+    targetItemId: string; 
     title: string;
 }
 
@@ -25,18 +27,11 @@ export const useContextMenuStore = defineStore('editorContextPreview', () => {
 
     const execute = () => {
         if (!task.value) return;
-
         const aiTaskStore = useAITaskStore();
-        aiTaskStore.startNewTask(task.value.type, task.value.targetItemId);
-
+        // Call the centralized task starter
+        aiTaskStore.startTask(task.value.type, task.value.targetItemId);
         hide();
     };
 
-    return {
-        isVisible,
-        task,
-        show,
-        hide,
-        execute,
-    };
+    return { isVisible, task, show, hide, execute };
 });

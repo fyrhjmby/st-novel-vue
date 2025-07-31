@@ -57,6 +57,7 @@ import type { AITask, AITaskStatus } from '@/novel/editor/types';
 
 const emit = defineEmits<{
   (e: 'select-task', task: AITask): void;
+  (e: 'apply-changes', taskId: string): void;
 }>();
 
 const aiTaskStore = useAITaskStore();
@@ -103,7 +104,7 @@ const handleRetry = (task: AITask) => {
 };
 
 const handleApplyChanges = (taskId: string) => {
-  aiTaskStore.applyChanges(taskId);
+  emit('apply-changes', taskId);
 }
 </script>
 

@@ -1,5 +1,3 @@
-
-
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { NoteItem } from '@/novel/editor/types';
@@ -36,8 +34,9 @@ export const useNotesStore = defineStore('notes', () => {
             const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
             let htmlToAppend = paragraphs;
             if (isAutoApplied) {
-                htmlToAppend += `<p class="ai-applied-marker">--- AI生成内容已应用 ---</p>`;
+                htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
             }
+            if (!note.content) note.content = "";
             note.content += htmlToAppend;
         }
     };

@@ -1,5 +1,4 @@
 // 文件: src/novel/editor/types/index.ts
-
 /**
  * 卷（目录的一级）
  */
@@ -15,12 +14,22 @@ export interface Volume {
  * 章节（目录的二级）
  */
 export interface Chapter {
-    id: string;
+    id:string;
     type: 'chapter';
     title: string;
     wordCount: number;
     content: string; // 章节正文 (HTML)
     status: 'planned' | 'editing' | 'completed' | 'archived';
+}
+
+/**
+ * AI生成的派生内容（剧情/分析）的存储结构
+ */
+export interface PlotAnalysisItem {
+    id: string; // 派生ID, e.g., 'plot_ch-1'
+    sourceChapterId: string; // 源章节ID, e.g., 'ch-1'
+    title: string; // 派生标题, e.g., '第一章 剧情'
+    content: string; // 生成的内容 (HTML)
 }
 
 /**
@@ -52,8 +61,8 @@ export interface RelatedTree {
     content?: string; // 可编辑的内容 (HTML)
     children?: RelatedTree[];
     originalData?: any; // 可选，用于存储原始关联数据
-    isOverview?: boolean;
-    isReadOnly?: boolean;
+    isOverview?: boolean; // 是否是自动生成的总览节点
+    isReadOnly?: boolean; // 节点是否只读
 }
 
 /**
@@ -78,10 +87,10 @@ export type AITaskStatus = 'pending' | 'processing' | 'completed' | 'failed' | '
 export interface AITask {
     id: string;
     title: string;
-    type: '润色' | '续写' | '分析';
+    type: '润色' | '续写' | '分析' | '剧情生成';
     targetItemId: string; // 任务目标文档的ID
     status: AITaskStatus;
-    originalContent: string;
+    sourceContent: string; // AI任务的源内容
     generatedContent: string;
     error?: string;
     createdAt: Date;
@@ -109,6 +118,10 @@ export interface EditorUIState {
     needsPreview: boolean;
     autoOpenAIPanel: boolean;
     activeTheme: 'default' | 'eye-care' | 'dark';
+    taskApplicationStrategy: {
+        mode: 'manual' | 'auto' | 'delayed';
+        delaySeconds: number;
+    };
     customContextContent: string;
     dynamicContextSettings: {
         prevChapters: number;
@@ -157,7 +170,7 @@ export interface SystemViewInfo {
 /**
  * 任意可被编辑器打开的条目
  */
-export type EditorItem = Volume | Chapter | RelatedTree | NoteItem | SystemViewInfo;
+export type EditorItem = Volume | Chapter | RelatedTree | NoteItem | SystemViewInfo | PlotAnalysisItem;
 
 /**
  * 搜索结果条目

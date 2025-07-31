@@ -18,6 +18,40 @@
           </p>
         </div>
       </div>
+
+      <div class="setting-item">
+        <label class="setting-label">任务应用策略</label>
+        <div class="setting-control">
+          <div class="space-y-3">
+            <div class="flex items-center">
+              <input id="apply-manual" type="radio" value="manual" v-model="applicationStrategy.mode" class="setting-radio" />
+              <label for="apply-manual" class="ml-3 font-medium text-gray-700">手动应用</label>
+            </div>
+            <div class="flex items-center">
+              <input id="apply-auto" type="radio" value="auto" v-model="applicationStrategy.mode" class="setting-radio" />
+              <label for="apply-auto" class="ml-3 font-medium text-gray-700">自动应用</label>
+            </div>
+            <div class="flex items-center">
+              <input id="apply-delayed" type="radio" value="delayed" v-model="applicationStrategy.mode" class="setting-radio" />
+              <label for="apply-delayed" class="ml-3 font-medium text-gray-700">延迟</label>
+              <input
+                  v-if="applicationStrategy.mode === 'delayed'"
+                  type="number"
+                  v-model.number="applicationStrategy.delaySeconds"
+                  min="1"
+                  class="setting-input w-20 ml-3 text-center"
+              />
+              <span v-if="applicationStrategy.mode === 'delayed'" class="ml-2 text-gray-700">秒后自动应用</span>
+            </div>
+          </div>
+          <p class="setting-description">
+            决定AI任务完成后，其生成的内容如何应用到文档中。<br>
+            <b>手动应用：</b>任务完成后状态变为“待应用”，需在任务面板手动点击应用。<br>
+            <b>自动应用：</b>任务完成后立即应用到文档中。
+          </p>
+        </div>
+      </div>
+
       <div class="setting-item">
         <label class="setting-label">清理任务</label>
         <div class="setting-control">
@@ -46,6 +80,11 @@ const uiStore = useUIStore();
 const autoOpenAIPanel = computed({
   get: () => uiStore.uiState.autoOpenAIPanel,
   set: (value) => uiStore.setAutoOpenAIPanel(value)
+});
+
+const applicationStrategy = computed({
+  get: () => uiStore.uiState.taskApplicationStrategy,
+  set: (value) => uiStore.setTaskApplicationStrategy(value)
 });
 
 const handleClearCompleted = () => {
@@ -99,5 +138,12 @@ const handleClearAll = () => {
   background-color: #FEE2E2;
 }
 .setting-checkbox { height: 1.25rem; width: 1.25rem; border-radius: 0.25rem; border: 1px solid #D1D5DB; color: #2563EB; }
-
+.setting-radio {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #2563EB;
+  border-color: #D1D5DB;
+}
+.setting-input { background-color: white; border: 1px solid #D1D5DB; border-radius: 0.375rem; padding: 0.5rem 0.75rem; outline: none; transition: all 0.2s; }
+.setting-input:focus { border-color: #3B82F6; box-shadow: 0 0 0 1px #3B82F6; }
 </style>

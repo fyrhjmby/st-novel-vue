@@ -1,3 +1,5 @@
+// 文件: src/novel/editor/components/content/EditorContextMenu.vue
+
 <template>
   <div
       v-if="visible"
@@ -29,6 +31,7 @@ import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
 import { useContextMenuStore } from '@/novel/editor/stores/contextPreviewStore';
+import type { AITask } from '@/novel/editor/types';
 
 const aiTaskStore = useAITaskStore();
 const editorStore = useEditorStore();
@@ -49,7 +52,7 @@ const hide = () => {
   visible.value = false;
 };
 
-const handleExecute = (taskType: '润色' | '续写' | '分析') => {
+const handleExecute = (taskType: AITask['type']) => {
   const activeItem = editorStore.activeTab?.item;
   if (!activeItem) {
     console.error("无法执行AI任务：没有激活的文档。");
@@ -64,7 +67,7 @@ const handleExecute = (taskType: '润色' | '续写' | '分析') => {
       title: activeItem.title
     });
   } else {
-    aiTaskStore.startNewTask(taskType, activeItem.id);
+    aiTaskStore.startTask(taskType, activeItem.id);
   }
 
   hide();

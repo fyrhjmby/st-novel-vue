@@ -1,5 +1,3 @@
-// 文件: src\novel\editor\components\content\PaneContentDispatcher.vue
-
 <template>
   <div class="pane-content-dispatcher">
     <template v-if="!activeTab">

@@ -17,7 +17,7 @@
           :nodes="directoryTree"
           :active-node-id="activeNodeId"
           :expanded-node-ids="uiStore.uiState.expandedNodeIds"
-          :editing-node-id="uiStore.editingNodeId"
+          :editing-node-id="editorStore.editingNodeId"
           @select-node="handleSelectNode"
           @toggle-expansion="handleToggleExpansion"
           @context-menu="handleContextMenu"
@@ -88,7 +88,7 @@ const handleCommitRename = (payload: { nodeId: string; newTitle: string }) => {
 };
 
 const handleCancelRename = () => {
-  uiStore.setEditingNodeId(null);
+  editorStore.setEditingNodeId(null);
 };
 </script>
 <style scoped>

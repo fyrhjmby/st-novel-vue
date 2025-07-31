@@ -1,5 +1,4 @@
 // 文件: src/novel/editor/stores/modules/metadataStore.ts
-
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { NovelMetadata } from '@/novel/editor/types';
@@ -34,6 +33,8 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
         uiStore.uiState.expandedNodeIds.add('vol-1');
         uiStore.uiState.expandedRelatedNodeIds.add('settings');
         uiStore.uiState.expandedRelatedNodeIds.add('characters');
+        uiStore.uiState.expandedRelatedNodeIds.add('plot');
+        uiStore.uiState.expandedRelatedNodeIds.add('analysis');
     }
 
     function removeTag(tagIndex: number) {
