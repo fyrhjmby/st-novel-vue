@@ -1,5 +1,5 @@
 // 文件: src/novel/editor/data/index.ts
-import type { Volume, RelatedTree, NoteItem, NovelMetadata, NovelCharacter, AITask } from '@/novel/editor/types';
+import type { Volume, Chapter, NoteItem, NovelMetadata, NovelCharacter, AITask, TreeNode, ItemNode, RootNode, GroupNode, PlotAnalysisItem } from '@/novel/editor/types';
 
 export const mockDirectoryData: Volume[] = [
     {
@@ -40,7 +40,7 @@ export const mockCharacters: NovelCharacter[] = [
     },
 ];
 
-export const mockSettingsData: RelatedTree[] = [
+export const mockSettingsData: TreeNode[] = [
     {
         id: 'settings', title: '设定', type: 'root', icon: 'fa-solid fa-book-journal-whills',
         children: [
@@ -51,26 +51,27 @@ export const mockSettingsData: RelatedTree[] = [
                         title: char.name,
                         type: 'character_item',
                         icon: 'fa-regular fa-user',
-                        content: `<h1>${char.name}</h1><p>${char.summary}</p>`
+                        content: `<h1>${char.name}</h1><p>${char.summary}</p>`,
+                        originalData: char,
                     }))
                 ]
-            },
-            { id: 'locations', title: '地点', type: 'group', icon: 'fa-solid fa-map-location-dot text-green-500', children: [] },
-            { id: 'items', title: '物品', type: 'group', icon: 'fa-solid fa-box-archive text-amber-600', children: [] },
+            } as GroupNode,
+            { id: 'locations', title: '地点', type: 'group', icon: 'fa-solid fa-map-location-dot text-green-500', children: [] } as GroupNode,
+            { id: 'items', title: '物品', type: 'group', icon: 'fa-solid fa-box-archive text-amber-600', children: [] } as GroupNode,
             {
                 id: 'worldview', title: '世界观', type: 'group', icon: 'fa-solid fa-earth-americas text-sky-500', children: [
-                    { id: 'world-overview', title: '世界观总览', type: 'worldview_item', icon: 'fa-solid fa-book-atlas', content: '<h1>世界观总览</h1><p>23世纪，人类掌握了亚光速航行技术，开始探索临近星系。</p>' },
+                    { id: 'world-overview', title: '世界观总览', type: 'worldview_item', icon: 'fa-solid fa-book-atlas', content: '<h1>世界观总览</h1><p>23世纪，人类掌握了亚光速航行技术，开始探索临近星系。</p>' } as ItemNode,
                 ]
-            }
+            } as GroupNode
         ]
-    }
+    } as RootNode,
 ];
 
-export const mockPlotCustomData: RelatedTree[] = [
+export const mockPlotCustomData: ItemNode[] = [
     { id: 'custom-plot-1', title: '关于跃迁点背后的文明猜想', type: 'plot_item', icon: 'fa-solid fa-lightbulb text-rose-500', content: '<h1>关于跃迁点背后的文明猜想</h1>' }
 ];
 
-export const mockAnalysisCustomData: RelatedTree[] = [];
+export const mockAnalysisCustomData: ItemNode[] = [];
 
 export const mockNoteData: NoteItem[] = [
     { id: 'note-1', type: 'note', title: '第四章情感转折点设计', timestamp: '今天 14:32', content: '<h1>第四章情感转折点设计</h1><p>需要重点描写卡尔文在面对跃迁点时，希望与恐惧交织的复杂心理。</p>' },

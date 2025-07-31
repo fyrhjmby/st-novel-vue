@@ -69,7 +69,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue';
 import type { PropType } from 'vue';
-import type { TreeNode } from '@/novel/editor/types';
+import type { TreeNode } from '@novel/editor/types';
 
 // --- Props & Emits ---
 const props = defineProps({

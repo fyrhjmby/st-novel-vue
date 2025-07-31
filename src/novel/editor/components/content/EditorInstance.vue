@@ -1,3 +1,5 @@
+// 文件: src/novel/editor/components/content/EditorInstance.vue
+
 <template>
   <div class="editor-instance-container" :class="{'is-active-pane': isActive}" @click="setActivePane">
     <!-- Level 1: Tabs + Pane Actions -->
@@ -37,7 +39,8 @@
 
 <script setup lang="ts">
 import { computed, ref, type PropType } from 'vue';
-import { useEditorStore, type EditorPane } from '@/novel/editor/stores/editorStore';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+import type { EditorPane } from '@/novel/editor/stores/modules/paneStore';
 import PaneActions from '../layout/PaneActions.vue';
 import BreadcrumbsBar from '../layout/BreadcrumbsBar.vue';
 import PaneContentDispatcher from './PaneContentDispatcher.vue';
@@ -61,11 +64,15 @@ const activeTab = computed(() => editorStore.getActiveTabForPane(props.pane.id))
 
 const activeTabContent = computed({
   get: () => {
-    if (activeTab.value?.item.type === 'system') return '';
-    return (activeTab.value?.item?.content as string) || '';
+    const item = activeTab.value?.item;
+    if (item && 'content' in item && typeof item.content === 'string') {
+      return item.content;
+    }
+    return '';
   },
   set: (newContent: string) => {
-    if (activeTab.value && activeTab.value.item.type !== 'system' && props.isActive) {
+    const item = activeTab.value?.item;
+    if (activeTab.value && item && 'content' in item && props.isActive) {
       editorStore.updateItemContentById(activeTab.value.id, newContent);
     }
   }

@@ -4,7 +4,7 @@ import { ref } from 'vue';
 import type { Volume, Chapter } from '@/novel/editor/types';
 import { useEditorStore } from './editorStore';
 import { useUIStore } from './uiStore';
-import { useRelatedContentStore } from './relatedContentStore';
+import { useDerivedContentStore } from './derivedContentStore';
 
 type DirectoryNode = Volume | Chapter;
 
@@ -54,7 +54,7 @@ export const useDirectoryStore = defineStore('directory', () => {
         const result = findNodeById(nodeId);
         if (result && result.node.type === 'chapter') {
             const chapter = result.node;
-            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
+            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
             let htmlToAppend = paragraphs;
             if (isAutoApplied) {
                 htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
@@ -128,24 +128,19 @@ export const useDirectoryStore = defineStore('directory', () => {
         if (!window.confirm(`您确定要删除 "${result.node.title}" 吗？此操作无法撤销。`)) return;
 
         const editorStore = useEditorStore();
+        const derivedContentStore = useDerivedContentStore();
 
-        // 删除章节时，也删除关联的派生数据
         if (result.node.type === 'chapter') {
-            const relatedContentStore = useRelatedContentStore();
-            relatedContentStore.plotData.delete(nodeId);
-            relatedContentStore.analysisData.delete(nodeId);
+            derivedContentStore.deleteDerivedDataForChapter(result.node.id);
         }
 
         if (result.parent && result.node.type === 'chapter') {
             result.parent.chapters = result.parent.chapters.filter(c => c.id !== nodeId);
         } else if (!result.parent && result.node.type === 'volume') {
-            directoryData.value = directoryData.value.filter(v => v.id !== nodeId);
-            // 删除卷时，删除其下所有章节的派生数据
             result.node.chapters.forEach(chapter => {
-                const relatedContentStore = useRelatedContentStore();
-                relatedContentStore.plotData.delete(chapter.id);
-                relatedContentStore.analysisData.delete(chapter.id);
+                derivedContentStore.deleteDerivedDataForChapter(chapter.id);
             });
+            directoryData.value = directoryData.value.filter(v => v.id !== nodeId);
         }
         editorStore.closeTab(nodeId);
         if (editorStore.editingNodeId === nodeId) editorStore.setEditingNodeId(null);

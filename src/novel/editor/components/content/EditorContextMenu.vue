@@ -27,16 +27,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import { useUIStore } from '@/novel/editor/stores/uiStore';
-import { useContextMenuStore } from '@/novel/editor/stores/contextPreviewStore';
+import { useAITaskExecutor } from '@/novel/editor/composables/useAITaskExecutor';
 import type { AITask } from '@/novel/editor/types';
 
-const aiTaskStore = useAITaskStore();
 const editorStore = useEditorStore();
-const uiStore = useUIStore();
-const contextPreviewStore = useContextMenuStore();
+const { executeAITask } = useAITaskExecutor();
 
 const visible = ref(false);
 const position = ref({ x: 0, y: 0 });
@@ -54,22 +50,13 @@ const hide = () => {
 
 const handleExecute = (taskType: AITask['type']) => {
   const activeItem = editorStore.activeTab?.item;
-  if (!activeItem) {
-    console.error("无法执行AI任务：没有激活的文档。");
+  if (!activeItem || !('content' in activeItem)) {
+    console.error("无法执行AI任务：没有激活的文档或文档无内容。");
     hide();
     return;
   }
 
-  if (uiStore.uiState.needsPreview) {
-    contextPreviewStore.show({
-      type: taskType,
-      targetItemId: activeItem.id,
-      title: activeItem.title
-    });
-  } else {
-    aiTaskStore.startTask(taskType, activeItem.id);
-  }
-
+  executeAITask(taskType, { id: activeItem.id, title: activeItem.title });
   hide();
 }
 

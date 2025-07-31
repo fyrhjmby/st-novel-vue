@@ -1,3 +1,5 @@
+// 文件: src/novel/editor/components/sidebar/DirectoryTab.vue
+
 <template>
   <div class="directory-tab-container">
     <div class="header">
@@ -32,11 +34,12 @@
 </template>
 <script setup lang="ts">
 import { computed } from 'vue';
-import TreeView, { type TreeNode } from './TreeView.vue';
+import TreeView from './TreeView.vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
+import type { TreeNode, VolumeNode, ChapterNode } from '@/novel/editor/types';
 
 const emit = defineEmits<{
   (e: 'show-context-menu', payload: { node: TreeNode; event: MouseEvent }): void;
@@ -48,7 +51,7 @@ const uiStore = useUIStore();
 
 const activeNodeId = computed(() => editorStore.activeTabId);
 
-const directoryTree = computed((): TreeNode[] => {
+const directoryTree = computed((): VolumeNode[] => {
   return directoryStore.directoryData.map(volume => ({
     id: volume.id,
     title: volume.title,
@@ -59,16 +62,20 @@ const directoryTree = computed((): TreeNode[] => {
       id: chapter.id,
       title: chapter.title,
       icon: getIconByNodeType(chapter.type),
-      status: chapter.status,
       type: 'chapter',
+      status: chapter.status,
       originalData: chapter,
-      children: [],
     })),
   }));
 });
 
-const handleSelectNode = (id: string) => {
-  editorStore.openTab(id);
+const handleSelectNode = (node: TreeNode) => {
+  // 只有在节点有内容时才打开tab，否则切换展开状态
+  if (node.type === 'chapter' || ('content' in node && node.content)) {
+    editorStore.openTab(node.id);
+  } else if(node.children && node.children.length > 0) {
+    uiStore.toggleNodeExpansion(node.id);
+  }
 };
 
 const handleToggleExpansion = (id:string) => {

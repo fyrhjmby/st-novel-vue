@@ -1,3 +1,5 @@
+// 文件: src/novel/editor/components/ai/AIDiffPreview.vue
+
 <template>
   <div class="diff-preview-container">
     <div class="header">
@@ -42,7 +44,7 @@ import type { AITask } from '@/novel/editor/types';
 defineProps({
   previewTask: {
     type: Object as PropType<AITask | null>,
-    default: null
+    default: null,
   }
 });
 

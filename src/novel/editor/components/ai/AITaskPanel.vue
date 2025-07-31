@@ -1,3 +1,5 @@
+// 文件: src/novel/editor/components/ai/AITaskPanel.vue
+
 <template>
   <div class="ai-task-panel-container">
     <div class="task-queue-section">

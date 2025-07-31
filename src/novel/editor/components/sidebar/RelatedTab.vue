@@ -1,4 +1,4 @@
-<!-- 文件: src/novel/editor/components/sidebar/RelatedTab.vue -->
+// 文件: src/novel/editor/components/sidebar/RelatedTab.vue
 <template>
   <div class="related-tab-container">
     <div class="header">
@@ -35,10 +35,11 @@
 </template>
 <script setup lang="ts">
 import { computed } from 'vue';
-import TreeView, { type TreeNode } from './TreeView.vue';
+import TreeView from './TreeView.vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
+import type { TreeNode } from '@/novel/editor/types';
 
 const emit = defineEmits<{
   (e: 'show-context-menu', payload: { node: TreeNode; event: MouseEvent }): void;
@@ -54,8 +55,13 @@ const relatedTree = computed((): TreeNode[] => {
   return relatedContentStore.relatedData;
 });
 
-const handleSelectNode = (id: string) => {
-  editorStore.openTab(id);
+const handleSelectNode = (node: TreeNode) => {
+  // 只有在节点有内容时才打开tab，否则切换展开状态
+  if ('content' in node && node.content !== undefined) {
+    editorStore.openTab(node.id);
+  } else if(node.children && node.children.length > 0) {
+    uiStore.toggleRelatedNodeExpansion(node.id);
+  }
 };
 
 const handleToggleExpansion = (id: string) => {

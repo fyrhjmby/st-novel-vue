@@ -3,7 +3,8 @@ import { defineStore } from 'pinia';
 import { useDirectoryStore } from '../directoryStore';
 import { useRelatedContentStore } from '../relatedContentStore';
 import { useNotesStore } from '../notesStore';
-import type { EditorItem, SystemViewInfo, RelatedTree } from '@/novel/editor/types';
+import { useDerivedContentStore } from '../derivedContentStore';
+import type { EditorItem, SystemViewInfo, TreeNode, PlotAnalysisItem } from '@/novel/editor/types';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
 
 export const SYSTEM_VIEWS: Record<string, SystemViewInfo> = {
@@ -23,6 +24,7 @@ export const useItemStore = defineStore('editor-item', () => {
     const directoryStore = useDirectoryStore();
     const relatedContentStore = useRelatedContentStore();
     const notesStore = useNotesStore();
+    const derivedContentStore = useDerivedContentStore();
 
     function findItemById(id: string): { node: EditorItem | null; source: string | null } {
         // 1. Check for System Views
@@ -43,40 +45,19 @@ export const useItemStore = defineStore('editor-item', () => {
             }
         }
 
-        // 2. Check for AI Derived Items (Plot/Analysis)
-        const derivedItem = relatedContentStore.findItemFromDerivedMaps(id);
+        // 2. Check for AI Derived Items
+        const derivedItem = derivedContentStore.findItemFromDerivedMaps(id);
         if (derivedItem) {
-            const type = id.startsWith('plot_') ? 'plot_chapter' : 'analysis_chapter';
-            const treeNode: RelatedTree = {
-                id: derivedItem.id,
-                title: derivedItem.title,
-                type: type,
-                icon: getIconByNodeType(type),
-                content: derivedItem.content,
-                isReadOnly: true,
-                originalData: derivedItem
-            };
-            return { node: treeNode, source: 'related' };
+            return { node: derivedItem as PlotAnalysisItem, source: 'derived' };
         }
 
         // 3. Check Directory
-        let result = directoryStore.findNodeById(id);
-        if (result?.node) return { node: result.node, source: 'directory' };
+        let dirResult = directoryStore.findNodeById(id);
+        if (dirResult?.node) return { node: dirResult.node, source: 'directory' };
 
         // 4. Check Related Content (Settings & Custom Items)
-        const findInRelatedTree = (nodes: RelatedTree[]): RelatedTree | undefined => {
-            for (const node of nodes) {
-                if (node.id === id) return node;
-                if (node.children) {
-                    const found = findInRelatedTree(node.children);
-                    if (found) return found;
-                }
-            }
-            return undefined;
-        };
-        const relatedNode = findInRelatedTree(relatedContentStore.relatedData);
-        if(relatedNode) return { node: relatedNode, source: 'related' };
-
+        const relatedResult = relatedContentStore.findNodeById(id);
+        if(relatedResult?.node) return { node: relatedResult.node, source: 'related' };
 
         // 5. Check Notes
         const note = notesStore.findNoteById(id);
@@ -91,6 +72,7 @@ export const useItemStore = defineStore('editor-item', () => {
             case 'directory': directoryStore.updateChapterContent(id, content); break;
             case 'related': relatedContentStore.updateNodeContent(id, content); break;
             case 'notes': notesStore.updateNoteContent(id, content); break;
+            case 'derived': derivedContentStore.updateNodeContent(id, content); break;
         }
     }
 
@@ -100,6 +82,7 @@ export const useItemStore = defineStore('editor-item', () => {
             case 'directory': directoryStore.appendChapterContent(itemId, content, auto); break;
             case 'related': relatedContentStore.appendNodeContent(itemId, content, auto); break;
             case 'notes': notesStore.appendNoteContent(itemId, content, auto); break;
+            case 'derived': derivedContentStore.appendNodeContent(itemId, content, auto); break;
         }
     }
 

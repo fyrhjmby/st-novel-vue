@@ -1,3 +1,5 @@
+// 文件: src/novel/editor/components/content/PaneContentDispatcher.vue
+
 <template>
   <div class="pane-content-dispatcher">
     <template v-if="!activeTab">
@@ -30,7 +32,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount, shallowRef, type PropType } from 'vue';
-import type { TabInfo, RelatedTree } from '@/novel/editor/types';
+import type { TabInfo, SystemViewInfo } from '@/novel/editor/types';
 import TiptapEditor from './TiptapEditor.vue';
 import FloatingToolbar from './FloatingToolbar.vue';
 import EditorContextMenu from './EditorContextMenu.vue';
@@ -79,13 +81,20 @@ const systemViewMap = shallowRef({
 });
 
 const systemViewComponent = computed(() => {
-  if (props.activeTab?.item.type !== 'system') return null;
-  const componentName = (props.activeTab.item as any).component;
-  return systemViewMap.value[componentName] || null;
+  const item = props.activeTab?.item;
+  if (item?.type === 'system') {
+    const componentName = item.component;
+    return systemViewMap.value[componentName] || null;
+  }
+  return null;
 });
 
 const isCurrentTabReadOnly = computed(() => {
-  return (props.activeTab?.item as RelatedTree)?.isReadOnly === true;
+  const item = props.activeTab?.item;
+  if (item && 'isReadOnly' in item) {
+    return item.isReadOnly === true;
+  }
+  return false;
 });
 
 const wrapperRef = ref<HTMLElement | null>(null);

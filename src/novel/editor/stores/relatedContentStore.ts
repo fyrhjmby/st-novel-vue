@@ -1,13 +1,14 @@
 // 文件: src/novel/editor/stores/relatedContentStore.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { RelatedTree, PlotAnalysisItem } from '@/novel/editor/types';
 import { useEditorStore } from './editorStore';
 import { useUIStore } from './uiStore';
 import { useDirectoryStore } from './directoryStore';
+import { useDerivedContentStore } from './derivedContentStore';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
+import type { TreeNode, RootNode, GroupNode, ItemNode, OverviewNode } from '@/novel/editor/types';
 
-const _findNodeInTreeRecursive = (nodes: RelatedTree[], nodeId: string): { node: RelatedTree; parent: RelatedTree | null; siblings: RelatedTree[] } | null => {
+const _findNodeInTreeRecursive = (nodes: TreeNode[], nodeId: string): { node: TreeNode; parent: TreeNode | null; siblings: TreeNode[] } | null => {
     for (const node of nodes) {
         if (node.id === nodeId) {
             return { node, parent: null, siblings: nodes };
@@ -25,7 +26,7 @@ const _findNodeInTreeRecursive = (nodes: RelatedTree[], nodeId: string): { node:
     return null;
 };
 
-const _findAndRemoveNodeInTree = (nodes: RelatedTree[], nodeId: string): boolean => {
+const _findAndRemoveNodeInTree = (nodes: TreeNode[], nodeId: string): boolean => {
     for (let i = 0; i < nodes.length; i++) {
         if (nodes[i].id === nodeId) {
             nodes.splice(i, 1);
@@ -39,15 +40,11 @@ const _findAndRemoveNodeInTree = (nodes: RelatedTree[], nodeId: string): boolean
 }
 
 export const useRelatedContentStore = defineStore('relatedContent', () => {
-    const directoryStore = useDirectoryStore();
+    const settingsData = ref<TreeNode[]>([]);
+    const plotCustomData = ref<TreeNode[]>([]);
+    const analysisCustomData = ref<TreeNode[]>([]);
 
-    const settingsData = ref<RelatedTree[]>([]);
-    const plotCustomData = ref<RelatedTree[]>([]);
-    const analysisCustomData = ref<RelatedTree[]>([]);
-    const plotData = ref<Map<string, PlotAnalysisItem>>(new Map());
-    const analysisData = ref<Map<string, PlotAnalysisItem>>(new Map());
-
-    const _findNodeInSettingsOrCustom = (nodeId: string): { node: RelatedTree; parent: RelatedTree | null; siblings: RelatedTree[] } | null => {
+    const findNodeById = (nodeId: string): { node: TreeNode; parent: TreeNode | null; siblings: TreeNode[] } | null => {
         const sources = [settingsData.value, plotCustomData.value, analysisCustomData.value];
         for (const source of sources) {
             const result = _findNodeInTreeRecursive(source, nodeId);
@@ -56,20 +53,19 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         return null;
     }
 
-    const processedSettingsData = computed(() => {
-        const clonedData: RelatedTree[] = JSON.parse(JSON.stringify(settingsData.value));
+    const processedSettingsData = computed((): TreeNode[] => {
+        const clonedData: TreeNode[] = JSON.parse(JSON.stringify(settingsData.value));
         const overviewGroups = ['characters', 'locations', 'items', 'worldview'];
 
-        const findAndProcess = (nodes: RelatedTree[]) => {
+        const findAndProcess = (nodes: TreeNode[]) => {
             for (const node of nodes) {
                 if (node.type === 'group' && overviewGroups.includes(node.id) && node.children) {
-                    const group = node;
-                    const itemsToSummarize = group.children.filter(child => child.type.endsWith('_item'));
+                    const group = node as GroupNode;
+                    const itemsToSummarize = group.children.filter(child => child.type.endsWith('_item')) as ItemNode[];
 
                     const demoteHeadings = (htmlContent: string): string => {
                         const tempDiv = document.createElement('div');
                         tempDiv.innerHTML = htmlContent;
-
                         const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5');
                         headings.forEach(heading => {
                             const level = parseInt(heading.tagName.charAt(1), 10);
@@ -81,20 +77,16 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
                             }
                             heading.parentNode?.replaceChild(newHeading, heading);
                         });
-
                         return tempDiv.innerHTML;
                     }
 
-                    const itemContents = itemsToSummarize.map(item => {
-                        return item.content ? demoteHeadings(item.content) : '';
-                    }).filter(Boolean);
-
+                    const itemContents = itemsToSummarize.map(item => item.content ? demoteHeadings(item.content) : '').filter(Boolean);
                     const overviewContent = `<h1>${group.title}总览</h1>` + itemContents.join('<hr>');
                     const overviewId = `${group.id}-overview`;
-                    const overviewType = `${group.id}_overview`;
+                    const overviewType = `${group.id}_overview` as OverviewNode['type'];
                     let overviewNode = group.children.find(child => child.id === overviewId);
 
-                    const overviewNodeData: RelatedTree = {
+                    const overviewNodeData: OverviewNode = {
                         id: overviewId, title: `${group.title}总览`, type: overviewType, icon: getIconByNodeType(overviewType), content: overviewContent, isOverview: true, isReadOnly: true,
                     };
 
@@ -113,19 +105,22 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         return clonedData;
     });
 
-    const relatedData = computed((): RelatedTree[] => {
+    const relatedData = computed((): TreeNode[] => {
+        const directoryStore = useDirectoryStore();
+        const derivedContentStore = useDerivedContentStore();
+
         const allChapterIds = new Set(directoryStore.directoryData.flatMap(v => v.chapters.map(c => c.id)));
-        for (const key of plotData.value.keys()) {
-            if (!allChapterIds.has(key)) plotData.value.delete(key);
+        for (const key of derivedContentStore.plotData.keys()) {
+            if (!allChapterIds.has(key)) derivedContentStore.plotData.delete(key);
         }
-        for (const key of analysisData.value.keys()) {
-            if (!allChapterIds.has(key)) analysisData.value.delete(key);
+        for (const key of derivedContentStore.analysisData.keys()) {
+            if (!allChapterIds.has(key)) derivedContentStore.analysisData.delete(key);
         }
 
         const buildDerivedTree = (
             type: 'plot' | 'analysis',
-            dataMap: Map<string, PlotAnalysisItem>
-        ): RelatedTree[] => {
+            dataMap: Map<string, any>
+        ): TreeNode[] => {
             return directoryStore.directoryData.map(volume => ({
                 id: `${type}_vol_${volume.id}`,
                 title: volume.title,
@@ -148,68 +143,28 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
             })).filter(vol => vol.children.length > 0);
         };
 
-        const plotTree: RelatedTree = {
+        const plotTree: RootNode = {
             id: 'plot', title: '剧情', type: 'root', icon: getIconByNodeType('plot'),
-            children: [...plotCustomData.value, ...buildDerivedTree('plot', plotData.value)]
+            children: [...plotCustomData.value, ...buildDerivedTree('plot', derivedContentStore.plotData)]
         };
-        const analysisTree: RelatedTree = {
+        const analysisTree: RootNode = {
             id: 'analysis', title: '分析', type: 'root', icon: getIconByNodeType('analysis'),
-            children: [...analysisCustomData.value, ...buildDerivedTree('analysis', analysisData.value)]
+            children: [...analysisCustomData.value, ...buildDerivedTree('analysis', derivedContentStore.analysisData)]
         };
 
         return [...processedSettingsData.value, plotTree, analysisTree];
     });
 
-    function fetchRelatedData(settings: RelatedTree[], plot: RelatedTree[], analysis: RelatedTree[]) {
+    function fetchRelatedData(settings: TreeNode[], plot: TreeNode[], analysis: TreeNode[]) {
         settingsData.value = settings;
         plotCustomData.value = plot;
         analysisCustomData.value = analysis;
     }
 
-    function ensureDerivedItemExists(itemId: string) {
-        const [type, sourceChapterId] = itemId.split(/_(.+)/);
-        if (!type || !sourceChapterId) return;
-
-        const dataMap = type === 'plot' ? plotData.value : analysisData.value;
-        if (dataMap.has(sourceChapterId)) return;
-
-        const chapterResult = directoryStore.findNodeById(sourceChapterId);
-        if (!chapterResult || chapterResult.node.type !== 'chapter') return;
-        const chapter = chapterResult.node;
-
-        const suffix = type === 'plot' ? ' 剧情' : ' 分析';
-        const newItem: PlotAnalysisItem = {
-            id: itemId,
-            sourceChapterId: sourceChapterId,
-            title: `${chapter.title}${suffix}`,
-            content: `<h1>${chapter.title}${suffix}</h1><p>AI正在生成内容，请稍候...</p>`
-        };
-        dataMap.set(sourceChapterId, newItem);
-    }
-
-    function findItemFromDerivedMaps(nodeId: string): PlotAnalysisItem | null {
-        const [type, sourceChapterId] = nodeId.split(/_(.+)/);
-        if (!type || !sourceChapterId) return null;
-
-        const dataMap = type === 'plot' ? plotData.value : (type === 'analysis' ? analysisData.value : null);
-        return dataMap?.get(sourceChapterId) ?? null;
-    }
-
     function updateNodeContent(nodeId: string, content: string) {
-        const derivedItem = findItemFromDerivedMaps(nodeId);
-        if (derivedItem) {
-            derivedItem.content = content;
-            const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
-            const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : derivedItem.title;
-            if (newTitle) {
-                derivedItem.title = newTitle;
-            }
-            return;
-        }
-
-        const result = _findNodeInSettingsOrCustom(nodeId);
+        const result = findNodeById(nodeId);
         if (result?.node && 'content' in result.node) {
-            result.node.content = content;
+            (result.node as ItemNode).content = content;
             if(!result.node.isReadOnly) {
                 const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
                 const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
@@ -221,34 +176,23 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
     }
 
     function appendNodeContent(nodeId: string, contentToAppend: string, isAutoApplied: boolean) {
-        const derivedItem = findItemFromDerivedMaps(nodeId);
-        if (derivedItem) {
-            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
-            let htmlToAppend = paragraphs;
-            if (isAutoApplied) {
-                htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
-            }
-            if (!derivedItem.content) derivedItem.content = "";
-            derivedItem.content += htmlToAppend;
-            return;
-        }
-
-        const result = _findNodeInSettingsOrCustom(nodeId);
+        const result = findNodeById(nodeId);
         if (result?.node && 'content' in result.node) {
-            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
+            const itemNode = result.node as ItemNode;
+            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
             let htmlToAppend = paragraphs;
             if (isAutoApplied) {
                 htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
             }
-            if (!result.node.content) result.node.content = "";
-            result.node.content += htmlToAppend;
+            if (!itemNode.content) itemNode.content = "";
+            itemNode.content += htmlToAppend;
         }
     }
 
     const addRelatedNode = (parentId: string, type: 'group' | 'item') => {
         const editorStore = useEditorStore();
         const uiStore = useUIStore();
-        const result = _findNodeInSettingsOrCustom(parentId);
+        const result = findNodeById(parentId);
         if (!result?.node) return;
 
         const parentNode = result.node;
@@ -256,18 +200,18 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         const itemTypePrefix = parentNode.id.replace(/s$/, '');
         const newNodeType = type === 'group' ? 'group' : `${itemTypePrefix}_item`;
         const newNodeIcon = getIconByNodeType(newNodeType);
-        const newNode: RelatedTree = {
+        const newNode: TreeNode = {
             id: `${type}-${Date.now()}`,
             title: type === 'group' ? '新建分组' : '新建条目',
             type: newNodeType,
             icon: newNodeIcon,
             content: type === 'item' ? '<h1>新建条目</h1><p>请在此处填写内容...</p>' : undefined,
             children: type === 'group' ? [] : undefined,
-        };
+        } as GroupNode | ItemNode;
         parentNode.children.push(newNode);
         uiStore.toggleRelatedNodeExpansion(parentId);
         uiStore.setEditingNodeId(newNode.id);
-        if (newNode.content !== undefined) editorStore.openTab(newNode.id);
+        if ('content' in newNode && newNode.content !== undefined) editorStore.openTab(newNode.id);
     };
 
     const renameRelatedNode = (nodeId: string, newTitle: string) => {
@@ -276,13 +220,12 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
             uiStore.setEditingNodeId(null);
             return;
         }
-
-        const result = _findNodeInSettingsOrCustom(nodeId);
+        const result = findNodeById(nodeId);
         if (result?.node && !result.node.isReadOnly) {
             const trimmedTitle = newTitle.trim();
             result.node.title = trimmedTitle;
-            if (result.node.content && result.node.content.includes('<h1>')) {
-                result.node.content = result.node.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
+            if ('content' in result.node && result.node.content && result.node.content.includes('<h1>')) {
+                (result.node as ItemNode).content = (result.node as ItemNode).content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
             }
         }
         uiStore.setEditingNodeId(null);
@@ -291,7 +234,7 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
     const deleteRelatedNode = (nodeId: string) => {
         const editorStore = useEditorStore();
         const uiStore = useUIStore();
-        const result = _findNodeInSettingsOrCustom(nodeId);
+        const result = findNodeById(nodeId);
         if (!result?.node) return;
         if (!window.confirm(`您确定要删除 "${result.node.title}" 吗？此操作无法撤销。`)) return;
 
@@ -307,7 +250,7 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         const uiStore = useUIStore();
         const dataRef = target === 'plot' ? plotCustomData : analysisCustomData;
         const icon = getIconByNodeType(`${target}_item`);
-        const newNode: RelatedTree = {
+        const newNode: ItemNode = {
             id: `custom-${target}-${Date.now()}`,
             title: '新建自定义条目',
             type: `${target}_item`,
@@ -327,7 +270,7 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
     const deleteCustomRelatedNode = (nodeId: string) => {
         const editorStore = useEditorStore();
         const uiStore = useUIStore();
-        const result = _findNodeInSettingsOrCustom(nodeId);
+        const result = findNodeById(nodeId);
         if (!result?.node) return;
         if (!window.confirm(`您确定要删除 "${result.node.title}" 吗？此操作无法撤销。`)) return;
 
@@ -343,14 +286,11 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         settingsData,
         plotCustomData,
         analysisCustomData,
-        plotData,
-        analysisData,
         relatedData,
         fetchRelatedData,
+        findNodeById,
         updateNodeContent,
         appendNodeContent,
-        ensureDerivedItemExists,
-        findItemFromDerivedMaps,
         addRelatedNode,
         renameRelatedNode,
         deleteRelatedNode,

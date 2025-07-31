@@ -67,6 +67,8 @@ onMounted(() => {
 // 文件: ..\src\novel\editor\components\ai\AIDiffPreview.vue
 //
 
+// 文件: src/novel/editor/components/ai/AIDiffPreview.vue
+
 <template>
   <div class="diff-preview-container">
     <div class="header">
@@ -111,7 +113,7 @@ import type { AITask } from '@/novel/editor/types';
 defineProps({
   previewTask: {
     type: Object as PropType<AITask | null>,
-    default: null
+    default: null,
   }
 });
 
@@ -158,8 +160,135 @@ defineEmits<{
 </style>
 
 // =
+// 文件: ..\src\novel\editor\components\ai\AITaskItem.vue
+//
+
+// 文件: src/novel/editor/components/ai/AITaskItem.vue
+
+<template>
+  <div
+      :class="['task-item', `status-${task.status}`, { 'clickable': isClickable(task.status) }]"
+      @click="handleTaskClick"
+  >
+    <div class="task-item-header">
+      <p class="task-title" :title="task.title">{{ task.title }}</p>
+      <div class="flex items-center gap-2">
+            <span class="task-status-text">
+              <i :class="getStatusIcon(task.status)" class="status-icon"></i>
+              {{ getStatusText(task.status) }}
+            </span>
+        <button
+            v-if="task.status === 'completed'"
+            @click.stop="emit('apply-changes', task.id)"
+            class="apply-now-btn"
+        >
+          <i class="fa-solid fa-check fa-xs"></i>
+          应用
+        </button>
+      </div>
+    </div>
+
+    <div class="task-item-body">
+      <div v-if="task.status === 'processing'" class="progress-bar-container">
+        <div class="progress-bar"></div>
+      </div>
+      <p v-if="task.status === 'failed'" class="error-message">
+        {{ task.error }} <a href="#" @click.prevent.stop="emit('retry-task', task.id)" class="retry-link">重试</a>
+      </p>
+      <p v-if="isClickable(task.status)" class="message">
+        点击查看详情
+      </p>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { AITask, AITaskStatus } from '@/novel/editor/types';
+
+const props = defineProps({
+  task: {
+    type: Object as PropType<AITask>,
+    required: true,
+  },
+});
+
+const emit = defineEmits<{
+  (e: 'select-task', task: AITask): void;
+  (e: 'apply-changes', taskId: string): void;
+  (e: 'retry-task', taskId: string): void;
+}>();
+
+const getStatusText = (status: AITaskStatus): string => {
+  const map: Record<AITaskStatus, string> = {
+    pending: '等待中',
+    processing: '进行中...',
+    completed: '待应用',
+    failed: '失败',
+    applied: '已应用'
+  };
+  return map[status];
+};
+
+const getStatusIcon = (status: AITaskStatus): string => {
+  const map: Record<AITaskStatus, string> = {
+    pending: 'fa-solid fa-hourglass-half',
+    processing: 'fa-solid fa-spinner fa-spin',
+    completed: 'fa-solid fa-check-circle',
+    failed: 'fa-solid fa-times-circle',
+    applied: 'fa-solid fa-check-double'
+  };
+  return map[status];
+}
+
+const isClickable = (status: AITaskStatus): boolean => {
+  return ['completed', 'processing', 'applied', 'failed'].includes(status);
+};
+
+const handleTaskClick = () => {
+  if (isClickable(props.task.status)) {
+    emit('select-task', props.task);
+  }
+};
+</script>
+
+<style scoped>
+.task-item { padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #E5E7EB; transition: all 0.2s ease; background-color: #FFFFFF;}
+.task-item.clickable { cursor: pointer; }
+.task-item.clickable:hover { border-color: #D1D5DB; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.task-item.status-processing.clickable { border: 1px solid #93C5FD; background-color: #EFF6FF; }
+.task-item.status-processing.clickable:hover { background-color: #DBEAFE; border-color: #60A5FA; }
+.task-item.status-completed.clickable { border: 1px solid #BBF7D0; background-color: #F0FDF4; }
+.task-item.status-completed.clickable:hover { background-color: #DCFCE7; border-color: #A7F3D0; }
+.task-item.status-failed { border: 1px solid #FECACA; background-color: #FEF2F2; }
+.task-item.status-applied.clickable { border: 1px solid #E5E7EB; background-color: #F9FAFB; }
+.task-item.status-applied.clickable:hover { background-color: #F3F4F6; border-color: #E5E7EB; }
+.task-item-header { display: flex; justify-content: space-between; align-items: center; }
+.task-title { font-size: 0.875rem; font-weight: 500; color: #1F2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.task-status-text { font-size: 0.75rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
+.status-icon { width: 1rem; text-align: center; }
+.status-pending .task-status-text { color: #6B7280; }
+.status-processing .task-status-text { color: #2563EB; }
+.status-completed .task-status-text { color: #16A34A; }
+.status-failed .task-status-text { color: #DC2626; }
+.status-applied .task-status-text { color: #6B7280; }
+.task-item-body { margin-top: 0.5rem; }
+.progress-bar-container { width: 100%; background-color: #E5E7EB; border-radius: 9999px; height: 0.25rem; overflow: hidden; }
+.progress-bar { background-color: #3B82F6; height: 100%; width: 100%; border-radius: 9999px; animation: indeterminate-progress 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+@keyframes indeterminate-progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.error-message, .message { font-size: 0.75rem; margin-top: 0.25rem; }
+.error-message { color: #B91C1C; }
+.message { color: #6B7280; }
+.retry-link { text-decoration: underline; font-weight: 500; }
+.apply-now-btn { display: flex; align-items: center; gap: 0.25rem; background: #22C55E; color: white; padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 500; transition: background-color 0.2s; }
+.apply-now-btn:hover { background: #16A34A; }
+</style>
+
+// =
 // 文件: ..\src\novel\editor\components\ai\AITaskPanel.vue
 //
+
+// 文件: src/novel/editor/components/ai/AITaskPanel.vue
 
 <template>
   <div class="ai-task-panel-container">
@@ -223,6 +352,8 @@ const handleApplyChanges = (taskId: string) => {
 // 文件: ..\src\novel\editor\components\ai\AITaskQueue.vue
 //
 
+// 文件: src/novel/editor/components/ai/AITaskQueue.vue
+
 <template>
   <div class="task-queue-container">
     <div class="header">
@@ -230,42 +361,14 @@ const handleApplyChanges = (taskId: string) => {
       <span v-if="activeTasksCount > 0" class="badge">{{ activeTasksCount }}个活跃</span>
     </div>
     <div v-if="tasks.length > 0" class="task-list">
-      <div
+      <AITaskItem
           v-for="task in tasks"
           :key="task.id"
-          :class="['task-item', `status-${task.status}`, { 'clickable': isClickable(task.status) }]"
-          @click="handleTaskClick(task)"
-      >
-        <div class="task-item-header">
-          <p class="task-title" :title="task.title">{{ task.title }}</p>
-          <div class="flex items-center gap-2">
-            <span class="task-status-text">
-              <i :class="getStatusIcon(task.status)" class="status-icon"></i>
-              {{ getStatusText(task.status) }}
-            </span>
-            <button
-                v-if="task.status === 'completed'"
-                @click.stop="handleApplyChanges(task.id)"
-                class="apply-now-btn"
-            >
-              <i class="fa-solid fa-check fa-xs"></i>
-              应用
-            </button>
-          </div>
-        </div>
-
-        <div class="task-item-body">
-          <div v-if="task.status === 'processing'" class="progress-bar-container">
-            <div class="progress-bar"></div>
-          </div>
-          <p v-if="task.status === 'failed'" class="error-message">
-            {{ task.error }} <a href="#" @click.prevent.stop="handleRetry(task)" class="retry-link">重试</a>
-          </p>
-          <p v-if="isClickable(task.status)" class="message">
-            点击查看详情
-          </p>
-        </div>
-      </div>
+          :task="task"
+          @select-task="handleTaskClick"
+          @apply-changes="handleApplyChanges"
+          @retry-task="handleRetry"
+      />
     </div>
     <div v-else class="empty-state">
       <i class="fa-regular fa-folder-open text-3xl text-gray-300"></i>
@@ -278,7 +381,8 @@ const handleApplyChanges = (taskId: string) => {
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
-import type { AITask, AITaskStatus } from '@/novel/editor/types';
+import type { AITask } from '@/novel/editor/types';
+import AITaskItem from './AITaskItem.vue';
 
 const emit = defineEmits<{
   (e: 'select-task', task: AITask): void;
@@ -287,45 +391,14 @@ const emit = defineEmits<{
 
 const aiTaskStore = useAITaskStore();
 const tasks = computed(() => aiTaskStore.tasks);
-
-const activeTasksCount = computed(() => {
-  return tasks.value.filter(t => t.status === 'processing' || t.status === 'pending').length;
-});
-
-const getStatusText = (status: AITaskStatus): string => {
-  const map: Record<AITaskStatus, string> = {
-    pending: '等待中',
-    processing: '进行中...',
-    completed: '待应用',
-    failed: '失败',
-    applied: '已应用'
-  };
-  return map[status];
-};
-
-const getStatusIcon = (status: AITaskStatus): string => {
-  const map: Record<AITaskStatus, string> = {
-    pending: 'fa-solid fa-hourglass-half',
-    processing: 'fa-solid fa-spinner fa-spin',
-    completed: 'fa-solid fa-check-circle',
-    failed: 'fa-solid fa-times-circle',
-    applied: 'fa-solid fa-check-double'
-  };
-  return map[status];
-}
-
-const isClickable = (status: AITaskStatus): boolean => {
-  return ['completed', 'processing', 'applied', 'failed'].includes(status);
-};
+const activeTasksCount = computed(() => aiTaskStore.activeTasksCount);
 
 const handleTaskClick = (task: AITask) => {
-  if (isClickable(task.status)) {
-    emit('select-task', task);
-  }
+  emit('select-task', task);
 };
 
-const handleRetry = (task: AITask) => {
-  aiTaskStore.retryTask(task.id);
+const handleRetry = (taskId: string) => {
+  aiTaskStore.retryTask(taskId);
 };
 
 const handleApplyChanges = (taskId: string) => {
@@ -339,40 +412,11 @@ const handleApplyChanges = (taskId: string) => {
 .title { font-size: 0.875rem; font-weight: 500; color: #4B5563; }
 .badge { font-size: 0.75rem; font-weight: 500; padding: 0.125rem 0.5rem; border-radius: 9999px; color: #1D4ED8; background-color: #DBEAFE; }
 .task-list { flex-grow: 1; overflow-y: auto; space-y: 0.5rem; padding-right: 4px; }
-.task-item { padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #E5E7EB; transition: all 0.2s ease; background-color: #FFFFFF;}
-.task-item.clickable { cursor: pointer; }
-.task-item.clickable:hover { border-color: #D1D5DB; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-.task-item.status-processing.clickable { border: 1px solid #93C5FD; background-color: #EFF6FF; }
-.task-item.status-processing.clickable:hover { background-color: #DBEAFE; border-color: #60A5FA; }
-.task-item.status-completed.clickable { border: 1px solid #BBF7D0; background-color: #F0FDF4; }
-.task-item.status-completed.clickable:hover { background-color: #DCFCE7; border-color: #A7F3D0; }
-.task-item.status-failed { border: 1px solid #FECACA; background-color: #FEF2F2; }
-.task-item.status-applied.clickable { border: 1px solid #E5E7EB; background-color: #F9FAFB; }
-.task-item.status-applied.clickable:hover { background-color: #F3F4F6; border-color: #E5E7EB; }
-.task-item-header { display: flex; justify-content: space-between; align-items: center; }
-.task-title { font-size: 0.875rem; font-weight: 500; color: #1F2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.task-status-text { font-size: 0.75rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
-.status-icon { width: 1rem; text-align: center; }
-.status-pending .task-status-text { color: #6B7280; }
-.status-processing .task-status-text { color: #2563EB; }
-.status-completed .task-status-text { color: #16A34A; }
-.status-failed .task-status-text { color: #DC2626; }
-.status-applied .task-status-text { color: #6B7280; }
-.task-item-body { margin-top: 0.5rem; }
-.progress-bar-container { width: 100%; background-color: #E5E7EB; border-radius: 9999px; height: 0.25rem; overflow: hidden; }
-.progress-bar { background-color: #3B82F6; height: 100%; width: 100%; border-radius: 9999px; animation: indeterminate-progress 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-@keyframes indeterminate-progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-.error-message, .message { font-size: 0.75rem; margin-top: 0.25rem; }
-.error-message { color: #B91C1C; }
-.message { color: #6B7280; }
-.retry-link { text-decoration: underline; font-weight: 500; }
 .empty-state { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #9CA3AF; font-size: 0.875rem; }
 .task-list { scrollbar-width: thin; scrollbar-color: #D1D5DB #f9fafb; }
 .task-list::-webkit-scrollbar { width: 6px; }
 .task-list::-webkit-scrollbar-track { background: transparent; }
 .task-list::-webkit-scrollbar-thumb { background-color: #D1D5DB; border-radius: 3px; }
-.apply-now-btn { display: flex; align-items: center; gap: 0.25rem; background: #22C55E; color: white; padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 500; transition: background-color 0.2s; }
-.apply-now-btn:hover { background: #16A34A; }
 </style>
 
 // =
@@ -659,16 +703,12 @@ const chatStore = useChatStore();
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import { useUIStore } from '@/novel/editor/stores/uiStore';
-import { useContextMenuStore } from '@/novel/editor/stores/contextPreviewStore';
+import { useAITaskExecutor } from '@/novel/editor/composables/useAITaskExecutor';
 import type { AITask } from '@/novel/editor/types';
 
-const aiTaskStore = useAITaskStore();
 const editorStore = useEditorStore();
-const uiStore = useUIStore();
-const contextPreviewStore = useContextMenuStore();
+const { executeAITask } = useAITaskExecutor();
 
 const visible = ref(false);
 const position = ref({ x: 0, y: 0 });
@@ -686,22 +726,13 @@ const hide = () => {
 
 const handleExecute = (taskType: AITask['type']) => {
   const activeItem = editorStore.activeTab?.item;
-  if (!activeItem) {
-    console.error("无法执行AI任务：没有激活的文档。");
+  if (!activeItem || !('content' in activeItem)) {
+    console.error("无法执行AI任务：没有激活的文档或文档无内容。");
     hide();
     return;
   }
 
-  if (uiStore.uiState.needsPreview) {
-    contextPreviewStore.show({
-      type: taskType,
-      targetItemId: activeItem.id,
-      title: activeItem.title
-    });
-  } else {
-    aiTaskStore.startTask(taskType, activeItem.id);
-  }
-
+  executeAITask(taskType, { id: activeItem.id, title: activeItem.title });
   hide();
 }
 
@@ -719,6 +750,8 @@ defineExpose({ show, hide });
 // =
 // 文件: ..\src\novel\editor\components\content\EditorInstance.vue
 //
+
+// 文件: src/novel/editor/components/content/EditorInstance.vue
 
 <template>
   <div class="editor-instance-container" :class="{'is-active-pane': isActive}" @click="setActivePane">
@@ -759,7 +792,8 @@ defineExpose({ show, hide });
 
 <script setup lang="ts">
 import { computed, ref, type PropType } from 'vue';
-import { useEditorStore, type EditorPane } from '@/novel/editor/stores/editorStore';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+import type { EditorPane } from '@/novel/editor/stores/modules/paneStore';
 import PaneActions from '../layout/PaneActions.vue';
 import BreadcrumbsBar from '../layout/BreadcrumbsBar.vue';
 import PaneContentDispatcher from './PaneContentDispatcher.vue';
@@ -783,11 +817,15 @@ const activeTab = computed(() => editorStore.getActiveTabForPane(props.pane.id))
 
 const activeTabContent = computed({
   get: () => {
-    if (activeTab.value?.item.type === 'system') return '';
-    return (activeTab.value?.item?.content as string) || '';
+    const item = activeTab.value?.item;
+    if (item && 'content' in item && typeof item.content === 'string') {
+      return item.content;
+    }
+    return '';
   },
   set: (newContent: string) => {
-    if (activeTab.value && activeTab.value.item.type !== 'system' && props.isActive) {
+    const item = activeTab.value?.item;
+    if (activeTab.value && item && 'content' in item && props.isActive) {
       editorStore.updateItemContentById(activeTab.value.id, newContent);
     }
   }
@@ -927,16 +965,12 @@ const showEditorContextMenu = (event: MouseEvent) => {
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import { useUIStore } from '@/novel/editor/stores/uiStore';
-import { useContextMenuStore } from '@/novel/editor/stores/contextPreviewStore';
+import { useAITaskExecutor } from '@/novel/editor/composables/useAITaskExecutor';
 import type { AITask } from '@/novel/editor/types';
 
-const aiTaskStore = useAITaskStore();
 const editorStore = useEditorStore();
-const uiStore = useUIStore();
-const contextPreviewStore = useContextMenuStore();
+const { executeAITask } = useAITaskExecutor();
 
 const visible = ref(false);
 const position = ref({ top: 0, left: 0 });
@@ -957,22 +991,13 @@ const handleExecute = (taskType: AITask['type'], event: MouseEvent) => {
   event.preventDefault();
 
   const activeItem = editorStore.activeTab?.item;
-  if (!activeItem) {
-    console.error("无法执行AI任务：没有激活的文档。");
+  if (!activeItem || !('content' in activeItem)) {
+    console.error("无法执行AI任务：没有激活的文档或文档无内容。");
     hide();
     return;
   }
 
-  if (uiStore.uiState.needsPreview) {
-    contextPreviewStore.show({
-      type: taskType,
-      targetItemId: activeItem.id,
-      title: activeItem.title
-    });
-  } else {
-    aiTaskStore.startTask(taskType, activeItem.id);
-  }
-
+  executeAITask(taskType, { id: activeItem.id, title: activeItem.title });
   hide();
 }
 
@@ -1131,6 +1156,8 @@ const startResize = (event: MouseEvent, paneIndex: number) => {
 // 文件: ..\src\novel\editor\components\content\PaneContentDispatcher.vue
 //
 
+// 文件: src/novel/editor/components/content/PaneContentDispatcher.vue
+
 <template>
   <div class="pane-content-dispatcher">
     <template v-if="!activeTab">
@@ -1163,7 +1190,7 @@ const startResize = (event: MouseEvent, paneIndex: number) => {
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount, shallowRef, type PropType } from 'vue';
-import type { TabInfo, RelatedTree } from '@/novel/editor/types';
+import type { TabInfo, SystemViewInfo } from '@/novel/editor/types';
 import TiptapEditor from './TiptapEditor.vue';
 import FloatingToolbar from './FloatingToolbar.vue';
 import EditorContextMenu from './EditorContextMenu.vue';
@@ -1212,13 +1239,20 @@ const systemViewMap = shallowRef({
 });
 
 const systemViewComponent = computed(() => {
-  if (props.activeTab?.item.type !== 'system') return null;
-  const componentName = (props.activeTab.item as any).component;
-  return systemViewMap.value[componentName] || null;
+  const item = props.activeTab?.item;
+  if (item?.type === 'system') {
+    const componentName = item.component;
+    return systemViewMap.value[componentName] || null;
+  }
+  return null;
 });
 
 const isCurrentTabReadOnly = computed(() => {
-  return (props.activeTab?.item as RelatedTree)?.isReadOnly === true;
+  const item = props.activeTab?.item;
+  if (item && 'isReadOnly' in item) {
+    return item.isReadOnly === true;
+  }
+  return false;
 });
 
 const wrapperRef = ref<HTMLElement | null>(null);
@@ -2173,108 +2207,82 @@ const toggleCollapse = (section: keyof typeof collapsedStates) => {
 // 文件: ..\src\novel\editor\components\sidebar\DirectoryContextMenu.vue
 //
 
-<!-- 文件: src/novel/editor/components/sidebar/DirectoryContextMenu.vue -->
+// 文件: src/novel/editor/components/sidebar/DirectoryContextMenu.vue
 <template>
   <div
-      v-if="visible"
+      v-if="visible && menuComponent"
       class="context-menu"
       :style="{ top: `${position.y}px`, left: `${position.x}px` }"
       @click.stop
   >
-    <!-- 目录管理：卷 -->
-    <template v-if="node?.type === 'volume'">
-      <p class="menu-title">目录管理</p>
-      <div @click="handleAction('newChapter')" class="context-menu-item"><i class="fa-solid fa-plus w-4 text-center"></i><span>新建章节</span></div>
-      <div @click="handleAction('newVolume')" class="context-menu-item"><i class="fa-solid fa-folder-plus w-4 text-center"></i><span>新建卷</span></div>
-      <div @click="handleAction('rename')" class="context-menu-item"><i class="fa-solid fa-pencil w-4 text-center"></i><span>重命名</span></div>
-      <div class="context-menu-divider"></div>
-      <p class="menu-title">AI 批量任务</p>
-      <div @click="handleAIAction('分析', node, true)" class="context-menu-item"><i class="fa-solid fa-magnifying-glass-chart w-4 text-center text-[#F59E0B]"></i><span>批量分析章节</span></div>
-      <div @click="handleAIAction('剧情生成', node, true)" class="context-menu-item"><i class="fa-solid fa-feather w-4 text-center text-[#EC4899]"></i><span>批量生成剧情</span></div>
-      <div @click="handleAIAction('续写', node, true)" class="context-menu-item"><i class="fa-solid fa-wand-magic-sparkles w-4 text-center text-[#4B5563]"></i><span>批量续写章节</span></div>
-      <div class="context-menu-divider"></div>
-      <div @click="handleAction('delete')" class="context-menu-item danger"><i class="fa-solid fa-trash-can w-4 text-center"></i><span>删除卷</span></div>
-    </template>
-
-    <!-- 目录管理：章节 -->
-    <template v-else-if="node?.type === 'chapter'">
-      <p class="menu-title">文件操作</p>
-      <div @click="handleAction('rename')" class="context-menu-item"><i class="fa-solid fa-pencil w-4 text-center"></i><span>重命名</span></div>
-      <div class="context-menu-divider"></div>
-      <p class="menu-title">AI 助手</p>
-      <div @click="handleAIAction('分析', node)" class="context-menu-item"><i class="fa-solid fa-magnifying-glass-chart w-4 text-center text-[#F59E0B]"></i><span>分析内容</span></div>
-      <div @click="handleAIAction('剧情生成', node)" class="context-menu-item"><i class="fa-solid fa-feather w-4 text-center text-[#EC4899]"></i><span>生成剧情</span></div>
-      <div @click="handleAIAction('续写', node)" class="context-menu-item"><i class="fa-solid fa-wand-magic-sparkles w-4 text-center text-[#4B5563]"></i><span>续写内容</span></div>
-      <div @click="handleAIAction('润色', node)" class="context-menu-item"><i class="fa-solid fa-palette w-4 text-center text-[#3B82F6]"></i><span>润色内容</span></div>
-      <div class="context-menu-divider"></div>
-      <div @click="handleAction('delete')" class="context-menu-item danger"><i class="fa-solid fa-trash-can w-4 text-center"></i><span>删除章节</span></div>
-    </template>
-
-    <!-- 相关内容：设定分组 -->
-    <template v-else-if="node?.type === 'group'">
-      <p class="menu-title">设定管理</p>
-      <div @click="handleSettingsAction('newItem')" class="context-menu-item"><i class="fa-solid fa-plus w-4 text-center"></i><span>新建条目</span></div>
-      <div @click="handleSettingsAction('newGroup')" class="context-menu-item"><i class="fa-solid fa-folder-plus w-4 text-center"></i><span>新建分组</span></div>
-      <div @click="handleSettingsAction('rename')" class="context-menu-item"><i class="fa-solid fa-pencil w-4 text-center"></i><span>重命名</span></div>
-      <div @click="handleSettingsAction('delete')" class="context-menu-item danger"><i class="fa-solid fa-trash-can w-4 text-center"></i><span>删除分组</span></div>
-    </template>
-
-    <!-- 相关内容：设定条目 (非只读) -->
-    <template v-else-if="node?.type && node.type.endsWith('_item') && !node.originalData?.isReadOnly && !node.id.startsWith('custom-')">
-      <p class="menu-title">条目管理</p>
-      <div @click="handleSettingsAction('rename')" class="context-menu-item"><i class="fa-solid fa-pencil w-4 text-center"></i><span>重命名</span></div>
-      <div @click="handleSettingsAction('delete')" class="context-menu-item danger"><i class="fa-solid fa-trash-can w-4 text-center"></i><span>删除条目</span></div>
-    </template>
-
-    <!-- 相关内容: 剧情/分析 根节点 -->
-    <template v-else-if="node?.id === 'plot' || node?.id === 'analysis'">
-      <p class="menu-title">管理</p>
-      <div @click="handleCustomRelatedAction('newItem')" class="context-menu-item"><i class="fa-solid fa-plus w-4 text-center"></i><span>新建自定义{{ node.id === 'plot' ? '剧情' : '分析' }}</span></div>
-    </template>
-
-    <!-- 相关内容: 自定义剧情/分析条目 -->
-    <template v-else-if="node?.id.startsWith('custom-')">
-      <p class="menu-title">条目管理</p>
-      <div @click="handleCustomRelatedAction('rename')" class="context-menu-item"><i class="fa-solid fa-pencil w-4 text-center"></i><span>重命名</span></div>
-      <div @click="handleCustomRelatedAction('delete')" class="context-menu-item danger"><i class="fa-solid fa-trash-can w-4 text-center"></i><span>删除条目</span></div>
-    </template>
-
-    <!-- 笔记 -->
-    <template v-else-if="node?.type === 'note'">
-      <p class="menu-title">笔记管理</p>
-      <div @click="handleNoteAction('rename')" class="context-menu-item"><i class="fa-solid fa-pencil w-4 text-center"></i><span>重命名</span></div>
-      <div @click="handleNoteAction('delete')" class="context-menu-item danger"><i class="fa-solid fa-trash-can w-4 text-center"></i><span>删除笔记</span></div>
-    </template>
+    <component
+        :is="menuComponent"
+        :node="node!"
+        @action="handleAction"
+        @ai-action="handleAIAction"
+        @settings-action="handleSettingsAction"
+        @custom-related-action="handleCustomRelatedAction"
+        @note-action="handleNoteAction"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-import type { TreeNode } from './TreeView.vue';
-import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
+import { ref, onMounted, onBeforeUnmount, computed, defineAsyncComponent, shallowRef } from 'vue';
+import type { TreeNode } from '@/novel/editor/types';
+import { useAITaskExecutor } from '@/novel/editor/composables/useAITaskExecutor';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
 import { useNotesStore } from '@/novel/editor/stores/notesStore';
-import { useContextMenuStore } from '@/novel/editor/stores/contextPreviewStore';
 import type { AITask } from '@/novel/editor/types';
-import { useUIStore } from "@novel/editor/stores/uiStore.ts";
 
-const aiTaskStore = useAITaskStore();
-const editorStore = useEditorStore();
-const directoryStore = useDirectoryStore();
-const relatedContentStore = useRelatedContentStore();
-const notesStore = useNotesStore();
-const contextPreviewStore = useContextMenuStore();
-const uiStore = useUIStore();
+// --- 组件映射 ---
+const menuComponentMap = shallowRef({
+  'volume': defineAsyncComponent(() => import('./context-menus/VolumeMenu.vue')),
+  'chapter': defineAsyncComponent(() => import('./context-menus/ChapterMenu.vue')),
+  'group': defineAsyncComponent(() => import('./context-menus/GroupMenu.vue')),
+  'item': defineAsyncComponent(() => import('./context-menus/ItemMenu.vue')),
+  'root': defineAsyncComponent(() => import('./context-menus/RootMenu.vue')),
+  'custom_related': defineAsyncComponent(() => import('./context-menus/CustomRelatedMenu.vue')),
+  'note': defineAsyncComponent(() => import('./context-menus/NoteMenu.vue')),
+});
 
+// --- State and Props ---
 const visible = ref(false);
 const position = ref({ x: 0, y: 0 });
 const node = ref<TreeNode | null>(null);
 
+// --- Stores and Composables ---
+const { executeAITask } = useAITaskExecutor();
+const editorStore = useEditorStore();
+const directoryStore = useDirectoryStore();
+const relatedContentStore = useRelatedContentStore();
+const notesStore = useNotesStore();
+
+// --- Computed ---
+const menuComponent = computed(() => {
+  if (!node.value) return null;
+  const { type, id } = node.value;
+
+  if (menuComponentMap.value[type]) {
+    return menuComponentMap.value[type];
+  }
+  if (type === 'root' && (id === 'plot' || id === 'analysis')) {
+    return menuComponentMap.value['root'];
+  }
+  if (id.startsWith('custom-')) {
+    return menuComponentMap.value['custom_related'];
+  }
+  if (type.endsWith('_item')) {
+    return menuComponentMap.value['item'];
+  }
+  return null;
+});
+
+// --- Core Logic ---
 const show = (event: MouseEvent, targetNode: TreeNode) => {
-  if (targetNode.originalData?.isReadOnly || targetNode.type.endsWith('_overview') || targetNode.type.endsWith('_volume') || targetNode.type.endsWith('_chapter')) {
-    // Don't show menu for read-only derived nodes
+  if (targetNode.isReadOnly || targetNode.type.endsWith('_overview')) {
     return;
   }
   node.value = targetNode;
@@ -2288,85 +2296,60 @@ const hide = () => {
   node.value = null;
 };
 
+// --- Event Handlers ---
 const handleAIAction = (taskType: AITask['type'], sourceNode: TreeNode, isBatch = false) => {
-  if (!sourceNode) return;
   hide();
-
-  if (isBatch && sourceNode.type === 'volume' && 'chapters' in sourceNode.originalData) {
-    aiTaskStore.startBatchTaskForVolume(taskType, sourceNode.originalData);
+  if (isBatch && sourceNode.type === 'volume' && 'originalData' in sourceNode && sourceNode.originalData.type === 'volume') {
+    const aiTaskStore = (async () => (await import('@/novel/editor/stores/aiTaskStore')).useAITaskStore())();
+    aiTaskStore.then(store => store.startBatchTaskForVolume(taskType, sourceNode.originalData));
   } else {
-    if (uiStore.uiState.needsPreview) {
-      contextPreviewStore.show({
-        type: taskType,
-        targetItemId: sourceNode.id,
-        title: sourceNode.title,
-      });
-    } else {
-      aiTaskStore.startTask(taskType, sourceNode.id);
-    }
+    executeAITask(taskType, { id: sourceNode.id, title: sourceNode.title });
   }
 };
 
-const handleAction = (action: 'newChapter' | 'newVolume' | 'rename' | 'delete') => {
-  if (!node.value) return;
-  const nodeId = node.value.id;
-
+const handleAction = (action: string, payload: any) => {
+  hide();
+  const nodeId = payload?.nodeId;
   switch (action) {
     case 'newChapter': directoryStore.addChapterToVolume(nodeId); break;
     case 'newVolume': directoryStore.addNewVolume(); break;
     case 'rename': editorStore.setEditingNodeId(nodeId); break;
     case 'delete': directoryStore.deleteNode(nodeId); break;
   }
-  hide();
 };
 
-const handleSettingsAction = (action: 'newGroup' | 'newItem' | 'rename' | 'delete') => {
-  if (!node.value) return;
-  const nodeId = node.value.id;
-
+const handleSettingsAction = (action: string, payload: any) => {
+  hide();
+  const nodeId = payload?.nodeId;
   switch (action) {
     case 'newGroup': relatedContentStore.addRelatedNode(nodeId, 'group'); break;
     case 'newItem': relatedContentStore.addRelatedNode(nodeId, 'item'); break;
     case 'rename': editorStore.setEditingNodeId(nodeId); break;
     case 'delete': relatedContentStore.deleteRelatedNode(nodeId); break;
   }
-  hide();
 };
 
-const handleCustomRelatedAction = (action: 'newItem' | 'rename' | 'delete') => {
-  if (!node.value) return;
-  const nodeId = node.value.id;
-  const target = node.value.id === 'plot' ? 'plot' : 'analysis';
-
+const handleCustomRelatedAction = (action: string, payload: any) => {
+  hide();
+  const nodeId = payload?.nodeId;
+  const target = node.value?.id === 'plot' ? 'plot' : 'analysis';
   switch(action) {
-    case 'newItem':
-      relatedContentStore.addCustomRelatedNode(target);
-      break;
-    case 'rename':
-      editorStore.setEditingNodeId(nodeId);
-      break;
-    case 'delete':
-      relatedContentStore.deleteCustomRelatedNode(nodeId);
-      break;
+    case 'newItem': relatedContentStore.addCustomRelatedNode(target); break;
+    case 'rename': editorStore.setEditingNodeId(nodeId); break;
+    case 'delete': relatedContentStore.deleteCustomRelatedNode(nodeId); break;
   }
-  hide();
 };
 
-const handleNoteAction = (action: 'rename' | 'delete') => {
-  if (!node.value) return;
-  const nodeId = node.value.id;
-
+const handleNoteAction = (action: string, payload: any) => {
+  hide();
+  const nodeId = payload?.nodeId;
   switch (action) {
-    case 'rename':
-      editorStore.setEditingNodeId(nodeId);
-      break;
-    case 'delete':
-      notesStore.deleteNote(nodeId);
-      break;
+    case 'rename': editorStore.setEditingNodeId(nodeId); break;
+    case 'delete': notesStore.deleteNote(nodeId); break;
   }
-  hide();
 };
 
+// --- Lifecycle ---
 onMounted(() => {
   window.addEventListener('click', hide);
 });
@@ -2389,43 +2372,13 @@ defineExpose({ show, hide });
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   min-width: 14rem;
 }
-.context-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  color: #374151;
-  cursor: pointer;
-  user-select: none;
-  transition: background-color 0.15s, color 0.15s;
-}
-.context-menu-item:hover {
-  background-color: #f3f4f6;
-}
-.context-menu-item.danger:hover {
-  background-color: #fee2e2;
-  color: #b91c1c;
-}
-.context-menu-divider {
-  height: 1px;
-  background-color: #f3f4f6;
-  margin: 0.5rem 0;
-}
-.menu-title {
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
-  color: #9CA3AF;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
 </style>
 
 // =
 // 文件: ..\src\novel\editor\components\sidebar\DirectoryTab.vue
 //
+
+// 文件: src/novel/editor/components/sidebar/DirectoryTab.vue
 
 <template>
   <div class="directory-tab-container">
@@ -2461,11 +2414,12 @@ defineExpose({ show, hide });
 </template>
 <script setup lang="ts">
 import { computed } from 'vue';
-import TreeView, { type TreeNode } from './TreeView.vue';
+import TreeView from './TreeView.vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
+import type { TreeNode, VolumeNode, ChapterNode } from '@/novel/editor/types';
 
 const emit = defineEmits<{
   (e: 'show-context-menu', payload: { node: TreeNode; event: MouseEvent }): void;
@@ -2477,7 +2431,7 @@ const uiStore = useUIStore();
 
 const activeNodeId = computed(() => editorStore.activeTabId);
 
-const directoryTree = computed((): TreeNode[] => {
+const directoryTree = computed((): VolumeNode[] => {
   return directoryStore.directoryData.map(volume => ({
     id: volume.id,
     title: volume.title,
@@ -2488,16 +2442,20 @@ const directoryTree = computed((): TreeNode[] => {
       id: chapter.id,
       title: chapter.title,
       icon: getIconByNodeType(chapter.type),
-      status: chapter.status,
       type: 'chapter',
+      status: chapter.status,
       originalData: chapter,
-      children: [],
     })),
   }));
 });
 
-const handleSelectNode = (id: string) => {
-  editorStore.openTab(id);
+const handleSelectNode = (node: TreeNode) => {
+  // 只有在节点有内容时才打开tab，否则切换展开状态
+  if (node.type === 'chapter' || ('content' in node && node.content)) {
+    editorStore.openTab(node.id);
+  } else if(node.children && node.children.length > 0) {
+    uiStore.toggleNodeExpansion(node.id);
+  }
 };
 
 const handleToggleExpansion = (id:string) => {
@@ -2770,7 +2728,7 @@ const handleCancelRename = () => {
 // 文件: ..\src\novel\editor\components\sidebar\RelatedTab.vue
 //
 
-<!-- 文件: src/novel/editor/components/sidebar/RelatedTab.vue -->
+// 文件: src/novel/editor/components/sidebar/RelatedTab.vue
 <template>
   <div class="related-tab-container">
     <div class="header">
@@ -2807,10 +2765,11 @@ const handleCancelRename = () => {
 </template>
 <script setup lang="ts">
 import { computed } from 'vue';
-import TreeView, { type TreeNode } from './TreeView.vue';
+import TreeView from './TreeView.vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
+import type { TreeNode } from '@/novel/editor/types';
 
 const emit = defineEmits<{
   (e: 'show-context-menu', payload: { node: TreeNode; event: MouseEvent }): void;
@@ -2826,8 +2785,13 @@ const relatedTree = computed((): TreeNode[] => {
   return relatedContentStore.relatedData;
 });
 
-const handleSelectNode = (id: string) => {
-  editorStore.openTab(id);
+const handleSelectNode = (node: TreeNode) => {
+  // 只有在节点有内容时才打开tab，否则切换展开状态
+  if ('content' in node && node.content !== undefined) {
+    editorStore.openTab(node.id);
+  } else if(node.children && node.children.length > 0) {
+    uiStore.toggleRelatedNodeExpansion(node.id);
+  }
 };
 
 const handleToggleExpansion = (id: string) => {
@@ -2969,6 +2933,8 @@ const showDirectoryContextMenu = (payload: { node: TreeNode, event: MouseEvent }
 // 文件: ..\src\novel\editor\components\sidebar\TreeView.vue
 //
 
+// 文件: src/novel/editor/components/sidebar/TreeView.vue
+
 <template>
   <ul class="tree-view-list">
     <li v-for="node in nodes" :key="node.id" class="tree-view-item">
@@ -2976,7 +2942,7 @@ const showDirectoryContextMenu = (payload: { node: TreeNode, event: MouseEvent }
       <div
           class="node-content"
           :class="{ 'active': node.id === activeNodeId }"
-          @click="handleNodeClick(node.id)"
+          @click="handleNodeClick(node)"
           @contextmenu.prevent="emit('context-menu', { node, event: $event })"
       >
         <!-- 展开/折叠图标 -->
@@ -3011,7 +2977,7 @@ const showDirectoryContextMenu = (payload: { node: TreeNode, event: MouseEvent }
         </template>
 
         <!-- 节点状态徽章 (可选) -->
-        <span v-if="node.status" class="node-status-badge">
+        <span v-if="'status' in node && node.status" class="node-status-badge">
           {{ node.status === 'editing' ? '编辑中' : '' }}
         </span>
       </div>
@@ -3038,17 +3004,7 @@ const showDirectoryContextMenu = (payload: { node: TreeNode, event: MouseEvent }
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue';
 import type { PropType } from 'vue';
-
-// --- 类型定义 ---
-export interface TreeNode {
-  id: string;
-  title: string;
-  icon: string;
-  status?: string;
-  type: string;
-  children?: TreeNode[];
-  originalData: any;
-}
+import type { TreeNode } from '@novel/editor/types';
 
 // --- Props & Emits ---
 const props = defineProps({
@@ -3071,7 +3027,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'select-node', id: string): void;
+  (e: 'select-node', node: TreeNode): void;
   (e: 'toggle-expansion', id: string): void;
   (e: 'context-menu', payload: { node: TreeNode, event: MouseEvent }): void;
   (e: 'commit-rename', payload: { nodeId: string, newTitle: string }): void;
@@ -3091,9 +3047,9 @@ watch(() => props.editingNodeId, (newId, oldId) => {
   }
 });
 
-const handleNodeClick = (id: string) => {
-  if (props.editingNodeId === id) return;
-  emit('select-node', id);
+const handleNodeClick = (node: TreeNode) => {
+  if (props.editingNodeId === node.id) return;
+  emit('select-node', node);
 };
 
 const handleRenameCommit = (event: Event, nodeId: string) => {
@@ -3185,6 +3141,349 @@ const handleRenameCancel = () => {
   outline: none;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\context-menus\ChapterMenu.vue
+//
+
+// 文件: src/novel/editor/components/sidebar/context-menus/ChapterMenu.vue
+<template>
+  <div>
+    <p class="menu-title">文件操作</p>
+    <div @click="emit('action', 'rename', { nodeId: node.id })" class="context-menu-item">
+      <i class="fa-solid fa-pencil w-4 text-center"></i>
+      <span>重命名</span>
+    </div>
+    <div class="context-menu-divider"></div>
+    <p class="menu-title">AI 助手</p>
+    <div @click="emit('ai-action', '分析', node)" class="context-menu-item">
+      <i class="fa-solid fa-magnifying-glass-chart w-4 text-center text-[#F59E0B]"></i>
+      <span>分析内容</span>
+    </div>
+    <div @click="emit('ai-action', '剧情生成', node)" class="context-menu-item">
+      <i class="fa-solid fa-feather w-4 text-center text-[#EC4899]"></i>
+      <span>生成剧情</span>
+    </div>
+    <div @click="emit('ai-action', '续写', node)" class="context-menu-item">
+      <i class="fa-solid fa-wand-magic-sparkles w-4 text-center text-[#4B5563]"></i>
+      <span>续写内容</span>
+    </div>
+    <div @click="emit('ai-action', '润色', node)" class="context-menu-item">
+      <i class="fa-solid fa-palette w-4 text-center text-[#3B82F6]"></i>
+      <span>润色内容</span>
+    </div>
+    <div class="context-menu-divider"></div>
+    <div @click="emit('action', 'delete', { nodeId: node.id })" class="context-menu-item danger">
+      <i class="fa-solid fa-trash-can w-4 text-center"></i>
+      <span>删除章节</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { AITask, TreeNode } from '@/novel/editor/types';
+
+defineProps({
+  node: {
+    type: Object as PropType<TreeNode>,
+    required: true,
+  },
+});
+
+const emit = defineEmits<{
+  (e: 'action', actionName: string, payload?: any): void;
+  (e: 'ai-action', taskType: AITask['type'], sourceNode: TreeNode, isBatch?: boolean): void;
+}>();
+</script>
+
+<style scoped>
+.context-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; cursor: pointer; user-select: none; transition: background-color 0.15s, color 0.15s; }
+.context-menu-item:hover { background-color: #f3f4f6; }
+.context-menu-item.danger:hover { background-color: #fee2e2; color: #b91c1c; }
+.context-menu-divider { height: 1px; background-color: #f3f4f6; margin: 0.5rem 0; }
+.menu-title { padding: 0.25rem 0.75rem; font-size: 0.75rem; color: #9CA3AF; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\context-menus\CustomRelatedMenu.vue
+//
+
+// 文件: src/novel/editor/components/sidebar/context-menus/CustomRelatedMenu.vue
+<template>
+  <div>
+    <p class="menu-title">条目管理</p>
+    <div @click="emit('custom-related-action', 'rename', { nodeId: node.id })" class="context-menu-item">
+      <i class="fa-solid fa-pencil w-4 text-center"></i>
+      <span>重命名</span>
+    </div>
+    <div @click="emit('custom-related-action', 'delete', { nodeId: node.id })" class="context-menu-item danger">
+      <i class="fa-solid fa-trash-can w-4 text-center"></i>
+      <span>删除条目</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { TreeNode } from '@/novel/editor/types';
+
+defineProps({
+  node: {
+    type: Object as PropType<TreeNode>,
+    required: true,
+  },
+});
+
+const emit = defineEmits<{
+  (e: 'custom-related-action', actionName: string, payload?: any): void;
+}>();
+</script>
+
+<style scoped>
+.context-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; cursor: pointer; user-select: none; transition: background-color 0.15s, color 0.15s; }
+.context-menu-item:hover { background-color: #f3f4f6; }
+.context-menu-item.danger:hover { background-color: #fee2e2; color: #b91c1c; }
+.menu-title { padding: 0.25rem 0.75rem; font-size: 0.75rem; color: #9CA3AF; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\context-menus\GroupMenu.vue
+//
+
+// 文件: src/novel/editor/components/sidebar/context-menus/GroupMenu.vue
+<template>
+  <div>
+    <p class="menu-title">设定管理</p>
+    <div @click="emit('settings-action', 'newItem', { nodeId: node.id })" class="context-menu-item">
+      <i class="fa-solid fa-plus w-4 text-center"></i>
+      <span>新建条目</span>
+    </div>
+    <div @click="emit('settings-action', 'newGroup', { nodeId: node.id })" class="context-menu-item">
+      <i class="fa-solid fa-folder-plus w-4 text-center"></i>
+      <span>新建分组</span>
+    </div>
+    <div @click="emit('settings-action', 'rename', { nodeId: node.id })" class="context-menu-item">
+      <i class="fa-solid fa-pencil w-4 text-center"></i>
+      <span>重命名</span>
+    </div>
+    <div @click="emit('settings-action', 'delete', { nodeId: node.id })" class="context-menu-item danger">
+      <i class="fa-solid fa-trash-can w-4 text-center"></i>
+      <span>删除分组</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { TreeNode } from '@/novel/editor/types';
+
+defineProps({
+  node: {
+    type: Object as PropType<TreeNode>,
+    required: true,
+  },
+});
+
+const emit = defineEmits<{
+  (e: 'settings-action', actionName: string, payload?: any): void;
+}>();
+</script>
+
+<style scoped>
+.context-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; cursor: pointer; user-select: none; transition: background-color 0.15s, color 0.15s; }
+.context-menu-item:hover { background-color: #f3f4f6; }
+.context-menu-item.danger:hover { background-color: #fee2e2; color: #b91c1c; }
+.menu-title { padding: 0.25rem 0.75rem; font-size: 0.75rem; color: #9CA3AF; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\context-menus\ItemMenu.vue
+//
+
+// 文件: src/novel/editor/components/sidebar/context-menus/ItemMenu.vue
+<template>
+  <div>
+    <p class="menu-title">条目管理</p>
+    <div @click="emit('settings-action', 'rename', { nodeId: node.id })" class="context-menu-item">
+      <i class="fa-solid fa-pencil w-4 text-center"></i>
+      <span>重命名</span>
+    </div>
+    <div @click="emit('settings-action', 'delete', { nodeId: node.id })" class="context-menu-item danger">
+      <i class="fa-solid fa-trash-can w-4 text-center"></i>
+      <span>删除条目</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { TreeNode } from '@/novel/editor/types';
+
+defineProps({
+  node: {
+    type: Object as PropType<TreeNode>,
+    required: true,
+  },
+});
+
+const emit = defineEmits<{
+  (e: 'settings-action', actionName: string, payload?: any): void;
+}>();
+</script>
+
+<style scoped>
+.context-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; cursor: pointer; user-select: none; transition: background-color 0.15s, color 0.15s; }
+.context-menu-item:hover { background-color: #f3f4f6; }
+.context-menu-item.danger:hover { background-color: #fee2e2; color: #b91c1c; }
+.menu-title { padding: 0.25rem 0.75rem; font-size: 0.75rem; color: #9CA3AF; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\context-menus\NoteMenu.vue
+//
+
+// 文件: src/novel/editor/components/sidebar/context-menus/NoteMenu.vue
+<template>
+  <div>
+    <p class="menu-title">笔记管理</p>
+    <div @click="emit('note-action', 'rename', { nodeId: node.id })" class="context-menu-item">
+      <i class="fa-solid fa-pencil w-4 text-center"></i>
+      <span>重命名</span>
+    </div>
+    <div @click="emit('note-action', 'delete', { nodeId: node.id })" class="context-menu-item danger">
+      <i class="fa-solid fa-trash-can w-4 text-center"></i>
+      <span>删除笔记</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { TreeNode } from '@/novel/editor/types';
+
+defineProps({
+  node: {
+    type: Object as PropType<TreeNode>,
+    required: true,
+  },
+});
+
+const emit = defineEmits<{
+  (e: 'note-action', actionName: string, payload?: any): void;
+}>();
+</script>
+
+<style scoped>
+.context-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; cursor: pointer; user-select: none; transition: background-color 0.15s, color 0.15s; }
+.context-menu-item:hover { background-color: #f3f4f6; }
+.context-menu-item.danger:hover { background-color: #fee2e2; color: #b91c1c; }
+.menu-title { padding: 0.25rem 0.75rem; font-size: 0.75rem; color: #9CA3AF; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\context-menus\RootMenu.vue
+//
+
+// 文件: src/novel/editor/components/sidebar/context-menus/RootMenu.vue
+<template>
+  <div>
+    <p class="menu-title">管理</p>
+    <div @click="emit('custom-related-action', 'newItem')" class="context-menu-item">
+      <i class="fa-solid fa-plus w-4 text-center"></i>
+      <span>新建自定义{{ node.id === 'plot' ? '剧情' : '分析' }}</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { TreeNode } from '@/novel/editor/types';
+
+defineProps({
+  node: {
+    type: Object as PropType<TreeNode>,
+    required: true,
+  },
+});
+
+const emit = defineEmits<{
+  (e: 'custom-related-action', actionName: string, payload?: any): void;
+}>();
+</script>
+
+<style scoped>
+.context-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; cursor: pointer; user-select: none; transition: background-color 0.15s, color 0.15s; }
+.context-menu-item:hover { background-color: #f3f4f6; }
+.menu-title { padding: 0.25rem 0.75rem; font-size: 0.75rem; color: #9CA3AF; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\context-menus\VolumeMenu.vue
+//
+
+// 文件: src/novel/editor/components/sidebar/context-menus/VolumeMenu.vue
+<template>
+  <div>
+    <p class="menu-title">目录管理</p>
+    <div @click="emit('action', 'newChapter', { nodeId: node.id })" class="context-menu-item">
+      <i class="fa-solid fa-plus w-4 text-center"></i>
+      <span>新建章节</span>
+    </div>
+    <div @click="emit('action', 'newVolume')" class="context-menu-item">
+      <i class="fa-solid fa-folder-plus w-4 text-center"></i>
+      <span>新建卷</span>
+    </div>
+    <div @click="emit('action', 'rename', { nodeId: node.id })" class="context-menu-item">
+      <i class="fa-solid fa-pencil w-4 text-center"></i>
+      <span>重命名</span>
+    </div>
+    <div class="context-menu-divider"></div>
+    <p class="menu-title">AI 批量任务</p>
+    <div @click="emit('ai-action', '分析', node, true)" class="context-menu-item">
+      <i class="fa-solid fa-magnifying-glass-chart w-4 text-center text-[#F59E0B]"></i>
+      <span>批量分析章节</span>
+    </div>
+    <div @click="emit('ai-action', '剧情生成', node, true)" class="context-menu-item">
+      <i class="fa-solid fa-feather w-4 text-center text-[#EC4899]"></i>
+      <span>批量生成剧情</span>
+    </div>
+    <div @click="emit('ai-action', '续写', node, true)" class="context-menu-item">
+      <i class="fa-solid fa-wand-magic-sparkles w-4 text-center text-[#4B5563]"></i>
+      <span>批量续写章节</span>
+    </div>
+    <div class="context-menu-divider"></div>
+    <div @click="emit('action', 'delete', { nodeId: node.id })" class="context-menu-item danger">
+      <i class="fa-solid fa-trash-can w-4 text-center"></i>
+      <span>删除卷</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { AITask, TreeNode } from '@/novel/editor/types';
+
+defineProps({
+  node: {
+    type: Object as PropType<TreeNode>,
+    required: true,
+  },
+});
+
+const emit = defineEmits<{
+  (e: 'action', actionName: string, payload?: any): void;
+  (e: 'ai-action', taskType: AITask['type'], sourceNode: TreeNode, isBatch: boolean): void;
+}>();
+</script>
+
+<style scoped>
+.context-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; cursor: pointer; user-select: none; transition: background-color 0.15s, color 0.15s; }
+.context-menu-item:hover { background-color: #f3f4f6; }
+.context-menu-item.danger:hover { background-color: #fee2e2; color: #b91c1c; }
+.context-menu-divider { height: 1px; background-color: #f3f4f6; margin: 0.5rem 0; }
+.menu-title { padding: 0.25rem 0.75rem; font-size: 0.75rem; color: #9CA3AF; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
 </style>
 
 // =
@@ -4455,6 +4754,55 @@ const setActiveTheme = (themeId: ThemeId) => {
 </style>
 
 // =
+// 文件: ..\src\novel\editor\composables\useAITaskExecutor.ts
+//
+
+import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
+import { useUIStore } from '@/novel/editor/stores/uiStore';
+import { useContextMenuStore } from '@/novel/editor/stores/contextPreviewStore';
+import type { AITask, EditorItem } from '@/novel/editor/types';
+
+/**
+ * AI 任务的源信息, 从核心 EditorItem 类型派生
+ */
+type TaskSource = Pick<EditorItem, 'id' | 'title'>;
+
+/**
+ * 提供一个统一的函数来执行 AI 任务。
+ * 它会自动处理是否需要显示预览窗口的逻辑。
+ */
+export function useAITaskExecutor() {
+    const aiTaskStore = useAITaskStore();
+    const uiStore = useUIStore();
+    const contextPreviewStore = useContextMenuStore();
+
+    /**
+     * 执行 AI 任务。
+     * @param taskType 要执行的任务类型 ('续写', '润色' 等)
+     * @param source 任务的源对象，必须包含 id 和 title
+     */
+    const executeAITask = (taskType: AITask['type'], source: TaskSource) => {
+        if (!source || !source.id) {
+            console.error("无法执行AI任务：缺少源信息。");
+            return;
+        }
+
+        // 根据 UI store 的状态，决定是直接开始任务还是显示预览
+        if (uiStore.uiState.needsPreview) {
+            contextPreviewStore.show({
+                type: taskType,
+                targetItemId: source.id,
+                title: source.title,
+            });
+        } else {
+            aiTaskStore.startTask(taskType, source.id);
+        }
+    };
+
+    return { executeAITask };
+}
+
+// =
 // 文件: ..\src\novel\editor\data\chatData.ts
 //
 
@@ -4495,7 +4843,7 @@ export const mockChatConversations: Conversation[] = [
 //
 
 // 文件: src/novel/editor/data/index.ts
-import type { Volume, RelatedTree, NoteItem, NovelMetadata, NovelCharacter, AITask } from '@/novel/editor/types';
+import type { Volume, Chapter, NoteItem, NovelMetadata, NovelCharacter, AITask, TreeNode, ItemNode, RootNode, GroupNode, PlotAnalysisItem } from '@/novel/editor/types';
 
 export const mockDirectoryData: Volume[] = [
     {
@@ -4536,7 +4884,7 @@ export const mockCharacters: NovelCharacter[] = [
     },
 ];
 
-export const mockSettingsData: RelatedTree[] = [
+export const mockSettingsData: TreeNode[] = [
     {
         id: 'settings', title: '设定', type: 'root', icon: 'fa-solid fa-book-journal-whills',
         children: [
@@ -4547,26 +4895,27 @@ export const mockSettingsData: RelatedTree[] = [
                         title: char.name,
                         type: 'character_item',
                         icon: 'fa-regular fa-user',
-                        content: `<h1>${char.name}</h1><p>${char.summary}</p>`
+                        content: `<h1>${char.name}</h1><p>${char.summary}</p>`,
+                        originalData: char,
                     }))
                 ]
-            },
-            { id: 'locations', title: '地点', type: 'group', icon: 'fa-solid fa-map-location-dot text-green-500', children: [] },
-            { id: 'items', title: '物品', type: 'group', icon: 'fa-solid fa-box-archive text-amber-600', children: [] },
+            } as GroupNode,
+            { id: 'locations', title: '地点', type: 'group', icon: 'fa-solid fa-map-location-dot text-green-500', children: [] } as GroupNode,
+            { id: 'items', title: '物品', type: 'group', icon: 'fa-solid fa-box-archive text-amber-600', children: [] } as GroupNode,
             {
                 id: 'worldview', title: '世界观', type: 'group', icon: 'fa-solid fa-earth-americas text-sky-500', children: [
-                    { id: 'world-overview', title: '世界观总览', type: 'worldview_item', icon: 'fa-solid fa-book-atlas', content: '<h1>世界观总览</h1><p>23世纪，人类掌握了亚光速航行技术，开始探索临近星系。</p>' },
+                    { id: 'world-overview', title: '世界观总览', type: 'worldview_item', icon: 'fa-solid fa-book-atlas', content: '<h1>世界观总览</h1><p>23世纪，人类掌握了亚光速航行技术，开始探索临近星系。</p>' } as ItemNode,
                 ]
-            }
+            } as GroupNode
         ]
-    }
+    } as RootNode,
 ];
 
-export const mockPlotCustomData: RelatedTree[] = [
+export const mockPlotCustomData: ItemNode[] = [
     { id: 'custom-plot-1', title: '关于跃迁点背后的文明猜想', type: 'plot_item', icon: 'fa-solid fa-lightbulb text-rose-500', content: '<h1>关于跃迁点背后的文明猜想</h1>' }
 ];
 
-export const mockAnalysisCustomData: RelatedTree[] = [];
+export const mockAnalysisCustomData: ItemNode[] = [];
 
 export const mockNoteData: NoteItem[] = [
     { id: 'note-1', type: 'note', title: '第四章情感转折点设计', timestamp: '今天 14:32', content: '<h1>第四章情感转折点设计</h1><p>需要重点描写卡尔文在面对跃迁点时，希望与恐惧交织的复杂心理。</p>' },
@@ -5191,6 +5540,116 @@ export const useContextMenuStore = defineStore('editorContextPreview', () => {
 });
 
 // =
+// 文件: ..\src\novel\editor\stores\derivedContentStore.ts
+//
+
+// 文件: src/novel/editor/stores/derivedContentStore.ts
+
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import type { PlotAnalysisItem } from '@/novel/editor/types';
+import { useDirectoryStore } from './directoryStore';
+
+export const useDerivedContentStore = defineStore('derivedContent', () => {
+    const plotData = ref<Map<string, PlotAnalysisItem>>(new Map());
+    const analysisData = ref<Map<string, PlotAnalysisItem>>(new Map());
+
+    /**
+     * 确保为指定章节创建派生内容项（如果不存在）。
+     * @param itemId - 派生内容的ID，格式为 `plot_{chapterId}` 或 `analysis_{chapterId}`
+     */
+    function ensureDerivedItemExists(itemId: string) {
+        const [type, sourceChapterId] = itemId.split(/_(.+)/);
+        if (!type || !sourceChapterId) return;
+
+        const dataMap = type === 'plot' ? plotData.value : analysisData.value;
+        if (dataMap.has(sourceChapterId)) return;
+
+        const directoryStore = useDirectoryStore();
+        const chapterResult = directoryStore.findNodeById(sourceChapterId);
+        if (!chapterResult || chapterResult.node.type !== 'chapter') return;
+
+        const chapter = chapterResult.node;
+        const suffix = type === 'plot' ? ' 剧情' : ' 分析';
+        const newItem: PlotAnalysisItem = {
+            id: itemId,
+            sourceChapterId: sourceChapterId,
+            title: `${chapter.title}${suffix}`,
+            content: `<h1>${chapter.title}${suffix}</h1><p>AI正在生成内容，请稍候...</p>`
+        };
+        dataMap.set(sourceChapterId, newItem);
+    }
+
+    /**
+     * 根据ID从派生地图中查找内容。
+     * @param nodeId - 派生内容的ID
+     */
+    function findItemFromDerivedMaps(nodeId: string): PlotAnalysisItem | null {
+        const [type, sourceChapterId] = nodeId.split(/_(.+)/);
+        if (!type || !sourceChapterId) return null;
+
+        const dataMap = type === 'plot' ? plotData.value : (type === 'analysis' ? analysisData.value : null);
+        return dataMap?.get(sourceChapterId) ?? null;
+    }
+
+    /**
+     * 更新派生内容。
+     * @param nodeId - 派生内容的ID
+     * @param content - 新的HTML内容
+     */
+    function updateNodeContent(nodeId: string, content: string) {
+        const derivedItem = findItemFromDerivedMaps(nodeId);
+        if (derivedItem) {
+            derivedItem.content = content;
+            const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
+            const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : derivedItem.title;
+            if (newTitle) {
+                derivedItem.title = newTitle;
+            }
+        }
+    }
+
+    /**
+     * 向派生内容追加内容。
+     * @param nodeId - 派生内容的ID
+     * @param contentToAppend - 要追加的原始文本
+     * @param isAutoApplied - 是否为自动应用
+     */
+    function appendNodeContent(nodeId: string, contentToAppend: string, isAutoApplied: boolean) {
+        const derivedItem = findItemFromDerivedMaps(nodeId);
+        if (derivedItem) {
+            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
+            let htmlToAppend = paragraphs;
+            if (isAutoApplied) {
+                htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
+            }
+            if (!derivedItem.content) derivedItem.content = "";
+            derivedItem.content += htmlToAppend;
+        }
+    }
+
+    /**
+     * 删除与指定章节ID关联的所有派生数据。
+     * @param chapterId - 源章节的ID
+     */
+    function deleteDerivedDataForChapter(chapterId: string) {
+        plotData.value.delete(chapterId);
+        analysisData.value.delete(chapterId);
+    }
+
+
+    return {
+        plotData,
+        analysisData,
+        ensureDerivedItemExists,
+        findItemFromDerivedMaps,
+        updateNodeContent,
+        appendNodeContent,
+        deleteDerivedDataForChapter,
+    };
+});
+
+// =
 // 文件: ..\src\novel\editor\stores\directoryStore.ts
 //
 
@@ -5200,7 +5659,7 @@ import { ref } from 'vue';
 import type { Volume, Chapter } from '@/novel/editor/types';
 import { useEditorStore } from './editorStore';
 import { useUIStore } from './uiStore';
-import { useRelatedContentStore } from './relatedContentStore';
+import { useDerivedContentStore } from './derivedContentStore';
 
 type DirectoryNode = Volume | Chapter;
 
@@ -5250,7 +5709,7 @@ export const useDirectoryStore = defineStore('directory', () => {
         const result = findNodeById(nodeId);
         if (result && result.node.type === 'chapter') {
             const chapter = result.node;
-            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
+            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
             let htmlToAppend = paragraphs;
             if (isAutoApplied) {
                 htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
@@ -5324,24 +5783,19 @@ export const useDirectoryStore = defineStore('directory', () => {
         if (!window.confirm(`您确定要删除 "${result.node.title}" 吗？此操作无法撤销。`)) return;
 
         const editorStore = useEditorStore();
+        const derivedContentStore = useDerivedContentStore();
 
-        // 删除章节时，也删除关联的派生数据
         if (result.node.type === 'chapter') {
-            const relatedContentStore = useRelatedContentStore();
-            relatedContentStore.plotData.delete(nodeId);
-            relatedContentStore.analysisData.delete(nodeId);
+            derivedContentStore.deleteDerivedDataForChapter(result.node.id);
         }
 
         if (result.parent && result.node.type === 'chapter') {
             result.parent.chapters = result.parent.chapters.filter(c => c.id !== nodeId);
         } else if (!result.parent && result.node.type === 'volume') {
-            directoryData.value = directoryData.value.filter(v => v.id !== nodeId);
-            // 删除卷时，删除其下所有章节的派生数据
             result.node.chapters.forEach(chapter => {
-                const relatedContentStore = useRelatedContentStore();
-                relatedContentStore.plotData.delete(chapter.id);
-                relatedContentStore.analysisData.delete(chapter.id);
+                derivedContentStore.deleteDerivedDataForChapter(chapter.id);
             });
+            directoryData.value = directoryData.value.filter(v => v.id !== nodeId);
         }
         editorStore.closeTab(nodeId);
         if (editorStore.editingNodeId === nodeId) editorStore.setEditingNodeId(null);
@@ -5469,7 +5923,8 @@ import { defineStore } from 'pinia';
 import { useDirectoryStore } from '../directoryStore';
 import { useRelatedContentStore } from '../relatedContentStore';
 import { useNotesStore } from '../notesStore';
-import type { EditorItem, SystemViewInfo, RelatedTree } from '@/novel/editor/types';
+import { useDerivedContentStore } from '../derivedContentStore';
+import type { EditorItem, SystemViewInfo, TreeNode, PlotAnalysisItem } from '@/novel/editor/types';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
 
 export const SYSTEM_VIEWS: Record<string, SystemViewInfo> = {
@@ -5489,6 +5944,7 @@ export const useItemStore = defineStore('editor-item', () => {
     const directoryStore = useDirectoryStore();
     const relatedContentStore = useRelatedContentStore();
     const notesStore = useNotesStore();
+    const derivedContentStore = useDerivedContentStore();
 
     function findItemById(id: string): { node: EditorItem | null; source: string | null } {
         // 1. Check for System Views
@@ -5509,40 +5965,19 @@ export const useItemStore = defineStore('editor-item', () => {
             }
         }
 
-        // 2. Check for AI Derived Items (Plot/Analysis)
-        const derivedItem = relatedContentStore.findItemFromDerivedMaps(id);
+        // 2. Check for AI Derived Items
+        const derivedItem = derivedContentStore.findItemFromDerivedMaps(id);
         if (derivedItem) {
-            const type = id.startsWith('plot_') ? 'plot_chapter' : 'analysis_chapter';
-            const treeNode: RelatedTree = {
-                id: derivedItem.id,
-                title: derivedItem.title,
-                type: type,
-                icon: getIconByNodeType(type),
-                content: derivedItem.content,
-                isReadOnly: true,
-                originalData: derivedItem
-            };
-            return { node: treeNode, source: 'related' };
+            return { node: derivedItem as PlotAnalysisItem, source: 'derived' };
         }
 
         // 3. Check Directory
-        let result = directoryStore.findNodeById(id);
-        if (result?.node) return { node: result.node, source: 'directory' };
+        let dirResult = directoryStore.findNodeById(id);
+        if (dirResult?.node) return { node: dirResult.node, source: 'directory' };
 
         // 4. Check Related Content (Settings & Custom Items)
-        const findInRelatedTree = (nodes: RelatedTree[]): RelatedTree | undefined => {
-            for (const node of nodes) {
-                if (node.id === id) return node;
-                if (node.children) {
-                    const found = findInRelatedTree(node.children);
-                    if (found) return found;
-                }
-            }
-            return undefined;
-        };
-        const relatedNode = findInRelatedTree(relatedContentStore.relatedData);
-        if(relatedNode) return { node: relatedNode, source: 'related' };
-
+        const relatedResult = relatedContentStore.findNodeById(id);
+        if(relatedResult?.node) return { node: relatedResult.node, source: 'related' };
 
         // 5. Check Notes
         const note = notesStore.findNoteById(id);
@@ -5557,6 +5992,7 @@ export const useItemStore = defineStore('editor-item', () => {
             case 'directory': directoryStore.updateChapterContent(id, content); break;
             case 'related': relatedContentStore.updateNodeContent(id, content); break;
             case 'notes': notesStore.updateNoteContent(id, content); break;
+            case 'derived': derivedContentStore.updateNodeContent(id, content); break;
         }
     }
 
@@ -5566,6 +6002,7 @@ export const useItemStore = defineStore('editor-item', () => {
             case 'directory': directoryStore.appendChapterContent(itemId, content, auto); break;
             case 'related': relatedContentStore.appendNodeContent(itemId, content, auto); break;
             case 'notes': notesStore.appendNoteContent(itemId, content, auto); break;
+            case 'derived': derivedContentStore.appendNodeContent(itemId, content, auto); break;
         }
     }
 
@@ -5959,13 +6396,14 @@ export const useNotesStore = defineStore('notes', () => {
 // 文件: src/novel/editor/stores/relatedContentStore.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { RelatedTree, PlotAnalysisItem } from '@/novel/editor/types';
 import { useEditorStore } from './editorStore';
 import { useUIStore } from './uiStore';
 import { useDirectoryStore } from './directoryStore';
+import { useDerivedContentStore } from './derivedContentStore';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
+import type { TreeNode, RootNode, GroupNode, ItemNode, OverviewNode } from '@/novel/editor/types';
 
-const _findNodeInTreeRecursive = (nodes: RelatedTree[], nodeId: string): { node: RelatedTree; parent: RelatedTree | null; siblings: RelatedTree[] } | null => {
+const _findNodeInTreeRecursive = (nodes: TreeNode[], nodeId: string): { node: TreeNode; parent: TreeNode | null; siblings: TreeNode[] } | null => {
     for (const node of nodes) {
         if (node.id === nodeId) {
             return { node, parent: null, siblings: nodes };
@@ -5983,7 +6421,7 @@ const _findNodeInTreeRecursive = (nodes: RelatedTree[], nodeId: string): { node:
     return null;
 };
 
-const _findAndRemoveNodeInTree = (nodes: RelatedTree[], nodeId: string): boolean => {
+const _findAndRemoveNodeInTree = (nodes: TreeNode[], nodeId: string): boolean => {
     for (let i = 0; i < nodes.length; i++) {
         if (nodes[i].id === nodeId) {
             nodes.splice(i, 1);
@@ -5997,15 +6435,11 @@ const _findAndRemoveNodeInTree = (nodes: RelatedTree[], nodeId: string): boolean
 }
 
 export const useRelatedContentStore = defineStore('relatedContent', () => {
-    const directoryStore = useDirectoryStore();
+    const settingsData = ref<TreeNode[]>([]);
+    const plotCustomData = ref<TreeNode[]>([]);
+    const analysisCustomData = ref<TreeNode[]>([]);
 
-    const settingsData = ref<RelatedTree[]>([]);
-    const plotCustomData = ref<RelatedTree[]>([]);
-    const analysisCustomData = ref<RelatedTree[]>([]);
-    const plotData = ref<Map<string, PlotAnalysisItem>>(new Map());
-    const analysisData = ref<Map<string, PlotAnalysisItem>>(new Map());
-
-    const _findNodeInSettingsOrCustom = (nodeId: string): { node: RelatedTree; parent: RelatedTree | null; siblings: RelatedTree[] } | null => {
+    const findNodeById = (nodeId: string): { node: TreeNode; parent: TreeNode | null; siblings: TreeNode[] } | null => {
         const sources = [settingsData.value, plotCustomData.value, analysisCustomData.value];
         for (const source of sources) {
             const result = _findNodeInTreeRecursive(source, nodeId);
@@ -6014,20 +6448,19 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         return null;
     }
 
-    const processedSettingsData = computed(() => {
-        const clonedData: RelatedTree[] = JSON.parse(JSON.stringify(settingsData.value));
+    const processedSettingsData = computed((): TreeNode[] => {
+        const clonedData: TreeNode[] = JSON.parse(JSON.stringify(settingsData.value));
         const overviewGroups = ['characters', 'locations', 'items', 'worldview'];
 
-        const findAndProcess = (nodes: RelatedTree[]) => {
+        const findAndProcess = (nodes: TreeNode[]) => {
             for (const node of nodes) {
                 if (node.type === 'group' && overviewGroups.includes(node.id) && node.children) {
-                    const group = node;
-                    const itemsToSummarize = group.children.filter(child => child.type.endsWith('_item'));
+                    const group = node as GroupNode;
+                    const itemsToSummarize = group.children.filter(child => child.type.endsWith('_item')) as ItemNode[];
 
                     const demoteHeadings = (htmlContent: string): string => {
                         const tempDiv = document.createElement('div');
                         tempDiv.innerHTML = htmlContent;
-
                         const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5');
                         headings.forEach(heading => {
                             const level = parseInt(heading.tagName.charAt(1), 10);
@@ -6039,20 +6472,16 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
                             }
                             heading.parentNode?.replaceChild(newHeading, heading);
                         });
-
                         return tempDiv.innerHTML;
                     }
 
-                    const itemContents = itemsToSummarize.map(item => {
-                        return item.content ? demoteHeadings(item.content) : '';
-                    }).filter(Boolean);
-
+                    const itemContents = itemsToSummarize.map(item => item.content ? demoteHeadings(item.content) : '').filter(Boolean);
                     const overviewContent = `<h1>${group.title}总览</h1>` + itemContents.join('<hr>');
                     const overviewId = `${group.id}-overview`;
-                    const overviewType = `${group.id}_overview`;
+                    const overviewType = `${group.id}_overview` as OverviewNode['type'];
                     let overviewNode = group.children.find(child => child.id === overviewId);
 
-                    const overviewNodeData: RelatedTree = {
+                    const overviewNodeData: OverviewNode = {
                         id: overviewId, title: `${group.title}总览`, type: overviewType, icon: getIconByNodeType(overviewType), content: overviewContent, isOverview: true, isReadOnly: true,
                     };
 
@@ -6071,19 +6500,22 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         return clonedData;
     });
 
-    const relatedData = computed((): RelatedTree[] => {
+    const relatedData = computed((): TreeNode[] => {
+        const directoryStore = useDirectoryStore();
+        const derivedContentStore = useDerivedContentStore();
+
         const allChapterIds = new Set(directoryStore.directoryData.flatMap(v => v.chapters.map(c => c.id)));
-        for (const key of plotData.value.keys()) {
-            if (!allChapterIds.has(key)) plotData.value.delete(key);
+        for (const key of derivedContentStore.plotData.keys()) {
+            if (!allChapterIds.has(key)) derivedContentStore.plotData.delete(key);
         }
-        for (const key of analysisData.value.keys()) {
-            if (!allChapterIds.has(key)) analysisData.value.delete(key);
+        for (const key of derivedContentStore.analysisData.keys()) {
+            if (!allChapterIds.has(key)) derivedContentStore.analysisData.delete(key);
         }
 
         const buildDerivedTree = (
             type: 'plot' | 'analysis',
-            dataMap: Map<string, PlotAnalysisItem>
-        ): RelatedTree[] => {
+            dataMap: Map<string, any>
+        ): TreeNode[] => {
             return directoryStore.directoryData.map(volume => ({
                 id: `${type}_vol_${volume.id}`,
                 title: volume.title,
@@ -6106,68 +6538,28 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
             })).filter(vol => vol.children.length > 0);
         };
 
-        const plotTree: RelatedTree = {
+        const plotTree: RootNode = {
             id: 'plot', title: '剧情', type: 'root', icon: getIconByNodeType('plot'),
-            children: [...plotCustomData.value, ...buildDerivedTree('plot', plotData.value)]
+            children: [...plotCustomData.value, ...buildDerivedTree('plot', derivedContentStore.plotData)]
         };
-        const analysisTree: RelatedTree = {
+        const analysisTree: RootNode = {
             id: 'analysis', title: '分析', type: 'root', icon: getIconByNodeType('analysis'),
-            children: [...analysisCustomData.value, ...buildDerivedTree('analysis', analysisData.value)]
+            children: [...analysisCustomData.value, ...buildDerivedTree('analysis', derivedContentStore.analysisData)]
         };
 
         return [...processedSettingsData.value, plotTree, analysisTree];
     });
 
-    function fetchRelatedData(settings: RelatedTree[], plot: RelatedTree[], analysis: RelatedTree[]) {
+    function fetchRelatedData(settings: TreeNode[], plot: TreeNode[], analysis: TreeNode[]) {
         settingsData.value = settings;
         plotCustomData.value = plot;
         analysisCustomData.value = analysis;
     }
 
-    function ensureDerivedItemExists(itemId: string) {
-        const [type, sourceChapterId] = itemId.split(/_(.+)/);
-        if (!type || !sourceChapterId) return;
-
-        const dataMap = type === 'plot' ? plotData.value : analysisData.value;
-        if (dataMap.has(sourceChapterId)) return;
-
-        const chapterResult = directoryStore.findNodeById(sourceChapterId);
-        if (!chapterResult || chapterResult.node.type !== 'chapter') return;
-        const chapter = chapterResult.node;
-
-        const suffix = type === 'plot' ? ' 剧情' : ' 分析';
-        const newItem: PlotAnalysisItem = {
-            id: itemId,
-            sourceChapterId: sourceChapterId,
-            title: `${chapter.title}${suffix}`,
-            content: `<h1>${chapter.title}${suffix}</h1><p>AI正在生成内容，请稍候...</p>`
-        };
-        dataMap.set(sourceChapterId, newItem);
-    }
-
-    function findItemFromDerivedMaps(nodeId: string): PlotAnalysisItem | null {
-        const [type, sourceChapterId] = nodeId.split(/_(.+)/);
-        if (!type || !sourceChapterId) return null;
-
-        const dataMap = type === 'plot' ? plotData.value : (type === 'analysis' ? analysisData.value : null);
-        return dataMap?.get(sourceChapterId) ?? null;
-    }
-
     function updateNodeContent(nodeId: string, content: string) {
-        const derivedItem = findItemFromDerivedMaps(nodeId);
-        if (derivedItem) {
-            derivedItem.content = content;
-            const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
-            const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : derivedItem.title;
-            if (newTitle) {
-                derivedItem.title = newTitle;
-            }
-            return;
-        }
-
-        const result = _findNodeInSettingsOrCustom(nodeId);
+        const result = findNodeById(nodeId);
         if (result?.node && 'content' in result.node) {
-            result.node.content = content;
+            (result.node as ItemNode).content = content;
             if(!result.node.isReadOnly) {
                 const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
                 const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
@@ -6179,34 +6571,23 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
     }
 
     function appendNodeContent(nodeId: string, contentToAppend: string, isAutoApplied: boolean) {
-        const derivedItem = findItemFromDerivedMaps(nodeId);
-        if (derivedItem) {
-            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
-            let htmlToAppend = paragraphs;
-            if (isAutoApplied) {
-                htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
-            }
-            if (!derivedItem.content) derivedItem.content = "";
-            derivedItem.content += htmlToAppend;
-            return;
-        }
-
-        const result = _findNodeInSettingsOrCustom(nodeId);
+        const result = findNodeById(nodeId);
         if (result?.node && 'content' in result.node) {
-            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
+            const itemNode = result.node as ItemNode;
+            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
             let htmlToAppend = paragraphs;
             if (isAutoApplied) {
                 htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
             }
-            if (!result.node.content) result.node.content = "";
-            result.node.content += htmlToAppend;
+            if (!itemNode.content) itemNode.content = "";
+            itemNode.content += htmlToAppend;
         }
     }
 
     const addRelatedNode = (parentId: string, type: 'group' | 'item') => {
         const editorStore = useEditorStore();
         const uiStore = useUIStore();
-        const result = _findNodeInSettingsOrCustom(parentId);
+        const result = findNodeById(parentId);
         if (!result?.node) return;
 
         const parentNode = result.node;
@@ -6214,18 +6595,18 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         const itemTypePrefix = parentNode.id.replace(/s$/, '');
         const newNodeType = type === 'group' ? 'group' : `${itemTypePrefix}_item`;
         const newNodeIcon = getIconByNodeType(newNodeType);
-        const newNode: RelatedTree = {
+        const newNode: TreeNode = {
             id: `${type}-${Date.now()}`,
             title: type === 'group' ? '新建分组' : '新建条目',
             type: newNodeType,
             icon: newNodeIcon,
             content: type === 'item' ? '<h1>新建条目</h1><p>请在此处填写内容...</p>' : undefined,
             children: type === 'group' ? [] : undefined,
-        };
+        } as GroupNode | ItemNode;
         parentNode.children.push(newNode);
         uiStore.toggleRelatedNodeExpansion(parentId);
         uiStore.setEditingNodeId(newNode.id);
-        if (newNode.content !== undefined) editorStore.openTab(newNode.id);
+        if ('content' in newNode && newNode.content !== undefined) editorStore.openTab(newNode.id);
     };
 
     const renameRelatedNode = (nodeId: string, newTitle: string) => {
@@ -6234,13 +6615,12 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
             uiStore.setEditingNodeId(null);
             return;
         }
-
-        const result = _findNodeInSettingsOrCustom(nodeId);
+        const result = findNodeById(nodeId);
         if (result?.node && !result.node.isReadOnly) {
             const trimmedTitle = newTitle.trim();
             result.node.title = trimmedTitle;
-            if (result.node.content && result.node.content.includes('<h1>')) {
-                result.node.content = result.node.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
+            if ('content' in result.node && result.node.content && result.node.content.includes('<h1>')) {
+                (result.node as ItemNode).content = (result.node as ItemNode).content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
             }
         }
         uiStore.setEditingNodeId(null);
@@ -6249,7 +6629,7 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
     const deleteRelatedNode = (nodeId: string) => {
         const editorStore = useEditorStore();
         const uiStore = useUIStore();
-        const result = _findNodeInSettingsOrCustom(nodeId);
+        const result = findNodeById(nodeId);
         if (!result?.node) return;
         if (!window.confirm(`您确定要删除 "${result.node.title}" 吗？此操作无法撤销。`)) return;
 
@@ -6265,7 +6645,7 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         const uiStore = useUIStore();
         const dataRef = target === 'plot' ? plotCustomData : analysisCustomData;
         const icon = getIconByNodeType(`${target}_item`);
-        const newNode: RelatedTree = {
+        const newNode: ItemNode = {
             id: `custom-${target}-${Date.now()}`,
             title: '新建自定义条目',
             type: `${target}_item`,
@@ -6285,7 +6665,7 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
     const deleteCustomRelatedNode = (nodeId: string) => {
         const editorStore = useEditorStore();
         const uiStore = useUIStore();
-        const result = _findNodeInSettingsOrCustom(nodeId);
+        const result = findNodeById(nodeId);
         if (!result?.node) return;
         if (!window.confirm(`您确定要删除 "${result.node.title}" 吗？此操作无法撤销。`)) return;
 
@@ -6301,14 +6681,11 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         settingsData,
         plotCustomData,
         analysisCustomData,
-        plotData,
-        analysisData,
         relatedData,
         fetchRelatedData,
+        findNodeById,
         updateNodeContent,
         appendNodeContent,
-        ensureDerivedItemExists,
-        findItemFromDerivedMaps,
         addRelatedNode,
         renameRelatedNode,
         deleteRelatedNode,
@@ -6509,120 +6886,12 @@ export const useUIStore = defineStore('ui', () => {
 });
 
 // =
-// 文件: ..\src\novel\editor\types\chatTypes.ts
+// 文件: ..\src\novel\editor\types\app.ts
 //
 
-/**
- * AI模型定义
- */
-export interface AIModel {
-    id: string;
-    name: string;
-    status: 'online' | 'offline' | 'limited';
-}
+// 文件: src/novel/editor/types/app.ts
 
-/**
- * 聊天消息定义
- */
-export interface ChatMessage {
-    id: string;
-    role: 'user' | 'ai';
-    content: string;
-    timestamp: string;
-}
-
-/**
- * 单个聊天会话定义
- */
-export interface Conversation {
-    id: string;
-    title: string;
-    summary: string;
-    createdAt: string;
-    messages: ChatMessage[];
-}
-
-// =
-// 文件: ..\src\novel\editor\types\index.ts
-//
-
-// 文件: src/novel/editor/types/index.ts
-/**
- * 卷（目录的一级）
- */
-export interface Volume {
-    id: string;
-    type: 'volume';
-    title: string;
-    content: string; // 卷的大纲或简介
-    chapters: Chapter[];
-}
-
-/**
- * 章节（目录的二级）
- */
-export interface Chapter {
-    id:string;
-    type: 'chapter';
-    title: string;
-    wordCount: number;
-    content: string; // 章节正文 (HTML)
-    status: 'planned' | 'editing' | 'completed' | 'archived';
-}
-
-/**
- * AI生成的派生内容（剧情/分析）的存储结构
- */
-export interface PlotAnalysisItem {
-    id: string; // 派生ID, e.g., 'plot_ch-1'
-    sourceChapterId: string; // 源章节ID, e.g., 'ch-1'
-    title: string; // 派生标题, e.g., '第一章 剧情'
-    content: string; // 生成的内容 (HTML)
-}
-
-/**
- * 代表一个角色
- */
-export interface NovelCharacter {
-    id: string;
-    name: string;
-    avatar: string;
-    identity: string;
-    gender?: string;
-    age?: number;
-    faction?: string;
-    summary: string; // AI参考的主要描述
-    notes?: string; // 作者的私人笔记
-    status?: 'editing' | 'completed' | 'draft';
-}
-
-
-/**
- * 相关内容树节点
- * 用于构建“设定”、“剧情”、“分析”等复杂的树状结构
- */
-export interface RelatedTree {
-    id: string;
-    type: string; // 例如: 'root', 'group', 'character_item', 'plot_chapter'
-    title: string;
-    icon: string;
-    content?: string; // 可编辑的内容 (HTML)
-    children?: RelatedTree[];
-    originalData?: any; // 可选，用于存储原始关联数据
-    isOverview?: boolean; // 是否是自动生成的总览节点
-    isReadOnly?: boolean; // 节点是否只读
-}
-
-/**
- * 笔记条目
- */
-export interface NoteItem {
-    id: string;
-    type: 'note';
-    title: string;
-    content: string; // 笔记内容 (HTML)
-    timestamp: string; // e.g., "今天 14:32"
-}
+import type { TreeNode, Volume, Chapter, NoteItem, PlotAnalysisItem } from './models';
 
 /**
  * AI 任务状态
@@ -6682,27 +6951,6 @@ export interface EditorUIState {
 }
 
 /**
- * 小说标签
- */
-export interface NovelTag {
-    text: string;
-    class: string;
-}
-
-/**
- * 小说元数据
- */
-export interface NovelMetadata {
-    id: string;
-    title: string;
-    description: string;
-    cover: string;
-    tags: NovelTag[];
-    status: '连载中' | '已完结' | '暂停更新';
-}
-
-
-/**
  * 系统视图信息，用于在内容区打开非文件类标签页
  */
 export interface SystemViewInfo {
@@ -6717,8 +6965,9 @@ export interface SystemViewInfo {
 
 /**
  * 任意可被编辑器打开的条目
+ * 这是一个辨识联合类型，涵盖了所有可能在标签页中打开的内容。
  */
-export type EditorItem = Volume | Chapter | RelatedTree | NoteItem | SystemViewInfo | PlotAnalysisItem;
+export type EditorItem = Volume | Chapter | TreeNode | NoteItem | SystemViewInfo | PlotAnalysisItem;
 
 /**
  * 搜索结果条目
@@ -6740,6 +6989,212 @@ export interface TabInfo {
     icon: string;
     item: EditorItem;
 }
+
+// =
+// 文件: ..\src\novel\editor\types\chatTypes.ts
+//
+
+/**
+ * AI模型定义
+ */
+export interface AIModel {
+    id: string;
+    name: string;
+    status: 'online' | 'offline' | 'limited';
+}
+
+/**
+ * 聊天消息定义
+ */
+export interface ChatMessage {
+    id: string;
+    role: 'user' | 'ai';
+    content: string;
+    timestamp: string;
+}
+
+/**
+ * 单个聊天会话定义
+ */
+export interface Conversation {
+    id: string;
+    title: string;
+    summary: string;
+    createdAt: string;
+    messages: ChatMessage[];
+}
+
+// =
+// 文件: ..\src\novel\editor\types\index.ts
+//
+
+// 文件: src/novel/editor/types/index.ts
+export * from './models';
+export * from './app';
+export * from './chatTypes';
+
+// =
+// 文件: ..\src\novel\editor\types\models.ts
+//
+
+// 文件: src/novel/editor/types/models.ts
+
+/**
+ * 卷（目录的一级）
+ */
+export interface Volume {
+    id: string;
+    type: 'volume';
+    title: string;
+    content: string; // 卷的大纲或简介
+    chapters: Chapter[];
+}
+
+/**
+ * 章节（目录的二级）
+ */
+export interface Chapter {
+    id:string;
+    type: 'chapter';
+    title: string;
+    wordCount: number;
+    content: string; // 章节正文 (HTML)
+    status: 'planned' | 'editing' | 'completed' | 'archived';
+}
+
+/**
+ * AI生成的派生内容（剧情/分析）的存储结构
+ */
+export interface PlotAnalysisItem {
+    id: string; // 派生ID, e.g., 'plot_ch-1'
+    sourceChapterId: string; // 源章节ID, e.g., 'ch-1'
+    title: string; // 派生标题, e.g., '第一章 剧情'
+    content: string; // 生成的内容 (HTML)
+}
+
+/**
+ * 代表一个角色
+ */
+export interface NovelCharacter {
+    id: string;
+    name: string;
+    avatar: string;
+    identity: string;
+    gender?: string;
+    age?: number;
+    faction?: string;
+    summary: string; // AI参考的主要描述
+    notes?: string; // 作者的私人笔记
+    status?: 'editing' | 'completed' | 'draft';
+}
+
+
+/**
+ * 笔记条目
+ */
+export interface NoteItem {
+    id: string;
+    type: 'note';
+    title: string;
+    content: string; // 笔记内容 (HTML)
+    timestamp: string; // e.g., "今天 14:32"
+}
+
+/**
+ * 小说标签
+ */
+export interface NovelTag {
+    text: string;
+    class: string;
+}
+
+/**
+ * 小说元数据
+ */
+export interface NovelMetadata {
+    id: string;
+    title: string;
+    description: string;
+    cover: string;
+    tags: NovelTag[];
+    status: '连载中' | '已完结' | '暂停更新';
+}
+
+// =================================================================
+// TreeNode: 用于所有树状视图的统一数据模型
+// =================================================================
+
+interface BaseNode {
+    id: string;
+    title: string;
+    icon: string;
+    children?: TreeNode[];
+    isReadOnly?: boolean;
+}
+
+export type AnyNode = Volume | Chapter | NoteItem | PlotAnalysisItem;
+
+// --- 根节点 ---
+export interface RootNode extends BaseNode {
+    type: 'root';
+    children: TreeNode[];
+}
+
+// --- 目录节点 ---
+export interface VolumeNode extends BaseNode {
+    type: 'volume';
+    originalData: Volume;
+    children: ChapterNode[];
+}
+export interface ChapterNode extends BaseNode {
+    type: 'chapter';
+    originalData: Chapter;
+    status?: Chapter['status'];
+    children?: never;
+}
+
+// --- 设定/自定义内容节点 ---
+export interface GroupNode extends BaseNode {
+    type: 'group';
+    children: TreeNode[];
+}
+export interface ItemNode extends BaseNode {
+    type: `${string}_item`; // e.g., character_item, plot_item
+    content: string;
+    originalData?: AnyNode;
+    children?: never;
+}
+export interface OverviewNode extends BaseNode {
+    type: `${string}_overview`; // e.g., characters_overview
+    content: string;
+    isOverview: true;
+    isReadOnly: true;
+    children?: never;
+}
+
+// --- AI派生内容节点 ---
+export interface DerivedVolumeNode extends BaseNode {
+    type: 'plot_volume' | 'analysis_volume';
+    isReadOnly: true;
+    children: DerivedChapterNode[];
+}
+
+export interface DerivedChapterNode extends BaseNode {
+    type: 'plot_chapter' | 'analysis_chapter';
+    isReadOnly: true;
+    originalData: PlotAnalysisItem;
+    children?: never;
+}
+
+export type TreeNode =
+    | RootNode
+    | GroupNode
+    | ItemNode
+    | OverviewNode
+    | VolumeNode
+    | ChapterNode
+    | DerivedVolumeNode
+    | DerivedChapterNode;
 
 // =
 // 文件: ..\src\novel\editor\utils\iconUtils.ts
