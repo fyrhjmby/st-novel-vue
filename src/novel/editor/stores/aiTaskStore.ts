@@ -1,25 +1,23 @@
 // 文件: src/novel/editor/stores/aiTaskStore.ts
+
 import { defineStore } from 'pinia'
 import { ref, nextTick, computed } from 'vue'
 import { useEditorStore } from './editorStore'
 import { useUIStore } from './uiStore'
-import { useRelatedContentStore } from './relatedContentStore';
+import { useDerivedContentStore } from './derivedContentStore';
 import type { AITask, Volume } from '@/novel/editor/types';
 import { mockAIResponses } from '@/novel/editor/data';
 
-const isReplaceTask = (type: AITask['type']) => {
-    return type === '分析' || type === '剧情生成';
-};
-
-const formatContentForEditor = (rawContent: string): string => {
-    return rawContent.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p}</p>`).join('');
+const formatContentForEditor = (title: string, rawContent: string): string => {
+    const body = rawContent.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p}</p>`).join('');
+    return `<h1>${title}</h1>${body}`;
 };
 
 export const useAITaskStore = defineStore('aiTask', () => {
     const tasks = ref<AITask[]>([]);
     const editorStore = useEditorStore();
     const uiStore = useUIStore();
-    const relatedContentStore = useRelatedContentStore();
+    const derivedContentStore = useDerivedContentStore();
 
     const activeTasksCount = computed(() => {
         return tasks.value.filter(t => t.status === 'processing' || t.status === 'pending').length;
@@ -44,6 +42,7 @@ export const useAITaskStore = defineStore('aiTask', () => {
             }
 
             if (wordIndex < words.length) {
+                // 流式更新只作用于任务自身的 generatedContent，用于AI预览面板
                 currentTask.generatedContent += words[wordIndex];
                 wordIndex++;
                 if (willFail && wordIndex > words.length / 2) {
@@ -57,21 +56,24 @@ export const useAITaskStore = defineStore('aiTask', () => {
                 clearInterval(intervalId);
                 currentTask.status = 'completed';
 
-                const strategy = uiStore.uiState.taskApplicationStrategy;
-                switch (strategy.mode) {
-                    case 'auto':
-                        applyChanges(currentTask.id, true);
-                        break;
-                    case 'delayed':
-                        setTimeout(() => {
-                            const taskAfterDelay = tasks.value.find(t => t.id === taskId);
-                            if (taskAfterDelay && taskAfterDelay.status === 'completed') {
-                                applyChanges(taskId, true);
-                            }
-                        }, strategy.delaySeconds * 1000);
-                        break;
-                    case 'manual':
-                        break;
+                // 自动应用策略只对“润色”这类直接修改任务有效
+                if (task.type === '润色') {
+                    const strategy = uiStore.uiState.taskApplicationStrategy;
+                    switch (strategy.mode) {
+                        case 'auto':
+                            applyChanges(currentTask.id, true);
+                            break;
+                        case 'delayed':
+                            setTimeout(() => {
+                                const taskAfterDelay = tasks.value.find(t => t.id === taskId);
+                                if (taskAfterDelay && taskAfterDelay.status === 'completed') {
+                                    applyChanges(taskId, true);
+                                }
+                            }, strategy.delaySeconds * 1000);
+                            break;
+                        case 'manual':
+                            break;
+                    }
                 }
 
                 _processQueue();
@@ -86,32 +88,44 @@ export const useAITaskStore = defineStore('aiTask', () => {
         if (pendingTask) _simulateAIStream(pendingTask.id);
     };
 
-    const startTask = (taskType: AITask['type'], sourceItemId: string) => {
+    const startTask = async (taskType: AITask['type'], sourceItemId: string) => {
         const { node: sourceItem } = editorStore.findItemById(sourceItemId);
         if (!sourceItem || !('content' in sourceItem) || typeof sourceItem.content !== 'string') {
             console.error("AI Task Error: Source item not found or has no content.", sourceItemId);
             return;
         }
 
-        const sourceContent = sourceItem.content;
-        const baseTitle = sourceItem.title;
-        let targetItemId = sourceItemId;
+        let targetItemId: string;
+        let taskTitle: string;
 
-        if (isReplaceTask(taskType)) {
-            const prefix = taskType === '分析' ? 'analysis' : 'plot';
-            targetItemId = `${prefix}_${sourceItemId}`;
-            relatedContentStore.ensureDerivedItemExists(targetItemId);
+        if (taskType === '分析' || taskType === '剧情生成') {
+            const newDerivedItem = derivedContentStore.createDerivedItem(sourceItemId, taskType);
+            if (!newDerivedItem) {
+                console.error("Failed to create derived item shell.");
+                return;
+            }
+            targetItemId = newDerivedItem.id;
+            taskTitle = newDerivedItem.title;
+
+            // 等待UI稳定
+            await nextTick();
+
+            // 打开新标签
+            editorStore.openTab(targetItemId);
+
+        } else { // 润色等直接修改任务
+            targetItemId = sourceItemId;
+            taskTitle = `${taskType}《${sourceItem.title}》`;
         }
 
-        editorStore.openTab(targetItemId);
 
         const newTask: AITask = {
             id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            title: `${taskType}《${baseTitle}》`,
+            title: taskTitle,
             type: taskType,
             targetItemId: targetItemId,
             status: 'pending',
-            sourceContent: sourceContent,
+            sourceContent: sourceItem.content,
             generatedContent: '',
             createdAt: new Date(),
         };
@@ -130,19 +144,26 @@ export const useAITaskStore = defineStore('aiTask', () => {
 
     const applyChanges = (taskId: string, isAutoApplied: boolean = false) => {
         const task = tasks.value.find(t => t.id === taskId);
-        if (task && task.status === 'completed') {
-            const { node: targetNode } = editorStore.findItemById(task.targetItemId);
-            if (!targetNode) return;
+        if (!task || task.status !== 'completed') return;
 
-            if (isReplaceTask(task.type)) {
-                const newBody = formatContentForEditor(task.generatedContent);
-                const newContent = `<h1>${targetNode.title}</h1>${newBody}`;
+        if (task.type === '分析' || task.type === '剧情生成') {
+            // 对于派生任务，应用修改意味着将最终内容写入占位符文件
+            const { node: targetNode } = editorStore.findItemById(task.targetItemId);
+            if (targetNode) {
+                // 从任务标题中移除时间戳，作为最终的文件标题
+                const finalTitle = task.title.split(' - ')[0];
+                const newContent = formatContentForEditor(finalTitle, task.generatedContent);
                 editorStore.updateItemContentById(task.targetItemId, newContent);
-            } else {
-                editorStore.appendContentToItem(task.targetItemId, task.generatedContent, isAutoApplied);
+                // 更新标题（如果需要）
+                const result = derivedContentStore.findItemById(task.targetItemId);
+                if (result) result.title = finalTitle;
             }
-            task.status = 'applied';
+        } else {
+            // 对于润色任务，追加内容
+            editorStore.appendContentToItem(task.targetItemId, task.generatedContent, isAutoApplied);
         }
+
+        task.status = 'applied';
     };
 
     const retryTask = (taskId: string) => {

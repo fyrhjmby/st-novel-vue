@@ -6,45 +6,51 @@ import type { PlotAnalysisItem } from '@/novel/editor/types';
 import { useDirectoryStore } from './directoryStore';
 
 export const useDerivedContentStore = defineStore('derivedContent', () => {
-    const plotData = ref<Map<string, PlotAnalysisItem>>(new Map());
-    const analysisData = ref<Map<string, PlotAnalysisItem>>(new Map());
+    // 数据结构从 Map<string, Item> 改为 ref<Item[]>
+    const plotItems = ref<PlotAnalysisItem[]>([]);
+    const analysisItems = ref<PlotAnalysisItem[]>([]);
 
     /**
-     * 确保为指定章节创建派生内容项（如果不存在）。
-     * @param itemId - 派生内容的ID，格式为 `plot_{chapterId}` 或 `analysis_{chapterId}`
+     * 为指定章节创建一个新的派生内容项（占位符）。
+     * @param sourceChapterId - 源章节的ID
+     * @param taskType - 任务类型 ('分析' 或 '剧情生成')
+     * @returns 新创建的派生内容项
      */
-    function ensureDerivedItemExists(itemId: string) {
-        const [type, sourceChapterId] = itemId.split(/_(.+)/);
-        if (!type || !sourceChapterId) return;
-
-        const dataMap = type === 'plot' ? plotData.value : analysisData.value;
-        if (dataMap.has(sourceChapterId)) return;
-
+    function createDerivedItem(sourceChapterId: string, taskType: '分析' | '剧情生成'): PlotAnalysisItem | null {
         const directoryStore = useDirectoryStore();
         const chapterResult = directoryStore.findNodeById(sourceChapterId);
-        if (!chapterResult || chapterResult.node.type !== 'chapter') return;
+        if (!chapterResult || chapterResult.node.type !== 'chapter') return null;
 
         const chapter = chapterResult.node;
-        const suffix = type === 'plot' ? ' 剧情' : ' 分析';
+        const now = new Date();
+        const timestamp = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        
+        const typePrefix = taskType === '分析' ? 'analysis' : 'plot';
+        const titleSuffix = taskType === '分析' ? '分析' : '剧情';
+
         const newItem: PlotAnalysisItem = {
-            id: itemId,
+            id: `${typePrefix}_${now.getTime()}`, // 使用时间戳保证ID唯一
+            type: taskType,
             sourceChapterId: sourceChapterId,
-            title: `${chapter.title}${suffix}`,
-            content: `<h1>${chapter.title}${suffix}</h1><p>AI正在生成内容，请稍候...</p>`
+            title: `《${chapter.title}》${titleSuffix} - ${timestamp}`,
+            content: `<h1>《${chapter.title}》${titleSuffix} - ${timestamp}</h1><p>AI正在生成内容，请稍候...</p>`
         };
-        dataMap.set(sourceChapterId, newItem);
+
+        if (taskType === '分析') {
+            analysisItems.value.unshift(newItem);
+        } else {
+            plotItems.value.unshift(newItem);
+        }
+
+        return newItem;
     }
 
     /**
-     * 根据ID从派生地图中查找内容。
+     * 根据ID从所有派生项中查找。
      * @param nodeId - 派生内容的ID
      */
-    function findItemFromDerivedMaps(nodeId: string): PlotAnalysisItem | null {
-        const [type, sourceChapterId] = nodeId.split(/_(.+)/);
-        if (!type || !sourceChapterId) return null;
-
-        const dataMap = type === 'plot' ? plotData.value : (type === 'analysis' ? analysisData.value : null);
-        return dataMap?.get(sourceChapterId) ?? null;
+    function findItemById(nodeId: string): PlotAnalysisItem | null {
+        return [...plotItems.value, ...analysisItems.value].find(item => item.id === nodeId) || null;
     }
 
     /**
@@ -53,33 +59,25 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
      * @param content - 新的HTML内容
      */
     function updateNodeContent(nodeId: string, content: string) {
-        const derivedItem = findItemFromDerivedMaps(nodeId);
+        const derivedItem = findItemById(nodeId);
         if (derivedItem) {
             derivedItem.content = content;
-            const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
-            const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : derivedItem.title;
-            if (newTitle) {
-                derivedItem.title = newTitle;
-            }
+            // 标题不再从内容中提取，以保留时间戳
         }
     }
 
     /**
+     * (此函数不再用于派生内容，但为保持接口一致性而保留)
      * 向派生内容追加内容。
      * @param nodeId - 派生内容的ID
      * @param contentToAppend - 要追加的原始文本
-     * @param isAutoApplied - 是否为自动应用
      */
-    function appendNodeContent(nodeId: string, contentToAppend: string, isAutoApplied: boolean) {
-        const derivedItem = findItemFromDerivedMaps(nodeId);
+    function appendNodeContent(nodeId: string, contentToAppend: string) {
+        const derivedItem = findItemById(nodeId);
         if (derivedItem) {
             const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
-            let htmlToAppend = paragraphs;
-            if (isAutoApplied) {
-                htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
-            }
             if (!derivedItem.content) derivedItem.content = "";
-            derivedItem.content += htmlToAppend;
+            derivedItem.content += paragraphs;
         }
     }
 
@@ -88,16 +86,16 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
      * @param chapterId - 源章节的ID
      */
     function deleteDerivedDataForChapter(chapterId: string) {
-        plotData.value.delete(chapterId);
-        analysisData.value.delete(chapterId);
+        plotItems.value = plotItems.value.filter(item => item.sourceChapterId !== chapterId);
+        analysisItems.value = analysisItems.value.filter(item => item.sourceChapterId !== chapterId);
     }
 
 
     return {
-        plotData,
-        analysisData,
-        ensureDerivedItemExists,
-        findItemFromDerivedMaps,
+        plotItems,
+        analysisItems,
+        createDerivedItem,
+        findItemById,
         updateNodeContent,
         appendNodeContent,
         deleteDerivedDataForChapter,

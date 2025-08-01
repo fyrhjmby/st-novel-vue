@@ -1,12 +1,13 @@
 // 文件: src/novel/editor/stores/relatedContentStore.ts
+
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useEditorStore } from './editorStore';
 import { useUIStore } from './uiStore';
 import { useDirectoryStore } from './directoryStore';
 import { useDerivedContentStore } from './derivedContentStore';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
-import type { TreeNode, RootNode, GroupNode, ItemNode, OverviewNode } from '@/novel/editor/types';
+import type { TreeNode, RootNode, GroupNode, ItemNode, OverviewNode, PlotAnalysisItem } from '@/novel/editor/types';
 
 const _findNodeInTreeRecursive = (nodes: TreeNode[], nodeId: string): { node: TreeNode; parent: TreeNode | null; siblings: TreeNode[] } | null => {
     for (const node of nodes) {
@@ -53,112 +54,118 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         return null;
     }
 
-    const processedSettingsData = computed((): TreeNode[] => {
-        const clonedData: TreeNode[] = JSON.parse(JSON.stringify(settingsData.value));
-        const overviewGroups = ['characters', 'locations', 'items', 'worldview'];
+    const relatedData = computed((): TreeNode[] => {
+        const directoryStore = useDirectoryStore();
+        const derivedContentStore = useDerivedContentStore();
 
+        const allChapterIds = new Set(directoryStore.directoryData.flatMap(v => v.chapters.map(c => c.id)));
+        for (const key of derivedContentStore.plotItems.map(i => i.sourceChapterId)) {
+            if (!allChapterIds.has(key)) derivedContentStore.plotItems = derivedContentStore.plotItems.filter(i => i.sourceChapterId !== key);
+        }
+        for (const key of derivedContentStore.analysisItems.map(i => i.sourceChapterId)) {
+            if (!allChapterIds.has(key)) derivedContentStore.analysisItems = derivedContentStore.analysisItems.filter(i => i.sourceChapterId !== key);
+        }
+
+        const buildDerivedTree = (
+            type: 'plot' | 'analysis',
+            dataArray: PlotAnalysisItem[]
+        ): TreeNode[] => {
+            return directoryStore.directoryData.map(volume => ({
+                id: `${type}_vol_${volume.id}`,
+                title: volume.title,
+                type: 'group', // Use a generic group type for display
+                icon: getIconByNodeType('volume'),
+                isReadOnly: true,
+                children: volume.chapters
+                    .map(chapter => {
+                        const derivedForChapter = dataArray.filter(item => item.sourceChapterId === chapter.id);
+                        if (derivedForChapter.length === 0) return null;
+                        
+                        return {
+                            id: `${type}_ch_group_${chapter.id}`,
+                            title: chapter.title,
+                            type: 'group',
+                            icon: getIconByNodeType('chapter'),
+                            isReadOnly: true,
+                            children: derivedForChapter.map(item => ({
+                                id: item.id,
+                                title: item.title,
+                                type: `${type}_item`,
+                                icon: getIconByNodeType(`${type}_item`),
+                                originalData: item,
+                                content: item.content
+                            }))
+                        };
+                    })
+                    .filter((c): c is TreeNode => c !== null)
+            })).filter(vol => vol.children.length > 0);
+        };
+
+        const plotTree: RootNode = {
+            id: 'plot', title: '剧情', type: 'root', icon: getIconByNodeType('plot'),
+            children: [...plotCustomData.value, ...buildDerivedTree('plot', derivedContentStore.plotItems)]
+        };
+        const analysisTree: RootNode = {
+            id: 'analysis', title: '分析', type: 'root', icon: getIconByNodeType('analysis'),
+            children: [...analysisCustomData.value, ...buildDerivedTree('analysis', derivedContentStore.analysisItems)]
+        };
+
+        return [...settingsData.value, plotTree, analysisTree];
+    });
+    
+    function updateOverviewContent(groupNode: GroupNode) {
+        if (!groupNode.children) return;
+
+        const overviewNode = groupNode.children.find(child => child.isOverview) as OverviewNode | undefined;
+        if (!overviewNode) return;
+
+        const itemsToSummarize = groupNode.children.filter(child => child.type.endsWith('_item') && !child.isOverview) as ItemNode[];
+
+        const demoteHeadings = (htmlContent: string): string => {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+            const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5');
+            headings.forEach(heading => {
+                const level = parseInt(heading.tagName.charAt(1), 10);
+                const newLevel = Math.min(6, level + 1);
+                const newHeading = document.createElement(`h${newLevel}`);
+                newHeading.innerHTML = heading.innerHTML;
+                for (const attr of heading.attributes) {
+                    newHeading.setAttribute(attr.name, attr.value);
+                }
+                heading.parentNode?.replaceChild(newHeading, heading);
+            });
+            return tempDiv.innerHTML;
+        };
+
+        const itemContents = itemsToSummarize.map(item => item.content ? demoteHeadings(item.content) : '').filter(Boolean);
+        overviewNode.content = `<h1>${overviewNode.title}</h1>` + (itemContents.length > 0 ? itemContents.join('<hr>') : `<p class="overview-placeholder">此分类下暂无内容，请添加条目。</p>`);
+    }
+
+    function updateAllOverviewContent() {
         const findAndProcess = (nodes: TreeNode[]) => {
             for (const node of nodes) {
-                if (node.type === 'group' && overviewGroups.includes(node.id) && node.children) {
-                    const group = node as GroupNode;
-                    const itemsToSummarize = group.children.filter(child => child.type.endsWith('_item')) as ItemNode[];
-
-                    const demoteHeadings = (htmlContent: string): string => {
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = htmlContent;
-                        const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5');
-                        headings.forEach(heading => {
-                            const level = parseInt(heading.tagName.charAt(1), 10);
-                            const newLevel = Math.min(6, level + 1);
-                            const newHeading = document.createElement(`h${newLevel}`);
-                            newHeading.innerHTML = heading.innerHTML;
-                            for (const attr of heading.attributes) {
-                                newHeading.setAttribute(attr.name, attr.value);
-                            }
-                            heading.parentNode?.replaceChild(newHeading, heading);
-                        });
-                        return tempDiv.innerHTML;
-                    }
-
-                    const itemContents = itemsToSummarize.map(item => item.content ? demoteHeadings(item.content) : '').filter(Boolean);
-                    const overviewContent = `<h1>${group.title}总览</h1>` + itemContents.join('<hr>');
-                    const overviewId = `${group.id}-overview`;
-                    const overviewType = `${group.id}_overview` as OverviewNode['type'];
-                    let overviewNode = group.children.find(child => child.id === overviewId);
-
-                    const overviewNodeData: OverviewNode = {
-                        id: overviewId, title: `${group.title}总览`, type: overviewType, icon: getIconByNodeType(overviewType), content: overviewContent, isOverview: true, isReadOnly: true,
-                    };
-
-                    if (overviewNode) {
-                        Object.assign(overviewNode, overviewNodeData);
-                    } else {
-                        group.children.unshift(overviewNodeData);
-                    }
+                if (node.type === 'group' && node.children?.some(c => c.isOverview)) {
+                    updateOverviewContent(node as GroupNode);
                 }
                 if (node.children) {
                     findAndProcess(node.children);
                 }
             }
         };
-        findAndProcess(clonedData);
-        return clonedData;
-    });
-
-    const relatedData = computed((): TreeNode[] => {
-        const directoryStore = useDirectoryStore();
-        const derivedContentStore = useDerivedContentStore();
-
-        const allChapterIds = new Set(directoryStore.directoryData.flatMap(v => v.chapters.map(c => c.id)));
-        for (const key of derivedContentStore.plotData.keys()) {
-            if (!allChapterIds.has(key)) derivedContentStore.plotData.delete(key);
-        }
-        for (const key of derivedContentStore.analysisData.keys()) {
-            if (!allChapterIds.has(key)) derivedContentStore.analysisData.delete(key);
-        }
-
-        const buildDerivedTree = (
-            type: 'plot' | 'analysis',
-            dataMap: Map<string, any>
-        ): TreeNode[] => {
-            return directoryStore.directoryData.map(volume => ({
-                id: `${type}_vol_${volume.id}`,
-                title: volume.title,
-                type: `${type}_volume`,
-                icon: getIconByNodeType(`${type}_volume`),
-                isReadOnly: true,
-                children: volume.chapters
-                    .filter(chapter => dataMap.has(chapter.id))
-                    .map(chapter => {
-                        const item = dataMap.get(chapter.id)!;
-                        return {
-                            id: item.id,
-                            title: item.title,
-                            type: `${type}_chapter`,
-                            icon: getIconByNodeType(`${type}_chapter`),
-                            isReadOnly: true,
-                            originalData: item
-                        };
-                    })
-            })).filter(vol => vol.children.length > 0);
-        };
-
-        const plotTree: RootNode = {
-            id: 'plot', title: '剧情', type: 'root', icon: getIconByNodeType('plot'),
-            children: [...plotCustomData.value, ...buildDerivedTree('plot', derivedContentStore.plotData)]
-        };
-        const analysisTree: RootNode = {
-            id: 'analysis', title: '分析', type: 'root', icon: getIconByNodeType('analysis'),
-            children: [...analysisCustomData.value, ...buildDerivedTree('analysis', derivedContentStore.analysisData)]
-        };
-
-        return [...processedSettingsData.value, plotTree, analysisTree];
-    });
+        findAndProcess(settingsData.value);
+    }
+    
+    watch(settingsData, () => {
+        updateAllOverviewContent();
+    }, { deep: true });
 
     function fetchRelatedData(settings: TreeNode[], plot: TreeNode[], analysis: TreeNode[]) {
         settingsData.value = settings;
         plotCustomData.value = plot;
         analysisCustomData.value = analysis;
+        // Initial content generation for overviews
+        updateAllOverviewContent();
     }
 
     function updateNodeContent(nodeId: string, content: string) {

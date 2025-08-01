@@ -23,6 +23,15 @@ export interface AITask {
 }
 
 /**
+ * AI 任务执行前的预览数据结构
+ */
+export interface AITaskPreview {
+    type: AITask['type'];
+    targetItemId: string;
+    title: string;
+}
+
+/**
  * 上下文预设或已选择的条目
  */
 export interface ContextItem {
@@ -57,6 +66,15 @@ export interface EditorUIState {
     };
     isRagEnabled: boolean;
     selectedContextItems: ContextItem[];
+}
+
+/**
+ * 编辑器窗格定义
+ */
+export interface EditorPane {
+    id: string;
+    openTabIds: string[];
+    activeTabId: string | null;
 }
 
 /**

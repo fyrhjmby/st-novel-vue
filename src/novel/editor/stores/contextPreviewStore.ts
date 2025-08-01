@@ -1,5 +1,3 @@
-
-
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';

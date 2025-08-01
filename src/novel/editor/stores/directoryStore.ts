@@ -1,4 +1,3 @@
-// 文件: src/novel/editor/stores/directoryStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { Volume, Chapter } from '@/novel/editor/types';
@@ -54,7 +53,7 @@ export const useDirectoryStore = defineStore('directory', () => {
         const result = findNodeById(nodeId);
         if (result && result.node.type === 'chapter') {
             const chapter = result.node;
-            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
+            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
             let htmlToAppend = paragraphs;
             if (isAutoApplied) {
                 htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;

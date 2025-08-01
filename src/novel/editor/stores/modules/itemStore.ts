@@ -46,7 +46,7 @@ export const useItemStore = defineStore('editor-item', () => {
         }
 
         // 2. Check for AI Derived Items
-        const derivedItem = derivedContentStore.findItemFromDerivedMaps(id);
+        const derivedItem = derivedContentStore.findItemById(id);
         if (derivedItem) {
             return { node: derivedItem as PlotAnalysisItem, source: 'derived' };
         }

@@ -1,5 +1,7 @@
 // 文件: src/novel/editor/types/models.ts
 
+// 文件: src/novel/editor/types/models.ts
+
 /**
  * 卷（目录的一级）
  */
@@ -28,6 +30,7 @@ export interface Chapter {
  */
 export interface PlotAnalysisItem {
     id: string; // 派生ID, e.g., 'plot_ch-1'
+    type: '分析' | '剧情生成'; // 明确其类型
     sourceChapterId: string; // 源章节ID, e.g., 'ch-1'
     title: string; // 派生标题, e.g., '第一章 剧情'
     content: string; // 生成的内容 (HTML)
@@ -91,6 +94,7 @@ interface BaseNode {
     icon: string;
     children?: TreeNode[];
     isReadOnly?: boolean;
+    isOverview?: boolean;
 }
 
 export type AnyNode = Volume | Chapter | NoteItem | PlotAnalysisItem;

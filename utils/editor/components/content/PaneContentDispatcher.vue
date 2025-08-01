@@ -33,7 +33,7 @@ import type { TabInfo } from '@/novel/editor/types';
 import TiptapEditor from './TiptapEditor.vue';
 import FloatingToolbar from './FloatingToolbar.vue';
 import EditorContextMenu from './EditorContextMenu.vue';
-import SearchView from '@/novel/editor/components/system/SearchView.vue';
+import SearchView from '@novel/editor/views/SearchView.vue';
 import AIChatView from '@/novel/editor/components/ai/AIChatView.vue';
 import AITaskPanel from '@/novel/editor/components/ai/AITaskPanel.vue';
 import EditorSettings from '@/novel/editor/components/system/settings/EditorSettings.vue';
