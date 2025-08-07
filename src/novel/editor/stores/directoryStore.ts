@@ -1,3 +1,4 @@
+// src/novel/editor/stores/directoryStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { Volume, Chapter } from '@/novel/editor/types';
@@ -35,16 +36,20 @@ export const useDirectoryStore = defineStore('directory', () => {
 
     const updateChapterContent = (nodeId: string, content: string) => {
         const result = findNodeById(nodeId);
-        if (result && result.node.type === 'chapter') {
-            const chapter = result.node;
-            chapter.content = content;
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = content;
-            chapter.wordCount = tempDiv.textContent?.trim().length || 0;
+        if (result && (result.node.type === 'chapter' || result.node.type === 'volume')) {
+            const item = result.node;
+            item.content = content;
+
+            if (item.type === 'chapter') {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = content;
+                item.wordCount = tempDiv.textContent?.trim().length || 0;
+            }
+
             const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
             const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
-            if (newTitle && newTitle !== chapter.title) {
-                chapter.title = newTitle;
+            if (newTitle && newTitle !== item.title) {
+                item.title = newTitle;
             }
         }
     };
@@ -110,7 +115,8 @@ export const useDirectoryStore = defineStore('directory', () => {
         if (result?.node) {
             const trimmedTitle = newTitle.trim();
             result.node.title = trimmedTitle;
-            if ('content' in result.node && result.node.content) {
+            // 同时更新卷和章节的content
+            if (result.node.content) {
                 if (result.node.content.includes('<h1>')) {
                     result.node.content = result.node.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
                 } else {
@@ -124,7 +130,6 @@ export const useDirectoryStore = defineStore('directory', () => {
     const deleteNode = (nodeId: string) => {
         const result = findNodeById(nodeId);
         if (!result) return;
-        if (!window.confirm(`您确定要删除 "${result.node.title}" 吗？此操作无法撤销。`)) return;
 
         const editorStore = useEditorStore();
         const derivedContentStore = useDerivedContentStore();

@@ -1,4 +1,4 @@
-// 文件: src/novel/editor/components/sidebar/RelatedTab.vue
+// src/novel/editor/components/sidebar/RelatedTab.vue
 <template>
   <div class="related-tab-container">
     <div class="header">
@@ -9,6 +9,9 @@
         </button>
         <button @click="handleAddNewCustomAnalysis" class="action-btn" title="新建自定义分析">
           <i class="fa-solid fa-magnifying-glass-chart fa-xs"></i>
+        </button>
+        <button @click="handleAddNewCustomOthers" class="action-btn" title="新建其他条目">
+          <i class="fa-solid fa-puzzle-piece fa-xs"></i>
         </button>
       </div>
     </div>
@@ -73,7 +76,9 @@ const handleContextMenu = (payload: { node: TreeNode; event: MouseEvent }) => {
 };
 
 const handleCommitRename = (payload: { nodeId: string; newTitle: string }) => {
-  if (payload.nodeId.startsWith('custom-')) {
+  if (payload.nodeId.startsWith('custom-others-')) {
+    relatedContentStore.renameCustomOthersNode(payload.nodeId, payload.newTitle);
+  } else if (payload.nodeId.startsWith('custom-')) {
     relatedContentStore.renameCustomRelatedNode(payload.nodeId, payload.newTitle);
   } else {
     relatedContentStore.renameRelatedNode(payload.nodeId, payload.newTitle);
@@ -90,6 +95,10 @@ const handleAddNewCustomPlot = () => {
 
 const handleAddNewCustomAnalysis = () => {
   relatedContentStore.addCustomRelatedNode('analysis');
+};
+
+const handleAddNewCustomOthers = () => {
+  relatedContentStore.addCustomOthersNode();
 };
 
 </script>

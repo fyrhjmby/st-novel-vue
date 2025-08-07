@@ -1,4 +1,4 @@
-// 文件: src/novel/editor/components/sidebar/DirectoryTab.vue
+// src/novel/editor/components/sidebar/DirectoryTab.vue
 
 <template>
   <div class="directory-tab-container">
@@ -57,6 +57,7 @@ const directoryTree = computed((): VolumeNode[] => {
     title: volume.title,
     icon: getIconByNodeType(volume.type),
     type: 'volume',
+    content: volume.content, // 直接暴露 content
     originalData: volume,
     children: volume.chapters.map(chapter => ({
       id: chapter.id,
@@ -64,16 +65,18 @@ const directoryTree = computed((): VolumeNode[] => {
       icon: getIconByNodeType(chapter.type),
       type: 'chapter',
       status: chapter.status,
+      content: chapter.content, // 直接暴露 content
       originalData: chapter,
     })),
   }));
 });
 
 const handleSelectNode = (node: TreeNode) => {
-  // 只有在节点有内容时才打开tab，否则切换展开状态
-  if (node.type === 'chapter' || ('content' in node && node.content)) {
+  // 明确判断，卷和章节都可以被打开编辑
+  if (node.type === 'chapter' || node.type === 'volume') {
     editorStore.openTab(node.id);
   } else if(node.children && node.children.length > 0) {
+    // 对于其他有子节点的节点（理论上这里不会走到），作为备用逻辑
     uiStore.toggleNodeExpansion(node.id);
   }
 };

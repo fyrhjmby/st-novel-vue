@@ -1,5 +1,3 @@
-// 文件: src/novel/editor/stores/uiStore.ts
-
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { EditorItem, EditorUIState } from '@/novel/editor/types';
@@ -59,6 +57,12 @@ export const useUIStore = defineStore('ui', () => {
         }
     };
 
+    const ensureRelatedNodeIsExpanded = (nodeId: string) => {
+        if (!uiState.value.expandedRelatedNodeIds.has(nodeId)) {
+            uiState.value.expandedRelatedNodeIds.add(nodeId);
+        }
+    };
+
     const showReaderMode = (item: EditorItem) => {
         readerModeItem.value = item;
         isReaderModeVisible.value = true;
@@ -81,6 +85,7 @@ export const useUIStore = defineStore('ui', () => {
         setTaskApplicationStrategy,
         toggleNodeExpansion,
         toggleRelatedNodeExpansion,
+        ensureRelatedNodeIsExpanded,
         showReaderMode,
         hideReaderMode,
     };

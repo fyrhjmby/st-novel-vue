@@ -1,3 +1,4 @@
+
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { NoteItem } from '@/novel/editor/types';
@@ -75,7 +76,6 @@ export const useNotesStore = defineStore('notes', () => {
         const editorStore = useEditorStore();
         const index = notes.value.findIndex(n => n.id === noteId);
         if (index !== -1) {
-            if (!window.confirm(`您确定要删除笔记 "${notes.value[index].title}" 吗？`)) return;
             notes.value.splice(index, 1);
             editorStore.closeTab(noteId);
         }

@@ -1,6 +1,6 @@
 <template>
   <div class="setting-page-container">
-    <div class="setting-page-wrapper custom-scrollbar">
+    <div class="setting-page-wrapper">
       <div class="page-header">
         <h2 class="page-title">上下文管理</h2>
         <p class="page-description">配置AI任务执行时如何处理上下文信息，以获得更精准的生成结果。</p>
@@ -42,7 +42,7 @@
             </div>
 
             <div v-if="settingsStore.selectedContextItems.length > 0">
-              <label class="block text-sm font-medium text-[#374151] mb-1.5">已选择的内容</label>
+              <label class="block text-sm font-medium text-[#374151] mb-1.5">已选择的设定内容</label>
               <div class="content-list">
                 <div
                     v-for="item in settingsStore.selectedContextItems"
@@ -59,6 +59,41 @@
                 </div>
               </div>
             </div>
+
+            <div>
+              <label class="block text-sm font-medium text-[#374151] mb-1.5">选择其他内容
+                <span class="text-xs text-[#9CA3AF] ml-2">可选择写作风格等其他参考</span>
+              </label>
+              <select
+                  @change="addSelectedOthersItem"
+                  class="w-full px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] custom-select focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]"
+              >
+                <option value="">请选择其他内容...</option>
+                <option v-for="preset in settingsStore.othersContextPresets" :key="preset.id" :value="preset.id">
+                  {{ preset.title }}
+                </option>
+              </select>
+            </div>
+
+            <div v-if="settingsStore.selectedOthersItems.length > 0">
+              <label class="block text-sm font-medium text-[#374151] mb-1.5">已选择的其他内容</label>
+              <div class="content-list">
+                <div
+                    v-for="item in settingsStore.selectedOthersItems"
+                    :key="item.id"
+                    class="content-list-item"
+                >
+                  <div class="flex-grow min-w-0">
+                    <div class="font-medium text-sm text-[#374151] truncate" :title="item.title">{{ item.title }}</div>
+                    <div class="text-xs text-[#9CA3AF] mt-1 truncate">{{ item.description }}</div>
+                  </div>
+                  <button @click.stop="settingsStore.removeOthersContextItem(item.id)" class="text-[#9CA3AF] hover:text-[#EF4444] transition-colors ml-4 flex-shrink-0">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div>
               <label for="custom-content" class="block text-sm font-medium text-[#374151] mb-1.5">自定义固定内容</label>
               <textarea
@@ -144,6 +179,18 @@ const addSelectedItem = (event: Event) => {
   }
   select.value = ""; // Reset select
 };
+
+const addSelectedOthersItem = (event: Event) => {
+  const select = event.target as HTMLSelectElement;
+  const selectedId = select.value;
+  if (!selectedId) return;
+
+  const preset = settingsStore.othersContextPresets.find(p => p.id === selectedId);
+  if (preset) {
+    settingsStore.addOthersContextItem(preset);
+  }
+  select.value = ""; // Reset select
+};
 </script>
 
 <style scoped>
@@ -160,29 +207,43 @@ const addSelectedItem = (event: Event) => {
   margin: 0 auto;
   overflow-y: auto;
   height: 100%;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
-
-.custom-scrollbar::-webkit-scrollbar {
-  display: block; width: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #d1d5db; border-radius: 3px;
+.setting-page-wrapper::-webkit-scrollbar {
+  display: none;
 }
 
 .page-header { padding-bottom: 1.5rem; border-bottom: 1px solid #E5E7EB; margin-bottom: 1.5rem; }
 .page-title { font-size: 1.5rem; font-weight: 600; color: #1F2937; }
 .page-description { color: #6B7280; margin-top: 0.25rem; }
 .setting-group { display: flex; flex-direction: column; }
-.setting-item { display: grid; grid-template-columns: 12rem 1fr; gap: 1rem; padding: 1.5rem 0; border-bottom: 1px solid #E5E7EB; }
+.setting-item {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid #E5E7EB;
+}
+@media (min-width: 768px) {
+  .setting-item {
+    grid-template-columns: 12rem 1fr;
+  }
+}
 .setting-item:last-child { border-bottom: none; }
-.setting-label { font-size: 0.875rem; font-weight: 500; color: #374151; padding-top: 0.5rem; }
+.setting-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+@media (min-width: 768px) {
+  .setting-label {
+    padding-top: 0.5rem;
+  }
+}
 .setting-control { display: flex; flex-direction: column; gap: 0.5rem; }
 .setting-description { color: #6B7280; font-size: 0.875rem; line-height: 1.6; }
 .setting-checkbox { height: 1.25rem; width: 1.25rem; border-radius: 0.25rem; border: 1px solid #D1D5DB; color: #2563EB; }
-.setting-checkbox-small { height: 1rem; width: 1rem; border-radius: 0.25rem; border: 1px solid #D1D5DB; color: #2563EB; }
 
 .range-custom {
   -webkit-appearance: none; appearance: none;

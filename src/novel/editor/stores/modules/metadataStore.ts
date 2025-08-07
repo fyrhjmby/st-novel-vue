@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { NovelMetadata } from '@/novel/editor/types';
-import { mockNovelMetadata, mockDirectoryData, mockSettingsData, mockPlotCustomData, mockAnalysisCustomData, mockNoteData } from '@/novel/editor/data';
+import { mockNovelMetadata, mockDirectoryData, mockSettingsData, mockPlotCustomData, mockAnalysisCustomData, mockNoteData, mockOthersCustomData } from '@/novel/editor/data';
 import { useDirectoryStore } from '../directoryStore';
 import { useRelatedContentStore } from '../relatedContentStore';
 import { useNotesStore } from '../notesStore';
@@ -22,7 +22,7 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
         const tabStore = useTabStore();
 
         directoryStore.fetchDirectoryData(mockDirectoryData);
-        relatedContentStore.fetchRelatedData(mockSettingsData, mockPlotCustomData, mockAnalysisCustomData);
+        relatedContentStore.fetchRelatedData(mockSettingsData, mockPlotCustomData, mockAnalysisCustomData, mockOthersCustomData);
         notesStore.fetchNotes(mockNoteData);
         novelMetadata.value = JSON.parse(JSON.stringify(mockNovelMetadata));
 
@@ -30,10 +30,11 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
         tabStore.openTab('ch-3');
 
         uiStore.uiState.expandedNodeIds.add('vol-1');
-        uiStore.uiState.expandedRelatedNodeIds.add('settings');
+        uiStore.uiState.expandedRelatedNodeIds.add('setting');
         uiStore.uiState.expandedRelatedNodeIds.add('characters');
         uiStore.uiState.expandedRelatedNodeIds.add('plot');
         uiStore.uiState.expandedRelatedNodeIds.add('analysis');
+        uiStore.uiState.expandedRelatedNodeIds.add('others');
     }
 
     function removeTag(tagIndex: number) {

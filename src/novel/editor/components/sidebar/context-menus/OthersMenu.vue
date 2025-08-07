@@ -1,10 +1,9 @@
-
 <template>
   <div>
     <p class="menu-title">管理</p>
-    <div @click="emit('custom-related-action', 'newItem', { target: node.id })" class="context-menu-item">
+    <div @click="emit('custom-others-action', 'newItem')" class="context-menu-item">
       <i class="fa-solid fa-plus w-4 text-center"></i>
-      <span>新建自定义{{ node.id === 'plot' ? '剧情' : '分析' }}</span>
+      <span>新建其他条目</span>
     </div>
   </div>
 </template>
@@ -21,7 +20,7 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'custom-related-action', actionName: string, payload?: any): void;
+  (e: 'custom-others-action', actionName: string, payload?: any): void;
 }>();
 </script>
 

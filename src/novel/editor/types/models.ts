@@ -1,3 +1,5 @@
+// src/novel/editor/types/models.ts
+
 
 /**
  * 卷（目录的一级）
@@ -103,11 +105,13 @@ export interface RootNode extends BaseNode {
 // --- 目录节点 ---
 export interface VolumeNode extends BaseNode {
     type: 'volume';
+    content: string;
     originalData: Volume;
     children: ChapterNode[];
 }
 export interface ChapterNode extends BaseNode {
     type: 'chapter';
+    content: string;
     originalData: Chapter;
     status?: Chapter['status'];
     children?: never;

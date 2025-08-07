@@ -27,9 +27,15 @@ export function useContextBuilder() {
         let fixedContextHtml = '';
         contextSettingsStore.selectedContextItems.forEach(item => {
             if (item.content) {
-                fixedContextHtml += `<hr><h3>相关设定: ${item.group} - ${item.title}</h3>${item.content}`;
+                fixedContextHtml += `<hr><h3>相关${item.category}: ${item.group} - ${item.title}</h3>${item.content}`;
             }
         });
+        contextSettingsStore.selectedOthersItems.forEach(item => {
+            if (item.content) {
+                fixedContextHtml += `<hr><h3>相关${item.category}: ${item.title}</h3>${item.content}`;
+            }
+        });
+
         if (contextSettingsStore.customContextContent.trim()) {
             fixedContextHtml += `<hr><h3>自定义固定内容</h3><p>${contextSettingsStore.customContextContent.trim().replace(/\n/g, '<br>')}</p>`;
         }
@@ -41,7 +47,7 @@ export function useContextBuilder() {
         const sourceItemResult = directoryStore.findNodeById(sourceItemId);
 
         if (sourceItemResult && sourceItemResult.node.type === 'chapter') {
-            const { parent: volume, siblings: chapters, node } = sourceItemResult;
+            const { parent: volume, siblings: chapters } = sourceItemResult;
             const chapterIndex = chapters.findIndex(c => c.id === sourceItemId);
 
             if (volume && chapterIndex > -1) {

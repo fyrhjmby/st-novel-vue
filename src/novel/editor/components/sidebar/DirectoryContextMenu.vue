@@ -1,4 +1,4 @@
-// 文件: src/novel/editor/components/sidebar/DirectoryContextMenu.vue
+// src/novel/editor/components/sidebar/DirectoryContextMenu.vue
 <template>
   <div
       v-if="visible && menuComponent"
@@ -13,6 +13,7 @@
         @ai-action="handleAIAction"
         @settings-action="handleSettingsAction"
         @custom-related-action="handleCustomRelatedAction"
+        @custom-others-action="handleOthersAction"
         @note-action="handleNoteAction"
     />
   </div>
@@ -35,8 +36,11 @@ const menuComponentMap = shallowRef({
   'group': defineAsyncComponent(() => import('./context-menus/GroupMenu.vue')),
   'item': defineAsyncComponent(() => import('./context-menus/ItemMenu.vue')),
   'root': defineAsyncComponent(() => import('./context-menus/RootMenu.vue')),
+  'others': defineAsyncComponent(() => import('./context-menus/OthersMenu.vue')),
+  'others_item': defineAsyncComponent(() => import('./context-menus/OthersItemMenu.vue')),
   'custom_related': defineAsyncComponent(() => import('./context-menus/CustomRelatedMenu.vue')),
   'note': defineAsyncComponent(() => import('./context-menus/NoteMenu.vue')),
+  'setting_root': defineAsyncComponent(() => import('./context-menus/SettingsRootMenu.vue')),
 });
 
 // --- State and Props ---
@@ -56,18 +60,38 @@ const menuComponent = computed(() => {
   if (!node.value) return null;
   const { type, id } = node.value;
 
-  if (menuComponentMap.value[type]) {
-    return menuComponentMap.value[type];
+  // Handle custom item types first by ID prefix
+  if (id.startsWith('custom-others-')) {
+    return menuComponentMap.value['others_item'];
   }
-  if (type === 'root' && (id === 'plot' || id === 'analysis')) {
-    return menuComponentMap.value['root'];
-  }
-  if (id.startsWith('custom-')) {
+  if (id.startsWith('custom-') && !id.startsWith('custom-others-')) {
     return menuComponentMap.value['custom_related'];
   }
+
+  // Handle root nodes by ID
+  if (type === 'root') {
+    if (id === 'setting') {
+      return menuComponentMap.value['setting_root'];
+    }
+    if (id === 'plot' || id === 'analysis') {
+      return menuComponentMap.value['root'];
+    }
+    if (id === 'others') {
+      return menuComponentMap.value['others'];
+    }
+    return null;
+  }
+
+  // Handle specific node types by their 'type' property
+  if (type in menuComponentMap.value) {
+    return menuComponentMap.value[type];
+  }
+
+  // Fallback for settings items (e.g., character_item)
   if (type.endsWith('_item')) {
     return menuComponentMap.value['item'];
   }
+
   return null;
 });
 
@@ -123,11 +147,30 @@ const handleSettingsAction = (action: string, payload: any) => {
 const handleCustomRelatedAction = (action: string, payload: any) => {
   hide();
   const nodeId = payload?.nodeId;
-  const target = node.value?.id === 'plot' ? 'plot' : 'analysis';
+  const target = payload?.target as 'plot' | 'analysis' | undefined;
+
   switch(action) {
-    case 'newItem': relatedContentStore.addCustomRelatedNode(target); break;
+    case 'newItem':
+      if (target) {
+        relatedContentStore.addCustomRelatedNode(target);
+      }
+      break;
+    case 'rename':
+      editorStore.setEditingNodeId(nodeId);
+      break;
+    case 'delete':
+      relatedContentStore.deleteCustomRelatedNode(nodeId);
+      break;
+  }
+};
+
+const handleOthersAction = (action: string, payload: any) => {
+  hide();
+  const nodeId = payload?.nodeId;
+  switch(action) {
+    case 'newItem': relatedContentStore.addCustomOthersNode(); break;
     case 'rename': editorStore.setEditingNodeId(nodeId); break;
-    case 'delete': relatedContentStore.deleteCustomRelatedNode(nodeId); break;
+    case 'delete': relatedContentStore.deleteCustomOthersNode(nodeId); break;
   }
 };
 

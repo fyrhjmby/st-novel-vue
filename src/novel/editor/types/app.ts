@@ -37,6 +37,7 @@ export interface AITaskPreview {
  */
 export interface ContextItem {
     id: string;
+    category: '设定' | '其他';
     group: string;
     title:string;
     description: string;

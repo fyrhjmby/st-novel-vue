@@ -1,5 +1,3 @@
-// 文件: src\novel\editor\utils\iconUtils.ts
-
 // 文件: src/novel/editor/utils/iconUtils.ts
 
 const ICON_MAP: Record<string, string> = {
@@ -8,7 +6,7 @@ const ICON_MAP: Record<string, string> = {
     'chapter': 'fa-regular fa-file-lines text-gray-600',
 
     // 相关内容 - 设定 (Related - Settings)
-    'settings': 'fa-solid fa-book-journal-whills', // 设定根节点
+    'setting': 'fa-solid fa-book-journal-whills', // 设定根节点
     'group': 'fa-regular fa-folder text-gray-500',
     'character_item': 'fa-regular fa-user',
     'location_item': 'fa-regular fa-map',
@@ -31,6 +29,10 @@ const ICON_MAP: Record<string, string> = {
     'analysis_volume': 'fa-solid fa-chart-pie',
     'analysis_chapter': 'fa-solid fa-chart-simple',
     'analysis_item': 'fa-solid fa-magnifying-glass-plus', // 自定义分析条目
+
+    // 相关内容 - 其他 (Related - Others)
+    'others': 'fa-solid fa-puzzle-piece', // 其他根节点
+    'others_item': 'fa-regular fa-file-zipper', // 其他条目
 
     // 笔记 (Notes)
     'note': 'fa-solid fa-note-sticky text-yellow-500',

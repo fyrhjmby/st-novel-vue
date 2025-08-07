@@ -1,7 +1,8 @@
 // == 扫描摘要 ==
 //
-// 跳过的目录 (共 1 个):
-//   - ..\src\novel\editor\components\ai\chat
+// 跳过的目录 (共 2 个):
+//   - ..\src\novel\editor\components\ai
+//   - ..\src\novel\editor\components\layout
 //
 // == 文件内容 ==
 
@@ -48,402 +49,6 @@ export function streamAITask(prompt: string, callbacks: StreamCallbacks): void {
         }
     }, 20); // 调整流式速度
 }
-
-// =
-// 文件: ..\src\novel\editor\components\ai\AIChatView.vue
-//
-
-<template>
-  <div class="flex-1 flex overflow-hidden">
-    <ConversationList />
-
-    <main v-if="activeConversation" class="flex-1 flex flex-col bg-white">
-      <ChatHeader :active-conversation="activeConversation" :current-model="currentModel" />
-
-      <ChatMessageHistory :conversation="activeConversation" :is-receiving="isReceiving" />
-
-      <ChatInputArea />
-
-    </main>
-
-    <div v-else class="flex-1 flex items-center justify-center bg-white text-gray-400">
-      请从左侧选择或新建一个对话
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { onMounted } from 'vue';
-import { useChatStore } from '@/novel/editor/stores/chatStore';
-import { storeToRefs } from 'pinia';
-import ConversationList from './chat/ConversationList.vue';
-import ChatMessageHistory from './chat/ChatMessageHistory.vue';
-import ChatInputArea from './chat/ChatInputArea.vue';
-import ChatHeader from './chat/ChatHeader.vue';
-
-const chatStore = useChatStore();
-const { activeConversation, currentModel, isReceiving } = storeToRefs(chatStore);
-
-onMounted(() => {
-  chatStore.fetchConversations();
-});
-</script>
-
-// =
-// 文件: ..\src\novel\editor\components\ai\AIDiffPreview.vue
-//
-
-// 文件: src/novel/editor/components/ai/AIDiffPreview.vue
-
-<template>
-  <div class="diff-preview-container">
-    <div class="header">
-      <h3 class="title">AI生成预览</h3>
-      <div class="actions">
-        <button v-if="previewTask && previewTask.status === 'completed'" @click="$emit('apply-changes', previewTask.id)" class="apply-btn">
-          <i class="fa-solid fa-check"></i>
-          应用修改
-        </button>
-      </div>
-    </div>
-    <div class="content-area">
-      <div v-if="previewTask">
-        <div class="prose-preview">
-          <div v-html="previewTask.generatedContent.replace(/\n/g, '<br>')"></div>
-          <span v-if="previewTask.status === 'processing'" class="blinking-cursor">▍</span>
-        </div>
-      </div>
-      <div v-else class="empty-state">
-        <i class="fa-regular fa-eye text-3xl text-gray-300"></i>
-        <p class="mt-2">请从上方任务队列中</p>
-        <p>选择一个任务来查看预览。</p>
-      </div>
-
-      <!-- Manual Apply Floating Button -->
-      <button
-          v-if="previewTask && previewTask.status === 'completed'"
-          @click="$emit('apply-changes', previewTask.id)"
-          class="manual-apply-fab"
-          title="应用修改"
-      >
-        <i class="fa-solid fa-check"></i>
-      </button>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import type { PropType } from 'vue';
-import type { AITask } from '@/novel/editor/types';
-
-defineProps({
-  previewTask: {
-    type: Object as PropType<AITask | null>,
-    default: null,
-  }
-});
-
-defineEmits<{
-  (e: 'apply-changes', taskId: string): void;
-}>();
-</script>
-
-<style scoped>
-.diff-preview-container { padding: 1rem; display: flex; flex-direction: column; height: 100%; }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding: 0 0.5rem; flex-shrink: 0; height: 32px; }
-.title { font-size: 0.875rem; font-weight: 500; color: #4B5563; }
-.apply-btn { display: flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.75rem; background-color: #16A34A; color: white; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500; transition: background-color 0.2s ease; }
-.apply-btn:hover { background-color: #15803D; }
-.content-area { flex-grow: 1; background-color: #FFFFFF; border-radius: 0.5rem; border: 1px solid #E5E7EB; padding: 1rem; overflow-y: auto; font-size: 0.875rem; line-height: 1.7; color: #374151; position: relative; }
-.empty-state { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #9CA3AF; font-size: 0.875rem; }
-.prose-preview { white-space: pre-wrap; }
-.blinking-cursor { font-weight: 500; font-size: 1em; color: #3B82F6; animation: blink 1s step-end infinite; }
-@keyframes blink { from, to { color: transparent; } 50% { color: #3B82F6; } }
-.content-area { scrollbar-width: thin; scrollbar-color: #D1D5DB #ffffff; }
-.content-area::-webkit-scrollbar { width: 6px; }
-.content-area::-webkit-scrollbar-track { background: transparent; }
-.content-area::-webkit-scrollbar-thumb { background-color: #D1D5DB; border-radius: 3px; }
-.manual-apply-fab {
-  position: absolute;
-  bottom: 1rem;
-  right: 1rem;
-  width: 2.75rem;
-  height: 2.75rem;
-  background-color: #16A34A;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  transition: all 0.2s ease;
-  z-index: 10;
-}
-.manual-apply-fab:hover {
-  background-color: #15803D;
-  transform: scale(1.05);
-}
-</style>
-
-// =
-// 文件: ..\src\novel\editor\components\ai\AITaskItem.vue
-//
-
-// 文件: src/novel/editor/components/ai/AITaskItem.vue
-
-<template>
-  <div
-      :class="['task-item', `status-${task.status}`, { 'clickable': isClickable(task.status) }]"
-      @click="handleTaskClick"
-  >
-    <div class="task-item-header">
-      <p class="task-title" :title="task.title">{{ task.title }}</p>
-      <div class="flex items-center gap-2">
-            <span class="task-status-text">
-              <i :class="getStatusIcon(task.status)" class="status-icon"></i>
-              {{ getStatusText(task.status) }}
-            </span>
-        <button
-            v-if="task.status === 'completed'"
-            @click.stop="emit('apply-changes', task.id)"
-            class="apply-now-btn"
-        >
-          <i class="fa-solid fa-check fa-xs"></i>
-          应用
-        </button>
-      </div>
-    </div>
-
-    <div class="task-item-body">
-      <div v-if="task.status === 'processing'" class="progress-bar-container">
-        <div class="progress-bar"></div>
-      </div>
-      <p v-if="task.status === 'failed'" class="error-message">
-        {{ task.error }} <a href="#" @click.prevent.stop="emit('retry-task', task.id)" class="retry-link">重试</a>
-      </p>
-      <p v-if="isClickable(task.status)" class="message">
-        点击查看详情
-      </p>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import type { PropType } from 'vue';
-import type { AITask, AITaskStatus } from '@/novel/editor/types';
-
-const props = defineProps({
-  task: {
-    type: Object as PropType<AITask>,
-    required: true,
-  },
-});
-
-const emit = defineEmits<{
-  (e: 'select-task', task: AITask): void;
-  (e: 'apply-changes', taskId: string): void;
-  (e: 'retry-task', taskId: string): void;
-}>();
-
-const getStatusText = (status: AITaskStatus): string => {
-  const map: Record<AITaskStatus, string> = {
-    pending: '等待中',
-    processing: '进行中...',
-    completed: '待应用',
-    failed: '失败',
-    applied: '已应用'
-  };
-  return map[status];
-};
-
-const getStatusIcon = (status: AITaskStatus): string => {
-  const map: Record<AITaskStatus, string> = {
-    pending: 'fa-solid fa-hourglass-half',
-    processing: 'fa-solid fa-spinner fa-spin',
-    completed: 'fa-solid fa-check-circle',
-    failed: 'fa-solid fa-times-circle',
-    applied: 'fa-solid fa-check-double'
-  };
-  return map[status];
-}
-
-const isClickable = (status: AITaskStatus): boolean => {
-  return ['completed', 'processing', 'applied', 'failed'].includes(status);
-};
-
-const handleTaskClick = () => {
-  if (isClickable(props.task.status)) {
-    emit('select-task', props.task);
-  }
-};
-</script>
-
-<style scoped>
-.task-item { padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #E5E7EB; transition: all 0.2s ease; background-color: #FFFFFF;}
-.task-item.clickable { cursor: pointer; }
-.task-item.clickable:hover { border-color: #D1D5DB; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-.task-item.status-processing.clickable { border: 1px solid #93C5FD; background-color: #EFF6FF; }
-.task-item.status-processing.clickable:hover { background-color: #DBEAFE; border-color: #60A5FA; }
-.task-item.status-completed.clickable { border: 1px solid #BBF7D0; background-color: #F0FDF4; }
-.task-item.status-completed.clickable:hover { background-color: #DCFCE7; border-color: #A7F3D0; }
-.task-item.status-failed { border: 1px solid #FECACA; background-color: #FEF2F2; }
-.task-item.status-applied.clickable { border: 1px solid #E5E7EB; background-color: #F9FAFB; }
-.task-item.status-applied.clickable:hover { background-color: #F3F4F6; border-color: #E5E7EB; }
-.task-item-header { display: flex; justify-content: space-between; align-items: center; }
-.task-title { font-size: 0.875rem; font-weight: 500; color: #1F2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.task-status-text { font-size: 0.75rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
-.status-icon { width: 1rem; text-align: center; }
-.status-pending .task-status-text { color: #6B7280; }
-.status-processing .task-status-text { color: #2563EB; }
-.status-completed .task-status-text { color: #16A34A; }
-.status-failed .task-status-text { color: #DC2626; }
-.status-applied .task-status-text { color: #6B7280; }
-.task-item-body { margin-top: 0.5rem; }
-.progress-bar-container { width: 100%; background-color: #E5E7EB; border-radius: 9999px; height: 0.25rem; overflow: hidden; }
-.progress-bar { background-color: #3B82F6; height: 100%; width: 100%; border-radius: 9999px; animation: indeterminate-progress 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-@keyframes indeterminate-progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-.error-message, .message { font-size: 0.75rem; margin-top: 0.25rem; }
-.error-message { color: #B91C1C; }
-.message { color: #6B7280; }
-.retry-link { text-decoration: underline; font-weight: 500; }
-.apply-now-btn { display: flex; align-items: center; gap: 0.25rem; background: #22C55E; color: white; padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 500; transition: background-color 0.2s; }
-.apply-now-btn:hover { background: #16A34A; }
-</style>
-
-// =
-// 文件: ..\src\novel\editor\components\ai\AITaskPanel.vue
-//
-
-// 文件: src/novel/editor/components/ai/AITaskPanel.vue
-
-<template>
-  <div class="ai-task-panel-container">
-    <div class="task-queue-section">
-      <AITaskQueue @select-task="handleSelectTask" @apply-changes="handleApplyChanges" />
-    </div>
-    <div class="diff-preview-section">
-      <AIDiffPreview :preview-task="selectedTask" @apply-changes="handleApplyChanges" />
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, computed } from 'vue';
-import AITaskQueue from './AITaskQueue.vue';
-import AIDiffPreview from './AIDiffPreview.vue';
-import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
-import type { AITask } from '@/novel/editor/types';
-
-const selectedTaskId = ref<string | null>(null);
-const aiTaskStore = useAITaskStore();
-
-const selectedTask = computed((): AITask | null => {
-  if (!selectedTaskId.value) return null;
-  return aiTaskStore.tasks.find(t => t.id === selectedTaskId.value) ?? null;
-});
-
-const handleSelectTask = (task: AITask) => {
-  selectedTaskId.value = task.id;
-};
-
-const handleApplyChanges = (taskId: string) => {
-  aiTaskStore.applyChanges(taskId);
-
-  // If the applied task was the one being previewed, clear the preview.
-  if (selectedTaskId.value === taskId) {
-    selectedTaskId.value = null;
-  }
-};
-</script>
-
-<style scoped>
-.ai-task-panel-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background-color: #F9FAFB;
-}
-.task-queue-section {
-  height: 50%;
-  min-height: 200px;
-  flex-shrink: 0;
-}
-.diff-preview-section {
-  flex-grow: 1;
-  height: 50%;
-}
-</style>
-
-// =
-// 文件: ..\src\novel\editor\components\ai\AITaskQueue.vue
-//
-
-// 文件: src/novel/editor/components/ai/AITaskQueue.vue
-
-<template>
-  <div class="task-queue-container">
-    <div class="header">
-      <h3 class="title">AI任务队列</h3>
-      <span v-if="activeTasksCount > 0" class="badge">{{ activeTasksCount }}个活跃</span>
-    </div>
-    <div v-if="tasks.length > 0" class="task-list">
-      <AITaskItem
-          v-for="task in tasks"
-          :key="task.id"
-          :task="task"
-          @select-task="handleTaskClick"
-          @apply-changes="handleApplyChanges"
-          @retry-task="handleRetry"
-      />
-    </div>
-    <div v-else class="empty-state">
-      <i class="fa-regular fa-folder-open text-3xl text-gray-300"></i>
-      <p class="mt-2">当前没有AI任务</p>
-      <p class="text-xs text-gray-400 mt-1">在编辑器中右键开始</p>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { computed } from 'vue';
-import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
-import type { AITask } from '@/novel/editor/types';
-import AITaskItem from './AITaskItem.vue';
-
-const emit = defineEmits<{
-  (e: 'select-task', task: AITask): void;
-  (e: 'apply-changes', taskId: string): void;
-}>();
-
-const aiTaskStore = useAITaskStore();
-const tasks = computed(() => aiTaskStore.tasks);
-const activeTasksCount = computed(() => aiTaskStore.activeTasksCount);
-
-const handleTaskClick = (task: AITask) => {
-  emit('select-task', task);
-};
-
-const handleRetry = (taskId: string) => {
-  aiTaskStore.retryTask(taskId);
-};
-
-const handleApplyChanges = (taskId: string) => {
-  emit('apply-changes', taskId);
-}
-</script>
-
-<style scoped>
-.task-queue-container { padding: 1rem; display: flex; flex-direction: column; height: 100%; border-bottom: 1px solid #E5E7EB; }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding: 0 0.5rem; }
-.title { font-size: 0.875rem; font-weight: 500; color: #4B5563; }
-.badge { font-size: 0.75rem; font-weight: 500; padding: 0.125rem 0.5rem; border-radius: 9999px; color: #1D4ED8; background-color: #DBEAFE; }
-.task-list { flex-grow: 1; overflow-y: auto; space-y: 0.5rem; padding-right: 4px; }
-.empty-state { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #9CA3AF; font-size: 0.875rem; }
-.task-list { scrollbar-width: thin; scrollbar-color: #D1D5DB #f9fafb; }
-.task-list::-webkit-scrollbar { width: 6px; }
-.task-list::-webkit-scrollbar-track { background: transparent; }
-.task-list::-webkit-scrollbar-thumb { background-color: #D1D5DB; border-radius: 3px; }
-</style>
 
 // =
 // 文件: ..\src\novel\editor\components\content\EditorContextMenu.vue
@@ -1248,526 +853,6 @@ onBeforeUnmount(() => {
 </style>
 
 // =
-// 文件: ..\src\novel\editor\components\layout\ActivityBar.vue
-//
-
-<template>
-  <div class="activity-bar-container">
-    <div class="main-actions">
-      <button
-          v-for="tab in mainTabs"
-          :key="tab.id"
-          class="action-item"
-          :class="{ 'active': activeTabId === tab.id && isSidebarVisible }"
-          :title="tab.title"
-          @click="$emit('select-tab', tab.id)"
-      >
-        <i :class="tab.icon"></i>
-      </button>
-
-      <div class="divider"></div>
-
-      <button
-          v-for="action in actionButtons"
-          :key="action.id"
-          class="action-item"
-          :title="action.title"
-          @click="$emit('trigger-action', action.id)"
-      >
-        <i :class="action.icon"></i>
-      </button>
-
-    </div>
-    <div class="footer-actions">
-      <button class="action-item" title="账户">
-        <i class="fa-solid fa-user-circle"></i>
-      </button>
-      <button class="action-item" title="管理" @click.stop="$emit('show-manage-menu', $event)">
-        <i class="fa-solid fa-gear"></i>
-      </button>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref } from 'vue';
-
-type TabId = 'directory' | 'related' | 'notes';
-type ActionId = 'system:search' | 'system:ai_chat';
-
-interface Tab {
-  id: TabId;
-  title: string;
-  icon: string;
-}
-
-interface ActionButton {
-  id: ActionId;
-  title: string;
-  icon: string;
-}
-
-defineProps<{
-  activeTabId: string | null;
-  isSidebarVisible: boolean;
-}>();
-
-defineEmits<{
-  (e: 'select-tab', id: TabId): void;
-  (e: 'trigger-action', id: ActionId): void;
-  (e: 'show-manage-menu', event: MouseEvent): void;
-}>();
-
-const mainTabs = ref<Tab[]>([
-  { id: 'directory', title: '目录', icon: 'fa-solid fa-list-ul' },
-  { id: 'related', title: '相关', icon: 'fa-solid fa-sitemap' },
-  { id: 'notes', title: '笔记', icon: 'fa-solid fa-book-medical' },
-]);
-
-const actionButtons = ref<ActionButton[]>([
-  { id: 'system:search', title: '搜索', icon: 'fa-solid fa-magnifying-glass' },
-  { id: 'system:ai_chat', title: 'AI 聊天', icon: 'fa-solid fa-wand-magic-sparkles' },
-])
-
-</script>
-
-<style scoped>
-.activity-bar-container {
-  width: 52px;
-  height: 100%;
-  background-color: #F3F4F6;
-  border-right: 1px solid #E5E7EB;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  flex-shrink: 0;
-}
-.main-actions,
-.footer-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.action-item {
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  color: #6B7280;
-  border-radius: 0.5rem;
-  transition: all 0.2s ease-in-out;
-  position: relative;
-}
-.action-item:hover {
-  color: #1F2937;
-  background-color: #E5E7EB;
-}
-.action-item.active {
-  color: #2563EB;
-  background-color: #DBEAFE;
-}
-.action-item.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 24px;
-  background-color: #2563EB;
-  border-radius: 0 4px 4px 0;
-}
-.divider {
-  height: 1px;
-  width: 28px;
-  background-color: #E5E7EB;
-  margin: 0.5rem 0;
-}
-</style>
-
-// =
-// 文件: ..\src\novel\editor\components\layout\BreadcrumbsBar.vue
-//
-
-<template>
-  <div class="breadcrumbs-bar-container" :class="{'is-active-pane': isActive}">
-    <div class="breadcrumbs">
-      <template v-if="activeTab">
-        <span>{{ volumeTitle }}</span>
-        <i class="fa-solid fa-chevron-right separator"></i>
-        <span class="font-medium title-highlight">{{ activeTab.title }}</span>
-      </template>
-      <template v-else>
-        <span></span>
-      </template>
-    </div>
-  </div>
-</template>
-<script setup lang="ts">
-import { computed } from 'vue';
-import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
-
-const props = defineProps<{
-  paneId: string;
-  isActive: boolean;
-}>();
-
-const editorStore = useEditorStore();
-const directoryStore = useDirectoryStore();
-
-const activeTab = computed(() => editorStore.getActiveTabForPane(props.paneId));
-
-const volumeTitle = computed(() => {
-  if (!activeTab.value || activeTab.value.item.type !== 'chapter') {
-    return '根目录';
-  }
-  const chapterId = activeTab.value.id;
-  const volume = directoryStore.directoryData.find(v =>
-      v.chapters.some(c => c.id === chapterId)
-  );
-  return volume ? volume.title : '未知卷';
-});
-
-</script>
-<style scoped>
-.breadcrumbs-bar-container {
-  height: 40px;
-  display: flex;
-  align-items: center;
-  padding: 0 1rem;
-  background-color: #FFFFFF;
-  border-bottom: 1px solid #E5E7EB;
-  flex-shrink: 0;
-  overflow-x: auto;
-  transition: color 0.2s;
-}
-.breadcrumbs {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: #6B7280;
-  white-space: nowrap;
-}
-.title-highlight {
-  color: #374151;
-}
-.breadcrumbs-bar-container:not(.is-active-pane) .breadcrumbs {
-  color: #B0B3B8;
-}
-.breadcrumbs-bar-container:not(.is-active-pane) .title-highlight {
-  color: #9CA3AF;
-}
-.separator {
-  font-size: 0.625rem;
-  color: #D1D5DB;
-}
-</style>
-
-// =
-// 文件: ..\src\novel\editor\components\layout\ManageMenu.vue
-//
-
-<template>
-  <div
-      v-if="visible"
-      ref="menuRef"
-      class="manage-menu-container"
-      :style="menuStyle"
-      @click.stop
-  >
-    <ul class="menu-list">
-      <li v-for="item in menuItems" :key="item.id">
-        <div v-if="item.isDivider" class="menu-divider"></div>
-        <a v-else href="#" class="menu-item" @click.prevent="selectItem(item.id)">
-          <span>{{ item.label }}</span>
-          <span v-if="item.shortcut" class="shortcut">{{ item.shortcut }}</span>
-        </a>
-      </li>
-    </ul>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-
-const emit = defineEmits<{
-  (e: 'select-action', actionId: string): void;
-}>();
-
-const visible = ref(false);
-const position = ref({ bottom: 0, left: 0 });
-const menuRef = ref<HTMLElement | null>(null);
-
-const menuItems = ref([
-  { id: 'command_palette', label: '命令面板...', shortcut: 'Ctrl+Shift+P' },
-  { isDivider: true },
-  { id: 'system:settings_novel', label: '小说设置', shortcut: '' },
-  { id: 'system:settings_context', label: '上下文管理', shortcut: '' },
-  { id: 'system:settings_ai_config', label: 'AI 任务配置', shortcut: '' },
-  { isDivider: true },
-  { id: 'system:settings_editor', label: '编辑器设置', shortcut: '' },
-  { id: 'system:settings_tasks', label: '任务管理', shortcut: '' },
-  { id: 'system:settings_theme', label: '主题设置' },
-  { isDivider: true },
-  { id: 'keyboard_shortcuts', label: '键盘快捷方式', shortcut: 'Ctrl+K Ctrl+S' },
-  { isDivider: true },
-  { id: 'check_for_updates', label: '检查更新...' },
-]);
-
-const menuStyle = computed(() => ({
-  bottom: `${position.value.bottom}px`,
-  left: `${position.value.left}px`,
-}));
-
-const show = (buttonElement: HTMLElement) => {
-  const rect = buttonElement.getBoundingClientRect();
-  position.value.bottom = window.innerHeight - rect.top + 8; // 8px spacing
-  position.value.left = rect.left;
-  visible.value = true;
-};
-
-const hide = () => {
-  visible.value = false;
-};
-
-const selectItem = (actionId: string) => {
-  emit('select-action', actionId);
-  hide();
-};
-
-const handleClickOutside = (event: MouseEvent) => {
-  if (menuRef.value && !menuRef.value.contains(event.target as Node)) {
-    hide();
-  }
-};
-
-onMounted(() => {
-  window.addEventListener('click', handleClickOutside);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener('click', handleClickOutside);
-});
-
-defineExpose({ show, hide });
-</script>
-
-<style scoped>
-.manage-menu-container {
-  position: fixed;
-  z-index: 1000;
-  width: 260px;
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  padding: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  color: #374151;
-}
-.menu-list {
-  list-style: none;
-}
-.menu-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  cursor: pointer;
-  text-decoration: none;
-  color: inherit;
-  transition: background-color 0.15s;
-}
-.menu-item:hover {
-  background-color: #f3f4f6;
-  color: #1f2937;
-}
-.shortcut {
-  color: #9ca3af;
-}
-.menu-item:hover .shortcut {
-  color: #6b7280;
-}
-.menu-divider {
-  height: 1px;
-  background-color: #f3f4f6;
-  margin: 0.5rem 0;
-}
-</style>
-
-// =
-// 文件: ..\src\novel\editor\components\layout\PaneActions.vue
-//
-
-<template>
-  <div class="pane-actions-container" :class="{'is-active-pane': isActive}">
-    <button @click="editorStore.toggleAIPanel(paneId)" class="toolbar-btn" title="AI 任务面板">
-      <i class="fa-solid fa-list-check"></i>
-    </button>
-    <button @click="handleShowHistory" class="toolbar-btn" title="版本历史">
-      <i class="fa-solid fa-code-compare"></i>
-    </button>
-    <div class="divider"></div>
-    <button @click="handleSplitPane" class="toolbar-btn" title="分屏">
-      <i class="fa-solid fa-columns"></i>
-    </button>
-    <button v-if="editorStore.panes.length > 1" @click="editorStore.closePane(paneId)" class="toolbar-btn" title="关闭窗格">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
-    <button @click="handleShowReader" class="toolbar-btn" title="阅读模式">
-      <i class="fa-solid fa-book-open"></i>
-    </button>
-  </div>
-</template>
-<script setup lang="ts">
-import { useEditorStore } from '@/novel/editor/stores/editorStore';
-
-const props = defineProps<{
-  paneId: string;
-  isActive: boolean;
-}>();
-
-const editorStore = useEditorStore();
-
-const handleSplitPane = () => {
-  editorStore.splitPane(props.paneId);
-}
-
-const handleShowHistory = () => {
-  editorStore.toggleHistoryPanel(props.paneId);
-};
-
-const handleShowReader = () => {
-  editorStore.openReaderView();
-};
-</script>
-<style scoped>
-.pane-actions-container {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0 1rem;
-  flex-shrink: 0;
-  transition: color 0.2s;
-}
-.toolbar-btn {
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6B7280;
-  border-radius: 0.375rem;
-  transition: all 0.2s;
-}
-.pane-actions-container.is-active-pane .toolbar-btn:hover {
-  background-color: #E5E7EB;
-  color: #1F2937;
-}
-.pane-actions-container:not(.is-active-pane) .toolbar-btn {
-  color: #B0B3B8;
-}
-.divider {
-  width: 1px;
-  height: 16px;
-  background-color: #E5E7EB;
-  margin: 0 0.25rem;
-}
-</style>
-
-// =
-// 文件: ..\src\novel\editor\components\layout\StatusBar.vue
-//
-
-<template>
-  <footer class="status-bar-container">
-    <div class="status-bar-left">
-      <div v-if="activeItem && activeItem.type === 'chapter'" class="status-item">
-        <i class="fa-solid fa-check-double text-green-500"></i>
-        <span>已保存</span>
-      </div>
-      <div v-if="wordCount > 0" class="status-item">
-        <span>{{ wordCount }} 字</span>
-      </div>
-      <div v-if="readingTime > 0" class="status-item">
-        <span>约 {{ readingTime }} 分钟阅读</span>
-      </div>
-    </div>
-    <div class="status-bar-right">
-      <div class="status-item">
-        <span>Ln 1, Col 1</span>
-      </div>
-      <div class="status-item">
-        <span>UTF-8</span>
-      </div>
-      <div class="status-item" title="通知">
-        <i class="fa-regular fa-bell"></i>
-      </div>
-    </div>
-  </footer>
-</template>
-
-<script setup lang="ts">
-import { computed } from 'vue';
-import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import type { Chapter } from '@/novel/editor/types';
-
-const editorStore = useEditorStore();
-
-const activeItem = computed(() => editorStore.activeTab?.item);
-
-const wordCount = computed(() => {
-  if (activeItem.value && activeItem.value.type === 'chapter') {
-    return (activeItem.value as Chapter).wordCount || 0;
-  }
-  return 0;
-});
-
-const readingTime = computed(() => {
-  if (!wordCount.value) return 0;
-  const time = Math.ceil(wordCount.value / 400);
-  return time > 0 ? time : 1;
-});
-</script>
-
-<style scoped>
-.status-bar-container {
-  height: 28px;
-  background-color: #F3F4F6;
-  border-top: 1px solid #E5E7EB;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1rem;
-  font-size: 0.75rem; /* 12px */
-  color: #4B5563;
-  flex-shrink: 0;
-  user-select: none;
-}
-.status-bar-left, .status-bar-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-.status-item {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  cursor: pointer;
-}
-.status-item:hover {
-  color: #1F2937;
-}
-</style>
-
-// =
 // 文件: ..\src\novel\editor\components\modals\ContextPreviewModal.vue
 //
 
@@ -1778,7 +863,7 @@ const readingTime = computed(() => {
       <header class="modal-header">
         <div>
           <h2 class="modal-title">AI 任务确认</h2>
-          <p class="modal-subtitle">即将为 <span class="font-semibold text-indigo-500">《{{ store.task?.title }}》</span> 执行 <span class="font-semibold text-indigo-500">【{{ store.task?.type }}】</span> 任务</p>
+          <p v-if="store.task" class="modal-subtitle">即将为 <span class="font-semibold text-gray-700">《{{ store.task.title }}》</span> 执行 <span class="font-semibold text-gray-700">【{{ store.task.type }}】</span> 任务</p>
         </div>
         <button @click="store.hide()" class="modal-close-button">
           <i class="fa-solid fa-times"></i>
@@ -1791,29 +876,21 @@ const readingTime = computed(() => {
         <p class="mt-4 text-gray-500">正在构建上下文...</p>
       </div>
 
-      <!-- Content State -->
+      <!-- Content State with Collapsible Panels -->
       <div v-else-if="store.previewContent" class="modal-content-wrapper">
-        <!-- Tabs -->
-        <nav class="content-tabs">
-          <a
-              v-for="tab in tabs"
-              :key="tab.id"
-              href="#"
-              @click.prevent="activeTab = tab.id"
-              :class="['tab-item', { 'active': activeTab === tab.id }]"
-          >
-            <span>{{ tab.name }}</span>
-            <span class="tab-badge">{{ formatCharCount(store.previewContent.stats[tab.statKey]) }}</span>
-          </a>
-        </nav>
-
-        <!-- Tab Content -->
-        <div class="content-display custom-scrollbar">
-          <div v-show="activeTab === 'fixed'" class="prose prose-sm max-w-none" v-html="store.previewContent.fixed || emptyStateHtml('固定上下文')"></div>
-          <div v-show="activeTab === 'dynamic'" class="prose prose-sm max-w-none" v-html="store.previewContent.dynamic || emptyStateHtml('动态上下文')"></div>
-          <div v-show="activeTab === 'rag'" class="prose prose-sm max-w-none" v-html="store.previewContent.rag || emptyStateHtml('RAG检索')"></div>
-          <div v-show="activeTab === 'prompt'">
-            <pre class="prompt-preview">{{ store.previewContent.prompt }}</pre>
+        <div v-for="panel in panels" :key="panel.id" class="result-group">
+          <div @click="toggleExpansion(panel.id)" class="result-header">
+            <div class="flex items-center gap-3 min-w-0">
+              <i class="fa-solid fa-chevron-right expand-icon" :class="{ 'expanded': expandedPanelIds.has(panel.id) }"></i>
+              <span class="font-medium truncate">{{ panel.name }}</span>
+            </div>
+            <span class="match-count">{{ formatCharCount(store.previewContent.stats[panel.statKey]) }}</span>
+          </div>
+          <div v-show="expandedPanelIds.has(panel.id)" class="match-list-style-body">
+            <div v-if="panel.id === 'prompt'">
+              <pre class="prompt-preview">{{ store.previewContent.prompt }}</pre>
+            </div>
+            <div v-else class="prose prose-sm max-w-none" v-html="store.previewContent[panel.id] || emptyStateHtml(panel.name)"></div>
           </div>
         </div>
       </div>
@@ -1821,7 +898,7 @@ const readingTime = computed(() => {
       <!-- Modal Footer -->
       <footer class="modal-footer">
         <div v-if="store.previewContent" class="stats-summary">
-          总计: {{ totalCharCount }} 字
+          总计上下文: {{ totalCharCount }} 字
         </div>
         <button @click="store.hide()" class="button-secondary">取消</button>
         <button @click="store.execute()" :disabled="store.isLoading" class="button-primary">
@@ -1834,34 +911,54 @@ const readingTime = computed(() => {
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useContextPreviewStore } from '@/novel/editor/stores/contextPreviewStore';
+import type { ContextBuildResult } from '@/novel/editor/types';
+
+type PanelId = 'fixed' | 'dynamic' | 'rag' | 'prompt';
 
 const store = useContextPreviewStore();
-const activeTab = ref<'fixed' | 'dynamic' | 'rag' | 'prompt'>('fixed');
+const expandedPanelIds = ref(new Set<PanelId>());
 
-const tabs = ref([
+const panels = ref([
   { id: 'fixed', name: '固定上下文', statKey: 'fixedCharCount' },
   { id: 'dynamic', name: '动态上下文', statKey: 'dynamicCharCount' },
   { id: 'rag', name: 'RAG检索', statKey: 'ragCharCount' },
   { id: 'prompt', name: '最终提示词', statKey: 'promptCharCount' },
 ] as const);
 
+watch(() => store.previewContent, (newContent) => {
+  if (newContent) {
+    // Default expand 'fixed' panel only.
+    expandedPanelIds.value.clear();
+    expandedPanelIds.value.add('fixed');
+  }
+}, { immediate: true });
+
+
+const toggleExpansion = (panelId: PanelId) => {
+  if (expandedPanelIds.value.has(panelId)) {
+    expandedPanelIds.value.delete(panelId);
+  } else {
+    expandedPanelIds.value.add(panelId);
+  }
+};
+
 const formatCharCount = (count: number) => {
-  return count > 1000 ? `${(count / 1000).toFixed(1)}k` : count;
+  if (count > 1000) return `${(count / 1000).toFixed(1)}k`;
+  return count;
 };
 
 const totalCharCount = computed(() => {
   if (!store.previewContent?.stats) return 0;
-  console.log(store.previewContent)
   const { fixedCharCount, dynamicCharCount, ragCharCount } = store.previewContent.stats;
-  return formatCharCount(fixedCharCount + dynamicCharCount + ragCharCount);
+  const total = fixedCharCount + dynamicCharCount + ragCharCount;
+  return formatCharCount(total);
 });
 
 const emptyStateHtml = (contextType: string) => {
-  return `<p class="text-gray-400 italic">未配置或未找到${contextType}内容。</p>`;
+  return `<p class="text-gray-400 italic p-4">未配置或未找到${contextType}内容。</p>`;
 };
-
 </script>
 
 <style scoped>
@@ -1881,11 +978,12 @@ const emptyStateHtml = (contextType: string) => {
   background-color: white;
   border-radius: 0.75rem;
   box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-  width: 100%;
-  max-width: 48rem; /* 768px */
+  width: 60vw;
+  height: 85vh;
+  max-width: 960px;
+  max-height: 800px;
   display: flex;
   flex-direction: column;
-  max-height: 90vh;
   overflow: hidden;
 }
 
@@ -1898,29 +996,11 @@ const emptyStateHtml = (contextType: string) => {
   flex-shrink: 0;
 }
 
-.modal-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #111827;
-}
-
-.modal-subtitle {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-top: 0.25rem;
-}
-
-.modal-close-button {
-  color: #9ca3af;
-  padding: 0.5rem;
-  margin: -0.5rem;
-  border-radius: 9999px;
-  transition: background-color 0.2s, color 0.2s;
-}
-.modal-close-button:hover {
-  background-color: #f3f4f6;
-  color: #1f2937;
-}
+.modal-title { font-size: 1.125rem; font-weight: 600; color: #111827; }
+.modal-subtitle { font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem; }
+.modal-subtitle .font-semibold { color: #4B5563; }
+.modal-close-button { color: #9ca3af; padding: 0.5rem; margin: -0.5rem; border-radius: 9999px; transition: background-color 0.2s, color 0.2s; }
+.modal-close-button:hover { background-color: #f3f4f6; color: #1f2937; }
 
 .modal-loading-state {
   flex-grow: 1;
@@ -1929,78 +1009,40 @@ const emptyStateHtml = (contextType: string) => {
   align-items: center;
   justify-content: center;
   padding: 4rem 1rem;
-  min-height: 300px;
 }
 
 .modal-content-wrapper {
   flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 300px;
-  overflow: hidden;
-}
-
-.content-tabs {
-  display: flex;
-  gap: 0.25rem;
-  padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  flex-shrink: 0;
-}
-
-.tab-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 0.5rem;
-  color: #4b5563;
-  text-decoration: none;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.tab-item:hover {
-  background-color: #f3f4f6;
-}
-
-.tab-item.active {
-  background-color: #eef2ff;
-  color: #4f46e5;
-}
-
-.tab-badge {
-  font-size: 0.75rem;
-  background-color: #e5e7eb;
-  color: #4b5563;
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-  font-variant-numeric: tabular-nums;
-}
-
-.tab-item.active .tab-badge {
-  background-color: #c7d2fe;
-  color: #4338ca;
-}
-
-.content-display {
-  flex-grow: 1;
   overflow-y: auto;
-  padding: 1.5rem;
-  background-color: #f9fafb;
+  padding: 1rem 1.5rem;
+  background-color: #FFFFFF;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
+.modal-content-wrapper::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, and Opera */
+}
+
+.result-group { margin-bottom: 0.75rem; }
+.result-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border-radius: 0.5rem; cursor: pointer; background-color: #F9FAFB; transition: background-color 0.2s; }
+.result-header:hover { background-color: #F3F4F6; }
+.expand-icon { transition: transform 0.2s ease; color: #9CA3AF; }
+.expand-icon.expanded { transform: rotate(90deg); }
+.match-count { margin-left: auto; font-size: 0.75rem; background-color: #E5E7EB; color: #4B5563; padding: 0.125rem 0.5rem; border-radius: 99px; flex-shrink: 0; }
+.match-list-style-body { padding-left: 2rem; margin-top: 0.5rem; border-left: 1px solid #F3F4F6; margin-left: 0.9rem; padding-bottom: 0.5rem; }
 
 .prompt-preview {
   white-space: pre-wrap;
   word-wrap: break-word;
-  font-size: 0.8rem;
-  color: #4b5563;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: #374151;
   line-height: 1.6;
-  background-color: #ffffff;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
+  padding-top: 0.5rem;
+}
+.prose {
+  margin-top: 0.75rem;
+  padding-left: 0.5rem;
 }
 
 .modal-footer {
@@ -2013,30 +1055,14 @@ const emptyStateHtml = (contextType: string) => {
   background-color: #f9fafb;
   flex-shrink: 0;
 }
-
-.stats-summary {
-  margin-right: auto;
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.button-secondary {
-  padding: 0.5rem 1rem;
-  background-color: white;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  color: #374151;
-  transition: background-color 0.2s;
-}
-.button-secondary:hover {
-  background-color: #f9fafb;
-}
+.stats-summary { margin-right: auto; font-size: 0.875rem; color: #6b7280; }
+.button-secondary { padding: 0.5rem 1rem; background-color: white; border: 1px solid #d1d5db; border-radius: 0.5rem; font-weight: 500; color: #374151; transition: background-color 0.2s; }
+.button-secondary:hover { background-color: #f9fafb; }
 
 .button-primary {
   padding: 0.5rem 1rem;
-  background-color: #4f46e5;
-  border: 1px solid #4f46e5;
+  background-color: #4B5563;
+  border: 1px solid transparent;
   border-radius: 0.5rem;
   font-weight: 500;
   color: white;
@@ -2045,25 +1071,11 @@ const emptyStateHtml = (contextType: string) => {
   align-items: center;
 }
 .button-primary:hover {
-  background-color: #4338ca;
+  background-color: #374151;
 }
 .button-primary:disabled {
-  background-color: #a5b4fc;
+  background-color: #9CA3AF;
   cursor: not-allowed;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
 }
 </style>
 
@@ -2071,7 +1083,7 @@ const emptyStateHtml = (contextType: string) => {
 // 文件: ..\src\novel\editor\components\sidebar\DirectoryContextMenu.vue
 //
 
-// 文件: src/novel/editor/components/sidebar/DirectoryContextMenu.vue
+// src/novel/editor/components/sidebar/DirectoryContextMenu.vue
 <template>
   <div
       v-if="visible && menuComponent"
@@ -2086,6 +1098,7 @@ const emptyStateHtml = (contextType: string) => {
         @ai-action="handleAIAction"
         @settings-action="handleSettingsAction"
         @custom-related-action="handleCustomRelatedAction"
+        @custom-others-action="handleOthersAction"
         @note-action="handleNoteAction"
     />
   </div>
@@ -2108,8 +1121,11 @@ const menuComponentMap = shallowRef({
   'group': defineAsyncComponent(() => import('./context-menus/GroupMenu.vue')),
   'item': defineAsyncComponent(() => import('./context-menus/ItemMenu.vue')),
   'root': defineAsyncComponent(() => import('./context-menus/RootMenu.vue')),
+  'others': defineAsyncComponent(() => import('./context-menus/OthersMenu.vue')),
+  'others_item': defineAsyncComponent(() => import('./context-menus/OthersItemMenu.vue')),
   'custom_related': defineAsyncComponent(() => import('./context-menus/CustomRelatedMenu.vue')),
   'note': defineAsyncComponent(() => import('./context-menus/NoteMenu.vue')),
+  'setting_root': defineAsyncComponent(() => import('./context-menus/SettingsRootMenu.vue')),
 });
 
 // --- State and Props ---
@@ -2129,18 +1145,38 @@ const menuComponent = computed(() => {
   if (!node.value) return null;
   const { type, id } = node.value;
 
-  if (menuComponentMap.value[type]) {
-    return menuComponentMap.value[type];
+  // Handle custom item types first by ID prefix
+  if (id.startsWith('custom-others-')) {
+    return menuComponentMap.value['others_item'];
   }
-  if (type === 'root' && (id === 'plot' || id === 'analysis')) {
-    return menuComponentMap.value['root'];
-  }
-  if (id.startsWith('custom-')) {
+  if (id.startsWith('custom-') && !id.startsWith('custom-others-')) {
     return menuComponentMap.value['custom_related'];
   }
+
+  // Handle root nodes by ID
+  if (type === 'root') {
+    if (id === 'setting') {
+      return menuComponentMap.value['setting_root'];
+    }
+    if (id === 'plot' || id === 'analysis') {
+      return menuComponentMap.value['root'];
+    }
+    if (id === 'others') {
+      return menuComponentMap.value['others'];
+    }
+    return null;
+  }
+
+  // Handle specific node types by their 'type' property
+  if (type in menuComponentMap.value) {
+    return menuComponentMap.value[type];
+  }
+
+  // Fallback for settings items (e.g., character_item)
   if (type.endsWith('_item')) {
     return menuComponentMap.value['item'];
   }
+
   return null;
 });
 
@@ -2196,11 +1232,30 @@ const handleSettingsAction = (action: string, payload: any) => {
 const handleCustomRelatedAction = (action: string, payload: any) => {
   hide();
   const nodeId = payload?.nodeId;
-  const target = node.value?.id === 'plot' ? 'plot' : 'analysis';
+  const target = payload?.target as 'plot' | 'analysis' | undefined;
+
   switch(action) {
-    case 'newItem': relatedContentStore.addCustomRelatedNode(target); break;
+    case 'newItem':
+      if (target) {
+        relatedContentStore.addCustomRelatedNode(target);
+      }
+      break;
+    case 'rename':
+      editorStore.setEditingNodeId(nodeId);
+      break;
+    case 'delete':
+      relatedContentStore.deleteCustomRelatedNode(nodeId);
+      break;
+  }
+};
+
+const handleOthersAction = (action: string, payload: any) => {
+  hide();
+  const nodeId = payload?.nodeId;
+  switch(action) {
+    case 'newItem': relatedContentStore.addCustomOthersNode(); break;
     case 'rename': editorStore.setEditingNodeId(nodeId); break;
-    case 'delete': relatedContentStore.deleteCustomRelatedNode(nodeId); break;
+    case 'delete': relatedContentStore.deleteCustomOthersNode(nodeId); break;
   }
 };
 
@@ -2242,7 +1297,7 @@ defineExpose({ show, hide });
 // 文件: ..\src\novel\editor\components\sidebar\DirectoryTab.vue
 //
 
-// 文件: src/novel/editor/components/sidebar/DirectoryTab.vue
+// src/novel/editor/components/sidebar/DirectoryTab.vue
 
 <template>
   <div class="directory-tab-container">
@@ -2301,6 +1356,7 @@ const directoryTree = computed((): VolumeNode[] => {
     title: volume.title,
     icon: getIconByNodeType(volume.type),
     type: 'volume',
+    content: volume.content, // 直接暴露 content
     originalData: volume,
     children: volume.chapters.map(chapter => ({
       id: chapter.id,
@@ -2308,16 +1364,18 @@ const directoryTree = computed((): VolumeNode[] => {
       icon: getIconByNodeType(chapter.type),
       type: 'chapter',
       status: chapter.status,
+      content: chapter.content, // 直接暴露 content
       originalData: chapter,
     })),
   }));
 });
 
 const handleSelectNode = (node: TreeNode) => {
-  // 只有在节点有内容时才打开tab，否则切换展开状态
-  if (node.type === 'chapter' || ('content' in node && node.content)) {
+  // 明确判断，卷和章节都可以被打开编辑
+  if (node.type === 'chapter' || node.type === 'volume') {
     editorStore.openTab(node.id);
   } else if(node.children && node.children.length > 0) {
+    // 对于其他有子节点的节点（理论上这里不会走到），作为备用逻辑
     uiStore.toggleNodeExpansion(node.id);
   }
 };
@@ -2592,7 +1650,7 @@ const handleCancelRename = () => {
 // 文件: ..\src\novel\editor\components\sidebar\RelatedTab.vue
 //
 
-// 文件: src/novel/editor/components/sidebar/RelatedTab.vue
+// src/novel/editor/components/sidebar/RelatedTab.vue
 <template>
   <div class="related-tab-container">
     <div class="header">
@@ -2603,6 +1661,9 @@ const handleCancelRename = () => {
         </button>
         <button @click="handleAddNewCustomAnalysis" class="action-btn" title="新建自定义分析">
           <i class="fa-solid fa-magnifying-glass-chart fa-xs"></i>
+        </button>
+        <button @click="handleAddNewCustomOthers" class="action-btn" title="新建其他条目">
+          <i class="fa-solid fa-puzzle-piece fa-xs"></i>
         </button>
       </div>
     </div>
@@ -2667,7 +1728,9 @@ const handleContextMenu = (payload: { node: TreeNode; event: MouseEvent }) => {
 };
 
 const handleCommitRename = (payload: { nodeId: string; newTitle: string }) => {
-  if (payload.nodeId.startsWith('custom-')) {
+  if (payload.nodeId.startsWith('custom-others-')) {
+    relatedContentStore.renameCustomOthersNode(payload.nodeId, payload.newTitle);
+  } else if (payload.nodeId.startsWith('custom-')) {
     relatedContentStore.renameCustomRelatedNode(payload.nodeId, payload.newTitle);
   } else {
     relatedContentStore.renameRelatedNode(payload.nodeId, payload.newTitle);
@@ -2684,6 +1747,10 @@ const handleAddNewCustomPlot = () => {
 
 const handleAddNewCustomAnalysis = () => {
   relatedContentStore.addCustomRelatedNode('analysis');
+};
+
+const handleAddNewCustomOthers = () => {
+  relatedContentStore.addCustomOthersNode();
 };
 
 </script>
@@ -3247,14 +2314,91 @@ const emit = defineEmits<{
 </style>
 
 // =
-// 文件: ..\src\novel\editor\components\sidebar\context-menus\RootMenu.vue
+// 文件: ..\src\novel\editor\components\sidebar\context-menus\OthersItemMenu.vue
 //
 
-// 文件: src/novel/editor/components/sidebar/context-menus/RootMenu.vue
+<template>
+  <div>
+    <p class="menu-title">条目管理</p>
+    <div @click="emit('custom-others-action', 'rename', { nodeId: node.id })" class="context-menu-item">
+      <i class="fa-solid fa-pencil w-4 text-center"></i>
+      <span>重命名</span>
+    </div>
+    <div @click="emit('custom-others-action', 'delete', { nodeId: node.id })" class="context-menu-item danger">
+      <i class="fa-solid fa-trash-can w-4 text-center"></i>
+      <span>删除条目</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { TreeNode } from '@/novel/editor/types';
+
+defineProps({
+  node: {
+    type: Object as PropType<TreeNode>,
+    required: true,
+  },
+});
+
+const emit = defineEmits<{
+  (e: 'custom-others-action', actionName: string, payload?: any): void;
+}>();
+</script>
+
+<style scoped>
+.context-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; cursor: pointer; user-select: none; transition: background-color 0.15s, color 0.15s; }
+.context-menu-item:hover { background-color: #f3f4f6; }
+.context-menu-item.danger:hover { background-color: #fee2e2; color: #b91c1c; }
+.menu-title { padding: 0.25rem 0.75rem; font-size: 0.75rem; color: #9CA3AF; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\context-menus\OthersMenu.vue
+//
+
 <template>
   <div>
     <p class="menu-title">管理</p>
-    <div @click="emit('custom-related-action', 'newItem')" class="context-menu-item">
+    <div @click="emit('custom-others-action', 'newItem')" class="context-menu-item">
+      <i class="fa-solid fa-plus w-4 text-center"></i>
+      <span>新建其他条目</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { TreeNode } from '@/novel/editor/types';
+
+defineProps({
+  node: {
+    type: Object as PropType<TreeNode>,
+    required: true,
+  },
+});
+
+const emit = defineEmits<{
+  (e: 'custom-others-action', actionName: string, payload?: any): void;
+}>();
+</script>
+
+<style scoped>
+.context-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; cursor: pointer; user-select: none; transition: background-color 0.15s, color 0.15s; }
+.context-menu-item:hover { background-color: #f3f4f6; }
+.menu-title { padding: 0.25rem 0.75rem; font-size: 0.75rem; color: #9CA3AF; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\context-menus\RootMenu.vue
+//
+
+
+<template>
+  <div>
+    <p class="menu-title">管理</p>
+    <div @click="emit('custom-related-action', 'newItem', { target: node.id })" class="context-menu-item">
       <i class="fa-solid fa-plus w-4 text-center"></i>
       <span>新建自定义{{ node.id === 'plot' ? '剧情' : '分析' }}</span>
     </div>
@@ -3274,6 +2418,43 @@ defineProps({
 
 const emit = defineEmits<{
   (e: 'custom-related-action', actionName: string, payload?: any): void;
+}>();
+</script>
+
+<style scoped>
+.context-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; cursor: pointer; user-select: none; transition: background-color 0.15s, color 0.15s; }
+.context-menu-item:hover { background-color: #f3f4f6; }
+.menu-title { padding: 0.25rem 0.75rem; font-size: 0.75rem; color: #9CA3AF; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\context-menus\SettingsRootMenu.vue
+//
+
+// src/novel/editor/components/sidebar/context-menus/SettingsRootMenu.vue
+<template>
+  <div>
+    <p class="menu-title">设定管理</p>
+    <div @click="emit('settings-action', 'newGroup', { nodeId: node.id })" class="context-menu-item">
+      <i class="fa-solid fa-folder-plus w-4 text-center"></i>
+      <span>新建分组</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { TreeNode } from '@/novel/editor/types';
+
+defineProps({
+  node: {
+    type: Object as PropType<TreeNode>,
+    required: true,
+  },
+});
+
+const emit = defineEmits<{
+  (e: 'settings-action', actionName: string, payload?: any): void;
 }>();
 </script>
 
@@ -3630,7 +2811,7 @@ const handlePromptChange = (event: Event) => {
 
 <template>
   <div class="setting-page-container">
-    <div class="setting-page-wrapper custom-scrollbar">
+    <div class="setting-page-wrapper">
       <div class="page-header">
         <h2 class="page-title">上下文管理</h2>
         <p class="page-description">配置AI任务执行时如何处理上下文信息，以获得更精准的生成结果。</p>
@@ -3672,7 +2853,7 @@ const handlePromptChange = (event: Event) => {
             </div>
 
             <div v-if="settingsStore.selectedContextItems.length > 0">
-              <label class="block text-sm font-medium text-[#374151] mb-1.5">已选择的内容</label>
+              <label class="block text-sm font-medium text-[#374151] mb-1.5">已选择的设定内容</label>
               <div class="content-list">
                 <div
                     v-for="item in settingsStore.selectedContextItems"
@@ -3689,6 +2870,41 @@ const handlePromptChange = (event: Event) => {
                 </div>
               </div>
             </div>
+
+            <div>
+              <label class="block text-sm font-medium text-[#374151] mb-1.5">选择其他内容
+                <span class="text-xs text-[#9CA3AF] ml-2">可选择写作风格等其他参考</span>
+              </label>
+              <select
+                  @change="addSelectedOthersItem"
+                  class="w-full px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] custom-select focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]"
+              >
+                <option value="">请选择其他内容...</option>
+                <option v-for="preset in settingsStore.othersContextPresets" :key="preset.id" :value="preset.id">
+                  {{ preset.title }}
+                </option>
+              </select>
+            </div>
+
+            <div v-if="settingsStore.selectedOthersItems.length > 0">
+              <label class="block text-sm font-medium text-[#374151] mb-1.5">已选择的其他内容</label>
+              <div class="content-list">
+                <div
+                    v-for="item in settingsStore.selectedOthersItems"
+                    :key="item.id"
+                    class="content-list-item"
+                >
+                  <div class="flex-grow min-w-0">
+                    <div class="font-medium text-sm text-[#374151] truncate" :title="item.title">{{ item.title }}</div>
+                    <div class="text-xs text-[#9CA3AF] mt-1 truncate">{{ item.description }}</div>
+                  </div>
+                  <button @click.stop="settingsStore.removeOthersContextItem(item.id)" class="text-[#9CA3AF] hover:text-[#EF4444] transition-colors ml-4 flex-shrink-0">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div>
               <label for="custom-content" class="block text-sm font-medium text-[#374151] mb-1.5">自定义固定内容</label>
               <textarea
@@ -3774,6 +2990,18 @@ const addSelectedItem = (event: Event) => {
   }
   select.value = ""; // Reset select
 };
+
+const addSelectedOthersItem = (event: Event) => {
+  const select = event.target as HTMLSelectElement;
+  const selectedId = select.value;
+  if (!selectedId) return;
+
+  const preset = settingsStore.othersContextPresets.find(p => p.id === selectedId);
+  if (preset) {
+    settingsStore.addOthersContextItem(preset);
+  }
+  select.value = ""; // Reset select
+};
 </script>
 
 <style scoped>
@@ -3790,29 +3018,43 @@ const addSelectedItem = (event: Event) => {
   margin: 0 auto;
   overflow-y: auto;
   height: 100%;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
-
-.custom-scrollbar::-webkit-scrollbar {
-  display: block; width: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #d1d5db; border-radius: 3px;
+.setting-page-wrapper::-webkit-scrollbar {
+  display: none;
 }
 
 .page-header { padding-bottom: 1.5rem; border-bottom: 1px solid #E5E7EB; margin-bottom: 1.5rem; }
 .page-title { font-size: 1.5rem; font-weight: 600; color: #1F2937; }
 .page-description { color: #6B7280; margin-top: 0.25rem; }
 .setting-group { display: flex; flex-direction: column; }
-.setting-item { display: grid; grid-template-columns: 12rem 1fr; gap: 1rem; padding: 1.5rem 0; border-bottom: 1px solid #E5E7EB; }
+.setting-item {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid #E5E7EB;
+}
+@media (min-width: 768px) {
+  .setting-item {
+    grid-template-columns: 12rem 1fr;
+  }
+}
 .setting-item:last-child { border-bottom: none; }
-.setting-label { font-size: 0.875rem; font-weight: 500; color: #374151; padding-top: 0.5rem; }
+.setting-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+@media (min-width: 768px) {
+  .setting-label {
+    padding-top: 0.5rem;
+  }
+}
 .setting-control { display: flex; flex-direction: column; gap: 0.5rem; }
 .setting-description { color: #6B7280; font-size: 0.875rem; line-height: 1.6; }
 .setting-checkbox { height: 1.25rem; width: 1.25rem; border-radius: 0.25rem; border: 1px solid #D1D5DB; color: #2563EB; }
-.setting-checkbox-small { height: 1rem; width: 1rem; border-radius: 0.25rem; border: 1px solid #D1D5DB; color: #2563EB; }
 
 .range-custom {
   -webkit-appearance: none; appearance: none;
@@ -4098,6 +3340,33 @@ const { novelMetadata } = storeToRefs(editorStore);
       </div>
 
       <div class="setting-item">
+        <label for="concurrent-tasks" class="setting-label">AI任务并发数</label>
+        <div class="setting-control">
+          <div class="flex items-center gap-4">
+            <input
+                id="concurrent-tasks"
+                type="range"
+                min="1"
+                max="10"
+                step="1"
+                v-model.number="concurrentTaskLimit"
+                class="range-custom flex-1"
+            />
+            <input
+                type="number"
+                min="1"
+                max="10"
+                v-model.number="concurrentTaskLimit"
+                class="setting-input w-20 text-center"
+            />
+          </div>
+          <p class="setting-description">
+            设置可以同时处理的AI任务数量。更高的并发数会占用更多资源。当前设置为 {{ concurrentTaskLimit }} 个。
+          </p>
+        </div>
+      </div>
+
+      <div class="setting-item">
         <label class="setting-label">清理任务</label>
         <div class="setting-control">
           <div class="flex items-center gap-4">
@@ -4130,6 +3399,11 @@ const autoOpenAIPanel = computed({
 const applicationStrategy = computed({
   get: () => uiStore.uiState.taskApplicationStrategy,
   set: (value) => uiStore.setTaskApplicationStrategy(value)
+});
+
+const concurrentTaskLimit = computed({
+  get: () => uiStore.uiState.concurrentTaskLimit,
+  set: (value) => uiStore.setConcurrentTaskLimit(value)
 });
 
 const handleClearCompleted = () => {
@@ -4191,6 +3465,22 @@ const handleClearAll = () => {
 }
 .setting-input { background-color: white; border: 1px solid #D1D5DB; border-radius: 0.375rem; padding: 0.5rem 0.75rem; outline: none; transition: all 0.2s; }
 .setting-input:focus { border-color: #3B82F6; box-shadow: 0 0 0 1px #3B82F6; }
+.range-custom {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 16px; background: transparent;
+  outline: none; padding: 0; margin: 0;
+}
+.range-custom::-webkit-slider-runnable-track {
+  width: 100%; height: 6px; cursor: pointer;
+  background: #E5E7EB; border-radius: 9999px;
+}
+.range-custom::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  height: 20px; width: 20px; background: #3B82F6;
+  border-radius: 50%; border: 3px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: grab; margin-top: -7px;
+}
 </style>
 
 // =
@@ -4435,17 +3725,22 @@ export function useContextBuilder() {
     const derivedContentStore = useDerivedContentStore();
     const aiConfigStore = useAIConfigStore();
 
-    const buildContextForTask = (taskType: AITask['type'], targetItem: EditorItem | null): ContextBuildResult | null => {
-        if (!targetItem) return null;
+    const buildContextForTask = (task: Pick<AITask, 'type' | 'sourceItemId' | 'sourceItemTitle' | 'sourceItemContent'>): ContextBuildResult | null => {
+        const { type: taskType, sourceItemId, sourceItemTitle, sourceItemContent } = task;
 
-        const mainContent = ('content' in targetItem && targetItem.content) ? targetItem.content : '';
-        const mainContentText = stripHtml(mainContent);
+        // **核心修正**: 直接使用任务快照中的内容作为“待处理内容”
+        const mainContentText = stripHtml(sourceItemContent);
 
         // --- Build Fixed Context ---
         let fixedContextHtml = '';
         contextSettingsStore.selectedContextItems.forEach(item => {
             if (item.content) {
-                fixedContextHtml += `<hr><h3>相关设定: ${item.group} - ${item.title}</h3>${item.content}`;
+                fixedContextHtml += `<hr><h3>相关${item.category}: ${item.group} - ${item.title}</h3>${item.content}`;
+            }
+        });
+        contextSettingsStore.selectedOthersItems.forEach(item => {
+            if (item.content) {
+                fixedContextHtml += `<hr><h3>相关${item.category}: ${item.title}</h3>${item.content}`;
             }
         });
 
@@ -4455,37 +3750,43 @@ export function useContextBuilder() {
         const fixedContextText = stripHtml(fixedContextHtml);
 
         // --- Build Dynamic Context ---
+        // 动态上下文依然需要通过sourceItemId实时查找其在目录中的位置
         let dynamicContextHtml = '';
-        if (targetItem.type === 'chapter') {
-            const chapterResult = directoryStore.findNodeById(targetItem.id);
-            if (chapterResult && chapterResult.parent) {
-                const volume = chapterResult.parent;
-                const chapterIndex = volume.chapters.findIndex(c => c.id === targetItem.id);
+        const sourceItemResult = directoryStore.findNodeById(sourceItemId);
 
-                if (chapterIndex > -1) {
-                    const prevStart = Math.max(0, chapterIndex - contextSettingsStore.dynamicContextSettings.prevChapters);
-                    for (let i = prevStart; i < chapterIndex; i++) {
-                        dynamicContextHtml += `<hr><h3>前文章节: ${volume.chapters[i].title}</h3>${volume.chapters[i].content}`;
-                    }
+        if (sourceItemResult && sourceItemResult.node.type === 'chapter') {
+            const { parent: volume, siblings: chapters } = sourceItemResult;
+            const chapterIndex = chapters.findIndex(c => c.id === sourceItemId);
 
-                    const nextEnd = Math.min(volume.chapters.length, chapterIndex + 1 + contextSettingsStore.dynamicContextSettings.nextChapters);
-                    for (let i = chapterIndex + 1; i < nextEnd; i++) {
-                        dynamicContextHtml += `<hr><h3>后续章节内容: ${volume.chapters[i].title}</h3>${volume.chapters[i].content}`;
+            if (volume && chapterIndex > -1) {
+                const prevStart = Math.max(0, chapterIndex - contextSettingsStore.dynamicContextSettings.prevChapters);
+                for (let i = prevStart; i < chapterIndex; i++) {
+                    const prevChapter = chapters[i] as EditorItem;
+                    if ('content' in prevChapter && prevChapter.content) {
+                        dynamicContextHtml += `<hr><h3>前文章节: ${prevChapter.title}</h3>${prevChapter.content}`;
                     }
+                }
 
-                    if (contextSettingsStore.dynamicContextSettings.includeRelatedPlot) {
-                        const relatedPlots = derivedContentStore.plotItems.filter(p => p.sourceChapterId === targetItem.id);
-                        if(relatedPlots.length > 0) {
-                            dynamicContextHtml += `<hr><h3>与本章相关的剧情</h3>`;
-                            relatedPlots.forEach(plot => { dynamicContextHtml += plot.content; });
-                        }
+                const nextEnd = Math.min(chapters.length, chapterIndex + 1 + contextSettingsStore.dynamicContextSettings.nextChapters);
+                for (let i = chapterIndex + 1; i < nextEnd; i++) {
+                    const nextChapter = chapters[i] as EditorItem;
+                    if ('content' in nextChapter && nextChapter.content) {
+                        dynamicContextHtml += `<hr><h3>后续章节内容: ${nextChapter.title}</h3>${nextChapter.content}`;
                     }
-                    if (contextSettingsStore.dynamicContextSettings.includeRelatedAnalysis) {
-                        const relatedAnalyses = derivedContentStore.analysisItems.filter(a => a.sourceChapterId === targetItem.id);
-                        if(relatedAnalyses.length > 0) {
-                            dynamicContextHtml += `<hr><h3>与本章相关的分析</h3>`;
-                            relatedAnalyses.forEach(analysis => { dynamicContextHtml += analysis.content; });
-                        }
+                }
+
+                if (contextSettingsStore.dynamicContextSettings.includeRelatedPlot) {
+                    const relatedPlots = derivedContentStore.plotItems.filter(p => p.sourceChapterId === sourceItemId);
+                    if(relatedPlots.length > 0) {
+                        dynamicContextHtml += `<hr><h3>与本章相关的剧情</h3>`;
+                        relatedPlots.forEach(plot => { dynamicContextHtml += plot.content; });
+                    }
+                }
+                if (contextSettingsStore.dynamicContextSettings.includeRelatedAnalysis) {
+                    const relatedAnalyses = derivedContentStore.analysisItems.filter(a => a.sourceChapterId === sourceItemId);
+                    if(relatedAnalyses.length > 0) {
+                        dynamicContextHtml += `<hr><h3>与本章相关的分析</h3>`;
+                        relatedAnalyses.forEach(analysis => { dynamicContextHtml += analysis.content; });
                     }
                 }
             }
@@ -4494,10 +3795,8 @@ export function useContextBuilder() {
 
         // --- Build RAG & Final Prompt ---
         const ragContext = contextSettingsStore.isRagEnabled ? '【RAG智能检索功能已开启，将根据任务内容自动查询知识库...】' : 'RAG检索已禁用或未返回任何结果。';
-
-        // --- Get selected prompt template from aiConfigStore ---
         const taskConfig = aiConfigStore.taskPromptConfigs[taskType];
-        const selectedPromptTemplate = taskConfig.prompts.find(p => p.name === taskConfig.selected)?.template || `请为《${targetItem.title}》执行“${taskType}”任务。`;
+        const selectedPromptTemplate = taskConfig.prompts.find(p => p.name === taskConfig.selected)?.template || `请为《${sourceItemTitle}》执行“${taskType}”任务。`;
 
         const prompt = `[任务提示词]
 ${selectedPromptTemplate}
@@ -4577,8 +3876,7 @@ export const mockChatConversations: Conversation[] = [
 // 文件: ..\src\novel\editor\data\index.ts
 //
 
-// 文件: src/novel/editor/data/index.ts
-import type { Volume, Chapter, NoteItem, NovelMetadata, NovelCharacter, AITask, TreeNode, ItemNode, RootNode, GroupNode, PlotAnalysisItem, OverviewNode } from '@/novel/editor/types';
+import type { Volume, NoteItem, NovelMetadata, NovelCharacter, AITask, TreeNode, ItemNode, RootNode, GroupNode, OverviewNode } from '@/novel/editor/types';
 
 export const mockDirectoryData: Volume[] = [
     {
@@ -4621,7 +3919,7 @@ export const mockCharacters: NovelCharacter[] = [
 
 export const mockSettingsData: TreeNode[] = [
     {
-        id: 'settings', title: '设定', type: 'root', icon: 'fa-solid fa-book-journal-whills',
+        id: 'setting', title: '设定', type: 'root', icon: 'fa-solid fa-book-journal-whills',
         children: [
             {
                 id: 'characters', title: '角色', type: 'group', icon: 'fa-solid fa-users text-teal-500', children: [
@@ -4636,12 +3934,12 @@ export const mockSettingsData: TreeNode[] = [
                     }))
                 ]
             } as GroupNode,
-            { 
+            {
                 id: 'locations', title: '地点', type: 'group', icon: 'fa-solid fa-map-location-dot text-green-500', children: [
                     { id: 'locations-overview', title: '地点总览', type: 'locations_overview', icon: 'fa-solid fa-map-location-dot', content: '', isOverview: true, isReadOnly: true } as OverviewNode,
                 ]
             } as GroupNode,
-            { 
+            {
                 id: 'items', title: '物品', type: 'group', icon: 'fa-solid fa-box-archive text-amber-600', children: [
                     { id: 'items-overview', title: '物品总览', type: 'items_overview', icon: 'fa-solid fa-box-archive', content: '', isOverview: true, isReadOnly: true } as OverviewNode,
                 ]
@@ -4661,6 +3959,10 @@ export const mockPlotCustomData: ItemNode[] = [
 ];
 
 export const mockAnalysisCustomData: ItemNode[] = [];
+
+export const mockOthersCustomData: ItemNode[] = [
+    { id: 'custom-others-1', title: '写作风格参考', type: 'others_item', icon: 'fa-regular fa-file-zipper', content: '<h1>写作风格参考</h1><p>参考阿西莫夫《基地》系列的宏大叙事风格，同时融合《黑暗森林》的悬疑氛围。' }
+];
 
 export const mockNoteData: NoteItem[] = [
     { id: 'note-1', type: 'note', title: '第四章情感转折点设计', timestamp: '今天 14:32', content: '<h1>第四章情感转折点设计</h1><p>需要重点描写卡尔文在面对跃迁点时，希望与恐惧交织的复杂心理。</p>' },
@@ -5039,30 +4341,20 @@ export const useAITaskStore = defineStore('aiTask', () => {
         task.status = 'processing';
         task.generatedContent = '';
 
-        // 如果任务没有预构建的提示词（例如，跳过了预览），则在此处构建。
         if (!task.finalPrompt) {
-            const { node: targetItem } = editorStore.findItemById(task.targetItemId);
-            if (!targetItem) {
-                task.status = 'failed';
-                task.error = '任务目标文档未找到，无法构建上下文。';
-                nextTick(_processQueue);
-                return;
-            }
-
-            const contextResult = buildContextForTask(task.type, targetItem);
+            // **核心修正**: 直接将任务对象传给上下文构建器
+            const contextResult = buildContextForTask(task);
             if (!contextResult || !contextResult.prompt) {
                 task.status = 'failed';
                 task.error = '上下文构建失败，无法生成最终提示词。';
                 nextTick(_processQueue);
                 return;
             }
-            // 保存构建好的提示词，以便重试时使用
             task.finalPrompt = contextResult.prompt;
         }
 
         const promptToUse = task.finalPrompt;
 
-        // 调用模拟API服务，仅传入最终提示词
         streamAITask(promptToUse, {
             onChunk: (chunk) => {
                 const currentTask = tasks.value.find(t => t.id === taskId);
@@ -5074,7 +4366,7 @@ export const useAITaskStore = defineStore('aiTask', () => {
                 const currentTask = tasks.value.find(t => t.id === taskId);
                 if (currentTask && currentTask.status === 'processing') {
                     currentTask.status = 'completed';
-                    if (task.type === '润色') {
+                    if (currentTask.type === '润色' || currentTask.type === '续写') {
                         const strategy = uiStore.uiState.taskApplicationStrategy;
                         switch (strategy.mode) {
                             case 'auto':
@@ -5107,10 +4399,21 @@ export const useAITaskStore = defineStore('aiTask', () => {
     }
 
     const _processQueue = () => {
+        const limit = uiStore.uiState.concurrentTaskLimit;
         const processingCount = tasks.value.filter(t => t.status === 'processing').length;
-        if (processingCount > 0) return;
-        const pendingTask = tasks.value.find(t => t.status === 'pending');
-        if (pendingTask) _executeTaskAndStream(pendingTask.id);
+
+        if (processingCount >= limit) {
+            return;
+        }
+
+        const canStartCount = limit - processingCount;
+        const pendingTasks = tasks.value.filter(t => t.status === 'pending');
+
+        const tasksToStart = pendingTasks.slice(0, canStartCount);
+
+        for (const task of tasksToStart) {
+            _executeTaskAndStream(task.id);
+        }
     };
 
     const startTask = async (taskType: AITask['type'], sourceItemId: string, finalPrompt?: string) => {
@@ -5134,22 +4437,22 @@ export const useAITaskStore = defineStore('aiTask', () => {
 
             await nextTick();
             editorStore.openTab(targetItemId);
-
         } else {
             targetItemId = sourceItemId;
             taskTitle = `${taskType}《${sourceItem.title}》`;
         }
 
-
         const newTask: AITask = {
             id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             title: taskTitle,
             type: taskType,
+            sourceItemId: sourceItemId,
             targetItemId: targetItemId,
+            sourceItemTitle: sourceItem.title, // **核心修正**: 添加标题快照
+            sourceItemContent: sourceItem.content, // **核心修正**: 添加内容快照
             status: 'pending',
-            sourceContent: sourceItem.content,
             generatedContent: '',
-            finalPrompt: finalPrompt, // 保存从预览窗口传来的提示词
+            finalPrompt: finalPrompt,
             createdAt: new Date(),
         };
 
@@ -5162,7 +4465,9 @@ export const useAITaskStore = defineStore('aiTask', () => {
 
     const startBatchTaskForVolume = (taskType: AITask['type'], volume: Volume) => {
         if (!volume || !volume.chapters) return;
-        volume.chapters.forEach(chapter => startTask(taskType, chapter.id));
+        volume.chapters.forEach(chapter => {
+            startTask(taskType, chapter.id, undefined);
+        });
     };
 
     const applyChanges = (taskId: string, isAutoApplied: boolean = false) => {
@@ -5191,7 +4496,7 @@ export const useAITaskStore = defineStore('aiTask', () => {
             task.status = 'pending';
             task.error = undefined;
             task.generatedContent = '';
-            // 提示词已保存在task.finalPrompt中，无需重新构建
+            task.finalPrompt = undefined; // 清除旧的prompt，强制重新构建
             nextTick(_processQueue);
         }
     };
@@ -5338,13 +4643,15 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import type { AITaskPreview, ContextBuildResult } from '@/novel/editor/types';
+import type { AITask, AITaskPreview, ContextBuildResult} from '@/novel/editor/types';
 import { useContextBuilder } from '@/novel/editor/composables/useContextBuilder';
+
 export const useContextPreviewStore = defineStore('contextPreview', () => {
     const isVisible = ref(false);
     const task = ref<AITaskPreview | null>(null);
     const isLoading = ref(false);
     const previewContent = ref<ContextBuildResult | null>(null);
+
     const editorStore = useEditorStore();
     const { buildContextForTask } = useContextBuilder();
 
@@ -5359,7 +4666,24 @@ export const useContextPreviewStore = defineStore('contextPreview', () => {
 
         // Delegate context building to the context builder composable
         const { node: targetItem } = editorStore.findItemById(previewTask.targetItemId);
-        previewContent.value = buildContextForTask(previewTask.type, targetItem);
+
+        if (targetItem && 'content' in targetItem && typeof targetItem.content === 'string') {
+            // Create a temporary task-like object (snapshot) for the context builder
+            const taskSnapshot: Pick<AITask, 'type' | 'sourceItemId' | 'sourceItemTitle' | 'sourceItemContent'> = {
+                type: previewTask.type,
+                sourceItemId: previewTask.targetItemId,
+                sourceItemTitle: previewTask.title,
+                sourceItemContent: targetItem.content, // Use the live content from the editor
+            };
+            previewContent.value = buildContextForTask(taskSnapshot);
+        } else {
+            console.error('Context Preview Error: Could not find target item or item has no content.', previewTask.targetItemId);
+            // Handle the error state in the UI
+            previewContent.value = {
+                fixed: '', dynamic: '', rag: '', prompt: '错误：无法加载上下文。目标文档不存在或无内容。',
+                stats: { fixedCharCount: 0, dynamicCharCount: 0, ragCharCount: 0, promptCharCount: 0 }
+            };
+        }
 
         // Short delay to show loading state
         await new Promise(res => setTimeout(res, 200));
@@ -5404,6 +4728,7 @@ const stripHtml = (html: string) => {
 export const useContextSettingsStore = defineStore('contextSettings', () => {
     const needsPreview = ref(true);
     const selectedContextItems = ref<ContextItem[]>([]);
+    const selectedOthersItems = ref<ContextItem[]>([]);
     const customContextContent = ref('');
     const dynamicContextSettings = ref({
         prevChapters: 1,
@@ -5421,6 +4746,7 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
             if (node.type.endsWith('_item') && 'content' in node && node.content) {
                 presets.push({
                     id: node.id,
+                    category: '设定',
                     group,
                     title: node.title,
                     description: stripHtml(node.content).substring(0, 100) + '...',
@@ -5428,13 +4754,41 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
                 });
             }
             if (node.children) {
-                node.children.forEach(child => processNode(child, node.id === 'settings' ? child.title : group));
+                node.children.forEach(child => processNode(child, node.id === 'setting' ? child.title : group));
             }
         };
 
         if (relatedStore.settingsData.length > 0) {
             relatedStore.settingsData.forEach(rootNode => processNode(rootNode, '设定'));
         }
+        return presets;
+    });
+
+    const othersContextPresets = computed((): ContextItem[] => {
+        const relatedStore = useRelatedContentStore();
+        const presets: ContextItem[] = [];
+
+        const processNode = (node: TreeNode) => {
+            if (node.type === 'others_item' && 'content' in node && node.content) {
+                presets.push({
+                    id: node.id,
+                    category: '其他',
+                    group: '其他',
+                    title: node.title,
+                    description: stripHtml(node.content).substring(0, 100) + '...',
+                    content: node.content,
+                });
+            }
+            if (node.children) {
+                node.children.forEach(child => processNode(child));
+            }
+        };
+
+        const othersRoot = relatedStore.relatedData.find(n => n.id === 'others');
+        if (othersRoot && othersRoot.children) {
+            processNode(othersRoot);
+        }
+
         return presets;
     });
 
@@ -5446,6 +4800,16 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
 
     const removeFixedContextItem = (id: string) => {
         selectedContextItems.value = selectedContextItems.value.filter(i => i.id !== id);
+    };
+
+    const addOthersContextItem = (item: ContextItem) => {
+        if (!selectedOthersItems.value.some(i => i.id === item.id)) {
+            selectedOthersItems.value.push(item);
+        }
+    };
+
+    const removeOthersContextItem = (id: string) => {
+        selectedOthersItems.value = selectedOthersItems.value.filter(i => i.id !== id);
     };
 
     const setCustomContextContent = (content: string) => {
@@ -5461,12 +4825,16 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
     return {
         needsPreview,
         fixedContextPresets,
+        othersContextPresets,
         selectedContextItems,
+        selectedOthersItems,
         customContextContent,
         dynamicContextSettings,
         isRagEnabled,
         addFixedContextItem,
         removeFixedContextItem,
+        addOthersContextItem,
+        removeOthersContextItem,
         setCustomContextContent,
         setDynamicContextSetting,
     };
@@ -5584,6 +4952,7 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
 // 文件: ..\src\novel\editor\stores\directoryStore.ts
 //
 
+// src/novel/editor/stores/directoryStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { Volume, Chapter } from '@/novel/editor/types';
@@ -5621,16 +4990,20 @@ export const useDirectoryStore = defineStore('directory', () => {
 
     const updateChapterContent = (nodeId: string, content: string) => {
         const result = findNodeById(nodeId);
-        if (result && result.node.type === 'chapter') {
-            const chapter = result.node;
-            chapter.content = content;
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = content;
-            chapter.wordCount = tempDiv.textContent?.trim().length || 0;
+        if (result && (result.node.type === 'chapter' || result.node.type === 'volume')) {
+            const item = result.node;
+            item.content = content;
+
+            if (item.type === 'chapter') {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = content;
+                item.wordCount = tempDiv.textContent?.trim().length || 0;
+            }
+
             const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
             const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
-            if (newTitle && newTitle !== chapter.title) {
-                chapter.title = newTitle;
+            if (newTitle && newTitle !== item.title) {
+                item.title = newTitle;
             }
         }
     };
@@ -5696,7 +5069,8 @@ export const useDirectoryStore = defineStore('directory', () => {
         if (result?.node) {
             const trimmedTitle = newTitle.trim();
             result.node.title = trimmedTitle;
-            if ('content' in result.node && result.node.content) {
+            // 同时更新卷和章节的content
+            if (result.node.content) {
                 if (result.node.content.includes('<h1>')) {
                     result.node.content = result.node.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
                 } else {
@@ -5710,7 +5084,6 @@ export const useDirectoryStore = defineStore('directory', () => {
     const deleteNode = (nodeId: string) => {
         const result = findNodeById(nodeId);
         if (!result) return;
-        if (!window.confirm(`您确定要删除 "${result.node.title}" 吗？此操作无法撤销。`)) return;
 
         const editorStore = useEditorStore();
         const derivedContentStore = useDerivedContentStore();
@@ -5945,7 +5318,7 @@ export const useItemStore = defineStore('editor-item', () => {
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { NovelMetadata } from '@/novel/editor/types';
-import { mockNovelMetadata, mockDirectoryData, mockSettingsData, mockPlotCustomData, mockAnalysisCustomData, mockNoteData } from '@/novel/editor/data';
+import { mockNovelMetadata, mockDirectoryData, mockSettingsData, mockPlotCustomData, mockAnalysisCustomData, mockNoteData, mockOthersCustomData } from '@/novel/editor/data';
 import { useDirectoryStore } from '../directoryStore';
 import { useRelatedContentStore } from '../relatedContentStore';
 import { useNotesStore } from '../notesStore';
@@ -5966,7 +5339,7 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
         const tabStore = useTabStore();
 
         directoryStore.fetchDirectoryData(mockDirectoryData);
-        relatedContentStore.fetchRelatedData(mockSettingsData, mockPlotCustomData, mockAnalysisCustomData);
+        relatedContentStore.fetchRelatedData(mockSettingsData, mockPlotCustomData, mockAnalysisCustomData, mockOthersCustomData);
         notesStore.fetchNotes(mockNoteData);
         novelMetadata.value = JSON.parse(JSON.stringify(mockNovelMetadata));
 
@@ -5974,10 +5347,11 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
         tabStore.openTab('ch-3');
 
         uiStore.uiState.expandedNodeIds.add('vol-1');
-        uiStore.uiState.expandedRelatedNodeIds.add('settings');
+        uiStore.uiState.expandedRelatedNodeIds.add('setting');
         uiStore.uiState.expandedRelatedNodeIds.add('characters');
         uiStore.uiState.expandedRelatedNodeIds.add('plot');
         uiStore.uiState.expandedRelatedNodeIds.add('analysis');
+        uiStore.uiState.expandedRelatedNodeIds.add('others');
     }
 
     function removeTag(tagIndex: number) {
@@ -6216,6 +5590,7 @@ export const useTabStore = defineStore('editor-tab', () => {
 // 文件: ..\src\novel\editor\stores\notesStore.ts
 //
 
+
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { NoteItem } from '@/novel/editor/types';
@@ -6293,7 +5668,6 @@ export const useNotesStore = defineStore('notes', () => {
         const editorStore = useEditorStore();
         const index = notes.value.findIndex(n => n.id === noteId);
         if (index !== -1) {
-            if (!window.confirm(`您确定要删除笔记 "${notes.value[index].title}" 吗？`)) return;
             notes.value.splice(index, 1);
             editorStore.closeTab(noteId);
         }
@@ -6312,18 +5686,59 @@ export const useNotesStore = defineStore('notes', () => {
 });
 
 // =
-// 文件: ..\src\novel\editor\stores\relatedContentStore.ts
+// 文件: ..\src\novel\editor\stores\related\itemDataStore.ts
+//
+
+// src/novel/editor/stores/modules/related/itemDataStore.ts
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import type { TreeNode } from '@novel/editor/types';
+
+export const useItemDataStore = defineStore('related-item-data', () => {
+    // 原始数据状态
+    const settingsData = ref<TreeNode[]>([]);
+    const plotCustomData = ref<TreeNode[]>([]);
+    const analysisCustomData = ref<TreeNode[]>([]);
+    const othersCustomData = ref<TreeNode[]>([]);
+
+    /**
+     * 从外部获取数据并填充 store
+     * @param settings - 设定的树形数据
+     * @param plot - 自定义剧情数据
+     * @param analysis - 自定义分析数据
+     * @param others - 其他自定义数据
+     */
+    function fetchRelatedData(settings: TreeNode[], plot: TreeNode[], analysis: TreeNode[], others: TreeNode[]) {
+        settingsData.value = settings;
+        plotCustomData.value = plot;
+        analysisCustomData.value = analysis;
+        othersCustomData.value = others;
+    }
+
+    return {
+        settingsData,
+        plotCustomData,
+        analysisCustomData,
+        othersCustomData,
+        fetchRelatedData,
+    };
+});
+
+// =
+// 文件: ..\src\novel\editor\stores\related\nodeOperationStore.ts
 //
 
 import { defineStore } from 'pinia';
-import { ref, computed, watch } from 'vue';
-import { useEditorStore } from './editorStore';
-import { useUIStore } from './uiStore';
-import { useDirectoryStore } from './directoryStore';
-import { useDerivedContentStore } from './derivedContentStore';
-import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
-import type { TreeNode, RootNode, GroupNode, ItemNode, OverviewNode, PlotAnalysisItem } from '@/novel/editor/types';
+import { useItemDataStore } from './itemDataStore.ts';
+import { useTreeBuilderStore } from './treeBuilderStore.ts';
+import { useEditorStore } from '@novel/editor/stores/editorStore.ts';
+import { useUIStore } from '@novel/editor/stores/uiStore.ts';
+import { getIconByNodeType } from '@novel/editor/utils/iconUtils.ts';
+import type { TreeNode, ItemNode, GroupNode } from '@novel/editor/types';
 
+// --- 辅助函数 ---
+
+// 在给定的树中递归查找节点
 const _findNodeInTreeRecursive = (nodes: TreeNode[], nodeId: string): { node: TreeNode; parent: TreeNode | null; siblings: TreeNode[] } | null => {
     for (const node of nodes) {
         if (node.id === nodeId) {
@@ -6342,6 +5757,7 @@ const _findNodeInTreeRecursive = (nodes: TreeNode[], nodeId: string): { node: Tr
     return null;
 };
 
+// 在给定的树中查找并移除节点
 const _findAndRemoveNodeInTree = (nodes: TreeNode[], nodeId: string): boolean => {
     for (let i = 0; i < nodes.length; i++) {
         if (nodes[i].id === nodeId) {
@@ -6355,32 +5771,335 @@ const _findAndRemoveNodeInTree = (nodes: TreeNode[], nodeId: string): boolean =>
     return false;
 }
 
-export const useRelatedContentStore = defineStore('relatedContent', () => {
-    const settingsData = ref<TreeNode[]>([]);
-    const plotCustomData = ref<TreeNode[]>([]);
-    const analysisCustomData = ref<TreeNode[]>([]);
+export const useNodeOperationStore = defineStore('related-node-operations', () => {
+    const itemDataStore = useItemDataStore();
+    const treeBuilderStore = useTreeBuilderStore();
+    const editorStore = useEditorStore();
+    const uiStore = useUIStore();
 
-    const findNodeById = (nodeId: string): { node: TreeNode; parent: TreeNode | null; siblings: TreeNode[] } | null => {
-        const sources = [settingsData.value, plotCustomData.value, analysisCustomData.value];
-        for (const source of sources) {
+    /**
+     * 在所有相关内容数据中查找节点
+     * @param nodeId - 要查找的节点ID
+     */
+    function findNodeById(nodeId: string): { node: TreeNode; parent: TreeNode | null; siblings: TreeNode[] } | null {
+        const staticSources = [
+            itemDataStore.settingsData,
+            itemDataStore.plotCustomData,
+            itemDataStore.analysisCustomData,
+            itemDataStore.othersCustomData
+        ];
+        for (const source of staticSources) {
             const result = _findNodeInTreeRecursive(source, nodeId);
             if (result) return result;
         }
-        return null;
+        // 作为备用方案，在完整的动态树中搜索（用于查找派生内容等）
+        return _findNodeInTreeRecursive(treeBuilderStore.relatedData, nodeId);
     }
 
+    /**
+     * 更新节点内容
+     * @param nodeId - 节点ID
+     * @param content - 新的HTML内容
+     */
+    function updateNodeContent(nodeId: string, content: string) {
+        const result = findNodeById(nodeId);
+        if (result?.node && 'content' in result.node) {
+            (result.node as ItemNode).content = content;
+            if (!result.node.isReadOnly) {
+                const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
+                const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
+                if (newTitle && newTitle !== result.node.title) {
+                    result.node.title = newTitle;
+                }
+            }
+        }
+    }
+
+    /**
+     * 向节点追加内容
+     * @param nodeId - 节点ID
+     * @param contentToAppend - 要追加的原始文本
+     * @param isAutoApplied - 是否为AI自动应用
+     */
+    function appendNodeContent(nodeId: string, contentToAppend: string, isAutoApplied: boolean) {
+        const result = findNodeById(nodeId);
+        if (result?.node && 'content' in result.node) {
+            const itemNode = result.node as ItemNode;
+            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
+            let htmlToAppend = paragraphs;
+            if (isAutoApplied) {
+                htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
+            }
+            if (!itemNode.content) itemNode.content = "";
+            itemNode.content += htmlToAppend;
+        }
+    }
+
+    /**
+     * 在设定的分组下添加新节点（分组或条目）
+     * @param parentId - 父节点ID
+     * @param type - 'group' 或 'item'
+     */
+    function addRelatedNode(parentId: string, type: 'group' | 'item') {
+        const result = findNodeById(parentId);
+        if (!result?.node) return;
+
+        const parentNode = result.node;
+        if (!parentNode.children) parentNode.children = [];
+
+        const itemTypePrefix = parentNode.id.endsWith('s') ? parentNode.id.slice(0, -1) : parentNode.id;
+        const newNodeType = type === 'group' ? 'group' : `${itemTypePrefix}_item`;
+        const newNodeIcon = getIconByNodeType(newNodeType);
+
+        const newNode: TreeNode = {
+            id: `${type}-${Date.now()}`,
+            title: type === 'group' ? '新建分组' : '新建条目',
+            type: newNodeType,
+            icon: newNodeIcon,
+            content: type === 'item' ? '<h1>新建条目</h1><p>请在此处填写内容...</p>' : undefined,
+            children: type === 'group' ? [] : undefined,
+        } as GroupNode | ItemNode;
+
+        parentNode.children.push(newNode);
+        uiStore.ensureRelatedNodeIsExpanded(parentId);
+        uiStore.setEditingNodeId(newNode.id);
+        if ('content' in newNode && newNode.content !== undefined) editorStore.openTab(newNode.id);
+    }
+
+    /**
+     * 重命名设定节点
+     * @param nodeId - 节点ID
+     * @param newTitle - 新标题
+     */
+    function renameRelatedNode(nodeId: string, newTitle: string) {
+        if (!newTitle.trim()) {
+            uiStore.setEditingNodeId(null);
+            return;
+        }
+        const result = findNodeById(nodeId);
+        if (result?.node && !result.node.isReadOnly) {
+            const trimmedTitle = newTitle.trim();
+            result.node.title = trimmedTitle;
+            if ('content' in result.node && result.node.content && result.node.content.includes('<h1>')) {
+                (result.node as ItemNode).content = (result.node as ItemNode).content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
+            }
+        }
+        uiStore.setEditingNodeId(null);
+    }
+
+    /**
+     * 删除设定节点
+     * @param nodeId - 节点ID
+     */
+    function deleteRelatedNode(nodeId: string) {
+        const result = findNodeById(nodeId);
+        if (!result?.node) return;
+
+        const wasRemoved = _findAndRemoveNodeInTree(itemDataStore.settingsData, nodeId);
+        if (wasRemoved) {
+            editorStore.closeTab(nodeId);
+            if (uiStore.editingNodeId === nodeId) uiStore.setEditingNodeId(null);
+        }
+    }
+
+    // --- Custom Related (Plot/Analysis) ---
+
+    function addCustomRelatedNode(target: 'plot' | 'analysis') {
+        const dataRef = target === 'plot' ? itemDataStore.plotCustomData : itemDataStore.analysisCustomData;
+        const icon = getIconByNodeType(`${target}_item`);
+        const newNode: ItemNode = {
+            id: `custom-${target}-${Date.now()}`,
+            title: '新建自定义条目',
+            type: `${target}_item`,
+            icon: icon,
+            content: '<h1>新建自定义条目</h1><p>请在此处填写内容...</p>',
+        };
+        dataRef.unshift(newNode);
+        uiStore.ensureRelatedNodeIsExpanded(target);
+        uiStore.setEditingNodeId(newNode.id);
+        editorStore.openTab(newNode.id);
+    }
+
+    function renameCustomRelatedNode(nodeId: string, newTitle: string) {
+        renameRelatedNode(nodeId, newTitle);
+    }
+
+    function deleteCustomRelatedNode(nodeId: string) {
+        const result = findNodeById(nodeId);
+        if (!result?.node) return;
+
+        const wasRemoved = _findAndRemoveNodeInTree(itemDataStore.plotCustomData, nodeId) || _findAndRemoveNodeInTree(itemDataStore.analysisCustomData, nodeId);
+
+        if (wasRemoved) {
+            editorStore.closeTab(nodeId);
+            if (uiStore.editingNodeId === nodeId) uiStore.setEditingNodeId(null);
+        }
+    }
+
+    // --- Custom Others ---
+
+    function addCustomOthersNode() {
+        const icon = getIconByNodeType('others_item');
+        const newNode: ItemNode = {
+            id: `custom-others-${Date.now()}`,
+            title: '新建其他条目',
+            type: 'others_item',
+            icon: icon,
+            content: '<h1>新建其他条目</h1><p>请在此处填写内容...</p>',
+        };
+        itemDataStore.othersCustomData.unshift(newNode);
+        uiStore.ensureRelatedNodeIsExpanded('others');
+        uiStore.setEditingNodeId(newNode.id);
+        editorStore.openTab(newNode.id);
+    }
+
+    function renameCustomOthersNode(nodeId: string, newTitle: string) {
+        renameRelatedNode(nodeId, newTitle);
+    }
+
+    function deleteCustomOthersNode(nodeId: string) {
+        const result = findNodeById(nodeId);
+        if (!result?.node) return;
+
+        const wasRemoved = _findAndRemoveNodeInTree(itemDataStore.othersCustomData, nodeId);
+
+        if (wasRemoved) {
+            editorStore.closeTab(nodeId);
+            if (uiStore.editingNodeId === nodeId) uiStore.setEditingNodeId(null);
+        }
+    }
+
+    return {
+        findNodeById,
+        updateNodeContent,
+        appendNodeContent,
+        addRelatedNode,
+        renameRelatedNode,
+        deleteRelatedNode,
+        addCustomRelatedNode,
+        renameCustomRelatedNode,
+        deleteCustomRelatedNode,
+        addCustomOthersNode,
+        renameCustomOthersNode,
+        deleteCustomOthersNode,
+    };
+});
+
+// =
+// 文件: ..\src\novel\editor\stores\related\overviewStore.ts
+//
+
+// src/novel/editor/stores/modules/related/overviewStore.ts
+import { defineStore } from 'pinia';
+import { watch } from 'vue';
+import { useItemDataStore } from './itemDataStore.ts';
+import type { TreeNode, GroupNode, ItemNode, OverviewNode } from '@novel/editor/types';
+
+/**
+ * 这个 store 专门用于管理和更新“总览”节点的内容。
+ * 它通过 watch 监听 settingsData 的变化，自动重新生成总览。
+ */
+export const useOverviewStore = defineStore('related-overview', () => {
+    const itemDataStore = useItemDataStore();
+
+    /**
+     * 更新单个分组节点下的总览内容。
+     * @param groupNode - 包含总览节点的父分组节点。
+     */
+    function updateOverviewContent(groupNode: GroupNode) {
+        if (!groupNode.children) return;
+
+        const overviewNode = groupNode.children.find(child => child.isOverview) as OverviewNode | undefined;
+        if (!overviewNode) return;
+
+        // 筛选出需要被汇总的普通条目
+        const itemsToSummarize = groupNode.children.filter(child => child.type.endsWith('_item') && !child.isOverview) as ItemNode[];
+
+        // 辅助函数，用于降低内容中标题的级别 (e.g., h1 -> h2)
+        const demoteHeadings = (htmlContent: string): string => {
+            if (typeof document === 'undefined') return htmlContent; // Guard for SSR
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+
+            // 将 h1, h2, h3 等标题降级
+            const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5');
+            headings.forEach(heading => {
+                const level = parseInt(heading.tagName.charAt(1), 10);
+                const newLevel = Math.min(6, level + 1); // 最多降到 h6
+                const newHeading = document.createElement(`h${newLevel}`);
+                newHeading.innerHTML = heading.innerHTML;
+                for (const attr of heading.attributes) {
+                    newHeading.setAttribute(attr.name, attr.value);
+                }
+                heading.parentNode?.replaceChild(newHeading, heading);
+            });
+            return tempDiv.innerHTML;
+        };
+
+        // 拼接所有条目的内容
+        const itemContents = itemsToSummarize.map(item => item.content ? demoteHeadings(item.content) : '').filter(Boolean);
+
+        // 更新总览节点的内容
+        overviewNode.content = `<h1>${overviewNode.title}</h1>` + (itemContents.length > 0 ? itemContents.join('<hr>') : `<p class="overview-placeholder">此分类下暂无内容，请添加条目。</p>`);
+    }
+
+    /**
+     * 遍历整个设定树，更新所有找到的总览节点。
+     */
+    function updateAllOverviewContent() {
+        const findAndProcess = (nodes: TreeNode[]) => {
+            for (const node of nodes) {
+                if (node.type === 'group' && node.children?.some(c => c.isOverview)) {
+                    updateOverviewContent(node as GroupNode);
+                }
+                if (node.children) {
+                    findAndProcess(node.children);
+                }
+            }
+        };
+        findAndProcess(itemDataStore.settingsData);
+    }
+
+    // 监听原始数据变化，自动更新总览
+    watch(
+        () => itemDataStore.settingsData,
+        () => {
+            updateAllOverviewContent();
+        },
+        { deep: true, immediate: true } // immediate确保初始化时也能执行
+    );
+
+    // 这个 store 主要通过 watch effect 工作，所以返回空对象
+    return {};
+});
+
+// =
+// 文件: ..\src\novel\editor\stores\related\treeBuilderStore.ts
+//
+
+import { defineStore } from 'pinia';
+import { computed } from 'vue';
+import { useItemDataStore } from './itemDataStore.ts';
+import { useDirectoryStore } from '@novel/editor/stores/directoryStore.ts';
+import { useDerivedContentStore } from '@novel/editor/stores/derivedContentStore.ts';
+import { getIconByNodeType } from '@novel/editor/utils/iconUtils.ts';
+import type { TreeNode, RootNode, PlotAnalysisItem } from '@novel/editor/types';
+
+export const useTreeBuilderStore = defineStore('related-tree-builder', () => {
+    const itemDataStore = useItemDataStore();
+    const directoryStore = useDirectoryStore();
+    const derivedContentStore = useDerivedContentStore();
+
+    /**
+     * 响应式地构建完整的相关内容树，供UI使用
+     */
     const relatedData = computed((): TreeNode[] => {
-        const directoryStore = useDirectoryStore();
-        const derivedContentStore = useDerivedContentStore();
-
+        // 清理无效的派生数据
         const allChapterIds = new Set(directoryStore.directoryData.flatMap(v => v.chapters.map(c => c.id)));
-        for (const key of derivedContentStore.plotItems.map(i => i.sourceChapterId)) {
-            if (!allChapterIds.has(key)) derivedContentStore.plotItems = derivedContentStore.plotItems.filter(i => i.sourceChapterId !== key);
-        }
-        for (const key of derivedContentStore.analysisItems.map(i => i.sourceChapterId)) {
-            if (!allChapterIds.has(key)) derivedContentStore.analysisItems = derivedContentStore.analysisItems.filter(i => i.sourceChapterId !== key);
-        }
+        derivedContentStore.plotItems = derivedContentStore.plotItems.filter(i => allChapterIds.has(i.sourceChapterId));
+        derivedContentStore.analysisItems = derivedContentStore.analysisItems.filter(i => allChapterIds.has(i.sourceChapterId));
 
+        // 辅助函数，用于构建派生内容的子树
         const buildDerivedTree = (
             type: 'plot' | 'analysis',
             dataArray: PlotAnalysisItem[]
@@ -6388,14 +6107,14 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
             return directoryStore.directoryData.map(volume => ({
                 id: `${type}_vol_${volume.id}`,
                 title: volume.title,
-                type: 'group', // Use a generic group type for display
+                type: 'group',
                 icon: getIconByNodeType('volume'),
                 isReadOnly: true,
                 children: volume.chapters
                     .map(chapter => {
                         const derivedForChapter = dataArray.filter(item => item.sourceChapterId === chapter.id);
                         if (derivedForChapter.length === 0) return null;
-                        
+
                         return {
                             id: `${type}_ch_group_${chapter.id}`,
                             title: chapter.title,
@@ -6416,199 +6135,84 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
             })).filter(vol => vol.children.length > 0);
         };
 
+        // 构建各个根节点
         const plotTree: RootNode = {
             id: 'plot', title: '剧情', type: 'root', icon: getIconByNodeType('plot'),
-            children: [...plotCustomData.value, ...buildDerivedTree('plot', derivedContentStore.plotItems)]
+            children: [...itemDataStore.plotCustomData, ...buildDerivedTree('plot', derivedContentStore.plotItems)]
         };
         const analysisTree: RootNode = {
             id: 'analysis', title: '分析', type: 'root', icon: getIconByNodeType('analysis'),
-            children: [...analysisCustomData.value, ...buildDerivedTree('analysis', derivedContentStore.analysisItems)]
+            children: [...itemDataStore.analysisCustomData, ...buildDerivedTree('analysis', derivedContentStore.analysisItems)]
+        };
+        const othersTree: RootNode = {
+            id: 'others', title: '其他', type: 'root', icon: getIconByNodeType('others'),
+            children: [...itemDataStore.othersCustomData]
         };
 
-        return [...settingsData.value, plotTree, analysisTree];
+        // 组合并返回最终的树结构
+        return [...itemDataStore.settingsData, plotTree, analysisTree, othersTree];
     });
-    
-    function updateOverviewContent(groupNode: GroupNode) {
-        if (!groupNode.children) return;
-
-        const overviewNode = groupNode.children.find(child => child.isOverview) as OverviewNode | undefined;
-        if (!overviewNode) return;
-
-        const itemsToSummarize = groupNode.children.filter(child => child.type.endsWith('_item') && !child.isOverview) as ItemNode[];
-
-        const demoteHeadings = (htmlContent: string): string => {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlContent;
-            const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5');
-            headings.forEach(heading => {
-                const level = parseInt(heading.tagName.charAt(1), 10);
-                const newLevel = Math.min(6, level + 1);
-                const newHeading = document.createElement(`h${newLevel}`);
-                newHeading.innerHTML = heading.innerHTML;
-                for (const attr of heading.attributes) {
-                    newHeading.setAttribute(attr.name, attr.value);
-                }
-                heading.parentNode?.replaceChild(newHeading, heading);
-            });
-            return tempDiv.innerHTML;
-        };
-
-        const itemContents = itemsToSummarize.map(item => item.content ? demoteHeadings(item.content) : '').filter(Boolean);
-        overviewNode.content = `<h1>${overviewNode.title}</h1>` + (itemContents.length > 0 ? itemContents.join('<hr>') : `<p class="overview-placeholder">此分类下暂无内容，请添加条目。</p>`);
-    }
-
-    function updateAllOverviewContent() {
-        const findAndProcess = (nodes: TreeNode[]) => {
-            for (const node of nodes) {
-                if (node.type === 'group' && node.children?.some(c => c.isOverview)) {
-                    updateOverviewContent(node as GroupNode);
-                }
-                if (node.children) {
-                    findAndProcess(node.children);
-                }
-            }
-        };
-        findAndProcess(settingsData.value);
-    }
-    
-    watch(settingsData, () => {
-        updateAllOverviewContent();
-    }, { deep: true });
-
-    function fetchRelatedData(settings: TreeNode[], plot: TreeNode[], analysis: TreeNode[]) {
-        settingsData.value = settings;
-        plotCustomData.value = plot;
-        analysisCustomData.value = analysis;
-        // Initial content generation for overviews
-        updateAllOverviewContent();
-    }
-
-    function updateNodeContent(nodeId: string, content: string) {
-        const result = findNodeById(nodeId);
-        if (result?.node && 'content' in result.node) {
-            (result.node as ItemNode).content = content;
-            if(!result.node.isReadOnly) {
-                const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
-                const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
-                if (newTitle && newTitle !== result.node.title) {
-                    result.node.title = newTitle;
-                }
-            }
-        }
-    }
-
-    function appendNodeContent(nodeId: string, contentToAppend: string, isAutoApplied: boolean) {
-        const result = findNodeById(nodeId);
-        if (result?.node && 'content' in result.node) {
-            const itemNode = result.node as ItemNode;
-            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
-            let htmlToAppend = paragraphs;
-            if (isAutoApplied) {
-                htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
-            }
-            if (!itemNode.content) itemNode.content = "";
-            itemNode.content += htmlToAppend;
-        }
-    }
-
-    const addRelatedNode = (parentId: string, type: 'group' | 'item') => {
-        const editorStore = useEditorStore();
-        const uiStore = useUIStore();
-        const result = findNodeById(parentId);
-        if (!result?.node) return;
-
-        const parentNode = result.node;
-        if (!parentNode.children) parentNode.children = [];
-        const itemTypePrefix = parentNode.id.replace(/s$/, '');
-        const newNodeType = type === 'group' ? 'group' : `${itemTypePrefix}_item`;
-        const newNodeIcon = getIconByNodeType(newNodeType);
-        const newNode: TreeNode = {
-            id: `${type}-${Date.now()}`,
-            title: type === 'group' ? '新建分组' : '新建条目',
-            type: newNodeType,
-            icon: newNodeIcon,
-            content: type === 'item' ? '<h1>新建条目</h1><p>请在此处填写内容...</p>' : undefined,
-            children: type === 'group' ? [] : undefined,
-        } as GroupNode | ItemNode;
-        parentNode.children.push(newNode);
-        uiStore.toggleRelatedNodeExpansion(parentId);
-        uiStore.setEditingNodeId(newNode.id);
-        if ('content' in newNode && newNode.content !== undefined) editorStore.openTab(newNode.id);
-    };
-
-    const renameRelatedNode = (nodeId: string, newTitle: string) => {
-        const uiStore = useUIStore();
-        if (!newTitle.trim()) {
-            uiStore.setEditingNodeId(null);
-            return;
-        }
-        const result = findNodeById(nodeId);
-        if (result?.node && !result.node.isReadOnly) {
-            const trimmedTitle = newTitle.trim();
-            result.node.title = trimmedTitle;
-            if ('content' in result.node && result.node.content && result.node.content.includes('<h1>')) {
-                (result.node as ItemNode).content = (result.node as ItemNode).content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
-            }
-        }
-        uiStore.setEditingNodeId(null);
-    };
-
-    const deleteRelatedNode = (nodeId: string) => {
-        const editorStore = useEditorStore();
-        const uiStore = useUIStore();
-        const result = findNodeById(nodeId);
-        if (!result?.node) return;
-        if (!window.confirm(`您确定要删除 "${result.node.title}" 吗？此操作无法撤销。`)) return;
-
-        const wasRemoved = _findAndRemoveNodeInTree(settingsData.value, nodeId);
-        if (wasRemoved) {
-            editorStore.closeTab(nodeId);
-            if (uiStore.editingNodeId === nodeId) uiStore.setEditingNodeId(null);
-        }
-    };
-
-    const addCustomRelatedNode = (target: 'plot' | 'analysis') => {
-        const editorStore = useEditorStore();
-        const uiStore = useUIStore();
-        const dataRef = target === 'plot' ? plotCustomData : analysisCustomData;
-        const icon = getIconByNodeType(`${target}_item`);
-        const newNode: ItemNode = {
-            id: `custom-${target}-${Date.now()}`,
-            title: '新建自定义条目',
-            type: `${target}_item`,
-            icon: icon,
-            content: '<h1>新建自定义条目</h1><p>请在此处填写内容...</p>',
-        };
-        dataRef.value.unshift(newNode);
-        uiStore.toggleRelatedNodeExpansion(target);
-        uiStore.setEditingNodeId(newNode.id);
-        editorStore.openTab(newNode.id);
-    };
-
-    const renameCustomRelatedNode = (nodeId: string, newTitle: string) => {
-        renameRelatedNode(nodeId, newTitle);
-    };
-
-    const deleteCustomRelatedNode = (nodeId: string) => {
-        const editorStore = useEditorStore();
-        const uiStore = useUIStore();
-        const result = findNodeById(nodeId);
-        if (!result?.node) return;
-        if (!window.confirm(`您确定要删除 "${result.node.title}" 吗？此操作无法撤销。`)) return;
-
-        const wasRemoved = _findAndRemoveNodeInTree(plotCustomData.value, nodeId) || _findAndRemoveNodeInTree(analysisCustomData.value, nodeId);
-
-        if (wasRemoved) {
-            editorStore.closeTab(nodeId);
-            if (uiStore.editingNodeId === nodeId) uiStore.setEditingNodeId(null);
-        }
-    };
 
     return {
+        relatedData,
+    };
+});
+
+// =
+// 文件: ..\src\novel\editor\stores\relatedContentStore.ts
+//
+
+
+import { defineStore } from 'pinia';
+import { computed } from 'vue';
+import { useItemDataStore } from '@novel/editor/stores/related/itemDataStore';
+import { useTreeBuilderStore } from '@novel/editor/stores/related/treeBuilderStore';
+import { useNodeOperationStore } from '@novel/editor/stores/related/nodeOperationStore';
+import { useOverviewStore } from '@novel/editor/stores/related/overviewStore';
+
+export const useRelatedContentStore = defineStore('relatedContent', () => {
+    // 实例化所有子模块
+    const itemDataStore = useItemDataStore();
+    const treeBuilderStore = useTreeBuilderStore();
+    const nodeOperationStore = useNodeOperationStore();
+
+    // 初始化总览内容的监听逻辑
+    useOverviewStore();
+
+    // --- State & Computed ---
+    // 从子模块中导出状态和计算属性
+    const settingsData = computed(() => itemDataStore.settingsData);
+    const plotCustomData = computed(() => itemDataStore.plotCustomData);
+    const analysisCustomData = computed(() => itemDataStore.analysisCustomData);
+    const othersCustomData = computed(() => itemDataStore.othersCustomData);
+    const relatedData = computed(() => treeBuilderStore.relatedData);
+
+    // --- Actions ---
+    // 从子模块中导出所有方法，保持接口不变
+    const { fetchRelatedData } = itemDataStore;
+    const {
+        findNodeById,
+        updateNodeContent,
+        appendNodeContent,
+        addRelatedNode,
+        renameRelatedNode,
+        deleteRelatedNode,
+        addCustomRelatedNode,
+        renameCustomRelatedNode,
+        deleteCustomRelatedNode,
+        addCustomOthersNode,
+        renameCustomOthersNode,
+        deleteCustomOthersNode,
+    } = nodeOperationStore;
+
+    return {
+        // State & Computed
         settingsData,
         plotCustomData,
         analysisCustomData,
+        othersCustomData,
         relatedData,
+        // Actions
         fetchRelatedData,
         findNodeById,
         updateNodeContent,
@@ -6619,6 +6223,9 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         addCustomRelatedNode,
         renameCustomRelatedNode,
         deleteCustomRelatedNode,
+        addCustomOthersNode,
+        renameCustomOthersNode,
+        deleteCustomOthersNode,
     };
 });
 
@@ -6726,8 +6333,6 @@ export const useSearchStore = defineStore('search', () => {
 // 文件: ..\src\novel\editor\stores\uiStore.ts
 //
 
-// 文件: src/novel/editor/stores/uiStore.ts
-
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { EditorItem, EditorUIState } from '@/novel/editor/types';
@@ -6739,6 +6344,7 @@ export const useUIStore = defineStore('ui', () => {
         expandedRelatedNodeIds: new Set(),
         autoOpenAIPanel: true,
         activeTheme: 'default',
+        concurrentTaskLimit: 3, // 新增：默认并发数为3
         taskApplicationStrategy: {
             mode: 'manual', // 'manual', 'auto', 'delayed'
             delaySeconds: 3,
@@ -6761,6 +6367,11 @@ export const useUIStore = defineStore('ui', () => {
         uiState.value.activeTheme = theme;
     };
 
+    const setConcurrentTaskLimit = (limit: number) => {
+        const newLimit = Math.max(1, Math.floor(limit)); // 保证至少为1
+        uiState.value.concurrentTaskLimit = newLimit;
+    };
+
     const setTaskApplicationStrategy = (strategy: EditorUIState['taskApplicationStrategy']) => {
         uiState.value.taskApplicationStrategy = strategy;
     };
@@ -6777,6 +6388,12 @@ export const useUIStore = defineStore('ui', () => {
         if (uiState.value.expandedRelatedNodeIds.has(nodeId)) {
             uiState.value.expandedRelatedNodeIds.delete(nodeId);
         } else {
+            uiState.value.expandedRelatedNodeIds.add(nodeId);
+        }
+    };
+
+    const ensureRelatedNodeIsExpanded = (nodeId: string) => {
+        if (!uiState.value.expandedRelatedNodeIds.has(nodeId)) {
             uiState.value.expandedRelatedNodeIds.add(nodeId);
         }
     };
@@ -6799,9 +6416,11 @@ export const useUIStore = defineStore('ui', () => {
         setEditingNodeId,
         setAutoOpenAIPanel,
         setTheme,
+        setConcurrentTaskLimit,
         setTaskApplicationStrategy,
         toggleNodeExpansion,
         toggleRelatedNodeExpansion,
+        ensureRelatedNodeIsExpanded,
         showReaderMode,
         hideReaderMode,
     };
@@ -6825,11 +6444,13 @@ export interface AITask {
     id: string;
     title: string;
     type: '润色' | '续写' | '分析' | '剧情生成';
+    sourceItemId: string;
     targetItemId: string;
+    sourceItemTitle: string; // 新增：源文档标题快照
+    sourceItemContent: string; // 新增：源文档内容快照
     status: AITaskStatus;
-    sourceContent: string;
     generatedContent: string;
-    finalPrompt?: string; // 用于存储最终构建的、发送给API的提示词
+    finalPrompt?: string;
     error?: string;
     createdAt: Date;
 }
@@ -6839,7 +6460,7 @@ export interface AITask {
  */
 export interface AITaskPreview {
     type: AITask['type'];
-    targetItemId: string;
+    targetItemId: string; // 此处targetItemId即为sourceItemId
     title: string;
 }
 
@@ -6848,6 +6469,7 @@ export interface AITaskPreview {
  */
 export interface ContextItem {
     id: string;
+    category: '设定' | '其他';
     group: string;
     title:string;
     description: string;
@@ -6880,6 +6502,7 @@ export interface EditorUIState {
     expandedRelatedNodeIds: Set<string>;
     autoOpenAIPanel: boolean;
     activeTheme: 'default' | 'eye-care' | 'dark';
+    concurrentTaskLimit: number;
     taskApplicationStrategy: {
         mode: 'manual' | 'auto' | 'delayed';
         delaySeconds: number;
@@ -6982,6 +6605,8 @@ export * from './ui';
 // =
 // 文件: ..\src\novel\editor\types\models.ts
 //
+
+// src/novel/editor/types/models.ts
 
 
 /**
@@ -7088,11 +6713,13 @@ export interface RootNode extends BaseNode {
 // --- 目录节点 ---
 export interface VolumeNode extends BaseNode {
     type: 'volume';
+    content: string;
     originalData: Volume;
     children: ChapterNode[];
 }
 export interface ChapterNode extends BaseNode {
     type: 'chapter';
+    content: string;
     originalData: Chapter;
     status?: Chapter['status'];
     children?: never;
@@ -7161,8 +6788,6 @@ export type ActivityBarActionId = 'system:search' | 'system:ai_chat';
 // 文件: ..\src\novel\editor\utils\iconUtils.ts
 //
 
-// 文件: src\novel\editor\utils\iconUtils.ts
-
 // 文件: src/novel/editor/utils/iconUtils.ts
 
 const ICON_MAP: Record<string, string> = {
@@ -7171,7 +6796,7 @@ const ICON_MAP: Record<string, string> = {
     'chapter': 'fa-regular fa-file-lines text-gray-600',
 
     // 相关内容 - 设定 (Related - Settings)
-    'settings': 'fa-solid fa-book-journal-whills', // 设定根节点
+    'setting': 'fa-solid fa-book-journal-whills', // 设定根节点
     'group': 'fa-regular fa-folder text-gray-500',
     'character_item': 'fa-regular fa-user',
     'location_item': 'fa-regular fa-map',
@@ -7194,6 +6819,10 @@ const ICON_MAP: Record<string, string> = {
     'analysis_volume': 'fa-solid fa-chart-pie',
     'analysis_chapter': 'fa-solid fa-chart-simple',
     'analysis_item': 'fa-solid fa-magnifying-glass-plus', // 自定义分析条目
+
+    // 相关内容 - 其他 (Related - Others)
+    'others': 'fa-solid fa-puzzle-piece', // 其他根节点
+    'others_item': 'fa-regular fa-file-zipper', // 其他条目
 
     // 笔记 (Notes)
     'note': 'fa-solid fa-note-sticky text-yellow-500',

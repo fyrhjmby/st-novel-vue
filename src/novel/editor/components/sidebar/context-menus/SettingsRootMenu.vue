@@ -1,10 +1,10 @@
-
+// src/novel/editor/components/sidebar/context-menus/SettingsRootMenu.vue
 <template>
   <div>
-    <p class="menu-title">管理</p>
-    <div @click="emit('custom-related-action', 'newItem', { target: node.id })" class="context-menu-item">
-      <i class="fa-solid fa-plus w-4 text-center"></i>
-      <span>新建自定义{{ node.id === 'plot' ? '剧情' : '分析' }}</span>
+    <p class="menu-title">设定管理</p>
+    <div @click="emit('settings-action', 'newGroup', { nodeId: node.id })" class="context-menu-item">
+      <i class="fa-solid fa-folder-plus w-4 text-center"></i>
+      <span>新建分组</span>
     </div>
   </div>
 </template>
@@ -21,7 +21,7 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'custom-related-action', actionName: string, payload?: any): void;
+  (e: 'settings-action', actionName: string, payload?: any): void;
 }>();
 </script>
 

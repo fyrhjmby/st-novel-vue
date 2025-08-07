@@ -13,6 +13,7 @@ const stripHtml = (html: string) => {
 export const useContextSettingsStore = defineStore('contextSettings', () => {
     const needsPreview = ref(true);
     const selectedContextItems = ref<ContextItem[]>([]);
+    const selectedOthersItems = ref<ContextItem[]>([]);
     const customContextContent = ref('');
     const dynamicContextSettings = ref({
         prevChapters: 1,
@@ -30,6 +31,7 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
             if (node.type.endsWith('_item') && 'content' in node && node.content) {
                 presets.push({
                     id: node.id,
+                    category: '设定',
                     group,
                     title: node.title,
                     description: stripHtml(node.content).substring(0, 100) + '...',
@@ -37,13 +39,41 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
                 });
             }
             if (node.children) {
-                node.children.forEach(child => processNode(child, node.id === 'settings' ? child.title : group));
+                node.children.forEach(child => processNode(child, node.id === 'setting' ? child.title : group));
             }
         };
 
         if (relatedStore.settingsData.length > 0) {
             relatedStore.settingsData.forEach(rootNode => processNode(rootNode, '设定'));
         }
+        return presets;
+    });
+
+    const othersContextPresets = computed((): ContextItem[] => {
+        const relatedStore = useRelatedContentStore();
+        const presets: ContextItem[] = [];
+
+        const processNode = (node: TreeNode) => {
+            if (node.type === 'others_item' && 'content' in node && node.content) {
+                presets.push({
+                    id: node.id,
+                    category: '其他',
+                    group: '其他',
+                    title: node.title,
+                    description: stripHtml(node.content).substring(0, 100) + '...',
+                    content: node.content,
+                });
+            }
+            if (node.children) {
+                node.children.forEach(child => processNode(child));
+            }
+        };
+
+        const othersRoot = relatedStore.relatedData.find(n => n.id === 'others');
+        if (othersRoot && othersRoot.children) {
+            processNode(othersRoot);
+        }
+
         return presets;
     });
 
@@ -55,6 +85,16 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
 
     const removeFixedContextItem = (id: string) => {
         selectedContextItems.value = selectedContextItems.value.filter(i => i.id !== id);
+    };
+
+    const addOthersContextItem = (item: ContextItem) => {
+        if (!selectedOthersItems.value.some(i => i.id === item.id)) {
+            selectedOthersItems.value.push(item);
+        }
+    };
+
+    const removeOthersContextItem = (id: string) => {
+        selectedOthersItems.value = selectedOthersItems.value.filter(i => i.id !== id);
     };
 
     const setCustomContextContent = (content: string) => {
@@ -70,12 +110,16 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
     return {
         needsPreview,
         fixedContextPresets,
+        othersContextPresets,
         selectedContextItems,
+        selectedOthersItems,
         customContextContent,
         dynamicContextSettings,
         isRagEnabled,
         addFixedContextItem,
         removeFixedContextItem,
+        addOthersContextItem,
+        removeOthersContextItem,
         setCustomContextContent,
         setDynamicContextSetting,
     };

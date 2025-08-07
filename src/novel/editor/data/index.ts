@@ -1,5 +1,4 @@
-// 文件: src/novel/editor/data/index.ts
-import type { Volume, Chapter, NoteItem, NovelMetadata, NovelCharacter, AITask, TreeNode, ItemNode, RootNode, GroupNode, PlotAnalysisItem, OverviewNode } from '@/novel/editor/types';
+import type { Volume, NoteItem, NovelMetadata, NovelCharacter, AITask, TreeNode, ItemNode, RootNode, GroupNode, OverviewNode } from '@/novel/editor/types';
 
 export const mockDirectoryData: Volume[] = [
     {
@@ -42,7 +41,7 @@ export const mockCharacters: NovelCharacter[] = [
 
 export const mockSettingsData: TreeNode[] = [
     {
-        id: 'settings', title: '设定', type: 'root', icon: 'fa-solid fa-book-journal-whills',
+        id: 'setting', title: '设定', type: 'root', icon: 'fa-solid fa-book-journal-whills',
         children: [
             {
                 id: 'characters', title: '角色', type: 'group', icon: 'fa-solid fa-users text-teal-500', children: [
@@ -57,12 +56,12 @@ export const mockSettingsData: TreeNode[] = [
                     }))
                 ]
             } as GroupNode,
-            { 
+            {
                 id: 'locations', title: '地点', type: 'group', icon: 'fa-solid fa-map-location-dot text-green-500', children: [
                     { id: 'locations-overview', title: '地点总览', type: 'locations_overview', icon: 'fa-solid fa-map-location-dot', content: '', isOverview: true, isReadOnly: true } as OverviewNode,
                 ]
             } as GroupNode,
-            { 
+            {
                 id: 'items', title: '物品', type: 'group', icon: 'fa-solid fa-box-archive text-amber-600', children: [
                     { id: 'items-overview', title: '物品总览', type: 'items_overview', icon: 'fa-solid fa-box-archive', content: '', isOverview: true, isReadOnly: true } as OverviewNode,
                 ]
@@ -82,6 +81,10 @@ export const mockPlotCustomData: ItemNode[] = [
 ];
 
 export const mockAnalysisCustomData: ItemNode[] = [];
+
+export const mockOthersCustomData: ItemNode[] = [
+    { id: 'custom-others-1', title: '写作风格参考', type: 'others_item', icon: 'fa-regular fa-file-zipper', content: '<h1>写作风格参考</h1><p>参考阿西莫夫《基地》系列的宏大叙事风格，同时融合《黑暗森林》的悬疑氛围。' }
+];
 
 export const mockNoteData: NoteItem[] = [
     { id: 'note-1', type: 'note', title: '第四章情感转折点设计', timestamp: '今天 14:32', content: '<h1>第四章情感转折点设计</h1><p>需要重点描写卡尔文在面对跃迁点时，希望与恐惧交织的复杂心理。</p>' },
