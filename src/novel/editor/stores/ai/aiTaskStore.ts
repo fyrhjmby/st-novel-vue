@@ -4,7 +4,7 @@ import { ref, nextTick, computed } from 'vue'
 import { useEditorStore } from './editorStore'
 import { useUIStore } from './uiStore'
 import { useDerivedContentStore } from './derivedContentStore';
-import type { AITask, Volume } from '@/novel/editor/types';
+import type { AITask, Volume, AITaskType } from '@/novel/editor/types';
 import { useContextBuilder } from '@/novel/editor/composables/useContextBuilder';
 import { streamAITask } from '@/novel/editor/api/aiService';
 
@@ -106,7 +106,7 @@ export const useAITaskStore = defineStore('aiTask', () => {
         }
     };
 
-    const startTask = async (taskType: AITask['type'], sourceItemId: string, finalPrompt?: string) => {
+    const startTask = async (taskType: AITaskType, sourceItemId: string, finalPrompt?: string) => {
         const { node: sourceItem } = editorStore.findItemById(sourceItemId);
         if (!sourceItem || !('content' in sourceItem) || typeof sourceItem.content !== 'string') {
             console.error("AI Task Error: Source item not found or has no content.", sourceItemId);
@@ -153,7 +153,7 @@ export const useAITaskStore = defineStore('aiTask', () => {
         nextTick(_processQueue);
     };
 
-    const startBatchTaskForVolume = (taskType: AITask['type'], volume: Volume) => {
+    const startBatchTaskForVolume = (taskType: AITaskType, volume: Volume) => {
         if (!volume || !volume.chapters) return;
         volume.chapters.forEach(chapter => {
             startTask(taskType, chapter.id, undefined);

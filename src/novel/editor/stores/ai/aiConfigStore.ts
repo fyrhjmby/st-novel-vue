@@ -1,11 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { AITask } from '@/novel/editor/types';
-
-type TaskType = AITask['type'];
+import type { AITaskType } from '@/novel/editor/types';
 
 // 定义每种任务类型的默认提示词模板
-const defaultPrompts: Record<TaskType, { name: string, template: string }[]> = {
+const defaultPrompts: Record<AITaskType, { name: string, template: string }[]> = {
     '润色': [
         { name: '默认润色提示词', template: '你是一名专业的小说编辑，请根据上下文，对以下“待处理内容”进行润色，使其更具文采和表现力。' },
         { name: '增强创造性提示词', template: '你是一名富有想象力的作家，请跳出常规，用更具创造性和独特风格的语言重写以下“待处理内容”，可以适度偏离原文。' }
@@ -25,7 +23,7 @@ const defaultPrompts: Record<TaskType, { name: string, template: string }[]> = {
 };
 
 export const useAIConfigStore = defineStore('aiConfig', () => {
-    const taskPromptConfigs = ref<Record<TaskType, { prompts: { name: string, template: string }[], selected: string }>>({
+    const taskPromptConfigs = ref<Record<AITaskType, { prompts: { name: string, template: string }[], selected: string }>>({
         '润色': { prompts: defaultPrompts['润色'], selected: defaultPrompts['润色'][0].name },
         '续写': { prompts: defaultPrompts['续写'], selected: defaultPrompts['续写'][0].name },
         '分析': { prompts: defaultPrompts['分析'], selected: defaultPrompts['分析'][0].name },
@@ -37,7 +35,7 @@ export const useAIConfigStore = defineStore('aiConfig', () => {
      * @param taskType 要更新的任务类型
      * @param promptName 选择的提示词名称
      */
-    const setSelectedPrompt = (taskType: TaskType, promptName: string) => {
+    const setSelectedPrompt = (taskType: AITaskType, promptName: string) => {
         if (taskPromptConfigs.value[taskType]) {
             taskPromptConfigs.value[taskType].selected = promptName;
         }
