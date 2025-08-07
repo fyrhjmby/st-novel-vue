@@ -1,206 +1,295 @@
 <template>
-  <div
-      v-if="isVisible"
-      class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
-      @click.self="handleCancel"
-  >
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-      <!-- 头部 -->
-      <div class="flex-shrink-0 px-8 py-5 border-b border-gray-100 flex justify-between items-center">
+  <div v-if="store.isVisible" class="modal-overlay">
+    <div class="modal-container">
+      <!-- Modal Header -->
+      <header class="modal-header">
         <div>
-          <h1 class="text-xl font-semibold text-[#374151]">上下文预览</h1>
-          <p class="text-sm text-[#6B7280] mt-1">{{ taskInfoText }}</p>
+          <h2 class="modal-title">AI 任务确认</h2>
+          <p class="modal-subtitle">即将为 <span class="font-semibold text-indigo-500">《{{ store.task?.title }}》</span> 执行 <span class="font-semibold text-indigo-500">【{{ store.task?.type }}】</span> 任务</p>
         </div>
-        <button @click="handleCancel" class="p-2 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        <button @click="store.hide()" class="modal-close-button">
+          <i class="fa-solid fa-times"></i>
         </button>
+      </header>
+
+      <!-- Loading State -->
+      <div v-if="store.isLoading" class="modal-loading-state">
+        <i class="fa-solid fa-spinner fa-spin text-3xl text-gray-400"></i>
+        <p class="mt-4 text-gray-500">正在构建上下文...</p>
       </div>
 
-      <!-- 上下文列表 (可滚动) -->
-      <div class="flex-grow p-6 space-y-4 overflow-y-auto bg-gray-50/50">
-        <!-- 固定上下文 -->
-        <div class="border border-gray-200/70 rounded-lg overflow-hidden bg-white shadow-sm">
-          <div @click="toggleCollapse('fixed')" class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <svg class="w-5 h-5 text-gray-400 collapse-arrow" :class="{ 'expanded': collapsedStates.fixed }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-              <svg class="w-6 h-6 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              <div>
-                <h3 class="font-medium text-[#374151]">固定上下文</h3>
-                <p class="text-xs text-[#9CA3AF] mt-0.5">始终包含在 AI 对话中的基础信息</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-4">
-              <span class="text-xs text-[#9CA3AF]">648 字符</span>
-              <label @click.stop class="flex items-center gap-2 cursor-pointer">
-                <span class="text-xs text-[#6B7280]">启用</span>
-                <input type="checkbox" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" checked>
-              </label>
-            </div>
-          </div>
-          <div class="collapse-content" :class="{ 'expanded': collapsedStates.fixed }">
-            <div class="px-6 pb-4 border-t border-gray-100 pt-4 text-sm text-gray-600">内容占位...</div>
-          </div>
-        </div>
+      <!-- Content State -->
+      <div v-else-if="store.previewContent" class="modal-content-wrapper">
+        <!-- Tabs -->
+        <nav class="content-tabs">
+          <a
+              v-for="tab in tabs"
+              :key="tab.id"
+              href="#"
+              @click.prevent="activeTab = tab.id"
+              :class="['tab-item', { 'active': activeTab === tab.id }]"
+          >
+            <span>{{ tab.name }}</span>
+            <span class="tab-badge">{{ formatCharCount(store.previewContent.stats[tab.statKey]) }}</span>
+          </a>
+        </nav>
 
-        <!-- 动态上下文 -->
-        <div class="border border-gray-200/70 rounded-lg overflow-hidden bg-white shadow-sm">
-          <div @click="toggleCollapse('dynamic')" class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <svg class="w-5 h-5 text-gray-400 collapse-arrow" :class="{ 'expanded': collapsedStates.dynamic }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-              <svg class="w-6 h-6 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              <div>
-                <h3 class="font-medium text-[#374151]">动态上下文</h3>
-                <p class="text-xs text-[#9CA3AF] mt-0.5">根据当前创作内容自动更新的信息</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-4">
-              <span class="text-xs text-[#9CA3AF]">892 字符</span>
-              <label @click.stop class="flex items-center gap-2 cursor-pointer">
-                <span class="text-xs text-[#6B7280]">启用</span>
-                <input type="checkbox" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" checked>
-              </label>
-            </div>
-          </div>
-          <div class="collapse-content" :class="{ 'expanded': collapsedStates.dynamic }">
-            <div class="px-6 pb-4 border-t border-gray-100 pt-4 text-sm text-gray-600">内容占位...</div>
-          </div>
-        </div>
-
-        <!-- RAG 上下文 -->
-        <div class="border border-gray-200/70 rounded-lg overflow-hidden bg-white shadow-sm">
-          <div @click="toggleCollapse('rag')" class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <svg class="w-5 h-5 text-gray-400 collapse-arrow" :class="{ 'expanded': collapsedStates.rag }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-              <svg class="w-6 h-6 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-              <div>
-                <h3 class="font-medium text-[#374151]">RAG 上下文</h3>
-                <p class="text-xs text-[#9CA3AF] mt-0.5">从知识库检索的相关参考信息</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-4">
-              <span class="text-xs text-[#9CA3AF]">456 字符</span>
-              <label @click.stop class="flex items-center gap-2 cursor-pointer">
-                <span class="text-xs text-[#6B7280]">启用</span>
-                <input type="checkbox" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" checked>
-              </label>
-            </div>
-          </div>
-          <div class="collapse-content" :class="{ 'expanded': collapsedStates.rag }">
-            <div class="px-6 pb-4 border-t border-gray-100 pt-4 text-sm text-gray-600">内容占位...</div>
-          </div>
-        </div>
-
-        <!-- 提示词 -->
-        <div class="border border-gray-200/70 rounded-lg overflow-hidden bg-white shadow-sm">
-          <div @click="toggleCollapse('prompt')" class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <svg class="w-5 h-5 text-gray-400 collapse-arrow" :class="{ 'expanded': collapsedStates.prompt }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-              <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-              <div>
-                <h3 class="font-medium text-[#374151]">提示词</h3>
-                <p class="text-xs text-[#9CA3AF] mt-0.5">当前任务的具体指令</p>
-              </div>
-            </div>
-          </div>
-          <div class="collapse-content" :class="{ 'expanded': collapsedStates.prompt }">
-            <div class="border-t border-gray-100">
-              <textarea class="context-textarea" readonly>请续写下一段内容，要求：
-
-1. 延续当前紧张神秘的氛围
-2. 详细描写空间站内部的环境细节
-3. 通过卡尔文的视角展现他的内心活动
-4. 适当加入一些技术细节增强科幻感
-5. 在段落末尾设置一个小悬念，引导读者继续阅读
-6. 字数控制在 300-400 字左右
-
-重点描写方向：卡尔文进入空间站控制室，发现仍在运行的神秘设备，以及他对这些发现的反应和推测。</textarea>
-            </div>
+        <!-- Tab Content -->
+        <div class="content-display custom-scrollbar">
+          <div v-show="activeTab === 'fixed'" class="prose prose-sm max-w-none" v-html="store.previewContent.fixed || emptyStateHtml('固定上下文')"></div>
+          <div v-show="activeTab === 'dynamic'" class="prose prose-sm max-w-none" v-html="store.previewContent.dynamic || emptyStateHtml('动态上下文')"></div>
+          <div v-show="activeTab === 'rag'" class="prose prose-sm max-w-none" v-html="store.previewContent.rag || emptyStateHtml('RAG检索')"></div>
+          <div v-show="activeTab === 'prompt'">
+            <pre class="prompt-preview">{{ store.previewContent.prompt }}</pre>
           </div>
         </div>
       </div>
 
-      <!-- 尾部 -->
-      <div class="flex-shrink-0 px-6 py-4 bg-white border-t border-gray-100 flex items-center justify-between">
-        <div class="text-xs text-gray-400">
-          <span>加载时间: 36ms</span>
+      <!-- Modal Footer -->
+      <footer class="modal-footer">
+        <div v-if="store.previewContent" class="stats-summary">
+          总计: {{ totalCharCount }} 字
         </div>
-        <div class="flex items-center gap-3">
-          <button @click="handleCancel" class="px-5 py-2 text-sm font-medium text-[#374151] bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
-            取消
-          </button>
-          <button @click="handleExecute" class="px-5 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center gap-2">
-            <i class="fa-solid fa-bolt fa-sm"></i>
-            <span>执行</span>
-          </button>
-        </div>
-      </div>
+        <button @click="store.hide()" class="button-secondary">取消</button>
+        <button @click="store.execute()" :disabled="store.isLoading" class="button-primary">
+          <i v-if="store.isLoading" class="fa-solid fa-spinner fa-spin mr-2"></i>
+          确认执行
+        </button>
+      </footer>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue';
-import { useContextMenuStore } from '@/novel/editor/stores/contextPreviewStore';
+import { ref, computed } from 'vue';
+import { useContextPreviewStore } from '@/novel/editor/stores/contextPreviewStore';
 
-const contextPreviewStore = useContextMenuStore();
+const store = useContextPreviewStore();
+const activeTab = ref<'fixed' | 'dynamic' | 'rag' | 'prompt'>('fixed');
 
-const collapsedStates = reactive({
-  fixed: false,
-  dynamic: false,
-  rag: false,
-  prompt: true,
+const tabs = ref([
+  { id: 'fixed', name: '固定上下文', statKey: 'fixedCharCount' },
+  { id: 'dynamic', name: '动态上下文', statKey: 'dynamicCharCount' },
+  { id: 'rag', name: 'RAG检索', statKey: 'ragCharCount' },
+  { id: 'prompt', name: '最终提示词', statKey: 'promptCharCount' },
+] as const);
+
+const formatCharCount = (count: number) => {
+  return count > 1000 ? `${(count / 1000).toFixed(1)}k` : count;
+};
+
+const totalCharCount = computed(() => {
+  if (!store.previewContent?.stats) return 0;
+  console.log(store.previewContent)
+  const { fixedCharCount, dynamicCharCount, ragCharCount } = store.previewContent.stats;
+  return formatCharCount(fixedCharCount + dynamicCharCount + ragCharCount);
 });
 
-const isVisible = computed(() => contextPreviewStore.isVisible);
-const task = computed(() => contextPreviewStore.task);
-
-const taskInfoText = computed(() => {
-  if (task.value) {
-    return `即将对《${task.value.title}》执行AI任务：${task.value.type}。`;
-  }
-  return '检查并确认将要提供给AI的全部信息。';
-});
-
-const handleExecute = () => {
-  contextPreviewStore.execute();
+const emptyStateHtml = (contextType: string) => {
+  return `<p class="text-gray-400 italic">未配置或未找到${contextType}内容。</p>`;
 };
 
-const handleCancel = () => {
-  contextPreviewStore.hide();
-};
-
-const toggleCollapse = (section: keyof typeof collapsedStates) => {
-  collapsedStates[section] = !collapsedStates[section];
-};
 </script>
 
 <style scoped>
-.collapse-content {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease-out;
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(17, 24, 39, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
 }
-.collapse-content.expanded {
-  max-height: 500px;
-  transition: max-height 0.35s ease-in;
-}
-.collapse-arrow {
-  transition: transform 0.3s ease;
-}
-.collapse-arrow.expanded {
-  transform: rotate(90deg);
-}
-.context-textarea {
-  background: transparent;
-  border: none;
-  resize: none;
-  outline: none;
+
+.modal-container {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   width: 100%;
-  line-height: 1.7;
-  color: #4B5563;
-  font-size: 14px;
+  max-width: 48rem; /* 768px */
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.modal-header {
   padding: 1rem 1.5rem;
-  min-height: 200px;
-  cursor: default;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.modal-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.modal-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.modal-close-button {
+  color: #9ca3af;
+  padding: 0.5rem;
+  margin: -0.5rem;
+  border-radius: 9999px;
+  transition: background-color 0.2s, color 0.2s;
+}
+.modal-close-button:hover {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.modal-loading-state {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  min-height: 300px;
+}
+
+.modal-content-wrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  overflow: hidden;
+}
+
+.content-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  color: #4b5563;
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.tab-item:hover {
+  background-color: #f3f4f6;
+}
+
+.tab-item.active {
+  background-color: #eef2ff;
+  color: #4f46e5;
+}
+
+.tab-badge {
+  font-size: 0.75rem;
+  background-color: #e5e7eb;
+  color: #4b5563;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tab-item.active .tab-badge {
+  background-color: #c7d2fe;
+  color: #4338ca;
+}
+
+.content-display {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  background-color: #f9fafb;
+}
+
+.prompt-preview {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 0.8rem;
+  color: #4b5563;
+  line-height: 1.6;
+  background-color: #ffffff;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: #f9fafb;
+  flex-shrink: 0;
+}
+
+.stats-summary {
+  margin-right: auto;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.button-secondary {
+  padding: 0.5rem 1rem;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  color: #374151;
+  transition: background-color 0.2s;
+}
+.button-secondary:hover {
+  background-color: #f9fafb;
+}
+
+.button-primary {
+  padding: 0.5rem 1rem;
+  background-color: #4f46e5;
+  border: 1px solid #4f46e5;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  color: white;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+}
+.button-primary:hover {
+  background-color: #4338ca;
+}
+.button-primary:disabled {
+  background-color: #a5b4fc;
+  cursor: not-allowed;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 </style>

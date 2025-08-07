@@ -1,6 +1,53 @@
 // == 扫描摘要 ==
 //
+// 跳过的目录 (共 1 个):
+//   - ..\src\novel\editor\components\ai\chat
+//
 // == 文件内容 ==
+
+// =
+// 文件: ..\src\novel\editor\api\aiService.ts
+//
+
+
+interface StreamCallbacks {
+    onChunk: (chunk: string) => void;
+    onComplete: () => void;
+    onError: (error: string) => void;
+}
+
+/**
+ * 模拟一个流式AI任务API。
+ * 这个函数接收一个提示词，然后通过回调函数逐字地将这个提示词返回，
+ * 以模拟一个接收到什么就返回什么的 "echo" 服务器。
+ * @param prompt - 发送给AI的最终提示词。
+ * @param callbacks - 用于处理数据流、完成和错误事件的回调对象。
+ */
+export function streamAITask(prompt: string, callbacks: StreamCallbacks): void {
+    const { onChunk, onComplete, onError } = callbacks;
+    const words = prompt.split('');
+    let wordIndex = 0;
+    const willFail = Math.random() < 0.1; // 10%的几率模拟失败
+
+    const intervalId = setInterval(() => {
+        // 模拟流式输出
+        if (wordIndex < words.length) {
+            onChunk(words[wordIndex]);
+            wordIndex++;
+
+            // 模拟中途失败
+            if (willFail && wordIndex > words.length / 2) {
+                clearInterval(intervalId);
+                onError('模拟网络错误，请重试。');
+                return;
+            }
+        } else {
+            // 流式结束
+            clearInterval(intervalId);
+            onComplete();
+        }
+    }, 20); // 调整流式速度
+}
 
 // =
 // 文件: ..\src\novel\editor\components\ai\AIChatView.vue
@@ -397,257 +444,6 @@ const handleApplyChanges = (taskId: string) => {
 .task-list::-webkit-scrollbar-track { background: transparent; }
 .task-list::-webkit-scrollbar-thumb { background-color: #D1D5DB; border-radius: 3px; }
 </style>
-
-// =
-// 文件: ..\src\novel\editor\components\ai\chat\ChatHeader.vue
-//
-
-<template>
-  <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
-    <div class="flex items-center gap-4">
-      <div class="w-10 h-10 bg-gradient-to-br from-[#4B5563] to-[#374151] rounded-full flex items-center justify-center">
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 21v-1.5M15.75 3v1.5M12 4.5v15M15.75 21v-1.5" /></svg>
-      </div>
-      <div>
-        <h2 class="font-medium text-[#374151]">{{ activeConversation.title }}</h2>
-        <button class="text-sm text-[#6B7280] flex items-center gap-2 hover:text-[#374151] transition-colors mt-1">
-          <span class="w-2 h-2 rounded-full" :class="currentModel.status === 'online' ? 'bg-[#10B981]' : 'bg-gray-400'"></span>
-          {{ currentModel.status === 'online' ? '在线' : '离线' }} • {{ currentModel.name }}
-          <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
-        </button>
-      </div>
-    </div>
-    <div class="flex items-center gap-2">
-      <button class="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="上下文管理">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
-      </button>
-      <button class="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="设置">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-1.007 1.11-.95.542.057 1.007.56 1.061 1.11L12 8.583l.235-3.535c.057-.542.56-1.007 1.11-.95.542.057 1.007.56 1.061 1.11L15.417 8.583l3.536-.235c.542-.057 1.007.56 1.061 1.11.057.542-.42 1.007-.95 1.061l-3.536.235.235 3.536c.057.542-.42 1.007-.95 1.061-.542.057-1.007-.42-1.061-.95L12 15.417l-.235 3.536c-.057.542-.56 1.007-1.11.95-.542-.057-1.007-.56-1.061-1.11L9.417 15.417l-3.536.235c-.542-.057-1.007-.42-.95-1.061.057-.542.42-1.007.95-1.061l3.536-.235-.235-3.536c-.057-.542.42-1.007.95-1.061.542-.057 1.007.42 1.061.95L12 9.417l.235-3.536zM12 14.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" /></svg>
-      </button>
-    </div>
-  </header>
-</template>
-<script setup lang="ts">
-import type { PropType } from 'vue';
-import type { Conversation, AIModel } from '@/novel/editor/types/chatTypes';
-
-defineProps({
-  activeConversation: {
-    type: Object as PropType<Conversation>,
-    required: true,
-  },
-  currentModel: {
-    type: Object as PropType<AIModel>,
-    required: true,
-  },
-});
-</script>
-
-// =
-// 文件: ..\src\novel\editor\components\ai\chat\ChatInputArea.vue
-//
-
-<template>
-  <div class="p-4 border-t border-gray-100 bg-[#FAFAFA]">
-    <div class="flex gap-3 items-end max-w-5xl mx-auto">
-      <button class="w-9 h-9 flex-shrink-0 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded-lg transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3.375 3.375 0 1118.375 12.74z" /></svg>
-      </button>
-      <div class="flex-1 bg-white border border-gray-200 rounded-lg focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 transition-shadow">
-        <textarea
-            v-model="messageInput"
-            @keydown.enter.exact.prevent="sendMessage"
-            class="w-full bg-transparent p-2.5 text-sm text-[#374151] resize-none outline-none hide-scrollbar"
-            placeholder="输入您的问题，按 Enter 发送"
-            rows="1"
-            ref="textareaRef"
-        ></textarea>
-      </div>
-      <button
-          @click="sendMessage"
-          :disabled="isReceiving || !messageInput.trim()"
-          class="w-10 h-10 flex-shrink-0 bg-[#4B5563] text-white rounded-lg hover:bg-[#374151] transition-colors flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path></svg>
-      </button>
-    </div>
-    <div class="text-center mt-2 text-xs text-[#9CA3AF]">
-      <span>按 Shift+Enter 换行 • 当前会话: {{ currentTokenCount }} tokens</span>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, watch } from 'vue';
-import { useChatStore } from '@/novel/editor/stores/chatStore';
-import { storeToRefs } from 'pinia';
-
-const chatStore = useChatStore();
-const { messageInput, isReceiving, currentTokenCount } = storeToRefs(chatStore);
-
-const textareaRef = ref<HTMLTextAreaElement | null>(null);
-
-const sendMessage = () => {
-  chatStore.sendMessage();
-};
-
-// 自动调整 textarea 高度
-watch(messageInput, (newValue) => {
-  const el = textareaRef.value;
-  if (el) {
-    el.style.height = 'auto';
-    el.style.height = `${el.scrollHeight}px`;
-  }
-  // 清空后恢复原始高度
-  if (newValue === '') {
-    el.style.height = 'auto';
-  }
-});
-</script>
-
-// =
-// 文件: ..\src\novel\editor\components\ai\chat\ChatMessageHistory.vue
-//
-
-<template>
-  <div class="flex-1 p-6 overflow-y-auto" ref="chatHistoryContainer">
-    <div class="max-w-5xl mx-auto space-y-6">
-      <div v-if="conversation" v-for="message in conversation.messages" :key="message.id" class="group relative">
-        <!-- 用户消息 -->
-        <div v-if="message.role === 'user'" class="flex justify-end items-center gap-2">
-          <div class="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button class="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"><i class="fa-solid fa-pen-to-square"></i></button>
-            <button class="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"><i class="fa-solid fa-copy"></i></button>
-          </div>
-          <div class="bg-[#3B82F6] text-white p-4 rounded-xl rounded-br-lg max-w-[70%] text-sm" v-html="message.content"></div>
-        </div>
-
-        <!-- AI回复 -->
-        <div v-if="message.role === 'ai'" class="flex items-start gap-3">
-          <div class="w-8 h-8 bg-gradient-to-br from-[#4B5563] to-[#374151] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
-            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 21v-1.5M15.75 3v1.5M12 4.5v15M15.75 21v-1.5" /></svg>
-          </div>
-          <div class="bg-[#F3F4F6] text-[#374151] p-4 rounded-xl rounded-bl-lg max-w-[70%] text-sm" v-html="message.content"></div>
-          <div class="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity self-center">
-            <button class="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"><i class="fa-solid fa-rotate-right"></i></button>
-            <button class="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"><i class="fa-solid fa-copy"></i></button>
-          </div>
-        </div>
-      </div>
-
-      <!-- AI正在输入指示器 -->
-      <div v-if="isReceiving" class="flex items-start gap-3">
-        <div class="w-8 h-8 bg-gradient-to-br from-[#4B5563] to-[#374151] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
-          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 21v-1.5M15.75 3v1.5M12 4.5v15M15.75 21v-1.5" /></svg>
-        </div>
-        <div class="bg-[#F3F4F6] text-[#374151] p-4 rounded-xl rounded-bl-lg text-sm">
-          <span class="blinking-cursor">▍</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, watch, nextTick, type PropType } from 'vue';
-import type { Conversation } from '@/novel/editor/types/chatTypes';
-
-const props = defineProps({
-  conversation: {
-    type: Object as PropType<Conversation | null>,
-    required: true,
-  },
-  isReceiving: {
-    type: Boolean,
-    required: true,
-  },
-});
-
-const chatHistoryContainer = ref<HTMLElement | null>(null);
-
-const scrollToBottom = () => {
-  nextTick(() => {
-    if (chatHistoryContainer.value) {
-      chatHistoryContainer.value.scrollTop = chatHistoryContainer.value.scrollHeight;
-    }
-  });
-};
-
-watch(() => props.conversation?.messages, () => {
-  scrollToBottom();
-}, { deep: true, flush: 'post' });
-
-watch(() => props.isReceiving, (newValue) => {
-  if (newValue) {
-    scrollToBottom();
-  }
-}, { flush: 'post' });
-</script>
-
-<style scoped>
-.blinking-cursor {
-  font-weight: 500;
-  animation: blink 1s step-end infinite;
-}
-
-@keyframes blink {
-  from, to {
-    color: transparent;
-  }
-  50% {
-    color: #3B82F6;
-  }
-}
-</style>
-
-// =
-// 文件: ..\src\novel\editor\components\ai\chat\ConversationList.vue
-//
-
-<template>
-  <aside class="w-80 bg-gray-50/50 border-r border-gray-200/80 flex flex-col flex-shrink-0">
-    <div class="p-4 border-b border-gray-200/80 h-20 flex items-center">
-      <button
-          @click="chatStore.createNewConversation"
-          class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors"
-      >
-        <i class="fa-solid fa-plus fa-sm"></i>
-        新建对话
-      </button>
-    </div>
-
-    <div class="flex-1 p-2 space-y-1 overflow-y-auto hide-scrollbar">
-      <a
-          v-for="conv in chatStore.conversations"
-          :key="conv.id"
-          href="#"
-          @click.prevent="chatStore.selectConversation(conv.id)"
-          class="block p-3 rounded-lg transition-colors"
-          :class="{
-            'bg-blue-100': chatStore.activeConversationId === conv.id,
-            'hover:bg-gray-200/60': chatStore.activeConversationId !== conv.id
-          }"
-      >
-        <div class="flex items-start gap-3">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" :class="chatStore.activeConversationId === conv.id ? 'bg-blue-600' : 'bg-gray-200'">
-            <svg class="w-4 h-4" :class="chatStore.activeConversationId === conv.id ? 'text-white' : 'text-gray-600'" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"></path></svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="font-medium text-sm text-gray-800 truncate">{{ conv.title }}</p>
-            <p class="text-xs text-gray-500 truncate mt-1">{{ conv.summary }}</p>
-            <p class="text-xs text-gray-400 mt-2">{{ conv.createdAt }}</p>
-          </div>
-        </div>
-      </a>
-    </div>
-  </aside>
-</template>
-
-<script setup lang="ts">
-import { useChatStore } from '@/novel/editor/stores/chatStore';
-
-const chatStore = useChatStore();
-</script>
 
 // =
 // 文件: ..\src\novel\editor\components\content\EditorContextMenu.vue
@@ -1976,209 +1772,298 @@ const readingTime = computed(() => {
 //
 
 <template>
-  <div
-      v-if="isVisible"
-      class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
-      @click.self="handleCancel"
-  >
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-      <!-- 头部 -->
-      <div class="flex-shrink-0 px-8 py-5 border-b border-gray-100 flex justify-between items-center">
+  <div v-if="store.isVisible" class="modal-overlay">
+    <div class="modal-container">
+      <!-- Modal Header -->
+      <header class="modal-header">
         <div>
-          <h1 class="text-xl font-semibold text-[#374151]">上下文预览</h1>
-          <p class="text-sm text-[#6B7280] mt-1">{{ taskInfoText }}</p>
+          <h2 class="modal-title">AI 任务确认</h2>
+          <p class="modal-subtitle">即将为 <span class="font-semibold text-indigo-500">《{{ store.task?.title }}》</span> 执行 <span class="font-semibold text-indigo-500">【{{ store.task?.type }}】</span> 任务</p>
         </div>
-        <button @click="handleCancel" class="p-2 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        <button @click="store.hide()" class="modal-close-button">
+          <i class="fa-solid fa-times"></i>
         </button>
+      </header>
+
+      <!-- Loading State -->
+      <div v-if="store.isLoading" class="modal-loading-state">
+        <i class="fa-solid fa-spinner fa-spin text-3xl text-gray-400"></i>
+        <p class="mt-4 text-gray-500">正在构建上下文...</p>
       </div>
 
-      <!-- 上下文列表 (可滚动) -->
-      <div class="flex-grow p-6 space-y-4 overflow-y-auto bg-gray-50/50">
-        <!-- 固定上下文 -->
-        <div class="border border-gray-200/70 rounded-lg overflow-hidden bg-white shadow-sm">
-          <div @click="toggleCollapse('fixed')" class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <svg class="w-5 h-5 text-gray-400 collapse-arrow" :class="{ 'expanded': collapsedStates.fixed }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-              <svg class="w-6 h-6 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              <div>
-                <h3 class="font-medium text-[#374151]">固定上下文</h3>
-                <p class="text-xs text-[#9CA3AF] mt-0.5">始终包含在 AI 对话中的基础信息</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-4">
-              <span class="text-xs text-[#9CA3AF]">648 字符</span>
-              <label @click.stop class="flex items-center gap-2 cursor-pointer">
-                <span class="text-xs text-[#6B7280]">启用</span>
-                <input type="checkbox" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" checked>
-              </label>
-            </div>
-          </div>
-          <div class="collapse-content" :class="{ 'expanded': collapsedStates.fixed }">
-            <div class="px-6 pb-4 border-t border-gray-100 pt-4 text-sm text-gray-600">内容占位...</div>
-          </div>
-        </div>
+      <!-- Content State -->
+      <div v-else-if="store.previewContent" class="modal-content-wrapper">
+        <!-- Tabs -->
+        <nav class="content-tabs">
+          <a
+              v-for="tab in tabs"
+              :key="tab.id"
+              href="#"
+              @click.prevent="activeTab = tab.id"
+              :class="['tab-item', { 'active': activeTab === tab.id }]"
+          >
+            <span>{{ tab.name }}</span>
+            <span class="tab-badge">{{ formatCharCount(store.previewContent.stats[tab.statKey]) }}</span>
+          </a>
+        </nav>
 
-        <!-- 动态上下文 -->
-        <div class="border border-gray-200/70 rounded-lg overflow-hidden bg-white shadow-sm">
-          <div @click="toggleCollapse('dynamic')" class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <svg class="w-5 h-5 text-gray-400 collapse-arrow" :class="{ 'expanded': collapsedStates.dynamic }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-              <svg class="w-6 h-6 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              <div>
-                <h3 class="font-medium text-[#374151]">动态上下文</h3>
-                <p class="text-xs text-[#9CA3AF] mt-0.5">根据当前创作内容自动更新的信息</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-4">
-              <span class="text-xs text-[#9CA3AF]">892 字符</span>
-              <label @click.stop class="flex items-center gap-2 cursor-pointer">
-                <span class="text-xs text-[#6B7280]">启用</span>
-                <input type="checkbox" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" checked>
-              </label>
-            </div>
-          </div>
-          <div class="collapse-content" :class="{ 'expanded': collapsedStates.dynamic }">
-            <div class="px-6 pb-4 border-t border-gray-100 pt-4 text-sm text-gray-600">内容占位...</div>
-          </div>
-        </div>
-
-        <!-- RAG 上下文 -->
-        <div class="border border-gray-200/70 rounded-lg overflow-hidden bg-white shadow-sm">
-          <div @click="toggleCollapse('rag')" class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <svg class="w-5 h-5 text-gray-400 collapse-arrow" :class="{ 'expanded': collapsedStates.rag }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-              <svg class="w-6 h-6 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-              <div>
-                <h3 class="font-medium text-[#374151]">RAG 上下文</h3>
-                <p class="text-xs text-[#9CA3AF] mt-0.5">从知识库检索的相关参考信息</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-4">
-              <span class="text-xs text-[#9CA3AF]">456 字符</span>
-              <label @click.stop class="flex items-center gap-2 cursor-pointer">
-                <span class="text-xs text-[#6B7280]">启用</span>
-                <input type="checkbox" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" checked>
-              </label>
-            </div>
-          </div>
-          <div class="collapse-content" :class="{ 'expanded': collapsedStates.rag }">
-            <div class="px-6 pb-4 border-t border-gray-100 pt-4 text-sm text-gray-600">内容占位...</div>
-          </div>
-        </div>
-
-        <!-- 提示词 -->
-        <div class="border border-gray-200/70 rounded-lg overflow-hidden bg-white shadow-sm">
-          <div @click="toggleCollapse('prompt')" class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <svg class="w-5 h-5 text-gray-400 collapse-arrow" :class="{ 'expanded': collapsedStates.prompt }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-              <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-              <div>
-                <h3 class="font-medium text-[#374151]">提示词</h3>
-                <p class="text-xs text-[#9CA3AF] mt-0.5">当前任务的具体指令</p>
-              </div>
-            </div>
-          </div>
-          <div class="collapse-content" :class="{ 'expanded': collapsedStates.prompt }">
-            <div class="border-t border-gray-100">
-              <textarea class="context-textarea" readonly>请续写下一段内容，要求：
-
-1. 延续当前紧张神秘的氛围
-2. 详细描写空间站内部的环境细节
-3. 通过卡尔文的视角展现他的内心活动
-4. 适当加入一些技术细节增强科幻感
-5. 在段落末尾设置一个小悬念，引导读者继续阅读
-6. 字数控制在 300-400 字左右
-
-重点描写方向：卡尔文进入空间站控制室，发现仍在运行的神秘设备，以及他对这些发现的反应和推测。</textarea>
-            </div>
+        <!-- Tab Content -->
+        <div class="content-display custom-scrollbar">
+          <div v-show="activeTab === 'fixed'" class="prose prose-sm max-w-none" v-html="store.previewContent.fixed || emptyStateHtml('固定上下文')"></div>
+          <div v-show="activeTab === 'dynamic'" class="prose prose-sm max-w-none" v-html="store.previewContent.dynamic || emptyStateHtml('动态上下文')"></div>
+          <div v-show="activeTab === 'rag'" class="prose prose-sm max-w-none" v-html="store.previewContent.rag || emptyStateHtml('RAG检索')"></div>
+          <div v-show="activeTab === 'prompt'">
+            <pre class="prompt-preview">{{ store.previewContent.prompt }}</pre>
           </div>
         </div>
       </div>
 
-      <!-- 尾部 -->
-      <div class="flex-shrink-0 px-6 py-4 bg-white border-t border-gray-100 flex items-center justify-between">
-        <div class="text-xs text-gray-400">
-          <span>加载时间: 36ms</span>
+      <!-- Modal Footer -->
+      <footer class="modal-footer">
+        <div v-if="store.previewContent" class="stats-summary">
+          总计: {{ totalCharCount }} 字
         </div>
-        <div class="flex items-center gap-3">
-          <button @click="handleCancel" class="px-5 py-2 text-sm font-medium text-[#374151] bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
-            取消
-          </button>
-          <button @click="handleExecute" class="px-5 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center gap-2">
-            <i class="fa-solid fa-bolt fa-sm"></i>
-            <span>执行</span>
-          </button>
-        </div>
-      </div>
+        <button @click="store.hide()" class="button-secondary">取消</button>
+        <button @click="store.execute()" :disabled="store.isLoading" class="button-primary">
+          <i v-if="store.isLoading" class="fa-solid fa-spinner fa-spin mr-2"></i>
+          确认执行
+        </button>
+      </footer>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue';
-import { useContextMenuStore } from '@/novel/editor/stores/contextPreviewStore';
+import { ref, computed } from 'vue';
+import { useContextPreviewStore } from '@/novel/editor/stores/contextPreviewStore';
 
-const contextPreviewStore = useContextMenuStore();
+const store = useContextPreviewStore();
+const activeTab = ref<'fixed' | 'dynamic' | 'rag' | 'prompt'>('fixed');
 
-const collapsedStates = reactive({
-  fixed: false,
-  dynamic: false,
-  rag: false,
-  prompt: true,
+const tabs = ref([
+  { id: 'fixed', name: '固定上下文', statKey: 'fixedCharCount' },
+  { id: 'dynamic', name: '动态上下文', statKey: 'dynamicCharCount' },
+  { id: 'rag', name: 'RAG检索', statKey: 'ragCharCount' },
+  { id: 'prompt', name: '最终提示词', statKey: 'promptCharCount' },
+] as const);
+
+const formatCharCount = (count: number) => {
+  return count > 1000 ? `${(count / 1000).toFixed(1)}k` : count;
+};
+
+const totalCharCount = computed(() => {
+  if (!store.previewContent?.stats) return 0;
+  console.log(store.previewContent)
+  const { fixedCharCount, dynamicCharCount, ragCharCount } = store.previewContent.stats;
+  return formatCharCount(fixedCharCount + dynamicCharCount + ragCharCount);
 });
 
-const isVisible = computed(() => contextPreviewStore.isVisible);
-const task = computed(() => contextPreviewStore.task);
-
-const taskInfoText = computed(() => {
-  if (task.value) {
-    return `即将对《${task.value.title}》执行AI任务：${task.value.type}。`;
-  }
-  return '检查并确认将要提供给AI的全部信息。';
-});
-
-const handleExecute = () => {
-  contextPreviewStore.execute();
+const emptyStateHtml = (contextType: string) => {
+  return `<p class="text-gray-400 italic">未配置或未找到${contextType}内容。</p>`;
 };
 
-const handleCancel = () => {
-  contextPreviewStore.hide();
-};
-
-const toggleCollapse = (section: keyof typeof collapsedStates) => {
-  collapsedStates[section] = !collapsedStates[section];
-};
 </script>
 
 <style scoped>
-.collapse-content {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease-out;
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(17, 24, 39, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
 }
-.collapse-content.expanded {
-  max-height: 500px;
-  transition: max-height 0.35s ease-in;
-}
-.collapse-arrow {
-  transition: transform 0.3s ease;
-}
-.collapse-arrow.expanded {
-  transform: rotate(90deg);
-}
-.context-textarea {
-  background: transparent;
-  border: none;
-  resize: none;
-  outline: none;
+
+.modal-container {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   width: 100%;
-  line-height: 1.7;
-  color: #4B5563;
-  font-size: 14px;
+  max-width: 48rem; /* 768px */
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.modal-header {
   padding: 1rem 1.5rem;
-  min-height: 200px;
-  cursor: default;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.modal-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.modal-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.modal-close-button {
+  color: #9ca3af;
+  padding: 0.5rem;
+  margin: -0.5rem;
+  border-radius: 9999px;
+  transition: background-color 0.2s, color 0.2s;
+}
+.modal-close-button:hover {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.modal-loading-state {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  min-height: 300px;
+}
+
+.modal-content-wrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  overflow: hidden;
+}
+
+.content-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  color: #4b5563;
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.tab-item:hover {
+  background-color: #f3f4f6;
+}
+
+.tab-item.active {
+  background-color: #eef2ff;
+  color: #4f46e5;
+}
+
+.tab-badge {
+  font-size: 0.75rem;
+  background-color: #e5e7eb;
+  color: #4b5563;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tab-item.active .tab-badge {
+  background-color: #c7d2fe;
+  color: #4338ca;
+}
+
+.content-display {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  background-color: #f9fafb;
+}
+
+.prompt-preview {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 0.8rem;
+  color: #4b5563;
+  line-height: 1.6;
+  background-color: #ffffff;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: #f9fafb;
+  flex-shrink: 0;
+}
+
+.stats-summary {
+  margin-right: auto;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.button-secondary {
+  padding: 0.5rem 1rem;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  color: #374151;
+  transition: background-color 0.2s;
+}
+.button-secondary:hover {
+  background-color: #f9fafb;
+}
+
+.button-primary {
+  padding: 0.5rem 1rem;
+  background-color: #4f46e5;
+  border: 1px solid #4f46e5;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  color: white;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+}
+.button-primary:hover {
+  background-color: #4338ca;
+}
+.button-primary:disabled {
+  background-color: #a5b4fc;
+  cursor: not-allowed;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 </style>
 
@@ -3613,18 +3498,18 @@ const headerTitle = computed(() => {
       </nav>
     </div>
 
-    <!-- Right Content Area: USES YOUR ORIGINAL UI CODE FROM AITaskConfigModal.vue -->
+    <!-- Right Content Area -->
     <div class="aiconfig-content custom-scrollbar">
-      <div v-if="activeTask" class="p-6 space-y-6">
-        <!-- Header copied from your original UI -->
+      <div v-if="activeTaskConfig" class="p-6 space-y-6">
+        <!-- Header -->
         <div class="flex justify-between items-center">
           <div>
-            <h3 class="text-lg font-medium text-[#374151]">AI任务配置 - {{ activeTask.name }}</h3>
+            <h3 class="text-lg font-medium text-[#374151]">AI任务配置 - {{ activeTaskInfo?.name }}</h3>
             <p class="text-sm text-[#6B7280] mt-1">配置AI助手如何处理您的内容</p>
           </div>
         </div>
 
-        <!-- AI模型配置 copied from your original UI -->
+        <!-- AI Model Selection -->
         <div>
           <label class="flex items-center justify-between mb-3">
             <span class="text-sm font-medium text-[#374151]">AI模型选择</span>
@@ -3641,66 +3526,22 @@ const headerTitle = computed(() => {
           </select>
         </div>
 
-        <!-- 提示词选择 copied from your original UI -->
+        <!-- Prompt Template Selection -->
         <div>
           <label for="prompt-template" class="text-sm font-medium text-[#374151] block mb-3">任务提示词模板</label>
-          <select id="prompt-template" class="w-full text-sm px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-            <option v-for="prompt in activeTask.prompts" :key="prompt" :selected="prompt === activeTask.defaultPrompt">{{ prompt }}</option>
+          <select
+              id="prompt-template"
+              :value="activeTaskConfig.selected"
+              @change="handlePromptChange"
+              class="w-full text-sm px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          >
+            <option v-for="prompt in activeTaskConfig.prompts" :key="prompt.name" :value="prompt.name">
+              {{ prompt.name }}
+            </option>
           </select>
         </div>
 
-        <!-- 上下文选择 copied from your original UI -->
-        <div>
-          <label class="text-sm font-medium text-[#374151] block mb-3">上下文配置</label>
-          <div class="space-y-3">
-            <div class="bg-white p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 text-[#4B5563]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
-                  </div>
-                  <div>
-                    <p class="font-medium text-sm text-[#374151]">固定上下文</p>
-                    <p class="text-xs text-[#9CA3AF]">小说设定、人物档案、世界观</p>
-                  </div>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" checked><div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-[#4B5563] peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div></label>
-              </div>
-            </div>
-
-            <div class="bg-white p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 text-[#4B5563]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19.5 12c0-5.23-4.27-9.5-9.5-9.5S.5 6.77.5 12s4.27 9.5 9.5 9.5M12 2v2m0 18v-2M4.5 4.5l1.42 1.42M18.08 18.08l-1.42-1.42m0-11.32l1.42-1.42M4.5 19.5l1.42-1.42M2 12h2m18 0h-2"></path></svg>
-                  </div>
-                  <div>
-                    <p class="font-medium text-sm text-[#374151]">动态上下文</p>
-                    <p class="text-xs text-[#9CA3AF]">自动包含前后相关章节</p>
-                  </div>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" checked><div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-[#4B5563] peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div></label>
-              </div>
-            </div>
-
-            <div class="bg-white p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 text-[#4B5563]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-                  </div>
-                  <div>
-                    <p class="font-medium text-sm text-[#374151]">RAG智能搜索</p>
-                    <p class="text-xs text-[#9CA3AF]">自动检索相关内容</p>
-                  </div>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer"><div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-[#4B5563] peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div></label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 高级设置 copied from your original UI -->
+        <!-- Advanced Settings -->
         <div>
           <label class="text-sm font-medium text-[#374151] block mb-3">高级设置</label>
           <div class="space-y-4 p-4 bg-[#F9FAFB] rounded-lg border border-gray-100">
@@ -3727,34 +3568,37 @@ const headerTitle = computed(() => {
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useAIConfigStore } from '@/novel/editor/stores/aiConfigStore';
+import type { AITask } from '@/novel/editor/types';
 
-const activeTaskId = ref('polish');
+type TaskType = AITask['type'];
 
-const availableTasks = ref([
-  {
-    id: 'polish',
-    name: '润色',
-    icon: 'fa-solid fa-palette',
-    defaultPrompt: '文学润色 - 注重修辞和意境',
-    prompts: ['文学润色 - 注重修辞和意境', '简洁优化 - 删繁就简', '情感强化 - 增强情感表达']
-  },
-  {
-    id: 'continue',
-    name: '续写',
-    icon: 'fa-solid fa-wand-magic-sparkles',
-    defaultPrompt: '标准续写',
-    prompts: ['标准续写', '悬念式结尾', '对话场景续写', '动作场景续写']
-  },
-  {
-    id: 'analyze',
-    name: '分析',
-    icon: 'fa-solid fa-magnifying-glass-chart',
-    defaultPrompt: '情节结构分析',
-    prompts: ['情节结构分析', '人物弧光分析', '修辞手法分析', '市场潜力评估']
-  }
-]);
+const aiConfigStore = useAIConfigStore();
 
-const activeTask = computed(() => availableTasks.value.find(t => t.id === activeTaskId.value));
+const taskInfoMap: Record<TaskType, { name: string; icon: string }> = {
+  '润色': { name: '润色', icon: 'fa-solid fa-palette' },
+  '续写': { name: '续写', icon: 'fa-solid fa-wand-magic-sparkles' },
+  '分析': { name: '分析', icon: 'fa-solid fa-magnifying-glass-chart' },
+  '剧情生成': { name: '剧情生成', icon: 'fa-solid fa-feather' },
+};
+
+const availableTasks = computed(() => {
+  return (Object.keys(aiConfigStore.taskPromptConfigs) as TaskType[]).map(id => ({
+    id,
+    name: taskInfoMap[id].name,
+    icon: taskInfoMap[id].icon
+  }));
+});
+
+const activeTaskId = ref<TaskType>('润色');
+
+const activeTaskInfo = computed(() => availableTasks.value.find(t => t.id === activeTaskId.value));
+const activeTaskConfig = computed(() => aiConfigStore.taskPromptConfigs[activeTaskId.value]);
+
+const handlePromptChange = (event: Event) => {
+  const selectedName = (event.target as HTMLSelectElement).value;
+  aiConfigStore.setSelectedPrompt(activeTaskId.value, selectedName);
+};
 </script>
 
 <style scoped>
@@ -3785,199 +3629,163 @@ const activeTask = computed(() => availableTasks.value.find(t => t.id === active
 //
 
 <template>
-  <div class="setting-page-wrapper custom-scrollbar">
-    <div class="page-header">
-      <h2 class="page-title">上下文管理</h2>
-      <p class="page-description">配置AI任务执行时如何处理上下文信息，以获得更精准的生成结果。</p>
-    </div>
+  <div class="setting-page-container">
+    <div class="setting-page-wrapper custom-scrollbar">
+      <div class="page-header">
+        <h2 class="page-title">上下文管理</h2>
+        <p class="page-description">配置AI任务执行时如何处理上下文信息，以获得更精准的生成结果。</p>
+      </div>
 
-    <div class="setting-group">
-      <div class="setting-item">
-        <label for="needs-preview" class="setting-label">执行前预览</label>
-        <div class="setting-control">
-          <div class="flex items-center">
-            <input id="needs-preview" type="checkbox" v-model="needsPreview" class="setting-checkbox" />
-            <label for="needs-preview" class="ml-3 font-medium text-gray-700">启用AI任务执行前预览</label>
+      <div class="setting-group">
+        <div class="setting-item">
+          <label for="needs-preview" class="setting-label">执行前预览</label>
+          <div class="setting-control">
+            <div class="flex items-center">
+              <input id="needs-preview" type="checkbox" v-model="settingsStore.needsPreview" class="setting-checkbox" />
+              <label for="needs-preview" class="ml-3 font-medium text-gray-700">启用AI任务执行前预览</label>
+            </div>
+            <p class="setting-description">
+              启用后，在编辑器或目录中触发AI任务（如续写、润色）时，不会立即执行，
+              而是会弹出一个上下文预览窗口供您确认和修改。
+            </p>
           </div>
-          <p class="setting-description">
-            启用后，在编辑器或目录中触发AI任务（如续写、润色）时，不会立即执行，
-            而是会弹出一个上下文预览窗口供您确认和修改。
-          </p>
         </div>
       </div>
-    </div>
 
-    <div class="setting-group mt-4">
-      <div class="setting-item">
-        <label for="fixed-context" class="setting-label">固定上下文</label>
-        <div class="setting-control space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-[#374151] mb-1.5">选择预设内容
-              <span class="text-xs text-[#9CA3AF] ml-2">可选择角色设定或世界观设定</span>
-            </label>
-            <select
-                @change="addSelectedItem"
-                class="w-full px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] custom-select focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]"
-            >
-              <option value="">请选择预设内容</option>
-              <option v-for="preset in fixedContextPresets" :key="preset.id" :value="preset.id">
-                {{ preset.group }} - {{ preset.title }}
-              </option>
-            </select>
-          </div>
-
-          <div v-if="selectedItems.length > 0">
-            <label class="block text-sm font-medium text-[#374151] mb-1.5">已选择的内容</label>
-            <div class="content-list">
-              <div
-                  v-for="(item, index) in selectedItems"
-                  :key="item.id"
-                  class="content-list-item"
+      <div class="setting-group mt-4">
+        <div class="setting-item">
+          <label for="fixed-context" class="setting-label">固定上下文</label>
+          <div class="setting-control space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-[#374151] mb-1.5">选择预设内容
+                <span class="text-xs text-[#9CA3AF] ml-2">可选择角色设定或世界观设定</span>
+              </label>
+              <select
+                  @change="addSelectedItem"
+                  class="w-full px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] custom-select focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]"
               >
-                <div>
-                  <div class="font-medium text-sm text-[#374151]">{{ item.group }} - {{ item.title }}</div>
-                  <div class="text-xs text-[#9CA3AF] mt-1">{{ item.description }}</div>
+                <option value="">请选择预设内容...</option>
+                <option v-for="preset in settingsStore.fixedContextPresets" :key="preset.id" :value="preset.id">
+                  {{ preset.group }} - {{ preset.title }}
+                </option>
+              </select>
+            </div>
+
+            <div v-if="settingsStore.selectedContextItems.length > 0">
+              <label class="block text-sm font-medium text-[#374151] mb-1.5">已选择的内容</label>
+              <div class="content-list">
+                <div
+                    v-for="item in settingsStore.selectedContextItems"
+                    :key="item.id"
+                    class="content-list-item"
+                >
+                  <div class="flex-grow min-w-0">
+                    <div class="font-medium text-sm text-[#374151] truncate" :title="`${item.group} - ${item.title}`">{{ item.group }} - {{ item.title }}</div>
+                    <div class="text-xs text-[#9CA3AF] mt-1 truncate">{{ item.description }}</div>
+                  </div>
+                  <button @click.stop="settingsStore.removeFixedContextItem(item.id)" class="text-[#9CA3AF] hover:text-[#EF4444] transition-colors ml-4 flex-shrink-0">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
                 </div>
-                <button @click.stop="removeSelectedItem(index)" class="text-[#9CA3AF] hover:text-[#EF4444] transition-colors">
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
               </div>
-            </div>
-          </div>
-          <div>
-            <label for="custom-content" class="block text-sm font-medium text-[#374151] mb-1.5">自定义固定内容</label>
-            <textarea
-                id="custom-content"
-                v-model="customContextContent"
-                class="w-full px-4 py-3 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] resize-none focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]"
-                rows="4"
-                placeholder="输入固定的背景设定、人物关系、重要事件等AI必须参考的信息..."
-            ></textarea>
-            <p class="setting-description mt-2">这里的内容将始终被添加到AI任务的上下文中。</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="setting-item">
-        <label for="dynamic-context" class="setting-label">动态上下文</label>
-        <div class="setting-control space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-            <div>
-              <label class="block text-sm font-medium text-[#374151] mb-1.5">前置章节数</label>
-              <div class="flex items-center gap-3">
-                <input type="range" min="0" max="10" v-model.number="dynamicContextSettings.prevChapters" class="range-custom flex-1"/>
-                <span class="text-sm font-medium w-8 text-center text-[#374151]">{{ dynamicContextSettings.prevChapters }}</span>
-              </div>
-              <p class="setting-description mt-1">自动包含当前章节之前的N个章节内容。</p>
             </div>
             <div>
-              <label class="block text-sm font-medium text-[#374151] mb-1.5">后续章节数</label>
-              <div class="flex items-center gap-3">
-                <input type="range" min="0" max="10" v-model.number="dynamicContextSettings.nextChapters" class="range-custom flex-1"/>
-                <span class="text-sm font-medium w-8 text-center text-[#374151]">{{ dynamicContextSettings.nextChapters }}</span>
-              </div>
-              <p class="setting-description mt-1">自动包含当前章节之后N个章节的大纲内容。</p>
+              <label for="custom-content" class="block text-sm font-medium text-[#374151] mb-1.5">自定义固定内容</label>
+              <textarea
+                  id="custom-content"
+                  :value="settingsStore.customContextContent"
+                  @input="settingsStore.setCustomContextContent(($event.target as HTMLTextAreaElement).value)"
+                  class="w-full px-4 py-3 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] resize-none focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]"
+                  rows="4"
+                  placeholder="输入固定的背景设定、人物关系、重要事件等AI必须参考的信息..."
+              ></textarea>
+              <p class="setting-description mt-2">这里的内容将始终被添加到AI任务的上下文中。</p>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="setting-item">
-        <label for="rag-context" class="setting-label">RAG 智能检索</label>
-        <div class="setting-control">
-          <div class="flex items-center">
-            <input id="rag-context" type="checkbox" v-model="isRagEnabled" class="setting-checkbox" />
-            <label for="rag-context" class="ml-3 font-medium text-gray-700">启用RAG智能检索</label>
+        <div class="setting-item">
+          <label for="dynamic-context" class="setting-label">动态上下文</label>
+          <div class="setting-control space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+              <div>
+                <label class="block text-sm font-medium text-[#374151] mb-1.5">前置章节数</label>
+                <div class="flex items-center gap-3">
+                  <input type="range" min="0" max="10" :value="settingsStore.dynamicContextSettings.prevChapters" @input="settingsStore.setDynamicContextSetting('prevChapters', parseInt(($event.target as HTMLInputElement).value, 10))" class="range-custom flex-1"/>
+                  <span class="text-sm font-medium w-8 text-center text-[#374151]">{{ settingsStore.dynamicContextSettings.prevChapters }}</span>
+                </div>
+                <p class="setting-description mt-1">自动包含当前章节之前的N个章节内容。</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-[#374151] mb-1.5">后续章节数</label>
+                <div class="flex items-center gap-3">
+                  <input type="range" min="0" max="10" :value="settingsStore.dynamicContextSettings.nextChapters" @input="settingsStore.setDynamicContextSetting('nextChapters', parseInt(($event.target as HTMLInputElement).value, 10))" class="range-custom flex-1"/>
+                  <span class="text-sm font-medium w-8 text-center text-[#374151]">{{ settingsStore.dynamicContextSettings.nextChapters }}</span>
+                </div>
+                <p class="setting-description mt-1">自动包含当前章节之后N个章节的全部内容。</p>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="flex items-center">
+                <input id="include-plot" type="checkbox" :checked="settingsStore.dynamicContextSettings.includeRelatedPlot" @change="settingsStore.setDynamicContextSetting('includeRelatedPlot', ($event.target as HTMLInputElement).checked)" class="setting-checkbox" />
+                <label for="include-plot" class="ml-3 font-medium text-gray-700">包含相关剧情</label>
+              </div>
+              <div class="flex items-center">
+                <input id="include-analysis" type="checkbox" :checked="settingsStore.dynamicContextSettings.includeRelatedAnalysis" @change="settingsStore.setDynamicContextSetting('includeRelatedAnalysis', ($event.target as HTMLInputElement).checked)" class="setting-checkbox" />
+                <label for="include-analysis" class="ml-3 font-medium text-gray-700">包含相关分析</label>
+              </div>
+            </div>
+
+            <p class="setting-description">动态上下文会智能加载目标章节前后的内容，以及与该章节关联的派生内容（剧情、分析），以提供更连贯的创作基础。实际加载的内容可在任务预览时查看。</p>
           </div>
-          <p class="setting-description">
-            启用后，AI任务将根据当前上下文自动从您的整个知识库（包括所有章节、设定、笔记）中检索最相关的信息片段并注入到上下文中。
-          </p>
         </div>
-      </div>
 
+        <div class="setting-item">
+          <label for="rag-context" class="setting-label">RAG 智能检索</label>
+          <div class="setting-control">
+            <div class="flex items-center">
+              <input id="rag-context" type="checkbox" v-model="settingsStore.isRagEnabled" class="setting-checkbox" />
+              <label for="rag-context" class="ml-3 font-medium text-gray-700">启用RAG智能检索</label>
+            </div>
+            <p class="setting-description">
+              启用后，AI任务将根据当前上下文自动从您的整个知识库（包括所有章节、设定、笔记）中检索最相关的信息片段并注入到上下文中。
+            </p>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useUIStore } from '@/novel/editor/stores/uiStore';
-import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
+import { useContextSettingsStore } from '@/novel/editor/stores/contextSettingsStore';
 
-const uiStore = useUIStore();
-const relatedContentStore = useRelatedContentStore();
-
-const needsPreview = computed({
-  get: () => uiStore.uiState.needsPreview,
-  set: (value: boolean) => uiStore.setNeedsPreview(value)
-});
-
-const customContextContent = computed({
-  get: () => uiStore.uiState.customContextContent,
-  set: (value: string) => uiStore.setCustomContextContent(value)
-});
-
-const dynamicContextSettings = computed({
-  get: () => uiStore.uiState.dynamicContextSettings,
-  set: (value) => uiStore.setDynamicContextSettings(value)
-});
-
-const isRagEnabled = computed({
-  get: () => uiStore.uiState.isRagEnabled,
-  set: (value: boolean) => uiStore.setRagEnabled(value)
-});
-
-const fixedContextPresets = computed(() => {
-  const presets: { id: string; group: string; title: string; description: string; content: string }[] = [];
-  const settingsNode = relatedContentStore.relatedData.find(n => n.id === 'settings');
-
-  if (settingsNode && settingsNode.children) {
-    settingsNode.children.forEach(group => {
-      if (group.children) {
-        group.children.forEach(item => {
-          if (item.content) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = item.content;
-            const description = tempDiv.querySelector('p')?.textContent || item.title;
-            presets.push({
-              id: item.id,
-              group: group.title,
-              title: item.title,
-              description: description.substring(0, 100),
-              content: item.content
-            });
-          }
-        });
-      }
-    });
-  }
-  return presets;
-});
-
-const selectedItems = computed(() => uiStore.uiState.selectedContextItems);
+const settingsStore = useContextSettingsStore();
 
 const addSelectedItem = (event: Event) => {
   const select = event.target as HTMLSelectElement;
   const selectedId = select.value;
   if (!selectedId) return;
 
-  const preset = fixedContextPresets.value.find(p => p.id === selectedId);
+  const preset = settingsStore.fixedContextPresets.find(p => p.id === selectedId);
   if (preset) {
-    uiStore.addFixedContextItem(preset);
+    settingsStore.addFixedContextItem(preset);
   }
   select.value = ""; // Reset select
 };
-
-const removeSelectedItem = (index: number) => {
-  uiStore.removeFixedContextItem(index);
-};
-
-
 </script>
 
 <style scoped>
+.setting-page-container {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 .setting-page-wrapper {
-  padding: 1rem 2rem 4rem; /* Added bottom padding */
+  padding: 1rem 2rem 4rem;
   max-width: 56rem;
   margin: 0 auto;
   overflow-y: auto;
@@ -4002,10 +3810,9 @@ const removeSelectedItem = (index: number) => {
 .setting-item:last-child { border-bottom: none; }
 .setting-label { font-size: 0.875rem; font-weight: 500; color: #374151; padding-top: 0.5rem; }
 .setting-control { display: flex; flex-direction: column; gap: 0.5rem; }
-.setting-input { background-color: white; border: 1px solid #D1D5DB; border-radius: 0.375rem; padding: 0.5rem 0.75rem; outline: none; transition: all 0.2s; }
-.setting-input:focus { border-color: #3B82F6; box-shadow: 0 0 0 1px #3B82F6; }
 .setting-description { color: #6B7280; font-size: 0.875rem; line-height: 1.6; }
 .setting-checkbox { height: 1.25rem; width: 1.25rem; border-radius: 0.25rem; border: 1px solid #D1D5DB; color: #2563EB; }
+.setting-checkbox-small { height: 1rem; width: 1rem; border-radius: 0.25rem; border: 1px solid #D1D5DB; color: #2563EB; }
 
 .range-custom {
   -webkit-appearance: none; appearance: none;
@@ -4043,15 +3850,16 @@ const removeSelectedItem = (index: number) => {
 .content-list-item {
   padding: 12px 16px;
   border-bottom: 1px solid #F3F4F6;
-  cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
 .content-list-item:hover {
   background: #F9FAFB;
+}
+.content-list-item:last-child {
+  border-bottom: none;
 }
 </style>
 
@@ -4557,9 +4365,11 @@ const setActiveTheme = (themeId: ThemeId) => {
 // 文件: ..\src\novel\editor\composables\useAITaskExecutor.ts
 //
 
+// 文件: src/novel/editor/composables/useAITaskExecutor.ts
+
 import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
-import { useUIStore } from '@/novel/editor/stores/uiStore';
-import { useContextMenuStore } from '@/novel/editor/stores/contextPreviewStore';
+import { useContextSettingsStore } from '@/novel/editor/stores/contextSettingsStore';
+import { useContextPreviewStore } from '@/novel/editor/stores/contextPreviewStore';
 import type { AITask, EditorItem } from '@/novel/editor/types';
 
 /**
@@ -4573,8 +4383,8 @@ type TaskSource = Pick<EditorItem, 'id' | 'title'>;
  */
 export function useAITaskExecutor() {
     const aiTaskStore = useAITaskStore();
-    const uiStore = useUIStore();
-    const contextPreviewStore = useContextMenuStore();
+    const contextSettingsStore = useContextSettingsStore();
+    const contextPreviewStore = useContextPreviewStore();
 
     /**
      * 执行 AI 任务。
@@ -4587,8 +4397,8 @@ export function useAITaskExecutor() {
             return;
         }
 
-        // 根据 UI store 的状态，决定是直接开始任务还是显示预览
-        if (uiStore.uiState.needsPreview) {
+        // 根据 context settings store 的状态，决定是直接开始任务还是显示预览
+        if (contextSettingsStore.needsPreview) {
             contextPreviewStore.show({
                 type: taskType,
                 targetItemId: source.id,
@@ -4600,6 +4410,131 @@ export function useAITaskExecutor() {
     };
 
     return { executeAITask };
+}
+
+// =
+// 文件: ..\src\novel\editor\composables\useContextBuilder.ts
+//
+
+import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
+import { useContextSettingsStore } from '@/novel/editor/stores/contextSettingsStore';
+import { useDerivedContentStore } from '@/novel/editor/stores/derivedContentStore';
+import { useAIConfigStore } from '@/novel/editor/stores/aiConfigStore';
+import type { AITask, ContextBuildResult, EditorItem } from '@/novel/editor/types';
+
+const stripHtml = (html: string) => {
+    if (typeof document === 'undefined') return html;
+    const tmp = document.createElement("DIV");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
+};
+
+export function useContextBuilder() {
+    const directoryStore = useDirectoryStore();
+    const contextSettingsStore = useContextSettingsStore();
+    const derivedContentStore = useDerivedContentStore();
+    const aiConfigStore = useAIConfigStore();
+
+    const buildContextForTask = (taskType: AITask['type'], targetItem: EditorItem | null): ContextBuildResult | null => {
+        if (!targetItem) return null;
+
+        const mainContent = ('content' in targetItem && targetItem.content) ? targetItem.content : '';
+        const mainContentText = stripHtml(mainContent);
+
+        // --- Build Fixed Context ---
+        let fixedContextHtml = '';
+        contextSettingsStore.selectedContextItems.forEach(item => {
+            if (item.content) {
+                fixedContextHtml += `<hr><h3>相关设定: ${item.group} - ${item.title}</h3>${item.content}`;
+            }
+        });
+
+        if (contextSettingsStore.customContextContent.trim()) {
+            fixedContextHtml += `<hr><h3>自定义固定内容</h3><p>${contextSettingsStore.customContextContent.trim().replace(/\n/g, '<br>')}</p>`;
+        }
+        const fixedContextText = stripHtml(fixedContextHtml);
+
+        // --- Build Dynamic Context ---
+        let dynamicContextHtml = '';
+        if (targetItem.type === 'chapter') {
+            const chapterResult = directoryStore.findNodeById(targetItem.id);
+            if (chapterResult && chapterResult.parent) {
+                const volume = chapterResult.parent;
+                const chapterIndex = volume.chapters.findIndex(c => c.id === targetItem.id);
+
+                if (chapterIndex > -1) {
+                    const prevStart = Math.max(0, chapterIndex - contextSettingsStore.dynamicContextSettings.prevChapters);
+                    for (let i = prevStart; i < chapterIndex; i++) {
+                        dynamicContextHtml += `<hr><h3>前文章节: ${volume.chapters[i].title}</h3>${volume.chapters[i].content}`;
+                    }
+
+                    const nextEnd = Math.min(volume.chapters.length, chapterIndex + 1 + contextSettingsStore.dynamicContextSettings.nextChapters);
+                    for (let i = chapterIndex + 1; i < nextEnd; i++) {
+                        dynamicContextHtml += `<hr><h3>后续章节内容: ${volume.chapters[i].title}</h3>${volume.chapters[i].content}`;
+                    }
+
+                    if (contextSettingsStore.dynamicContextSettings.includeRelatedPlot) {
+                        const relatedPlots = derivedContentStore.plotItems.filter(p => p.sourceChapterId === targetItem.id);
+                        if(relatedPlots.length > 0) {
+                            dynamicContextHtml += `<hr><h3>与本章相关的剧情</h3>`;
+                            relatedPlots.forEach(plot => { dynamicContextHtml += plot.content; });
+                        }
+                    }
+                    if (contextSettingsStore.dynamicContextSettings.includeRelatedAnalysis) {
+                        const relatedAnalyses = derivedContentStore.analysisItems.filter(a => a.sourceChapterId === targetItem.id);
+                        if(relatedAnalyses.length > 0) {
+                            dynamicContextHtml += `<hr><h3>与本章相关的分析</h3>`;
+                            relatedAnalyses.forEach(analysis => { dynamicContextHtml += analysis.content; });
+                        }
+                    }
+                }
+            }
+        }
+        const dynamicContextText = stripHtml(dynamicContextHtml);
+
+        // --- Build RAG & Final Prompt ---
+        const ragContext = contextSettingsStore.isRagEnabled ? '【RAG智能检索功能已开启，将根据任务内容自动查询知识库...】' : 'RAG检索已禁用或未返回任何结果。';
+
+        // --- Get selected prompt template from aiConfigStore ---
+        const taskConfig = aiConfigStore.taskPromptConfigs[taskType];
+        const selectedPromptTemplate = taskConfig.prompts.find(p => p.name === taskConfig.selected)?.template || `请为《${targetItem.title}》执行“${taskType}”任务。`;
+
+        const prompt = `[任务提示词]
+${selectedPromptTemplate}
+
+--------
+[附加上下文]
+
+# 固定上下文
+${fixedContextText.trim() || '无'}
+
+# 动态上下文
+${dynamicContextText.trim() || '无'}
+
+# RAG检索信息
+${ragContext.trim() || '无'}
+
+# 待处理内容
+${mainContentText.trim() || '无'}
+
+--------
+请严格按照任务提示词的要求开始执行：`;
+
+        return {
+            fixed: fixedContextHtml.trim(),
+            dynamic: dynamicContextHtml.trim(),
+            rag: ragContext,
+            prompt: prompt,
+            stats: {
+                fixedCharCount: fixedContextText.trim().length,
+                dynamicCharCount: dynamicContextText.trim().length,
+                ragCharCount: ragContext.trim().length,
+                promptCharCount: prompt.trim().length
+            }
+        };
+    };
+
+    return { buildContextForTask };
 }
 
 // =
@@ -4643,7 +4578,7 @@ export const mockChatConversations: Conversation[] = [
 //
 
 // 文件: src/novel/editor/data/index.ts
-import type { Volume, Chapter, NoteItem, NovelMetadata, NovelCharacter, AITask, TreeNode, ItemNode, RootNode, GroupNode, PlotAnalysisItem } from '@/novel/editor/types';
+import type { Volume, Chapter, NoteItem, NovelMetadata, NovelCharacter, AITask, TreeNode, ItemNode, RootNode, GroupNode, PlotAnalysisItem, OverviewNode } from '@/novel/editor/types';
 
 export const mockDirectoryData: Volume[] = [
     {
@@ -4690,6 +4625,7 @@ export const mockSettingsData: TreeNode[] = [
         children: [
             {
                 id: 'characters', title: '角色', type: 'group', icon: 'fa-solid fa-users text-teal-500', children: [
+                    { id: 'characters-overview', title: '角色总览', type: 'characters_overview', icon: 'fa-solid fa-users', content: '', isOverview: true, isReadOnly: true } as OverviewNode,
                     ...mockCharacters.map(char => ({
                         id: char.id,
                         title: char.name,
@@ -4700,11 +4636,20 @@ export const mockSettingsData: TreeNode[] = [
                     }))
                 ]
             } as GroupNode,
-            { id: 'locations', title: '地点', type: 'group', icon: 'fa-solid fa-map-location-dot text-green-500', children: [] } as GroupNode,
-            { id: 'items', title: '物品', type: 'group', icon: 'fa-solid fa-box-archive text-amber-600', children: [] } as GroupNode,
+            { 
+                id: 'locations', title: '地点', type: 'group', icon: 'fa-solid fa-map-location-dot text-green-500', children: [
+                    { id: 'locations-overview', title: '地点总览', type: 'locations_overview', icon: 'fa-solid fa-map-location-dot', content: '', isOverview: true, isReadOnly: true } as OverviewNode,
+                ]
+            } as GroupNode,
+            { 
+                id: 'items', title: '物品', type: 'group', icon: 'fa-solid fa-box-archive text-amber-600', children: [
+                    { id: 'items-overview', title: '物品总览', type: 'items_overview', icon: 'fa-solid fa-box-archive', content: '', isOverview: true, isReadOnly: true } as OverviewNode,
+                ]
+            } as GroupNode,
             {
                 id: 'worldview', title: '世界观', type: 'group', icon: 'fa-solid fa-earth-americas text-sky-500', children: [
-                    { id: 'world-overview', title: '世界观总览', type: 'worldview_item', icon: 'fa-solid fa-book-atlas', content: '<h1>世界观总览</h1><p>23世纪，人类掌握了亚光速航行技术，开始探索临近星系。</p>' } as ItemNode,
+                    { id: 'worldview-overview', title: '世界观总览', type: 'worldview_overview', icon: 'fa-solid fa-book-atlas', content: '', isOverview: true, isReadOnly: true } as OverviewNode,
+                    { id: 'world-overview-item', title: '世界观细则', type: 'worldview_item', icon: 'fa-solid fa-book-atlas', content: '<h1>世界观总览</h1><p>23世纪，人类掌握了亚光速航行技术，开始探索临近星系。</p>' } as ItemNode,
                 ]
             } as GroupNode
         ]
@@ -5003,18 +4948,73 @@ export const editorRoutes: Array<RouteRecordRaw> = [
 ]
 
 // =
+// 文件: ..\src\novel\editor\stores\aiConfigStore.ts
+//
+
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import type { AITask } from '@/novel/editor/types';
+
+type TaskType = AITask['type'];
+
+// 定义每种任务类型的默认提示词模板
+const defaultPrompts: Record<TaskType, { name: string, template: string }[]> = {
+    '润色': [
+        { name: '默认润色提示词', template: '你是一名专业的小说编辑，请根据上下文，对以下“待处理内容”进行润色，使其更具文采和表现力。' },
+        { name: '增强创造性提示词', template: '你是一名富有想象力的作家，请跳出常规，用更具创造性和独特风格的语言重写以下“待处理内容”，可以适度偏离原文。' }
+    ],
+    '续写': [
+        { name: '默认续写提示词', template: '你是一名小说家，请根据所有上下文信息，紧接着“待处理内容”的结尾，自然地续写接下来的故事情节。' },
+        { name: '增强戏剧性提示词', template: '你是一名顶尖的剧本编剧，请在续写时增加戏剧性冲突或意外转折，让故事更有张力。' }
+    ],
+    '分析': [
+        { name: '默认分析提示词', template: '请作为一个文学评论家，分析以下“待处理内容”的结构、角色动态、潜在主题和写作风格。' },
+        { name: '深度结构分析提示词', template: '请从叙事技巧、象征意义和读者情感引导等角度，深度剖析以下“待处理内容”，并提出改进建议。' }
+    ],
+    '剧情生成': [
+        { name: '默认剧情生成提示词', template: '你是一名创意编剧，请根据“待处理内容”中描写的场景或事件，生成一段相关的、有趣的后续剧情大纲。' },
+        { name: '生成反转剧情提示词', template: '你是一名擅长制造悬念的编剧，请根据“待处理内容”，构思一个包含意外反转的后续剧情大纲。' }
+    ],
+};
+
+export const useAIConfigStore = defineStore('aiConfig', () => {
+    const taskPromptConfigs = ref<Record<TaskType, { prompts: { name: string, template: string }[], selected: string }>>({
+        '润色': { prompts: defaultPrompts['润色'], selected: defaultPrompts['润色'][0].name },
+        '续写': { prompts: defaultPrompts['续写'], selected: defaultPrompts['续写'][0].name },
+        '分析': { prompts: defaultPrompts['分析'], selected: defaultPrompts['分析'][0].name },
+        '剧情生成': { prompts: defaultPrompts['剧情生成'], selected: defaultPrompts['剧情生成'][0].name },
+    });
+
+    /**
+     * 更新指定任务类型选择的提示词
+     * @param taskType 要更新的任务类型
+     * @param promptName 选择的提示词名称
+     */
+    const setSelectedPrompt = (taskType: TaskType, promptName: string) => {
+        if (taskPromptConfigs.value[taskType]) {
+            taskPromptConfigs.value[taskType].selected = promptName;
+        }
+    };
+
+    return {
+        taskPromptConfigs,
+        setSelectedPrompt,
+    };
+});
+
+// =
 // 文件: ..\src\novel\editor\stores\aiTaskStore.ts
 //
 
-// 文件: src/novel/editor/stores/aiTaskStore.ts
-
+// src/novel/editor/stores/aiTaskStore.ts
 import { defineStore } from 'pinia'
 import { ref, nextTick, computed } from 'vue'
 import { useEditorStore } from './editorStore'
 import { useUIStore } from './uiStore'
 import { useDerivedContentStore } from './derivedContentStore';
 import type { AITask, Volume } from '@/novel/editor/types';
-import { mockAIResponses } from '@/novel/editor/data';
+import { useContextBuilder } from '@/novel/editor/composables/useContextBuilder';
+import { streamAITask } from '@/novel/editor/api/aiService';
 
 const formatContentForEditor = (title: string, rawContent: string): string => {
     const body = rawContent.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p}</p>`).join('');
@@ -5026,77 +5026,94 @@ export const useAITaskStore = defineStore('aiTask', () => {
     const editorStore = useEditorStore();
     const uiStore = useUIStore();
     const derivedContentStore = useDerivedContentStore();
+    const { buildContextForTask } = useContextBuilder();
 
     const activeTasksCount = computed(() => {
         return tasks.value.filter(t => t.status === 'processing' || t.status === 'pending').length;
     });
 
-    const _simulateAIStream = (taskId: string) => {
+    const _executeTaskAndStream = (taskId: string) => {
         const task = tasks.value.find(t => t.id === taskId);
-        if (!task || task.status !== 'pending') return;
+        if (!task) return;
 
         task.status = 'processing';
         task.generatedContent = '';
-        const mockResponseText = mockAIResponses[task.type];
-        const words = mockResponseText.split('');
-        let wordIndex = 0;
-        const willFail = Math.random() < 0.1;
 
-        const intervalId = setInterval(() => {
-            const currentTask = tasks.value.find(t => t.id === taskId);
-            if (!currentTask || currentTask.status !== 'processing') {
-                clearInterval(intervalId);
+        // 如果任务没有预构建的提示词（例如，跳过了预览），则在此处构建。
+        if (!task.finalPrompt) {
+            const { node: targetItem } = editorStore.findItemById(task.targetItemId);
+            if (!targetItem) {
+                task.status = 'failed';
+                task.error = '任务目标文档未找到，无法构建上下文。';
+                nextTick(_processQueue);
                 return;
             }
 
-            if (wordIndex < words.length) {
-                // 流式更新只作用于任务自身的 generatedContent，用于AI预览面板
-                currentTask.generatedContent += words[wordIndex];
-                wordIndex++;
-                if (willFail && wordIndex > words.length / 2) {
-                    clearInterval(intervalId);
-                    currentTask.status = 'failed';
-                    currentTask.error = '生成超时，请检查网络后重试。';
-                    _processQueue();
-                    return;
-                }
-            } else {
-                clearInterval(intervalId);
-                currentTask.status = 'completed';
-
-                // 自动应用策略只对“润色”这类直接修改任务有效
-                if (task.type === '润色') {
-                    const strategy = uiStore.uiState.taskApplicationStrategy;
-                    switch (strategy.mode) {
-                        case 'auto':
-                            applyChanges(currentTask.id, true);
-                            break;
-                        case 'delayed':
-                            setTimeout(() => {
-                                const taskAfterDelay = tasks.value.find(t => t.id === taskId);
-                                if (taskAfterDelay && taskAfterDelay.status === 'completed') {
-                                    applyChanges(taskId, true);
-                                }
-                            }, strategy.delaySeconds * 1000);
-                            break;
-                        case 'manual':
-                            break;
-                    }
-                }
-
-                _processQueue();
+            const contextResult = buildContextForTask(task.type, targetItem);
+            if (!contextResult || !contextResult.prompt) {
+                task.status = 'failed';
+                task.error = '上下文构建失败，无法生成最终提示词。';
+                nextTick(_processQueue);
+                return;
             }
-        }, 30);
+            // 保存构建好的提示词，以便重试时使用
+            task.finalPrompt = contextResult.prompt;
+        }
+
+        const promptToUse = task.finalPrompt;
+
+        // 调用模拟API服务，仅传入最终提示词
+        streamAITask(promptToUse, {
+            onChunk: (chunk) => {
+                const currentTask = tasks.value.find(t => t.id === taskId);
+                if (currentTask && currentTask.status === 'processing') {
+                    currentTask.generatedContent += chunk;
+                }
+            },
+            onComplete: () => {
+                const currentTask = tasks.value.find(t => t.id === taskId);
+                if (currentTask && currentTask.status === 'processing') {
+                    currentTask.status = 'completed';
+                    if (task.type === '润色') {
+                        const strategy = uiStore.uiState.taskApplicationStrategy;
+                        switch (strategy.mode) {
+                            case 'auto':
+                                applyChanges(currentTask.id, true);
+                                break;
+                            case 'delayed':
+                                setTimeout(() => {
+                                    const taskAfterDelay = tasks.value.find(t => t.id === taskId);
+                                    if (taskAfterDelay && taskAfterDelay.status === 'completed') {
+                                        applyChanges(taskId, true);
+                                    }
+                                }, strategy.delaySeconds * 1000);
+                                break;
+                            case 'manual':
+                                break;
+                        }
+                    }
+                    _processQueue();
+                }
+            },
+            onError: (error) => {
+                const currentTask = tasks.value.find(t => t.id === taskId);
+                if (currentTask && currentTask.status === 'processing') {
+                    currentTask.status = 'failed';
+                    currentTask.error = error;
+                    _processQueue();
+                }
+            }
+        });
     }
 
     const _processQueue = () => {
         const processingCount = tasks.value.filter(t => t.status === 'processing').length;
         if (processingCount > 0) return;
         const pendingTask = tasks.value.find(t => t.status === 'pending');
-        if (pendingTask) _simulateAIStream(pendingTask.id);
+        if (pendingTask) _executeTaskAndStream(pendingTask.id);
     };
 
-    const startTask = async (taskType: AITask['type'], sourceItemId: string) => {
+    const startTask = async (taskType: AITask['type'], sourceItemId: string, finalPrompt?: string) => {
         const { node: sourceItem } = editorStore.findItemById(sourceItemId);
         if (!sourceItem || !('content' in sourceItem) || typeof sourceItem.content !== 'string') {
             console.error("AI Task Error: Source item not found or has no content.", sourceItemId);
@@ -5115,13 +5132,10 @@ export const useAITaskStore = defineStore('aiTask', () => {
             targetItemId = newDerivedItem.id;
             taskTitle = newDerivedItem.title;
 
-            // 等待UI稳定
             await nextTick();
-
-            // 打开新标签
             editorStore.openTab(targetItemId);
 
-        } else { // 润色等直接修改任务
+        } else {
             targetItemId = sourceItemId;
             taskTitle = `${taskType}《${sourceItem.title}》`;
         }
@@ -5135,6 +5149,7 @@ export const useAITaskStore = defineStore('aiTask', () => {
             status: 'pending',
             sourceContent: sourceItem.content,
             generatedContent: '',
+            finalPrompt: finalPrompt, // 保存从预览窗口传来的提示词
             createdAt: new Date(),
         };
 
@@ -5155,19 +5170,15 @@ export const useAITaskStore = defineStore('aiTask', () => {
         if (!task || task.status !== 'completed') return;
 
         if (task.type === '分析' || task.type === '剧情生成') {
-            // 对于派生任务，应用修改意味着将最终内容写入占位符文件
             const { node: targetNode } = editorStore.findItemById(task.targetItemId);
             if (targetNode) {
-                // 从任务标题中移除时间戳，作为最终的文件标题
                 const finalTitle = task.title.split(' - ')[0];
                 const newContent = formatContentForEditor(finalTitle, task.generatedContent);
                 editorStore.updateItemContentById(task.targetItemId, newContent);
-                // 更新标题（如果需要）
                 const result = derivedContentStore.findItemById(task.targetItemId);
                 if (result) result.title = finalTitle;
             }
         } else {
-            // 对于润色任务，追加内容
             editorStore.appendContentToItem(task.targetItemId, task.generatedContent, isAutoApplied);
         }
 
@@ -5180,6 +5191,7 @@ export const useAITaskStore = defineStore('aiTask', () => {
             task.status = 'pending';
             task.error = undefined;
             task.generatedContent = '';
+            // 提示词已保存在task.finalPrompt中，无需重新构建
             nextTick(_processQueue);
         }
     };
@@ -5325,37 +5337,139 @@ export const useChatStore = defineStore('editorChat', () => {
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
-import type { AITask } from '@/novel/editor/types';
-
-interface PreviewTask {
-    type: AITask['type'];
-    targetItemId: string; 
-    title: string;
-}
-
-export const useContextMenuStore = defineStore('editorContextPreview', () => {
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+import type { AITaskPreview, ContextBuildResult } from '@/novel/editor/types';
+import { useContextBuilder } from '@/novel/editor/composables/useContextBuilder';
+export const useContextPreviewStore = defineStore('contextPreview', () => {
     const isVisible = ref(false);
-    const task = ref<PreviewTask | null>(null);
+    const task = ref<AITaskPreview | null>(null);
+    const isLoading = ref(false);
+    const previewContent = ref<ContextBuildResult | null>(null);
+    const editorStore = useEditorStore();
+    const { buildContextForTask } = useContextBuilder();
 
-    const show = (previewTask: PreviewTask) => {
+    const show = async (previewTask: AITaskPreview) => {
         task.value = previewTask;
         isVisible.value = true;
+        isLoading.value = true;
+        previewContent.value = null; // Reset previous content
+
+        // Short delay for UI to mount
+        await new Promise(res => setTimeout(res, 50));
+
+        // Delegate context building to the context builder composable
+        const { node: targetItem } = editorStore.findItemById(previewTask.targetItemId);
+        previewContent.value = buildContextForTask(previewTask.type, targetItem);
+
+        // Short delay to show loading state
+        await new Promise(res => setTimeout(res, 200));
+        isLoading.value = false;
     };
 
     const hide = () => {
         isVisible.value = false;
         task.value = null;
+        isLoading.value = false;
+        previewContent.value = null;
     };
 
     const execute = () => {
-        if (!task.value) return;
+        if (!task.value || isLoading.value || !previewContent.value?.prompt) return;
+
         const aiTaskStore = useAITaskStore();
-        // Call the centralized task starter
-        aiTaskStore.startTask(task.value.type, task.value.targetItemId);
+        // 将预览时生成的最终提示词，在开始任务时一并传递过去
+        aiTaskStore.startTask(task.value.type, task.value.targetItemId, previewContent.value.prompt);
         hide();
     };
 
-    return { isVisible, task, show, hide, execute };
+    return { isVisible, task, previewContent, isLoading, show, hide, execute };
+});
+
+// =
+// 文件: ..\src\novel\editor\stores\contextSettingsStore.ts
+//
+
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+import type { ContextItem, TreeNode } from '@/novel/editor/types';
+import { useRelatedContentStore } from './relatedContentStore';
+
+const stripHtml = (html: string) => {
+    if (typeof document === 'undefined') return html;
+    const tmp = document.createElement("DIV");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
+}
+
+export const useContextSettingsStore = defineStore('contextSettings', () => {
+    const needsPreview = ref(true);
+    const selectedContextItems = ref<ContextItem[]>([]);
+    const customContextContent = ref('');
+    const dynamicContextSettings = ref({
+        prevChapters: 1,
+        nextChapters: 0,
+        includeRelatedPlot: true,
+        includeRelatedAnalysis: true,
+    });
+    const isRagEnabled = ref(false);
+
+    const fixedContextPresets = computed((): ContextItem[] => {
+        const relatedStore = useRelatedContentStore();
+        const presets: ContextItem[] = [];
+
+        const processNode = (node: TreeNode, group: string) => {
+            if (node.type.endsWith('_item') && 'content' in node && node.content) {
+                presets.push({
+                    id: node.id,
+                    group,
+                    title: node.title,
+                    description: stripHtml(node.content).substring(0, 100) + '...',
+                    content: node.content,
+                });
+            }
+            if (node.children) {
+                node.children.forEach(child => processNode(child, node.id === 'settings' ? child.title : group));
+            }
+        };
+
+        if (relatedStore.settingsData.length > 0) {
+            relatedStore.settingsData.forEach(rootNode => processNode(rootNode, '设定'));
+        }
+        return presets;
+    });
+
+    const addFixedContextItem = (item: ContextItem) => {
+        if (!selectedContextItems.value.some(i => i.id === item.id)) {
+            selectedContextItems.value.push(item);
+        }
+    };
+
+    const removeFixedContextItem = (id: string) => {
+        selectedContextItems.value = selectedContextItems.value.filter(i => i.id !== id);
+    };
+
+    const setCustomContextContent = (content: string) => {
+        customContextContent.value = content;
+    };
+
+    const setDynamicContextSetting = (key: keyof typeof dynamicContextSettings.value, value: number | boolean) => {
+        if (key in dynamicContextSettings.value) {
+            (dynamicContextSettings.value[key] as any) = value;
+        }
+    };
+
+    return {
+        needsPreview,
+        fixedContextPresets,
+        selectedContextItems,
+        customContextContent,
+        dynamicContextSettings,
+        isRagEnabled,
+        addFixedContextItem,
+        removeFixedContextItem,
+        setCustomContextContent,
+        setDynamicContextSetting,
+    };
 });
 
 // =
@@ -5734,7 +5848,6 @@ export const useEditorStore = defineStore('editor-facade', () => {
 // 文件: ..\src\novel\editor\stores\modules\itemStore.ts
 //
 
-// 文件: src/novel/editor/stores/modules/itemStore.ts
 import { defineStore } from 'pinia';
 import { useDirectoryStore } from '../directoryStore';
 import { useRelatedContentStore } from '../relatedContentStore';
@@ -5829,7 +5942,6 @@ export const useItemStore = defineStore('editor-item', () => {
 // 文件: ..\src\novel\editor\stores\modules\metadataStore.ts
 //
 
-// 文件: src/novel/editor/stores/modules/metadataStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { NovelMetadata } from '@/novel/editor/types';
@@ -5901,8 +6013,6 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
 // 文件: ..\src\novel\editor\stores\modules\paneStore.ts
 //
 
-// 文件: src/novel/editor/stores/modules/paneStore.ts
-
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
@@ -5965,8 +6075,6 @@ export const usePaneStore = defineStore('editor-pane', () => {
 // =
 // 文件: ..\src\novel\editor\stores\modules\systemViewStore.ts
 //
-
-// 文件: src/novel/editor/stores/modules/systemViewStore.ts
 
 import { defineStore } from 'pinia';
 import { usePaneStore } from './paneStore';
@@ -6035,8 +6143,6 @@ export const useSystemViewStore = defineStore('editor-system-view', () => {
 // =
 // 文件: ..\src\novel\editor\stores\modules\tabStore.ts
 //
-
-// 文件: src/novel/editor/stores/modules/tabStore.ts
 
 import { defineStore } from 'pinia';
 import { usePaneStore } from './paneStore';
@@ -6209,10 +6315,8 @@ export const useNotesStore = defineStore('notes', () => {
 // 文件: ..\src\novel\editor\stores\relatedContentStore.ts
 //
 
-// 文件: src/novel/editor/stores/relatedContentStore.ts
-
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useEditorStore } from './editorStore';
 import { useUIStore } from './uiStore';
 import { useDirectoryStore } from './directoryStore';
@@ -6264,58 +6368,6 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         }
         return null;
     }
-
-    const processedSettingsData = computed((): TreeNode[] => {
-        const clonedData: TreeNode[] = JSON.parse(JSON.stringify(settingsData.value));
-        const overviewGroups = ['characters', 'locations', 'items', 'worldview'];
-
-        const findAndProcess = (nodes: TreeNode[]) => {
-            for (const node of nodes) {
-                if (node.type === 'group' && overviewGroups.includes(node.id) && node.children) {
-                    const group = node as GroupNode;
-                    const itemsToSummarize = group.children.filter(child => child.type.endsWith('_item')) as ItemNode[];
-
-                    const demoteHeadings = (htmlContent: string): string => {
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = htmlContent;
-                        const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5');
-                        headings.forEach(heading => {
-                            const level = parseInt(heading.tagName.charAt(1), 10);
-                            const newLevel = Math.min(6, level + 1);
-                            const newHeading = document.createElement(`h${newLevel}`);
-                            newHeading.innerHTML = heading.innerHTML;
-                            for (const attr of heading.attributes) {
-                                newHeading.setAttribute(attr.name, attr.value);
-                            }
-                            heading.parentNode?.replaceChild(newHeading, heading);
-                        });
-                        return tempDiv.innerHTML;
-                    }
-
-                    const itemContents = itemsToSummarize.map(item => item.content ? demoteHeadings(item.content) : '').filter(Boolean);
-                    const overviewContent = `<h1>${group.title}总览</h1>` + itemContents.join('<hr>');
-                    const overviewId = `${group.id}-overview`;
-                    const overviewType = `${group.id}_overview` as OverviewNode['type'];
-                    let overviewNode = group.children.find(child => child.id === overviewId);
-
-                    const overviewNodeData: OverviewNode = {
-                        id: overviewId, title: `${group.title}总览`, type: overviewType, icon: getIconByNodeType(overviewType), content: overviewContent, isOverview: true, isReadOnly: true,
-                    };
-
-                    if (overviewNode) {
-                        Object.assign(overviewNode, overviewNodeData);
-                    } else {
-                        group.children.unshift(overviewNodeData);
-                    }
-                }
-                if (node.children) {
-                    findAndProcess(node.children);
-                }
-            }
-        };
-        findAndProcess(clonedData);
-        return clonedData;
-    });
 
     const relatedData = computed((): TreeNode[] => {
         const directoryStore = useDirectoryStore();
@@ -6373,13 +6425,62 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
             children: [...analysisCustomData.value, ...buildDerivedTree('analysis', derivedContentStore.analysisItems)]
         };
 
-        return [...processedSettingsData.value, plotTree, analysisTree];
+        return [...settingsData.value, plotTree, analysisTree];
     });
+    
+    function updateOverviewContent(groupNode: GroupNode) {
+        if (!groupNode.children) return;
+
+        const overviewNode = groupNode.children.find(child => child.isOverview) as OverviewNode | undefined;
+        if (!overviewNode) return;
+
+        const itemsToSummarize = groupNode.children.filter(child => child.type.endsWith('_item') && !child.isOverview) as ItemNode[];
+
+        const demoteHeadings = (htmlContent: string): string => {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+            const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5');
+            headings.forEach(heading => {
+                const level = parseInt(heading.tagName.charAt(1), 10);
+                const newLevel = Math.min(6, level + 1);
+                const newHeading = document.createElement(`h${newLevel}`);
+                newHeading.innerHTML = heading.innerHTML;
+                for (const attr of heading.attributes) {
+                    newHeading.setAttribute(attr.name, attr.value);
+                }
+                heading.parentNode?.replaceChild(newHeading, heading);
+            });
+            return tempDiv.innerHTML;
+        };
+
+        const itemContents = itemsToSummarize.map(item => item.content ? demoteHeadings(item.content) : '').filter(Boolean);
+        overviewNode.content = `<h1>${overviewNode.title}</h1>` + (itemContents.length > 0 ? itemContents.join('<hr>') : `<p class="overview-placeholder">此分类下暂无内容，请添加条目。</p>`);
+    }
+
+    function updateAllOverviewContent() {
+        const findAndProcess = (nodes: TreeNode[]) => {
+            for (const node of nodes) {
+                if (node.type === 'group' && node.children?.some(c => c.isOverview)) {
+                    updateOverviewContent(node as GroupNode);
+                }
+                if (node.children) {
+                    findAndProcess(node.children);
+                }
+            }
+        };
+        findAndProcess(settingsData.value);
+    }
+    
+    watch(settingsData, () => {
+        updateAllOverviewContent();
+    }, { deep: true });
 
     function fetchRelatedData(settings: TreeNode[], plot: TreeNode[], analysis: TreeNode[]) {
         settingsData.value = settings;
         plotCustomData.value = plot;
         analysisCustomData.value = analysis;
+        // Initial content generation for overviews
+        updateAllOverviewContent();
     }
 
     function updateNodeContent(nodeId: string, content: string) {
@@ -6625,26 +6726,23 @@ export const useSearchStore = defineStore('search', () => {
 // 文件: ..\src\novel\editor\stores\uiStore.ts
 //
 
+// 文件: src/novel/editor/stores/uiStore.ts
+
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { EditorUIState, EditorItem, ContextItem } from '@/novel/editor/types';
+import type { EditorItem, EditorUIState } from '@/novel/editor/types';
 
 export const useUIStore = defineStore('ui', () => {
     const editingNodeId = ref<string | null>(null);
     const uiState = ref<EditorUIState>({
         expandedNodeIds: new Set(),
         expandedRelatedNodeIds: new Set(),
-        needsPreview: false,
         autoOpenAIPanel: true,
         activeTheme: 'default',
         taskApplicationStrategy: {
             mode: 'manual', // 'manual', 'auto', 'delayed'
             delaySeconds: 3,
         },
-        customContextContent: '',
-        dynamicContextSettings: { prevChapters: 3, nextChapters: 2, prevVolumes: 1, nextVolumes: 1 },
-        isRagEnabled: true,
-        selectedContextItems: []
     });
 
     // Reader Mode State
@@ -6654,10 +6752,6 @@ export const useUIStore = defineStore('ui', () => {
     const setEditingNodeId = (id: string | null) => {
         editingNodeId.value = id;
     };
-
-    const setNeedsPreview = (value: boolean) => {
-        uiState.value.needsPreview = value;
-    }
 
     const setAutoOpenAIPanel = (value: boolean) => {
         uiState.value.autoOpenAIPanel = value;
@@ -6669,31 +6763,6 @@ export const useUIStore = defineStore('ui', () => {
 
     const setTaskApplicationStrategy = (strategy: EditorUIState['taskApplicationStrategy']) => {
         uiState.value.taskApplicationStrategy = strategy;
-    };
-
-    const setCustomContextContent = (content: string) => {
-        uiState.value.customContextContent = content;
-    }
-
-    const setDynamicContextSettings = (settings: { prevChapters: number, nextChapters: number, prevVolumes: number, nextVolumes: number }) => {
-        uiState.value.dynamicContextSettings = settings;
-    }
-
-    const setRagEnabled = (value: boolean) => {
-        uiState.value.isRagEnabled = value;
-    }
-
-    const addFixedContextItem = (item: ContextItem) => {
-        if (!uiState.value.selectedContextItems.some(i => i.id === item.id)) {
-            uiState.value.selectedContextItems.push({
-                ...item,
-                wordCount: item.content.length // Simple word count for now
-            });
-        }
-    };
-
-    const removeFixedContextItem = (index: number) => {
-        uiState.value.selectedContextItems.splice(index, 1);
     };
 
     const toggleNodeExpansion = (nodeId: string) => {
@@ -6728,15 +6797,9 @@ export const useUIStore = defineStore('ui', () => {
         isReaderModeVisible,
         readerModeItem,
         setEditingNodeId,
-        setNeedsPreview,
         setAutoOpenAIPanel,
         setTheme,
         setTaskApplicationStrategy,
-        setCustomContextContent,
-        setDynamicContextSettings,
-        setRagEnabled,
-        addFixedContextItem,
-        removeFixedContextItem,
         toggleNodeExpansion,
         toggleRelatedNodeExpansion,
         showReaderMode,
@@ -6747,8 +6810,6 @@ export const useUIStore = defineStore('ui', () => {
 // =
 // 文件: ..\src\novel\editor\types\app.ts
 //
-
-// 文件: src/novel/editor/types/app.ts
 
 import type { TreeNode, Volume, Chapter, NoteItem, PlotAnalysisItem } from './models';
 
@@ -6764,10 +6825,11 @@ export interface AITask {
     id: string;
     title: string;
     type: '润色' | '续写' | '分析' | '剧情生成';
-    targetItemId: string; // 任务目标文档的ID
+    targetItemId: string;
     status: AITaskStatus;
-    sourceContent: string; // AI任务的源内容
+    sourceContent: string;
     generatedContent: string;
+    finalPrompt?: string; // 用于存储最终构建的、发送给API的提示词
     error?: string;
     createdAt: Date;
 }
@@ -6787,35 +6849,41 @@ export interface AITaskPreview {
 export interface ContextItem {
     id: string;
     group: string;
-    title: string;
+    title:string;
     description: string;
     content: string;
-    wordCount?: number;
 }
 
 /**
+ * buildContextForTask 方法的返回结果
+ */
+export interface ContextBuildResult {
+    fixed: string;
+    dynamic: string;
+    rag: string;
+    prompt: string;
+    stats: {
+        fixedCharCount: number;
+        dynamicCharCount: number;
+        ragCharCount: number;
+        promptCharCount: number;
+    };
+}
+
+
+/**
  * 编辑器UI状态
- * 用于定义 editorStore 中的 uiState
+ * 用于定义 uiStore 中的 uiState
  */
 export interface EditorUIState {
     expandedNodeIds: Set<string>;
     expandedRelatedNodeIds: Set<string>;
-    needsPreview: boolean;
     autoOpenAIPanel: boolean;
     activeTheme: 'default' | 'eye-care' | 'dark';
     taskApplicationStrategy: {
         mode: 'manual' | 'auto' | 'delayed';
         delaySeconds: number;
     };
-    customContextContent: string;
-    dynamicContextSettings: {
-        prevChapters: number;
-        nextChapters: number;
-        prevVolumes: number;
-        nextVolumes: number;
-    };
-    isRagEnabled: boolean;
-    selectedContextItems: ContextItem[];
 }
 
 /**
@@ -6905,7 +6973,7 @@ export interface Conversation {
 // 文件: ..\src\novel\editor\types\index.ts
 //
 
-// 文件: src/novel/editor/types/index.ts
+
 export * from './models';
 export * from './app';
 export * from './chatTypes';
@@ -6915,9 +6983,6 @@ export * from './ui';
 // 文件: ..\src\novel\editor\types\models.ts
 //
 
-// 文件: src/novel/editor/types/models.ts
-
-// 文件: src/novel/editor/types/models.ts
 
 /**
  * 卷（目录的一级）
@@ -7001,9 +7066,7 @@ export interface NovelMetadata {
     status: '连载中' | '已完结' | '暂停更新';
 }
 
-// =================================================================
-// TreeNode: 用于所有树状视图的统一数据模型
-// =================================================================
+
 
 interface BaseNode {
     id: string;
@@ -7011,6 +7074,7 @@ interface BaseNode {
     icon: string;
     children?: TreeNode[];
     isReadOnly?: boolean;
+    isOverview?: boolean;
 }
 
 export type AnyNode = Volume | Chapter | NoteItem | PlotAnalysisItem;
@@ -7081,7 +7145,7 @@ export type TreeNode =
 // 文件: ..\src\novel\editor\types\ui.ts
 //
 
-// 文件: src/novel/editor/types/ui.ts
+
 
 /**
  * 侧边活动栏（ActivityBar）的标签页ID

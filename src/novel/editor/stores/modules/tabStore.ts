@@ -1,5 +1,3 @@
-// 文件: src/novel/editor/stores/modules/tabStore.ts
-
 import { defineStore } from 'pinia';
 import { usePaneStore } from './paneStore';
 import { useUIStore } from '../uiStore';

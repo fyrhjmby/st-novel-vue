@@ -1,4 +1,3 @@
-// 文件: src/novel/editor/stores/modules/metadataStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { NovelMetadata } from '@/novel/editor/types';

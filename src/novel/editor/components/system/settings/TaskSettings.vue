@@ -53,6 +53,33 @@
       </div>
 
       <div class="setting-item">
+        <label for="concurrent-tasks" class="setting-label">AI任务并发数</label>
+        <div class="setting-control">
+          <div class="flex items-center gap-4">
+            <input
+                id="concurrent-tasks"
+                type="range"
+                min="1"
+                max="10"
+                step="1"
+                v-model.number="concurrentTaskLimit"
+                class="range-custom flex-1"
+            />
+            <input
+                type="number"
+                min="1"
+                max="10"
+                v-model.number="concurrentTaskLimit"
+                class="setting-input w-20 text-center"
+            />
+          </div>
+          <p class="setting-description">
+            设置可以同时处理的AI任务数量。更高的并发数会占用更多资源。当前设置为 {{ concurrentTaskLimit }} 个。
+          </p>
+        </div>
+      </div>
+
+      <div class="setting-item">
         <label class="setting-label">清理任务</label>
         <div class="setting-control">
           <div class="flex items-center gap-4">
@@ -85,6 +112,11 @@ const autoOpenAIPanel = computed({
 const applicationStrategy = computed({
   get: () => uiStore.uiState.taskApplicationStrategy,
   set: (value) => uiStore.setTaskApplicationStrategy(value)
+});
+
+const concurrentTaskLimit = computed({
+  get: () => uiStore.uiState.concurrentTaskLimit,
+  set: (value) => uiStore.setConcurrentTaskLimit(value)
 });
 
 const handleClearCompleted = () => {
@@ -146,4 +178,20 @@ const handleClearAll = () => {
 }
 .setting-input { background-color: white; border: 1px solid #D1D5DB; border-radius: 0.375rem; padding: 0.5rem 0.75rem; outline: none; transition: all 0.2s; }
 .setting-input:focus { border-color: #3B82F6; box-shadow: 0 0 0 1px #3B82F6; }
+.range-custom {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 16px; background: transparent;
+  outline: none; padding: 0; margin: 0;
+}
+.range-custom::-webkit-slider-runnable-track {
+  width: 100%; height: 6px; cursor: pointer;
+  background: #E5E7EB; border-radius: 9999px;
+}
+.range-custom::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  height: 20px; width: 20px; background: #3B82F6;
+  border-radius: 50%; border: 3px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: grab; margin-top: -7px;
+}
 </style>

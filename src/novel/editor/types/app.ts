@@ -1,5 +1,3 @@
-// 文件: src/novel/editor/types/app.ts
-
 import type { TreeNode, Volume, Chapter, NoteItem, PlotAnalysisItem } from './models';
 
 /**
@@ -14,10 +12,13 @@ export interface AITask {
     id: string;
     title: string;
     type: '润色' | '续写' | '分析' | '剧情生成';
-    targetItemId: string; // 任务目标文档的ID
+    sourceItemId: string;
+    targetItemId: string;
+    sourceItemTitle: string; // 新增：源文档标题快照
+    sourceItemContent: string; // 新增：源文档内容快照
     status: AITaskStatus;
-    sourceContent: string; // AI任务的源内容
     generatedContent: string;
+    finalPrompt?: string;
     error?: string;
     createdAt: Date;
 }
@@ -27,7 +28,7 @@ export interface AITask {
  */
 export interface AITaskPreview {
     type: AITask['type'];
-    targetItemId: string;
+    targetItemId: string; // 此处targetItemId即为sourceItemId
     title: string;
 }
 
@@ -37,35 +38,42 @@ export interface AITaskPreview {
 export interface ContextItem {
     id: string;
     group: string;
-    title: string;
+    title:string;
     description: string;
     content: string;
-    wordCount?: number;
 }
 
 /**
+ * buildContextForTask 方法的返回结果
+ */
+export interface ContextBuildResult {
+    fixed: string;
+    dynamic: string;
+    rag: string;
+    prompt: string;
+    stats: {
+        fixedCharCount: number;
+        dynamicCharCount: number;
+        ragCharCount: number;
+        promptCharCount: number;
+    };
+}
+
+
+/**
  * 编辑器UI状态
- * 用于定义 editorStore 中的 uiState
+ * 用于定义 uiStore 中的 uiState
  */
 export interface EditorUIState {
     expandedNodeIds: Set<string>;
     expandedRelatedNodeIds: Set<string>;
-    needsPreview: boolean;
     autoOpenAIPanel: boolean;
     activeTheme: 'default' | 'eye-care' | 'dark';
+    concurrentTaskLimit: number;
     taskApplicationStrategy: {
         mode: 'manual' | 'auto' | 'delayed';
         delaySeconds: number;
     };
-    customContextContent: string;
-    dynamicContextSettings: {
-        prevChapters: number;
-        nextChapters: number;
-        prevVolumes: number;
-        nextVolumes: number;
-    };
-    isRagEnabled: boolean;
-    selectedContextItems: ContextItem[];
 }
 
 /**

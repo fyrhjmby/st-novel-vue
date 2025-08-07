@@ -1,4 +1,4 @@
-// 文件: src/novel/editor/types/ui.ts
+
 
 /**
  * 侧边活动栏（ActivityBar）的标签页ID

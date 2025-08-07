@@ -1,6 +1,8 @@
+// 文件: src/novel/editor/composables/useAITaskExecutor.ts
+
 import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
-import { useUIStore } from '@/novel/editor/stores/uiStore';
-import { useContextMenuStore } from '@/novel/editor/stores/contextPreviewStore';
+import { useContextSettingsStore } from '@/novel/editor/stores/contextSettingsStore';
+import { useContextPreviewStore } from '@/novel/editor/stores/contextPreviewStore';
 import type { AITask, EditorItem } from '@/novel/editor/types';
 
 /**
@@ -14,8 +16,8 @@ type TaskSource = Pick<EditorItem, 'id' | 'title'>;
  */
 export function useAITaskExecutor() {
     const aiTaskStore = useAITaskStore();
-    const uiStore = useUIStore();
-    const contextPreviewStore = useContextMenuStore();
+    const contextSettingsStore = useContextSettingsStore();
+    const contextPreviewStore = useContextPreviewStore();
 
     /**
      * 执行 AI 任务。
@@ -28,8 +30,8 @@ export function useAITaskExecutor() {
             return;
         }
 
-        // 根据 UI store 的状态，决定是直接开始任务还是显示预览
-        if (uiStore.uiState.needsPreview) {
+        // 根据 context settings store 的状态，决定是直接开始任务还是显示预览
+        if (contextSettingsStore.needsPreview) {
             contextPreviewStore.show({
                 type: taskType,
                 targetItemId: source.id,

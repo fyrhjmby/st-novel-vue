@@ -1,5 +1,3 @@
-// 文件: src/novel/editor/stores/relatedContentStore.ts
-
 import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
 import { useEditorStore } from './editorStore';

@@ -1,6 +1,3 @@
-// 文件: src/novel/editor/types/models.ts
-
-// 文件: src/novel/editor/types/models.ts
 
 /**
  * 卷（目录的一级）
@@ -84,9 +81,7 @@ export interface NovelMetadata {
     status: '连载中' | '已完结' | '暂停更新';
 }
 
-// =================================================================
-// TreeNode: 用于所有树状视图的统一数据模型
-// =================================================================
+
 
 interface BaseNode {
     id: string;

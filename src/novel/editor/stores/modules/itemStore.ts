@@ -1,4 +1,3 @@
-// 文件: src/novel/editor/stores/modules/itemStore.ts
 import { defineStore } from 'pinia';
 import { useDirectoryStore } from '../directoryStore';
 import { useRelatedContentStore } from '../relatedContentStore';

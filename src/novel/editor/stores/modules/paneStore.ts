@@ -1,5 +1,3 @@
-// 文件: src/novel/editor/stores/modules/paneStore.ts
-
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 

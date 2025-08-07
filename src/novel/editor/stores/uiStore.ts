@@ -1,23 +1,21 @@
+// 文件: src/novel/editor/stores/uiStore.ts
+
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { EditorUIState, EditorItem, ContextItem } from '@/novel/editor/types';
+import type { EditorItem, EditorUIState } from '@/novel/editor/types';
 
 export const useUIStore = defineStore('ui', () => {
     const editingNodeId = ref<string | null>(null);
     const uiState = ref<EditorUIState>({
         expandedNodeIds: new Set(),
         expandedRelatedNodeIds: new Set(),
-        needsPreview: false,
         autoOpenAIPanel: true,
         activeTheme: 'default',
+        concurrentTaskLimit: 3, // 新增：默认并发数为3
         taskApplicationStrategy: {
             mode: 'manual', // 'manual', 'auto', 'delayed'
             delaySeconds: 3,
         },
-        customContextContent: '',
-        dynamicContextSettings: { prevChapters: 3, nextChapters: 2, prevVolumes: 1, nextVolumes: 1 },
-        isRagEnabled: true,
-        selectedContextItems: []
     });
 
     // Reader Mode State
@@ -28,10 +26,6 @@ export const useUIStore = defineStore('ui', () => {
         editingNodeId.value = id;
     };
 
-    const setNeedsPreview = (value: boolean) => {
-        uiState.value.needsPreview = value;
-    }
-
     const setAutoOpenAIPanel = (value: boolean) => {
         uiState.value.autoOpenAIPanel = value;
     };
@@ -40,33 +34,13 @@ export const useUIStore = defineStore('ui', () => {
         uiState.value.activeTheme = theme;
     };
 
+    const setConcurrentTaskLimit = (limit: number) => {
+        const newLimit = Math.max(1, Math.floor(limit)); // 保证至少为1
+        uiState.value.concurrentTaskLimit = newLimit;
+    };
+
     const setTaskApplicationStrategy = (strategy: EditorUIState['taskApplicationStrategy']) => {
         uiState.value.taskApplicationStrategy = strategy;
-    };
-
-    const setCustomContextContent = (content: string) => {
-        uiState.value.customContextContent = content;
-    }
-
-    const setDynamicContextSettings = (settings: { prevChapters: number, nextChapters: number, prevVolumes: number, nextVolumes: number }) => {
-        uiState.value.dynamicContextSettings = settings;
-    }
-
-    const setRagEnabled = (value: boolean) => {
-        uiState.value.isRagEnabled = value;
-    }
-
-    const addFixedContextItem = (item: ContextItem) => {
-        if (!uiState.value.selectedContextItems.some(i => i.id === item.id)) {
-            uiState.value.selectedContextItems.push({
-                ...item,
-                wordCount: item.content.length // Simple word count for now
-            });
-        }
-    };
-
-    const removeFixedContextItem = (index: number) => {
-        uiState.value.selectedContextItems.splice(index, 1);
     };
 
     const toggleNodeExpansion = (nodeId: string) => {
@@ -101,15 +75,10 @@ export const useUIStore = defineStore('ui', () => {
         isReaderModeVisible,
         readerModeItem,
         setEditingNodeId,
-        setNeedsPreview,
         setAutoOpenAIPanel,
         setTheme,
+        setConcurrentTaskLimit,
         setTaskApplicationStrategy,
-        setCustomContextContent,
-        setDynamicContextSettings,
-        setRagEnabled,
-        addFixedContextItem,
-        removeFixedContextItem,
         toggleNodeExpansion,
         toggleRelatedNodeExpansion,
         showReaderMode,
