@@ -50,12 +50,12 @@
           <label for="prompt-template" class="text-sm font-medium text-[#374151] block mb-3">任务提示词模板</label>
           <select
               id="prompt-template"
-              :value="activeTaskConfig.selected"
+              :value="activeTaskConfig.selectedPromptId"
               @change="handlePromptChange"
               class="w-full text-sm px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
           >
-            <option v-for="prompt in activeTaskConfig.prompts" :key="prompt.name" :value="prompt.name">
-              {{ prompt.name }}
+            <option v-for="prompt in availablePrompts" :key="prompt.id" :value="prompt.id">
+              {{ prompt.title }}
             </option>
           </select>
         </div>
@@ -87,22 +87,25 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useAIConfigStore } from '@/novel/editor/stores/aiConfigStore';
+import { useAIConfigStore } from '@novel/editor/stores/ai/aiConfigStore.ts';
+import { usePromptTemplateStore } from '@novel/editor/stores/promptTemplateStore.ts';
 import type { AITask } from '@/novel/editor/types';
 
 type TaskType = AITask['type'];
 
 const aiConfigStore = useAIConfigStore();
+const promptTemplateStore = usePromptTemplateStore();
 
 const taskInfoMap: Record<TaskType, { name: string; icon: string }> = {
   '润色': { name: '润色', icon: 'fa-solid fa-palette' },
   '续写': { name: '续写', icon: 'fa-solid fa-wand-magic-sparkles' },
   '分析': { name: '分析', icon: 'fa-solid fa-magnifying-glass-chart' },
   '剧情生成': { name: '剧情生成', icon: 'fa-solid fa-feather' },
+  '创作': { name: '创作', icon: 'fa-solid fa-pen-nib' },
 };
 
 const availableTasks = computed(() => {
-  return (Object.keys(aiConfigStore.taskPromptConfigs) as TaskType[]).map(id => ({
+  return (Object.keys(aiConfigStore.taskConfigs) as TaskType[]).map(id => ({
     id,
     name: taskInfoMap[id].name,
     icon: taskInfoMap[id].icon
@@ -112,11 +115,12 @@ const availableTasks = computed(() => {
 const activeTaskId = ref<TaskType>('润色');
 
 const activeTaskInfo = computed(() => availableTasks.value.find(t => t.id === activeTaskId.value));
-const activeTaskConfig = computed(() => aiConfigStore.taskPromptConfigs[activeTaskId.value]);
+const activeTaskConfig = computed(() => aiConfigStore.taskConfigs[activeTaskId.value]);
+const availablePrompts = computed(() => promptTemplateStore.getPromptsForTask(activeTaskId.value));
 
 const handlePromptChange = (event: Event) => {
-  const selectedName = (event.target as HTMLSelectElement).value;
-  aiConfigStore.setSelectedPrompt(activeTaskId.value, selectedName);
+  const selectedId = (event.target as HTMLSelectElement).value;
+  aiConfigStore.setSelectedPromptId(activeTaskId.value, selectedId);
 };
 </script>
 

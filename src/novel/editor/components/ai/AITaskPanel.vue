@@ -15,7 +15,7 @@
 import { ref, computed } from 'vue';
 import AITaskQueue from './AITaskQueue.vue';
 import AIDiffPreview from './AIDiffPreview.vue';
-import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
+import { useAITaskStore } from '@novel/editor/stores/ai/aiTaskStore.ts';
 import type { AITask } from '@/novel/editor/types';
 
 const selectedTaskId = ref<string | null>(null);

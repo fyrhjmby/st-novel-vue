@@ -1,5 +1,3 @@
-// 文件: src/novel/editor/components/sidebar/TreeView.vue
-
 <template>
   <ul class="tree-view-list">
     <li v-for="node in nodes" :key="node.id" class="tree-view-item">
@@ -31,8 +29,8 @@
               type="text"
               :value="node.title"
               class="rename-input"
-              @blur="handleRenameCommit($event, node.id)"
-              @keydown.enter.prevent="handleRenameCommit($event, node.id)"
+              @blur="handleRenameCommit($event, node)"
+              @keydown.enter.prevent="handleRenameCommit($event, node)"
               @keydown.esc.prevent="handleRenameCancel"
               @click.stop
           />
@@ -95,7 +93,7 @@ const emit = defineEmits<{
   (e: 'select-node', node: TreeNode): void;
   (e: 'toggle-expansion', id: string): void;
   (e: 'context-menu', payload: { node: TreeNode, event: MouseEvent }): void;
-  (e: 'commit-rename', payload: { nodeId: string, newTitle: string }): void;
+  (e: 'commit-rename', payload: { nodeId: string, newTitle: string, nodeType: string }): void;
   (e: 'cancel-rename'): void;
 }>();
 
@@ -117,10 +115,10 @@ const handleNodeClick = (node: TreeNode) => {
   emit('select-node', node);
 };
 
-const handleRenameCommit = (event: Event, nodeId: string) => {
+const handleRenameCommit = (event: Event, node: TreeNode) => {
   const input = event.target as HTMLInputElement;
   const newTitle = input.value;
-  emit('commit-rename', { nodeId, newTitle });
+  emit('commit-rename', { nodeId: node.id, newTitle, nodeType: node.type });
 };
 
 const handleRenameCancel = () => {

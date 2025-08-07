@@ -23,7 +23,6 @@ export function streamAITask(prompt: string, callbacks: StreamCallbacks): void {
         if (wordIndex < words.length) {
             onChunk(words[wordIndex]);
             wordIndex++;
-
             // 模拟中途失败
             if (willFail && wordIndex > words.length / 2) {
                 clearInterval(intervalId);

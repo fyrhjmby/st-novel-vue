@@ -2,7 +2,7 @@
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { PlotAnalysisItem } from '@/novel/editor/types';
+import type { PlotAnalysisItem, AITaskType } from '@/novel/editor/types';
 import { useDirectoryStore } from './directoryStore';
 
 export const useDerivedContentStore = defineStore('derivedContent', () => {
@@ -16,7 +16,9 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
      * @param taskType - 任务类型 ('分析' 或 '剧情生成')
      * @returns 新创建的派生内容项
      */
-    function createDerivedItem(sourceChapterId: string, taskType: '分析' | '剧情生成'): PlotAnalysisItem | null {
+    function createDerivedItem(sourceChapterId: string, taskType: AITaskType): PlotAnalysisItem | null {
+        if (taskType !== '分析' && taskType !== '剧情生成') return null;
+
         const directoryStore = useDirectoryStore();
         const chapterResult = directoryStore.findNodeById(sourceChapterId);
         if (!chapterResult || chapterResult.node.type !== 'chapter') return null;
@@ -24,19 +26,19 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
         const chapter = chapterResult.node;
         const now = new Date();
         const timestamp = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-        
-        const typePrefix = taskType === '分析' ? 'analysis' : 'plot';
-        const titleSuffix = taskType === '分析' ? '分析' : '剧情';
+
+        const derivedType: PlotAnalysisItem['type'] = taskType === '分析' ? 'analysis' : 'plot';
+        const titleSuffix = taskType;
 
         const newItem: PlotAnalysisItem = {
-            id: `${typePrefix}_${now.getTime()}`, // 使用时间戳保证ID唯一
-            type: taskType,
+            id: `${derivedType}_${now.getTime()}`, // 使用时间戳保证ID唯一
+            type: derivedType,
             sourceChapterId: sourceChapterId,
             title: `《${chapter.title}》${titleSuffix} - ${timestamp}`,
             content: `<h1>《${chapter.title}》${titleSuffix} - ${timestamp}</h1><p>AI正在生成内容，请稍候...</p>`
         };
 
-        if (taskType === '分析') {
+        if (derivedType === 'analysis') {
             analysisItems.value.unshift(newItem);
         } else {
             plotItems.value.unshift(newItem);

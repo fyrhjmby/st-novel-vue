@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { useChatStore } from '@/novel/editor/stores/chatStore';
+import { useChatStore } from '@novel/editor/stores/ai/chatStore.ts';
 import { storeToRefs } from 'pinia';
 
 const chatStore = useChatStore();

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
+import { useAITaskStore } from '@novel/editor/stores/ai/aiTaskStore.ts';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import type { AITask, AITaskPreview, ContextBuildResult} from '@/novel/editor/types';
 import { useContextBuilder } from '@/novel/editor/composables/useContextBuilder';

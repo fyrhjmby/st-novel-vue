@@ -1,9 +1,9 @@
 // 文件: src/novel/editor/composables/useAITaskExecutor.ts
 
-import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
+import { useAITaskStore } from '@novel/editor/stores/ai/aiTaskStore.ts';
 import { useContextSettingsStore } from '@/novel/editor/stores/contextSettingsStore';
 import { useContextPreviewStore } from '@/novel/editor/stores/contextPreviewStore';
-import type { AITask, EditorItem } from '@/novel/editor/types';
+import type { AITaskType, EditorItem } from '@/novel/editor/types';
 
 /**
  * AI 任务的源信息, 从核心 EditorItem 类型派生
@@ -24,7 +24,7 @@ export function useAITaskExecutor() {
      * @param taskType 要执行的任务类型 ('续写', '润色' 等)
      * @param source 任务的源对象，必须包含 id 和 title
      */
-    const executeAITask = (taskType: AITask['type'], source: TaskSource) => {
+    const executeAITask = (taskType: AITaskType, source: TaskSource) => {
         if (!source || !source.id) {
             console.error("无法执行AI任务：缺少源信息。");
             return;

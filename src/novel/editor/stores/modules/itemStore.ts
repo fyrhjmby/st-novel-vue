@@ -3,6 +3,7 @@ import { useDirectoryStore } from '../directoryStore';
 import { useRelatedContentStore } from '../relatedContentStore';
 import { useNotesStore } from '../notesStore';
 import { useDerivedContentStore } from '../derivedContentStore';
+import { usePromptTemplateStore } from '../promptTemplateStore';
 import type { EditorItem, SystemViewInfo, TreeNode, PlotAnalysisItem } from '@/novel/editor/types';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
 
@@ -24,6 +25,7 @@ export const useItemStore = defineStore('editor-item', () => {
     const relatedContentStore = useRelatedContentStore();
     const notesStore = useNotesStore();
     const derivedContentStore = useDerivedContentStore();
+    const promptTemplateStore = usePromptTemplateStore();
 
     function findItemById(id: string): { node: EditorItem | null; source: string | null } {
         // 1. Check for System Views
@@ -50,15 +52,21 @@ export const useItemStore = defineStore('editor-item', () => {
             return { node: derivedItem as PlotAnalysisItem, source: 'derived' };
         }
 
-        // 3. Check Directory
+        // 3. Check for Prompt Templates
+        const promptItem = promptTemplateStore.findPromptById(id);
+        if (promptItem) {
+            return { node: promptItem, source: 'prompt' };
+        }
+
+        // 4. Check Directory
         let dirResult = directoryStore.findNodeById(id);
         if (dirResult?.node) return { node: dirResult.node, source: 'directory' };
 
-        // 4. Check Related Content (Settings & Custom Items)
+        // 5. Check Related Content (Settings & Custom Items)
         const relatedResult = relatedContentStore.findNodeById(id);
         if(relatedResult?.node) return { node: relatedResult.node, source: 'related' };
 
-        // 5. Check Notes
+        // 6. Check Notes
         const note = notesStore.findNoteById(id);
         if (note) return { node: note, source: 'notes' };
 
@@ -72,6 +80,7 @@ export const useItemStore = defineStore('editor-item', () => {
             case 'related': relatedContentStore.updateNodeContent(id, content); break;
             case 'notes': notesStore.updateNoteContent(id, content); break;
             case 'derived': derivedContentStore.updateNodeContent(id, content); break;
+            case 'prompt': promptTemplateStore.updatePromptItemContent(id, content); break;
         }
     }
 

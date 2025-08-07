@@ -34,6 +34,18 @@ const ICON_MAP: Record<string, string> = {
     'others': 'fa-solid fa-puzzle-piece', // 其他根节点
     'others_item': 'fa-regular fa-file-zipper', // 其他条目
 
+    // 新增：提示词模板 (Prompt Templates)
+    'prompt_group': 'fa-solid fa-layer-group text-sky-600',
+    'prompt_item': 'fa-regular fa-comment-dots text-sky-500',
+
+    // 新增：AI任务类型作为分组图标
+    '润色': 'fa-solid fa-palette text-blue-500',
+    '续写': 'fa-solid fa-wand-magic-sparkles text-gray-600',
+    '分析': 'fa-solid fa-magnifying-glass-chart text-amber-500',
+    '剧情生成': 'fa-solid fa-feather text-pink-500',
+    '创作': 'fa-solid fa-pen-nib text-violet-500',
+
+
     // 笔记 (Notes)
     'note': 'fa-solid fa-note-sticky text-yellow-500',
 

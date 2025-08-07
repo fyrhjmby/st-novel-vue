@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import { useChatStore } from '@/novel/editor/stores/chatStore';
+import { useChatStore } from '@novel/editor/stores/ai/chatStore.ts';
 import { storeToRefs } from 'pinia';
 import ConversationList from './chat/ConversationList.vue';
 import ChatMessageHistory from './chat/ChatMessageHistory.vue';

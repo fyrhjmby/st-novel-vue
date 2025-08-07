@@ -1,5 +1,3 @@
-// 文件: src/novel/editor/components/content/EditorContextMenu.vue
-
 <template>
   <div
       v-if="visible"
@@ -15,6 +13,10 @@
     <a @click="handleExecute('润色')" href="#" class="context-menu-item">
       <i class="fa-solid fa-palette w-4 text-center text-[#3B82F6]"></i>
       <span>润色内容</span>
+    </a>
+    <a @click="handleExecute('创作')" href="#" class="context-menu-item">
+      <i class="fa-solid fa-pen-nib w-4 text-center text-violet-500"></i>
+      <span>创作正文</span>
     </a>
     <div class="context-menu-divider"></div>
     <p class="menu-title">分析任务</p>

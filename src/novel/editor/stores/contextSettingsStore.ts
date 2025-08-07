@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { ContextItem, TreeNode } from '@/novel/editor/types';
+import type { ContextItem, TreeNode, DynamicContextSettings } from '@/novel/editor/types';
 import { useRelatedContentStore } from './relatedContentStore';
 
 const stripHtml = (html: string) => {
@@ -15,7 +15,7 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
     const selectedContextItems = ref<ContextItem[]>([]);
     const selectedOthersItems = ref<ContextItem[]>([]);
     const customContextContent = ref('');
-    const dynamicContextSettings = ref({
+    const dynamicContextSettings = ref<DynamicContextSettings>({
         prevChapters: 1,
         nextChapters: 0,
         includeRelatedPlot: true,
@@ -101,9 +101,9 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
         customContextContent.value = content;
     };
 
-    const setDynamicContextSetting = (key: keyof typeof dynamicContextSettings.value, value: number | boolean) => {
+    const setDynamicContextSetting = (key: keyof DynamicContextSettings, value: number | boolean) => {
         if (key in dynamicContextSettings.value) {
-            (dynamicContextSettings.value[key] as any) = value;
+            dynamicContextSettings.value[key] = value as never;
         }
     };
 

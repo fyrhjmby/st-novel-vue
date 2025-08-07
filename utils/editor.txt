@@ -1,7 +1,7 @@
 // == 扫描摘要 ==
 //
 // 跳过的目录 (共 2 个):
-//   - ..\src\novel\editor\components\ai
+//   - ..\src\novel\editor\components\ai\chat
 //   - ..\src\novel\editor\components\layout
 //
 // == 文件内容 ==
@@ -35,7 +35,6 @@ export function streamAITask(prompt: string, callbacks: StreamCallbacks): void {
         if (wordIndex < words.length) {
             onChunk(words[wordIndex]);
             wordIndex++;
-
             // 模拟中途失败
             if (willFail && wordIndex > words.length / 2) {
                 clearInterval(intervalId);
@@ -49,6 +48,402 @@ export function streamAITask(prompt: string, callbacks: StreamCallbacks): void {
         }
     }, 20); // 调整流式速度
 }
+
+// =
+// 文件: ..\src\novel\editor\components\ai\AIChatView.vue
+//
+
+<template>
+  <div class="flex-1 flex overflow-hidden">
+    <ConversationList />
+
+    <main v-if="activeConversation" class="flex-1 flex flex-col bg-white">
+      <ChatHeader :active-conversation="activeConversation" :current-model="currentModel" />
+
+      <ChatMessageHistory :conversation="activeConversation" :is-receiving="isReceiving" />
+
+      <ChatInputArea />
+
+    </main>
+
+    <div v-else class="flex-1 flex items-center justify-center bg-white text-gray-400">
+      请从左侧选择或新建一个对话
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { onMounted } from 'vue';
+import { useChatStore } from '@novel/editor/stores/ai/chatStore.ts';
+import { storeToRefs } from 'pinia';
+import ConversationList from './chat/ConversationList.vue';
+import ChatMessageHistory from './chat/ChatMessageHistory.vue';
+import ChatInputArea from './chat/ChatInputArea.vue';
+import ChatHeader from './chat/ChatHeader.vue';
+
+const chatStore = useChatStore();
+const { activeConversation, currentModel, isReceiving } = storeToRefs(chatStore);
+
+onMounted(() => {
+  chatStore.fetchConversations();
+});
+</script>
+
+// =
+// 文件: ..\src\novel\editor\components\ai\AIDiffPreview.vue
+//
+
+// 文件: src/novel/editor/components/ai/AIDiffPreview.vue
+
+<template>
+  <div class="diff-preview-container">
+    <div class="header">
+      <h3 class="title">AI生成预览</h3>
+      <div class="actions">
+        <button v-if="previewTask && previewTask.status === 'completed'" @click="$emit('apply-changes', previewTask.id)" class="apply-btn">
+          <i class="fa-solid fa-check"></i>
+          应用修改
+        </button>
+      </div>
+    </div>
+    <div class="content-area">
+      <div v-if="previewTask">
+        <div class="prose-preview">
+          <div v-html="previewTask.generatedContent.replace(/\n/g, '<br>')"></div>
+          <span v-if="previewTask.status === 'processing'" class="blinking-cursor">▍</span>
+        </div>
+      </div>
+      <div v-else class="empty-state">
+        <i class="fa-regular fa-eye text-3xl text-gray-300"></i>
+        <p class="mt-2">请从上方任务队列中</p>
+        <p>选择一个任务来查看预览。</p>
+      </div>
+
+      <!-- Manual Apply Floating Button -->
+      <button
+          v-if="previewTask && previewTask.status === 'completed'"
+          @click="$emit('apply-changes', previewTask.id)"
+          class="manual-apply-fab"
+          title="应用修改"
+      >
+        <i class="fa-solid fa-check"></i>
+      </button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { AITask } from '@/novel/editor/types';
+
+defineProps({
+  previewTask: {
+    type: Object as PropType<AITask | null>,
+    default: null,
+  }
+});
+
+defineEmits<{
+  (e: 'apply-changes', taskId: string): void;
+}>();
+</script>
+
+<style scoped>
+.diff-preview-container { padding: 1rem; display: flex; flex-direction: column; height: 100%; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding: 0 0.5rem; flex-shrink: 0; height: 32px; }
+.title { font-size: 0.875rem; font-weight: 500; color: #4B5563; }
+.apply-btn { display: flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.75rem; background-color: #16A34A; color: white; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500; transition: background-color 0.2s ease; }
+.apply-btn:hover { background-color: #15803D; }
+.content-area { flex-grow: 1; background-color: #FFFFFF; border-radius: 0.5rem; border: 1px solid #E5E7EB; padding: 1rem; overflow-y: auto; font-size: 0.875rem; line-height: 1.7; color: #374151; position: relative; }
+.empty-state { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #9CA3AF; font-size: 0.875rem; }
+.prose-preview { white-space: pre-wrap; }
+.blinking-cursor { font-weight: 500; font-size: 1em; color: #3B82F6; animation: blink 1s step-end infinite; }
+@keyframes blink { from, to { color: transparent; } 50% { color: #3B82F6; } }
+.content-area { scrollbar-width: thin; scrollbar-color: #D1D5DB #ffffff; }
+.content-area::-webkit-scrollbar { width: 6px; }
+.content-area::-webkit-scrollbar-track { background: transparent; }
+.content-area::-webkit-scrollbar-thumb { background-color: #D1D5DB; border-radius: 3px; }
+.manual-apply-fab {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  background-color: #16A34A;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+.manual-apply-fab:hover {
+  background-color: #15803D;
+  transform: scale(1.05);
+}
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\ai\AITaskItem.vue
+//
+
+// 文件: src/novel/editor/components/ai/AITaskItem.vue
+
+<template>
+  <div
+      :class="['task-item', `status-${task.status}`, { 'clickable': isClickable(task.status) }]"
+      @click="handleTaskClick"
+  >
+    <div class="task-item-header">
+      <p class="task-title" :title="task.title">{{ task.title }}</p>
+      <div class="flex items-center gap-2">
+            <span class="task-status-text">
+              <i :class="getStatusIcon(task.status)" class="status-icon"></i>
+              {{ getStatusText(task.status) }}
+            </span>
+        <button
+            v-if="task.status === 'completed'"
+            @click.stop="emit('apply-changes', task.id)"
+            class="apply-now-btn"
+        >
+          <i class="fa-solid fa-check fa-xs"></i>
+          应用
+        </button>
+      </div>
+    </div>
+
+    <div class="task-item-body">
+      <div v-if="task.status === 'processing'" class="progress-bar-container">
+        <div class="progress-bar"></div>
+      </div>
+      <p v-if="task.status === 'failed'" class="error-message">
+        {{ task.error }} <a href="#" @click.prevent.stop="emit('retry-task', task.id)" class="retry-link">重试</a>
+      </p>
+      <p v-if="isClickable(task.status)" class="message">
+        点击查看详情
+      </p>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { AITask, AITaskStatus } from '@/novel/editor/types';
+
+const props = defineProps({
+  task: {
+    type: Object as PropType<AITask>,
+    required: true,
+  },
+});
+
+const emit = defineEmits<{
+  (e: 'select-task', task: AITask): void;
+  (e: 'apply-changes', taskId: string): void;
+  (e: 'retry-task', taskId: string): void;
+}>();
+
+const getStatusText = (status: AITaskStatus): string => {
+  const map: Record<AITaskStatus, string> = {
+    pending: '等待中',
+    processing: '进行中...',
+    completed: '待应用',
+    failed: '失败',
+    applied: '已应用'
+  };
+  return map[status];
+};
+
+const getStatusIcon = (status: AITaskStatus): string => {
+  const map: Record<AITaskStatus, string> = {
+    pending: 'fa-solid fa-hourglass-half',
+    processing: 'fa-solid fa-spinner fa-spin',
+    completed: 'fa-solid fa-check-circle',
+    failed: 'fa-solid fa-times-circle',
+    applied: 'fa-solid fa-check-double'
+  };
+  return map[status];
+}
+
+const isClickable = (status: AITaskStatus): boolean => {
+  return ['completed', 'processing', 'applied', 'failed'].includes(status);
+};
+
+const handleTaskClick = () => {
+  if (isClickable(props.task.status)) {
+    emit('select-task', props.task);
+  }
+};
+</script>
+
+<style scoped>
+.task-item { padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #E5E7EB; transition: all 0.2s ease; background-color: #FFFFFF;}
+.task-item.clickable { cursor: pointer; }
+.task-item.clickable:hover { border-color: #D1D5DB; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.task-item.status-processing.clickable { border: 1px solid #93C5FD; background-color: #EFF6FF; }
+.task-item.status-processing.clickable:hover { background-color: #DBEAFE; border-color: #60A5FA; }
+.task-item.status-completed.clickable { border: 1px solid #BBF7D0; background-color: #F0FDF4; }
+.task-item.status-completed.clickable:hover { background-color: #DCFCE7; border-color: #A7F3D0; }
+.task-item.status-failed { border: 1px solid #FECACA; background-color: #FEF2F2; }
+.task-item.status-applied.clickable { border: 1px solid #E5E7EB; background-color: #F9FAFB; }
+.task-item.status-applied.clickable:hover { background-color: #F3F4F6; border-color: #E5E7EB; }
+.task-item-header { display: flex; justify-content: space-between; align-items: center; }
+.task-title { font-size: 0.875rem; font-weight: 500; color: #1F2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.task-status-text { font-size: 0.75rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
+.status-icon { width: 1rem; text-align: center; }
+.status-pending .task-status-text { color: #6B7280; }
+.status-processing .task-status-text { color: #2563EB; }
+.status-completed .task-status-text { color: #16A34A; }
+.status-failed .task-status-text { color: #DC2626; }
+.status-applied .task-status-text { color: #6B7280; }
+.task-item-body { margin-top: 0.5rem; }
+.progress-bar-container { width: 100%; background-color: #E5E7EB; border-radius: 9999px; height: 0.25rem; overflow: hidden; }
+.progress-bar { background-color: #3B82F6; height: 100%; width: 100%; border-radius: 9999px; animation: indeterminate-progress 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+@keyframes indeterminate-progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.error-message, .message { font-size: 0.75rem; margin-top: 0.25rem; }
+.error-message { color: #B91C1C; }
+.message { color: #6B7280; }
+.retry-link { text-decoration: underline; font-weight: 500; }
+.apply-now-btn { display: flex; align-items: center; gap: 0.25rem; background: #22C55E; color: white; padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 500; transition: background-color 0.2s; }
+.apply-now-btn:hover { background: #16A34A; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\ai\AITaskPanel.vue
+//
+
+// 文件: src/novel/editor/components/ai/AITaskPanel.vue
+
+<template>
+  <div class="ai-task-panel-container">
+    <div class="task-queue-section">
+      <AITaskQueue @select-task="handleSelectTask" @apply-changes="handleApplyChanges" />
+    </div>
+    <div class="diff-preview-section">
+      <AIDiffPreview :preview-task="selectedTask" @apply-changes="handleApplyChanges" />
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+import AITaskQueue from './AITaskQueue.vue';
+import AIDiffPreview from './AIDiffPreview.vue';
+import { useAITaskStore } from '@novel/editor/stores/ai/aiTaskStore.ts';
+import type { AITask } from '@/novel/editor/types';
+
+const selectedTaskId = ref<string | null>(null);
+const aiTaskStore = useAITaskStore();
+
+const selectedTask = computed((): AITask | null => {
+  if (!selectedTaskId.value) return null;
+  return aiTaskStore.tasks.find(t => t.id === selectedTaskId.value) ?? null;
+});
+
+const handleSelectTask = (task: AITask) => {
+  selectedTaskId.value = task.id;
+};
+
+const handleApplyChanges = (taskId: string) => {
+  aiTaskStore.applyChanges(taskId);
+
+  // If the applied task was the one being previewed, clear the preview.
+  if (selectedTaskId.value === taskId) {
+    selectedTaskId.value = null;
+  }
+};
+</script>
+
+<style scoped>
+.ai-task-panel-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #F9FAFB;
+}
+.task-queue-section {
+  height: 50%;
+  min-height: 200px;
+  flex-shrink: 0;
+}
+.diff-preview-section {
+  flex-grow: 1;
+  height: 50%;
+}
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\ai\AITaskQueue.vue
+//
+
+// 文件: src/novel/editor/components/ai/AITaskQueue.vue
+
+<template>
+  <div class="task-queue-container">
+    <div class="header">
+      <h3 class="title">AI任务队列</h3>
+      <span v-if="activeTasksCount > 0" class="badge">{{ activeTasksCount }}个活跃</span>
+    </div>
+    <div v-if="tasks.length > 0" class="task-list">
+      <AITaskItem
+          v-for="task in tasks"
+          :key="task.id"
+          :task="task"
+          @select-task="handleTaskClick"
+          @apply-changes="handleApplyChanges"
+          @retry-task="handleRetry"
+      />
+    </div>
+    <div v-else class="empty-state">
+      <i class="fa-regular fa-folder-open text-3xl text-gray-300"></i>
+      <p class="mt-2">当前没有AI任务</p>
+      <p class="text-xs text-gray-400 mt-1">在编辑器中右键开始</p>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useAITaskStore } from '@novel/editor/stores/ai/aiTaskStore.ts';
+import type { AITask } from '@/novel/editor/types';
+import AITaskItem from './AITaskItem.vue';
+
+const emit = defineEmits<{
+  (e: 'select-task', task: AITask): void;
+  (e: 'apply-changes', taskId: string): void;
+}>();
+
+const aiTaskStore = useAITaskStore();
+const tasks = computed(() => aiTaskStore.tasks);
+const activeTasksCount = computed(() => aiTaskStore.activeTasksCount);
+
+const handleTaskClick = (task: AITask) => {
+  emit('select-task', task);
+};
+
+const handleRetry = (taskId: string) => {
+  aiTaskStore.retryTask(taskId);
+};
+
+const handleApplyChanges = (taskId: string) => {
+  emit('apply-changes', taskId);
+}
+</script>
+
+<style scoped>
+.task-queue-container { padding: 1rem; display: flex; flex-direction: column; height: 100%; border-bottom: 1px solid #E5E7EB; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding: 0 0.5rem; }
+.title { font-size: 0.875rem; font-weight: 500; color: #4B5563; }
+.badge { font-size: 0.75rem; font-weight: 500; padding: 0.125rem 0.5rem; border-radius: 9999px; color: #1D4ED8; background-color: #DBEAFE; }
+.task-list { flex-grow: 1; overflow-y: auto; space-y: 0.5rem; padding-right: 4px; }
+.empty-state { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #9CA3AF; font-size: 0.875rem; }
+.task-list { scrollbar-width: thin; scrollbar-color: #D1D5DB #f9fafb; }
+.task-list::-webkit-scrollbar { width: 6px; }
+.task-list::-webkit-scrollbar-track { background: transparent; }
+.task-list::-webkit-scrollbar-thumb { background-color: #D1D5DB; border-radius: 3px; }
+</style>
 
 // =
 // 文件: ..\src\novel\editor\components\content\EditorContextMenu.vue
@@ -1200,7 +1595,7 @@ const hide = () => {
 const handleAIAction = (taskType: AITask['type'], sourceNode: TreeNode, isBatch = false) => {
   hide();
   if (isBatch && sourceNode.type === 'volume' && 'originalData' in sourceNode && sourceNode.originalData.type === 'volume') {
-    const aiTaskStore = (async () => (await import('@/novel/editor/stores/aiTaskStore')).useAITaskStore())();
+    const aiTaskStore = (async () => (await import('@novel/editor/stores/ai/aiTaskStore.ts')).useAITaskStore())();
     aiTaskStore.then(store => store.startBatchTaskForVolume(taskType, sourceNode.originalData));
   } else {
     executeAITask(taskType, { id: sourceNode.id, title: sourceNode.title });
@@ -2096,6 +2491,10 @@ const handleRenameCancel = () => {
       <i class="fa-solid fa-feather w-4 text-center text-[#EC4899]"></i>
       <span>生成剧情</span>
     </div>
+    <div @click="emit('ai-action', '创作', node)" class="context-menu-item">
+      <i class="fa-solid fa-pen-nib w-4 text-center text-violet-500"></i>
+      <span>创作正文</span>
+    </div>
     <div @click="emit('ai-action', '续写', node)" class="context-menu-item">
       <i class="fa-solid fa-wand-magic-sparkles w-4 text-center text-[#4B5563]"></i>
       <span>续写内容</span>
@@ -2494,6 +2893,10 @@ const emit = defineEmits<{
       <i class="fa-solid fa-feather w-4 text-center text-[#EC4899]"></i>
       <span>批量生成剧情</span>
     </div>
+    <div @click="emit('ai-action', '创作', node, true)" class="context-menu-item">
+      <i class="fa-solid fa-pen-to-square w-4 text-center text-[#8B5CF6]"></i>
+      <span>批量创作正文</span>
+    </div>
     <div @click="emit('ai-action', '续写', node, true)" class="context-menu-item">
       <i class="fa-solid fa-wand-magic-sparkles w-4 text-center text-[#4B5563]"></i>
       <span>批量续写章节</span>
@@ -2749,7 +3152,7 @@ const headerTitle = computed(() => {
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useAIConfigStore } from '@/novel/editor/stores/aiConfigStore';
+import { useAIConfigStore } from '@novel/editor/stores/ai/aiConfigStore.ts';
 import type { AITask } from '@/novel/editor/types';
 
 type TaskType = AITask['type'];
@@ -2761,6 +3164,7 @@ const taskInfoMap: Record<TaskType, { name: string; icon: string }> = {
   '续写': { name: '续写', icon: 'fa-solid fa-wand-magic-sparkles' },
   '分析': { name: '分析', icon: 'fa-solid fa-magnifying-glass-chart' },
   '剧情生成': { name: '剧情生成', icon: 'fa-solid fa-feather' },
+  '创作': { name: '创作', icon: 'fa-solid fa-pen-nib' },
 };
 
 const availableTasks = computed(() => {
@@ -3385,7 +3789,7 @@ const { novelMetadata } = storeToRefs(editorStore);
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
+import { useAITaskStore } from '@novel/editor/stores/ai/aiTaskStore.ts';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
 
 const aiTaskStore = useAITaskStore();
@@ -3657,10 +4061,10 @@ const setActiveTheme = (themeId: ThemeId) => {
 
 // 文件: src/novel/editor/composables/useAITaskExecutor.ts
 
-import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
+import { useAITaskStore } from '@novel/editor/stores/ai/aiTaskStore.ts';
 import { useContextSettingsStore } from '@/novel/editor/stores/contextSettingsStore';
 import { useContextPreviewStore } from '@/novel/editor/stores/contextPreviewStore';
-import type { AITask, EditorItem } from '@/novel/editor/types';
+import type { AITaskType, EditorItem } from '@/novel/editor/types';
 
 /**
  * AI 任务的源信息, 从核心 EditorItem 类型派生
@@ -3681,7 +4085,7 @@ export function useAITaskExecutor() {
      * @param taskType 要执行的任务类型 ('续写', '润色' 等)
      * @param source 任务的源对象，必须包含 id 和 title
      */
-    const executeAITask = (taskType: AITask['type'], source: TaskSource) => {
+    const executeAITask = (taskType: AITaskType, source: TaskSource) => {
         if (!source || !source.id) {
             console.error("无法执行AI任务：缺少源信息。");
             return;
@@ -3709,7 +4113,7 @@ export function useAITaskExecutor() {
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useContextSettingsStore } from '@/novel/editor/stores/contextSettingsStore';
 import { useDerivedContentStore } from '@/novel/editor/stores/derivedContentStore';
-import { useAIConfigStore } from '@/novel/editor/stores/aiConfigStore';
+import { useAIConfigStore } from '@novel/editor/stores/ai/aiConfigStore.ts';
 import type { AITask, ContextBuildResult, EditorItem } from '@/novel/editor/types';
 
 const stripHtml = (html: string) => {
@@ -4250,17 +4654,15 @@ export const editorRoutes: Array<RouteRecordRaw> = [
 ]
 
 // =
-// 文件: ..\src\novel\editor\stores\aiConfigStore.ts
+// 文件: ..\src\novel\editor\stores\ai\aiConfigStore.ts
 //
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { AITask } from '@/novel/editor/types';
-
-type TaskType = AITask['type'];
+import type { AITaskType } from '@novel/editor/types';
 
 // 定义每种任务类型的默认提示词模板
-const defaultPrompts: Record<TaskType, { name: string, template: string }[]> = {
+const defaultPrompts: Record<AITaskType, { name: string, template: string }[]> = {
     '润色': [
         { name: '默认润色提示词', template: '你是一名专业的小说编辑，请根据上下文，对以下“待处理内容”进行润色，使其更具文采和表现力。' },
         { name: '增强创造性提示词', template: '你是一名富有想象力的作家，请跳出常规，用更具创造性和独特风格的语言重写以下“待处理内容”，可以适度偏离原文。' }
@@ -4277,14 +4679,18 @@ const defaultPrompts: Record<TaskType, { name: string, template: string }[]> = {
         { name: '默认剧情生成提示词', template: '你是一名创意编剧，请根据“待处理内容”中描写的场景或事件，生成一段相关的、有趣的后续剧情大纲。' },
         { name: '生成反转剧情提示词', template: '你是一名擅长制造悬念的编剧，请根据“待处理内容”，构思一个包含意外反转的后续剧情大纲。' }
     ],
+    '创作': [
+        { name: '默认创作提示词', template: '你是一位小说家，请根据“动态上下文”（其中可能包含剧情大纲和分析）以及“固定上下文”，为标题为《{{sourceItemTitle}}》的章节创作完整的正文内容。“待处理内容”是旧版或草稿，可作为参考，但你的主要任务是生成全新的、完整的章节。' },
+    ],
 };
 
 export const useAIConfigStore = defineStore('aiConfig', () => {
-    const taskPromptConfigs = ref<Record<TaskType, { prompts: { name: string, template: string }[], selected: string }>>({
+    const taskPromptConfigs = ref<Record<AITaskType, { prompts: { name: string, template: string }[], selected: string }>>({
         '润色': { prompts: defaultPrompts['润色'], selected: defaultPrompts['润色'][0].name },
         '续写': { prompts: defaultPrompts['续写'], selected: defaultPrompts['续写'][0].name },
         '分析': { prompts: defaultPrompts['分析'], selected: defaultPrompts['分析'][0].name },
         '剧情生成': { prompts: defaultPrompts['剧情生成'], selected: defaultPrompts['剧情生成'][0].name },
+        '创作': { prompts: defaultPrompts['创作'], selected: defaultPrompts['创作'][0].name },
     });
 
     /**
@@ -4292,7 +4698,7 @@ export const useAIConfigStore = defineStore('aiConfig', () => {
      * @param taskType 要更新的任务类型
      * @param promptName 选择的提示词名称
      */
-    const setSelectedPrompt = (taskType: TaskType, promptName: string) => {
+    const setSelectedPrompt = (taskType: AITaskType, promptName: string) => {
         if (taskPromptConfigs.value[taskType]) {
             taskPromptConfigs.value[taskType].selected = promptName;
         }
@@ -4305,18 +4711,18 @@ export const useAIConfigStore = defineStore('aiConfig', () => {
 });
 
 // =
-// 文件: ..\src\novel\editor\stores\aiTaskStore.ts
+// 文件: ..\src\novel\editor\stores\ai\aiTaskStore.ts
 //
 
 // src/novel/editor/stores/aiTaskStore.ts
 import { defineStore } from 'pinia'
 import { ref, nextTick, computed } from 'vue'
-import { useEditorStore } from './editorStore'
-import { useUIStore } from './uiStore'
-import { useDerivedContentStore } from './derivedContentStore';
-import type { AITask, Volume } from '@/novel/editor/types';
-import { useContextBuilder } from '@/novel/editor/composables/useContextBuilder';
-import { streamAITask } from '@/novel/editor/api/aiService';
+import { useEditorStore } from '../editorStore.ts'
+import { useUIStore } from '../uiStore.ts'
+import { useDerivedContentStore } from '../derivedContentStore.ts';
+import type { AITask, Volume, AITaskType } from '@novel/editor/types';
+import { useContextBuilder } from '@novel/editor/composables/useContextBuilder.ts';
+import { streamAITask } from '@novel/editor/api/aiService.ts';
 
 const formatContentForEditor = (title: string, rawContent: string): string => {
     const body = rawContent.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p}</p>`).join('');
@@ -4416,7 +4822,7 @@ export const useAITaskStore = defineStore('aiTask', () => {
         }
     };
 
-    const startTask = async (taskType: AITask['type'], sourceItemId: string, finalPrompt?: string) => {
+    const startTask = async (taskType: AITaskType, sourceItemId: string, finalPrompt?: string) => {
         const { node: sourceItem } = editorStore.findItemById(sourceItemId);
         if (!sourceItem || !('content' in sourceItem) || typeof sourceItem.content !== 'string') {
             console.error("AI Task Error: Source item not found or has no content.", sourceItemId);
@@ -4463,7 +4869,7 @@ export const useAITaskStore = defineStore('aiTask', () => {
         nextTick(_processQueue);
     };
 
-    const startBatchTaskForVolume = (taskType: AITask['type'], volume: Volume) => {
+    const startBatchTaskForVolume = (taskType: AITaskType, volume: Volume) => {
         if (!volume || !volume.chapters) return;
         volume.chapters.forEach(chapter => {
             startTask(taskType, chapter.id, undefined);
@@ -4515,13 +4921,13 @@ export const useAITaskStore = defineStore('aiTask', () => {
 });
 
 // =
-// 文件: ..\src\novel\editor\stores\chatStore.ts
+// 文件: ..\src\novel\editor\stores\ai\chatStore.ts
 //
 
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { Conversation, ChatMessage, AIModel } from '@/novel/editor/types/chatTypes';
-import { mockChatConversations } from '@/novel/editor/data/chatData';
+import type { Conversation, ChatMessage, AIModel } from '@novel/editor/types/chatTypes.ts';
+import { mockChatConversations } from '@novel/editor/data/chatData.ts';
 
 export const useChatStore = defineStore('editorChat', () => {
     // --- State ---
@@ -4641,7 +5047,7 @@ export const useChatStore = defineStore('editorChat', () => {
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
+import { useAITaskStore } from '@novel/editor/stores/ai/aiTaskStore.ts';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import type { AITask, AITaskPreview, ContextBuildResult} from '@/novel/editor/types';
 import { useContextBuilder } from '@/novel/editor/composables/useContextBuilder';
@@ -4715,7 +5121,7 @@ export const useContextPreviewStore = defineStore('contextPreview', () => {
 
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { ContextItem, TreeNode } from '@/novel/editor/types';
+import type { ContextItem, TreeNode, DynamicContextSettings } from '@/novel/editor/types';
 import { useRelatedContentStore } from './relatedContentStore';
 
 const stripHtml = (html: string) => {
@@ -4730,7 +5136,7 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
     const selectedContextItems = ref<ContextItem[]>([]);
     const selectedOthersItems = ref<ContextItem[]>([]);
     const customContextContent = ref('');
-    const dynamicContextSettings = ref({
+    const dynamicContextSettings = ref<DynamicContextSettings>({
         prevChapters: 1,
         nextChapters: 0,
         includeRelatedPlot: true,
@@ -4816,9 +5222,9 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
         customContextContent.value = content;
     };
 
-    const setDynamicContextSetting = (key: keyof typeof dynamicContextSettings.value, value: number | boolean) => {
+    const setDynamicContextSetting = (key: keyof DynamicContextSettings, value: number | boolean) => {
         if (key in dynamicContextSettings.value) {
-            (dynamicContextSettings.value[key] as any) = value;
+            dynamicContextSettings.value[key] = value as never;
         }
     };
 
@@ -4848,7 +5254,7 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { PlotAnalysisItem } from '@/novel/editor/types';
+import type { PlotAnalysisItem, AITaskType } from '@/novel/editor/types';
 import { useDirectoryStore } from './directoryStore';
 
 export const useDerivedContentStore = defineStore('derivedContent', () => {
@@ -4862,7 +5268,9 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
      * @param taskType - 任务类型 ('分析' 或 '剧情生成')
      * @returns 新创建的派生内容项
      */
-    function createDerivedItem(sourceChapterId: string, taskType: '分析' | '剧情生成'): PlotAnalysisItem | null {
+    function createDerivedItem(sourceChapterId: string, taskType: AITaskType): PlotAnalysisItem | null {
+        if (taskType !== '分析' && taskType !== '剧情生成') return null;
+
         const directoryStore = useDirectoryStore();
         const chapterResult = directoryStore.findNodeById(sourceChapterId);
         if (!chapterResult || chapterResult.node.type !== 'chapter') return null;
@@ -4870,19 +5278,19 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
         const chapter = chapterResult.node;
         const now = new Date();
         const timestamp = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-        
-        const typePrefix = taskType === '分析' ? 'analysis' : 'plot';
-        const titleSuffix = taskType === '分析' ? '分析' : '剧情';
+
+        const derivedType: PlotAnalysisItem['type'] = taskType === '分析' ? 'analysis' : 'plot';
+        const titleSuffix = taskType;
 
         const newItem: PlotAnalysisItem = {
-            id: `${typePrefix}_${now.getTime()}`, // 使用时间戳保证ID唯一
-            type: taskType,
+            id: `${derivedType}_${now.getTime()}`, // 使用时间戳保证ID唯一
+            type: derivedType,
             sourceChapterId: sourceChapterId,
             title: `《${chapter.title}》${titleSuffix} - ${timestamp}`,
             content: `<h1>《${chapter.title}》${titleSuffix} - ${timestamp}</h1><p>AI正在生成内容，请稍候...</p>`
         };
 
-        if (taskType === '分析') {
+        if (derivedType === 'analysis') {
             analysisItems.value.unshift(newItem);
         } else {
             plotItems.value.unshift(newItem);
@@ -5793,7 +6201,7 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
             if (result) return result;
         }
         // 作为备用方案，在完整的动态树中搜索（用于查找派生内容等）
-        return _findNodeInTreeRecursive(treeBuilderStore.relatedData, nodeId);
+        return _findNodeInTreeRecursive(treeBuilderStore.relatedData as TreeNode[], nodeId);
     }
 
     /**
@@ -5842,28 +6250,38 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
      */
     function addRelatedNode(parentId: string, type: 'group' | 'item') {
         const result = findNodeById(parentId);
-        if (!result?.node) return;
+        if (!result?.node || !result.node.children) return;
 
-        const parentNode = result.node;
-        if (!parentNode.children) parentNode.children = [];
+        const parentNode = result.node as GroupNode;
 
         const itemTypePrefix = parentNode.id.endsWith('s') ? parentNode.id.slice(0, -1) : parentNode.id;
         const newNodeType = type === 'group' ? 'group' : `${itemTypePrefix}_item`;
         const newNodeIcon = getIconByNodeType(newNodeType);
 
-        const newNode: TreeNode = {
-            id: `${type}-${Date.now()}`,
-            title: type === 'group' ? '新建分组' : '新建条目',
-            type: newNodeType,
-            icon: newNodeIcon,
-            content: type === 'item' ? '<h1>新建条目</h1><p>请在此处填写内容...</p>' : undefined,
-            children: type === 'group' ? [] : undefined,
-        } as GroupNode | ItemNode;
+        if (type === 'group') {
+            const newNode: GroupNode = {
+                id: `group-${Date.now()}`,
+                title: '新建分组',
+                type: 'group',
+                icon: newNodeIcon,
+                children: [],
+            };
+            parentNode.children.push(newNode);
+            uiStore.setEditingNodeId(newNode.id);
+        } else { // type === 'item'
+            const newNode: ItemNode = {
+                id: `item-${Date.now()}`,
+                title: '新建条目',
+                type: newNodeType as ItemNode['type'],
+                icon: newNodeIcon,
+                content: '<h1>新建条目</h1><p>请在此处填写内容...</p>',
+            };
+            parentNode.children.push(newNode);
+            uiStore.setEditingNodeId(newNode.id);
+            editorStore.openTab(newNode.id);
+        }
 
-        parentNode.children.push(newNode);
         uiStore.ensureRelatedNodeIsExpanded(parentId);
-        uiStore.setEditingNodeId(newNode.id);
-        if ('content' in newNode && newNode.content !== undefined) editorStore.openTab(newNode.id);
     }
 
     /**
@@ -6438,12 +6856,17 @@ import type { TreeNode, Volume, Chapter, NoteItem, PlotAnalysisItem } from './mo
 export type AITaskStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'applied';
 
 /**
+ * AI 任务类型 (用户界面显示名称)
+ */
+export type AITaskType = '润色' | '续写' | '分析' | '剧情生成' | '创作';
+
+/**
  * AI 任务对象
  */
 export interface AITask {
     id: string;
     title: string;
-    type: '润色' | '续写' | '分析' | '剧情生成';
+    type: AITaskType;
     sourceItemId: string;
     targetItemId: string;
     sourceItemTitle: string; // 新增：源文档标题快照
@@ -6459,7 +6882,7 @@ export interface AITask {
  * AI 任务执行前的预览数据结构
  */
 export interface AITaskPreview {
-    type: AITask['type'];
+    type: AITaskType;
     targetItemId: string; // 此处targetItemId即为sourceItemId
     title: string;
 }
@@ -6468,7 +6891,7 @@ export interface AITaskPreview {
  * 上下文预设或已选择的条目
  */
 export interface ContextItem {
-    id: string;
+    id:string;
     category: '设定' | '其他';
     group: string;
     title:string;
@@ -6492,6 +6915,15 @@ export interface ContextBuildResult {
     };
 }
 
+/**
+ * 动态上下文的配置项
+ */
+export interface DynamicContextSettings {
+    prevChapters: number;
+    nextChapters: number;
+    includeRelatedPlot: boolean;
+    includeRelatedAnalysis: boolean;
+}
 
 /**
  * 编辑器UI状态
@@ -6616,6 +7048,7 @@ export interface Volume {
     id: string;
     type: 'volume';
     title: string;
+    icon?: string;
     content: string; // 卷的大纲或简介
     chapters: Chapter[];
 }
@@ -6627,6 +7060,7 @@ export interface Chapter {
     id:string;
     type: 'chapter';
     title: string;
+    icon?: string;
     wordCount: number;
     content: string; // 章节正文 (HTML)
     status: 'planned' | 'editing' | 'completed' | 'archived';
@@ -6637,7 +7071,8 @@ export interface Chapter {
  */
 export interface PlotAnalysisItem {
     id: string; // 派生ID, e.g., 'plot_ch-1'
-    type: '分析' | '剧情生成'; // 明确其类型
+    type: 'plot' | 'analysis'; // 明确其类型
+    icon?: string;
     sourceChapterId: string; // 源章节ID, e.g., 'ch-1'
     title: string; // 派生标题, e.g., '第一章 剧情'
     content: string; // 生成的内容 (HTML)
@@ -6667,6 +7102,7 @@ export interface NoteItem {
     id: string;
     type: 'note';
     title: string;
+    icon?: string;
     content: string; // 笔记内容 (HTML)
     timestamp: string; // e.g., "今天 14:32"
 }
@@ -6744,29 +7180,13 @@ export interface OverviewNode extends BaseNode {
     children?: never;
 }
 
-// --- AI派生内容节点 ---
-export interface DerivedVolumeNode extends BaseNode {
-    type: 'plot_volume' | 'analysis_volume';
-    isReadOnly: true;
-    children: DerivedChapterNode[];
-}
-
-export interface DerivedChapterNode extends BaseNode {
-    type: 'plot_chapter' | 'analysis_chapter';
-    isReadOnly: true;
-    originalData: PlotAnalysisItem;
-    children?: never;
-}
-
 export type TreeNode =
     | RootNode
     | GroupNode
     | ItemNode
     | OverviewNode
     | VolumeNode
-    | ChapterNode
-    | DerivedVolumeNode
-    | DerivedChapterNode;
+    | ChapterNode;
 
 // =
 // 文件: ..\src\novel\editor\types\ui.ts

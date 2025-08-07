@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useItemDataStore } from './itemDataStore.ts';
 import { useDirectoryStore } from '@novel/editor/stores/directoryStore.ts';
 import { useDerivedContentStore } from '@novel/editor/stores/derivedContentStore.ts';
+import { usePromptTemplateStore } from '@novel/editor/stores/promptTemplateStore';
 import { getIconByNodeType } from '@novel/editor/utils/iconUtils.ts';
 import type { TreeNode, RootNode, PlotAnalysisItem } from '@novel/editor/types';
 
@@ -10,6 +11,7 @@ export const useTreeBuilderStore = defineStore('related-tree-builder', () => {
     const itemDataStore = useItemDataStore();
     const directoryStore = useDirectoryStore();
     const derivedContentStore = useDerivedContentStore();
+    const promptTemplateStore = usePromptTemplateStore();
 
     /**
      * 响应式地构建完整的相关内容树，供UI使用
@@ -67,7 +69,10 @@ export const useTreeBuilderStore = defineStore('related-tree-builder', () => {
         };
         const othersTree: RootNode = {
             id: 'others', title: '其他', type: 'root', icon: getIconByNodeType('others'),
-            children: [...itemDataStore.othersCustomData]
+            children: [
+                ...promptTemplateStore.templates, // 将提示词模板树注入到“其他”分类下
+                ...itemDataStore.othersCustomData
+            ]
         };
 
         // 组合并返回最终的树结构

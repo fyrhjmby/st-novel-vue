@@ -1,12 +1,12 @@
 // src/novel/editor/stores/aiTaskStore.ts
 import { defineStore } from 'pinia'
 import { ref, nextTick, computed } from 'vue'
-import { useEditorStore } from './editorStore'
-import { useUIStore } from './uiStore'
-import { useDerivedContentStore } from './derivedContentStore';
-import type { AITask, Volume, AITaskType } from '@/novel/editor/types';
-import { useContextBuilder } from '@/novel/editor/composables/useContextBuilder';
-import { streamAITask } from '@/novel/editor/api/aiService';
+import { useEditorStore } from '../editorStore.ts'
+import { useUIStore } from '../uiStore.ts'
+import { useDerivedContentStore } from '../derivedContentStore.ts';
+import type { AITask, Volume, AITaskType } from '@novel/editor/types';
+import { useContextBuilder } from '@novel/editor/composables/useContextBuilder.ts';
+import { streamAITask } from '@novel/editor/api/aiService.ts';
 
 const formatContentForEditor = (title: string, rawContent: string): string => {
     const body = rawContent.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p}</p>`).join('');

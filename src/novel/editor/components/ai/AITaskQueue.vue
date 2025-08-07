@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
+import { useAITaskStore } from '@novel/editor/stores/ai/aiTaskStore.ts';
 import type { AITask } from '@/novel/editor/types';
 import AITaskItem from './AITaskItem.vue';
 

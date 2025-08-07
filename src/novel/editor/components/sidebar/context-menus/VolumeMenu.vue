@@ -24,6 +24,10 @@
       <i class="fa-solid fa-feather w-4 text-center text-[#EC4899]"></i>
       <span>批量生成剧情</span>
     </div>
+    <div @click="emit('ai-action', '创作', node, true)" class="context-menu-item">
+      <i class="fa-solid fa-pen-to-square w-4 text-center text-[#8B5CF6]"></i>
+      <span>批量创作正文</span>
+    </div>
     <div @click="emit('ai-action', '续写', node, true)" class="context-menu-item">
       <i class="fa-solid fa-wand-magic-sparkles w-4 text-center text-[#4B5563]"></i>
       <span>批量续写章节</span>

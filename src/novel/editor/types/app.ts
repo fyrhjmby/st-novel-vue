@@ -6,12 +6,17 @@ import type { TreeNode, Volume, Chapter, NoteItem, PlotAnalysisItem } from './mo
 export type AITaskStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'applied';
 
 /**
+ * AI 任务类型 (用户界面显示名称)
+ */
+export type AITaskType = '润色' | '续写' | '分析' | '剧情生成' | '创作';
+
+/**
  * AI 任务对象
  */
 export interface AITask {
     id: string;
     title: string;
-    type: '润色' | '续写' | '分析' | '剧情生成';
+    type: AITaskType;
     sourceItemId: string;
     targetItemId: string;
     sourceItemTitle: string; // 新增：源文档标题快照
@@ -27,7 +32,7 @@ export interface AITask {
  * AI 任务执行前的预览数据结构
  */
 export interface AITaskPreview {
-    type: AITask['type'];
+    type: AITaskType;
     targetItemId: string; // 此处targetItemId即为sourceItemId
     title: string;
 }
@@ -36,7 +41,7 @@ export interface AITaskPreview {
  * 上下文预设或已选择的条目
  */
 export interface ContextItem {
-    id: string;
+    id:string;
     category: '设定' | '其他';
     group: string;
     title:string;
@@ -60,6 +65,15 @@ export interface ContextBuildResult {
     };
 }
 
+/**
+ * 动态上下文的配置项
+ */
+export interface DynamicContextSettings {
+    prevChapters: number;
+    nextChapters: number;
+    includeRelatedPlot: boolean;
+    includeRelatedAnalysis: boolean;
+}
 
 /**
  * 编辑器UI状态

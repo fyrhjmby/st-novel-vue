@@ -3,6 +3,7 @@ import { useItemDataStore } from './itemDataStore.ts';
 import { useTreeBuilderStore } from './treeBuilderStore.ts';
 import { useEditorStore } from '@novel/editor/stores/editorStore.ts';
 import { useUIStore } from '@novel/editor/stores/uiStore.ts';
+import { usePromptTemplateStore } from '../promptTemplateStore.ts';
 import { getIconByNodeType } from '@novel/editor/utils/iconUtils.ts';
 import type { TreeNode, ItemNode, GroupNode } from '@novel/editor/types';
 
@@ -46,12 +47,18 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
     const treeBuilderStore = useTreeBuilderStore();
     const editorStore = useEditorStore();
     const uiStore = useUIStore();
+    const promptTemplateStore = usePromptTemplateStore();
 
     /**
      * 在所有相关内容数据中查找节点
      * @param nodeId - 要查找的节点ID
      */
     function findNodeById(nodeId: string): { node: TreeNode; parent: TreeNode | null; siblings: TreeNode[] } | null {
+        // 先从动态树中查找，因为它包含了所有内容
+        const resultInDynamicTree = _findNodeInTreeRecursive(treeBuilderStore.relatedData as TreeNode[], nodeId);
+        if (resultInDynamicTree) return resultInDynamicTree;
+
+        // 作为备用方案，在原始数据源中搜索
         const staticSources = [
             itemDataStore.settingsData,
             itemDataStore.plotCustomData,
@@ -62,8 +69,8 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
             const result = _findNodeInTreeRecursive(source, nodeId);
             if (result) return result;
         }
-        // 作为备用方案，在完整的动态树中搜索（用于查找派生内容等）
-        return _findNodeInTreeRecursive(treeBuilderStore.relatedData, nodeId);
+
+        return null;
     }
 
     /**
@@ -73,14 +80,20 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
      */
     function updateNodeContent(nodeId: string, content: string) {
         const result = findNodeById(nodeId);
-        if (result?.node && 'content' in result.node) {
-            (result.node as ItemNode).content = content;
-            if (!result.node.isReadOnly) {
-                const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
-                const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
-                if (newTitle && newTitle !== result.node.title) {
-                    result.node.title = newTitle;
-                }
+        if (!result?.node || !('content' in result.node)) return;
+
+        // 特殊处理提示词条目
+        if (result.node.type === 'prompt_item') {
+            promptTemplateStore.updatePromptItemContent(nodeId, content);
+            return;
+        }
+
+        (result.node as ItemNode).content = content;
+        if (!result.node.isReadOnly) {
+            const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
+            const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
+            if (newTitle && newTitle !== result.node.title) {
+                result.node.title = newTitle;
             }
         }
     }
@@ -112,28 +125,38 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
      */
     function addRelatedNode(parentId: string, type: 'group' | 'item') {
         const result = findNodeById(parentId);
-        if (!result?.node) return;
+        if (!result?.node || !result.node.children) return;
 
-        const parentNode = result.node;
-        if (!parentNode.children) parentNode.children = [];
+        const parentNode = result.node as GroupNode;
 
         const itemTypePrefix = parentNode.id.endsWith('s') ? parentNode.id.slice(0, -1) : parentNode.id;
         const newNodeType = type === 'group' ? 'group' : `${itemTypePrefix}_item`;
         const newNodeIcon = getIconByNodeType(newNodeType);
 
-        const newNode: TreeNode = {
-            id: `${type}-${Date.now()}`,
-            title: type === 'group' ? '新建分组' : '新建条目',
-            type: newNodeType,
-            icon: newNodeIcon,
-            content: type === 'item' ? '<h1>新建条目</h1><p>请在此处填写内容...</p>' : undefined,
-            children: type === 'group' ? [] : undefined,
-        } as GroupNode | ItemNode;
+        if (type === 'group') {
+            const newNode: GroupNode = {
+                id: `group-${Date.now()}`,
+                title: '新建分组',
+                type: 'group',
+                icon: newNodeIcon,
+                children: [],
+            };
+            parentNode.children.push(newNode);
+            uiStore.setEditingNodeId(newNode.id);
+        } else { // type === 'item'
+            const newNode: ItemNode = {
+                id: `item-${Date.now()}`,
+                title: '新建条目',
+                type: newNodeType as ItemNode['type'],
+                icon: newNodeIcon,
+                content: '<h1>新建条目</h1><p>请在此处填写内容...</p>',
+            };
+            parentNode.children.push(newNode);
+            uiStore.setEditingNodeId(newNode.id);
+            editorStore.openTab(newNode.id);
+        }
 
-        parentNode.children.push(newNode);
         uiStore.ensureRelatedNodeIsExpanded(parentId);
-        uiStore.setEditingNodeId(newNode.id);
-        if ('content' in newNode && newNode.content !== undefined) editorStore.openTab(newNode.id);
     }
 
     /**
@@ -239,6 +262,31 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
         }
     }
 
+    // --- Prompts ---
+    function addPrompt(groupId: string) {
+        const newPrompt = promptTemplateStore.addPromptItem(groupId, '新建提示词', '在这里输入你的提示词模板...');
+        if (newPrompt) {
+            uiStore.ensureRelatedNodeIsExpanded(groupId);
+            editorStore.openTab(newPrompt.id);
+            uiStore.setEditingNodeId(newPrompt.id);
+        }
+    }
+
+    function renamePrompt(promptId: string, newTitle: string) {
+        if (!newTitle.trim()) {
+            uiStore.setEditingNodeId(null);
+            return;
+        }
+        promptTemplateStore.renamePromptItem(promptId, newTitle.trim());
+        uiStore.setEditingNodeId(null);
+    }
+
+    function deletePrompt(promptId: string) {
+        if (promptTemplateStore.deletePromptItem(promptId)) {
+            editorStore.closeTab(promptId);
+        }
+    }
+
     return {
         findNodeById,
         updateNodeContent,
@@ -252,5 +300,8 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
         addCustomOthersNode,
         renameCustomOthersNode,
         deleteCustomOthersNode,
+        addPrompt,
+        renamePrompt,
+        deletePrompt,
     };
 });

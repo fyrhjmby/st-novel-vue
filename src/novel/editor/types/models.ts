@@ -8,6 +8,7 @@ export interface Volume {
     id: string;
     type: 'volume';
     title: string;
+    icon?: string;
     content: string; // 卷的大纲或简介
     chapters: Chapter[];
 }
@@ -19,6 +20,7 @@ export interface Chapter {
     id:string;
     type: 'chapter';
     title: string;
+    icon?: string;
     wordCount: number;
     content: string; // 章节正文 (HTML)
     status: 'planned' | 'editing' | 'completed' | 'archived';
@@ -29,7 +31,8 @@ export interface Chapter {
  */
 export interface PlotAnalysisItem {
     id: string; // 派生ID, e.g., 'plot_ch-1'
-    type: '分析' | '剧情生成'; // 明确其类型
+    type: 'plot' | 'analysis'; // 明确其类型
+    icon?: string;
     sourceChapterId: string; // 源章节ID, e.g., 'ch-1'
     title: string; // 派生标题, e.g., '第一章 剧情'
     content: string; // 生成的内容 (HTML)
@@ -59,6 +62,7 @@ export interface NoteItem {
     id: string;
     type: 'note';
     title: string;
+    icon?: string;
     content: string; // 笔记内容 (HTML)
     timestamp: string; // e.g., "今天 14:32"
 }
@@ -92,6 +96,7 @@ interface BaseNode {
     children?: TreeNode[];
     isReadOnly?: boolean;
     isOverview?: boolean;
+    originalData?: any;
 }
 
 export type AnyNode = Volume | Chapter | NoteItem | PlotAnalysisItem;
@@ -123,7 +128,7 @@ export interface GroupNode extends BaseNode {
     children: TreeNode[];
 }
 export interface ItemNode extends BaseNode {
-    type: `${string}_item`; // e.g., character_item, plot_item
+    type: `${string}_item`; // e.g., character_item, plot_item, prompt_item
     content: string;
     originalData?: AnyNode;
     children?: never;
@@ -136,19 +141,17 @@ export interface OverviewNode extends BaseNode {
     children?: never;
 }
 
-// --- AI派生内容节点 ---
-export interface DerivedVolumeNode extends BaseNode {
-    type: 'plot_volume' | 'analysis_volume';
-    isReadOnly: true;
-    children: DerivedChapterNode[];
+// --- 新增：提示词模板节点 ---
+export interface PromptGroupNode extends BaseNode {
+    type: 'prompt_group';
+    children: PromptItemNode[];
 }
-
-export interface DerivedChapterNode extends BaseNode {
-    type: 'plot_chapter' | 'analysis_chapter';
-    isReadOnly: true;
-    originalData: PlotAnalysisItem;
+export interface PromptItemNode extends BaseNode {
+    type: 'prompt_item';
+    content: string; // <pre>template</pre>
     children?: never;
 }
+
 
 export type TreeNode =
     | RootNode
@@ -157,5 +160,5 @@ export type TreeNode =
     | OverviewNode
     | VolumeNode
     | ChapterNode
-    | DerivedVolumeNode
-    | DerivedChapterNode;
+    | PromptGroupNode
+    | PromptItemNode;

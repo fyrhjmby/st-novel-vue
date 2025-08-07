@@ -1,16 +1,17 @@
-
 import { defineStore } from 'pinia';
 import { computed } from 'vue';
 import { useItemDataStore } from '@novel/editor/stores/related/itemDataStore';
 import { useTreeBuilderStore } from '@novel/editor/stores/related/treeBuilderStore';
 import { useNodeOperationStore } from '@novel/editor/stores/related/nodeOperationStore';
 import { useOverviewStore } from '@novel/editor/stores/related/overviewStore';
+import { usePromptTemplateStore } from './promptTemplateStore';
 
 export const useRelatedContentStore = defineStore('relatedContent', () => {
     // 实例化所有子模块
     const itemDataStore = useItemDataStore();
     const treeBuilderStore = useTreeBuilderStore();
     const nodeOperationStore = useNodeOperationStore();
+    const promptTemplateStore = usePromptTemplateStore();
 
     // 初始化总览内容的监听逻辑
     useOverviewStore();
@@ -24,8 +25,13 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
     const relatedData = computed(() => treeBuilderStore.relatedData);
 
     // --- Actions ---
-    // 从子模块中导出所有方法，保持接口不变
-    const { fetchRelatedData } = itemDataStore;
+
+    function fetchRelatedData(settings: any[], plot: any[], analysis: any[], others: any[]) {
+        // 访问 promptTemplates 计算属性以确保其被初始化
+        const _ = promptTemplateStore.templates;
+        itemDataStore.fetchRelatedData(settings, plot, analysis, others);
+    }
+
     const {
         findNodeById,
         updateNodeContent,
@@ -39,6 +45,9 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         addCustomOthersNode,
         renameCustomOthersNode,
         deleteCustomOthersNode,
+        addPrompt,
+        renamePrompt,
+        deletePrompt,
     } = nodeOperationStore;
 
     return {
@@ -62,5 +71,8 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         addCustomOthersNode,
         renameCustomOthersNode,
         deleteCustomOthersNode,
+        addPrompt,
+        renamePrompt,
+        deletePrompt,
     };
 });

@@ -98,7 +98,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useAITaskStore } from '@/novel/editor/stores/aiTaskStore';
+import { useAITaskStore } from '@novel/editor/stores/ai/aiTaskStore.ts';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
 
 const aiTaskStore = useAITaskStore();

@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { useChatStore } from '@/novel/editor/stores/chatStore';
+import { useChatStore } from '@novel/editor/stores/ai/chatStore.ts';
 
 const chatStore = useChatStore();
 </script>

@@ -16,6 +16,10 @@
       <i class="fa-solid fa-feather w-4 text-center text-[#EC4899]"></i>
       <span>生成剧情</span>
     </div>
+    <div @click="emit('ai-action', '创作', node)" class="context-menu-item">
+      <i class="fa-solid fa-pen-nib w-4 text-center text-violet-500"></i>
+      <span>创作正文</span>
+    </div>
     <div @click="emit('ai-action', '续写', node)" class="context-menu-item">
       <i class="fa-solid fa-wand-magic-sparkles w-4 text-center text-[#4B5563]"></i>
       <span>续写内容</span>

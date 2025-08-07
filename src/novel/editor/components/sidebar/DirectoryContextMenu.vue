@@ -1,4 +1,3 @@
-// src/novel/editor/components/sidebar/DirectoryContextMenu.vue
 <template>
   <div
       v-if="visible && menuComponent"
@@ -15,6 +14,7 @@
         @custom-related-action="handleCustomRelatedAction"
         @custom-others-action="handleOthersAction"
         @note-action="handleNoteAction"
+        @prompt-action="handlePromptAction"
     />
   </div>
 </template>
@@ -41,6 +41,8 @@ const menuComponentMap = shallowRef({
   'custom_related': defineAsyncComponent(() => import('./context-menus/CustomRelatedMenu.vue')),
   'note': defineAsyncComponent(() => import('./context-menus/NoteMenu.vue')),
   'setting_root': defineAsyncComponent(() => import('./context-menus/SettingsRootMenu.vue')),
+  'prompt_group': defineAsyncComponent(() => import('./context-menus/PromptGroupMenu.vue')),
+  'prompt_item': defineAsyncComponent(() => import('./context-menus/PromptItemMenu.vue')),
 });
 
 // --- State and Props ---
@@ -59,6 +61,11 @@ const notesStore = useNotesStore();
 const menuComponent = computed(() => {
   if (!node.value) return null;
   const { type, id } = node.value;
+
+  // 检查是否为提示词相关节点
+  if (type === 'prompt_group' || type === 'prompt_item') {
+    return menuComponentMap.value[type];
+  }
 
   // Handle custom item types first by ID prefix
   if (id.startsWith('custom-others-')) {
@@ -97,9 +104,9 @@ const menuComponent = computed(() => {
 
 // --- Core Logic ---
 const show = (event: MouseEvent, targetNode: TreeNode) => {
-  if (targetNode.isReadOnly || targetNode.type.endsWith('_overview')) {
-    return;
-  }
+  if (targetNode.isOverview) return;
+  if(targetNode.isReadOnly && targetNode.type !== 'prompt_group') return;
+
   node.value = targetNode;
   visible.value = true;
   position.value.x = event.clientX;
@@ -115,7 +122,7 @@ const hide = () => {
 const handleAIAction = (taskType: AITask['type'], sourceNode: TreeNode, isBatch = false) => {
   hide();
   if (isBatch && sourceNode.type === 'volume' && 'originalData' in sourceNode && sourceNode.originalData.type === 'volume') {
-    const aiTaskStore = (async () => (await import('@/novel/editor/stores/aiTaskStore')).useAITaskStore())();
+    const aiTaskStore = (async () => (await import('@novel/editor/stores/ai/aiTaskStore.ts')).useAITaskStore())();
     aiTaskStore.then(store => store.startBatchTaskForVolume(taskType, sourceNode.originalData));
   } else {
     executeAITask(taskType, { id: sourceNode.id, title: sourceNode.title });
@@ -182,6 +189,23 @@ const handleNoteAction = (action: string, payload: any) => {
     case 'delete': notesStore.deleteNote(nodeId); break;
   }
 };
+
+const handlePromptAction = (action: string, payload: any) => {
+  hide();
+  switch(action) {
+    case 'newPrompt':
+      relatedContentStore.addPrompt(payload.groupId);
+      break;
+    case 'renamePrompt':
+      editorStore.setEditingNodeId(payload.promptId);
+      break;
+    case 'deletePrompt':
+      if (confirm('确定要删除这个提示词模板吗？')) {
+        relatedContentStore.deletePrompt(payload.promptId);
+      }
+      break;
+  }
+}
 
 // --- Lifecycle ---
 onMounted(() => {

@@ -1,7 +1,8 @@
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useContextSettingsStore } from '@/novel/editor/stores/contextSettingsStore';
 import { useDerivedContentStore } from '@/novel/editor/stores/derivedContentStore';
-import { useAIConfigStore } from '@/novel/editor/stores/aiConfigStore';
+import { useAIConfigStore } from '@novel/editor/stores/ai/aiConfigStore.ts';
+import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
 import type { AITask, ContextBuildResult, EditorItem } from '@/novel/editor/types';
 
 const stripHtml = (html: string) => {
@@ -16,6 +17,7 @@ export function useContextBuilder() {
     const contextSettingsStore = useContextSettingsStore();
     const derivedContentStore = useDerivedContentStore();
     const aiConfigStore = useAIConfigStore();
+    const promptTemplateStore = usePromptTemplateStore();
 
     const buildContextForTask = (task: Pick<AITask, 'type' | 'sourceItemId' | 'sourceItemTitle' | 'sourceItemContent'>): ContextBuildResult | null => {
         const { type: taskType, sourceItemId, sourceItemTitle, sourceItemContent } = task;
@@ -87,8 +89,19 @@ export function useContextBuilder() {
 
         // --- Build RAG & Final Prompt ---
         const ragContext = contextSettingsStore.isRagEnabled ? '【RAG智能检索功能已开启，将根据任务内容自动查询知识库...】' : 'RAG检索已禁用或未返回任何结果。';
-        const taskConfig = aiConfigStore.taskPromptConfigs[taskType];
-        const selectedPromptTemplate = taskConfig.prompts.find(p => p.name === taskConfig.selected)?.template || `请为《${sourceItemTitle}》执行“${taskType}”任务。`;
+
+        const taskConfig = aiConfigStore.taskConfigs[taskType];
+        const selectedPromptId = taskConfig.selectedPromptId;
+        const promptNode = promptTemplateStore.findPromptById(selectedPromptId);
+
+        let selectedPromptTemplate = `请为《${sourceItemTitle}》执行“${taskType}”任务。`; // Fallback
+        if (promptNode?.content) {
+            // 从节点的 content (格式为 <pre>template</pre>) 中提取纯文本模板
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = promptNode.content;
+            selectedPromptTemplate = tempDiv.querySelector('pre')?.textContent || selectedPromptTemplate;
+        }
+
 
         const prompt = `[任务提示词]
 ${selectedPromptTemplate}
