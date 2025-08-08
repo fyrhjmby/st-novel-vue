@@ -2,40 +2,36 @@
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { PlotAnalysisItem, AITaskType } from '@/novel/editor/types';
-import { useDirectoryStore } from './directoryStore';
+import type { PlotAnalysisItem, AITaskType, EditorItem } from '@/novel/editor/types';
 
 export const useDerivedContentStore = defineStore('derivedContent', () => {
-    // 数据结构从 Map<string, Item> 改为 ref<Item[]>
     const plotItems = ref<PlotAnalysisItem[]>([]);
     const analysisItems = ref<PlotAnalysisItem[]>([]);
 
     /**
-     * 为指定章节创建一个新的派生内容项（占位符）。
-     * @param sourceChapterId - 源章节的ID
+     * 为指定源（章节或卷）创建一个新的派生内容项（占位符）。
+     * @param sourceNode - 源节点对象 (章节或卷)
      * @param taskType - 任务类型 ('分析' 或 '剧情生成')
      * @returns 新创建的派生内容项
      */
-    function createDerivedItem(sourceChapterId: string, taskType: AITaskType): PlotAnalysisItem | null {
+    function createDerivedItem(sourceNode: EditorItem, taskType: AITaskType): PlotAnalysisItem | null {
         if (taskType !== '分析' && taskType !== '剧情生成') return null;
+        if (sourceNode.type !== 'chapter' && sourceNode.type !== 'volume') return null;
 
-        const directoryStore = useDirectoryStore();
-        const chapterResult = directoryStore.findNodeById(sourceChapterId);
-        if (!chapterResult || chapterResult.node.type !== 'chapter') return null;
 
-        const chapter = chapterResult.node;
         const now = new Date();
         const timestamp = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 
         const derivedType: PlotAnalysisItem['type'] = taskType === '分析' ? 'analysis' : 'plot';
         const titleSuffix = taskType;
+        const titlePrefix = sourceNode.type === 'volume' ? '卷' : '';
 
         const newItem: PlotAnalysisItem = {
             id: `${derivedType}_${now.getTime()}`, // 使用时间戳保证ID唯一
             type: derivedType,
-            sourceChapterId: sourceChapterId,
-            title: `《${chapter.title}》${titleSuffix} - ${timestamp}`,
-            content: `<h1>《${chapter.title}》${titleSuffix} - ${timestamp}</h1><p>AI正在生成内容，请稍候...</p>`
+            sourceId: sourceNode.id,
+            title: `《${titlePrefix}${sourceNode.title}》${titleSuffix} - ${timestamp}`,
+            content: `<h1>《${titlePrefix}${sourceNode.title}》${titleSuffix} - ${timestamp}</h1><p>AI正在生成内容，请稍候...</p>`
         };
 
         if (derivedType === 'analysis') {
@@ -64,7 +60,6 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
         const derivedItem = findItemById(nodeId);
         if (derivedItem) {
             derivedItem.content = content;
-            // 标题不再从内容中提取，以保留时间戳
         }
     }
 
@@ -84,12 +79,12 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
     }
 
     /**
-     * 删除与指定章节ID关联的所有派生数据。
-     * @param chapterId - 源章节的ID
+     * 删除与指定源ID关联的所有派生数据。
+     * @param sourceId - 源的ID
      */
-    function deleteDerivedDataForChapter(chapterId: string) {
-        plotItems.value = plotItems.value.filter(item => item.sourceChapterId !== chapterId);
-        analysisItems.value = analysisItems.value.filter(item => item.sourceChapterId !== chapterId);
+    function deleteDerivedDataForSource(sourceId: string) {
+        plotItems.value = plotItems.value.filter(item => item.sourceId !== sourceId);
+        analysisItems.value = analysisItems.value.filter(item => item.sourceId !== sourceId);
     }
 
 
@@ -100,6 +95,6 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
         findItemById,
         updateNodeContent,
         appendNodeContent,
-        deleteDerivedDataForChapter,
+        deleteDerivedDataForSource,
     };
 });

@@ -1,3 +1,5 @@
+// 文件: src/novel/editor/stores/contextSettingsStore.ts
+
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { ContextItem, TreeNode, DynamicContextSettings } from '@/novel/editor/types';
@@ -16,8 +18,12 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
     const selectedOthersItems = ref<ContextItem[]>([]);
     const customContextContent = ref('');
     const dynamicContextSettings = ref<DynamicContextSettings>({
+        prevVolumes: 0,
+        nextVolumes: 0,
         prevChapters: 1,
         nextChapters: 0,
+        includeVolumePlot: false,
+        includeVolumeAnalysis: false,
         includeRelatedPlot: true,
         includeRelatedAnalysis: true,
     });

@@ -1,5 +1,4 @@
-// src/novel/editor/types/models.ts
-
+// 文件: src/novel/editor/types/models.ts
 
 /**
  * 卷（目录的一级）
@@ -33,7 +32,7 @@ export interface PlotAnalysisItem {
     id: string; // 派生ID, e.g., 'plot_ch-1'
     type: 'plot' | 'analysis'; // 明确其类型
     icon?: string;
-    sourceChapterId: string; // 源章节ID, e.g., 'ch-1'
+    sourceId: string; // 源ID, e.g., 'ch-1' or 'vol-1'
     title: string; // 派生标题, e.g., '第一章 剧情'
     content: string; // 生成的内容 (HTML)
 }

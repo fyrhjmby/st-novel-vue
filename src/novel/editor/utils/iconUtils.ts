@@ -35,6 +35,7 @@ const ICON_MAP: Record<string, string> = {
     'others_item': 'fa-regular fa-file-zipper', // 其他条目
 
     // 新增：提示词模板 (Prompt Templates)
+    'prompt_root': 'fa-solid fa-flask-vial text-cyan-600',
     'prompt_group': 'fa-solid fa-layer-group text-sky-600',
     'prompt_item': 'fa-regular fa-comment-dots text-sky-500',
 

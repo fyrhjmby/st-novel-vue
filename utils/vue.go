@@ -13,12 +13,13 @@ func main() {
 	rootDirs := []string{"../src/novel/editor"}
 	outputFileName := "editor.txt"
 	// 定义要屏蔽（不进行递归读取）的目录名称列表。
-	excludedDirs := []string{"chat","layout"}
+	excludedDirs := []string{"chat","layout","modals"}
 
 //   	excludedDirs := []string{""}
 
 	// 定义要屏蔽（不读取）的特定文件名列表。
-	excludedFiles := []string{".json", "package.json", "pnpm-lock.yaml"}
+	excludedFiles := []string{".json", "package.json", "pnpm-lock.yaml",
+	"HistoryPanel.vue","ThemeSettings.vue","NovelSettings.vue","EditorSettings.vue"}
 
 	if len(os.Args) > 1 {
 		rootDirs = os.Args[1:]

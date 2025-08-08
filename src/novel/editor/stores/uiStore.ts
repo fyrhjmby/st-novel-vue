@@ -1,3 +1,4 @@
+// 文件: src/novel/editor/stores/uiStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { EditorItem, EditorUIState } from '@/novel/editor/types';
@@ -9,7 +10,7 @@ export const useUIStore = defineStore('ui', () => {
         expandedRelatedNodeIds: new Set(),
         autoOpenAIPanel: true,
         activeTheme: 'default',
-        concurrentTaskLimit: 3, // 新增：默认并发数为3
+        concurrentTaskLimit: 3,
         taskApplicationStrategy: {
             mode: 'manual', // 'manual', 'auto', 'delayed'
             delaySeconds: 3,
@@ -49,6 +50,12 @@ export const useUIStore = defineStore('ui', () => {
         }
     };
 
+    const ensureNodeIsExpanded = (nodeId: string) => {
+        if (!uiState.value.expandedNodeIds.has(nodeId)) {
+            uiState.value.expandedNodeIds.add(nodeId);
+        }
+    };
+
     const toggleRelatedNodeExpansion = (nodeId: string) => {
         if (uiState.value.expandedRelatedNodeIds.has(nodeId)) {
             uiState.value.expandedRelatedNodeIds.delete(nodeId);
@@ -84,6 +91,7 @@ export const useUIStore = defineStore('ui', () => {
         setConcurrentTaskLimit,
         setTaskApplicationStrategy,
         toggleNodeExpansion,
+        ensureNodeIsExpanded,
         toggleRelatedNodeExpansion,
         ensureRelatedNodeIsExpanded,
         showReaderMode,

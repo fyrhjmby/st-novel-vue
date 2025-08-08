@@ -21,10 +21,10 @@
 import { onMounted } from 'vue';
 import { useChatStore } from '@novel/editor/stores/ai/chatStore.ts';
 import { storeToRefs } from 'pinia';
-import ConversationList from './chat/ConversationList.vue';
-import ChatMessageHistory from './chat/ChatMessageHistory.vue';
-import ChatInputArea from './chat/ChatInputArea.vue';
-import ChatHeader from './chat/ChatHeader.vue';
+import ConversationList from './ConversationList.vue';
+import ChatMessageHistory from './ChatMessageHistory.vue';
+import ChatInputArea from './ChatInputArea.vue';
+import ChatHeader from './ChatHeader.vue';
 
 const chatStore = useChatStore();
 const { activeConversation, currentModel, isReceiving } = storeToRefs(chatStore);

@@ -1,3 +1,5 @@
+// 文件: src/novel/editor/components/system/settings/ContextSettings.vue
+
 <template>
   <div class="setting-page-container">
     <div class="setting-page-wrapper">
@@ -114,6 +116,22 @@
           <div class="setting-control space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               <div>
+                <label class="block text-sm font-medium text-[#374151] mb-1.5">前置卷数</label>
+                <div class="flex items-center gap-3">
+                  <input type="range" min="0" max="5" :value="settingsStore.dynamicContextSettings.prevVolumes" @input="settingsStore.setDynamicContextSetting('prevVolumes', parseInt(($event.target as HTMLInputElement).value, 10))" class="range-custom flex-1"/>
+                  <span class="text-sm font-medium w-8 text-center text-[#374151]">{{ settingsStore.dynamicContextSettings.prevVolumes }}</span>
+                </div>
+                <p class="setting-description mt-1">自动包含当前内容之前的N个卷。</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-[#374151] mb-1.5">后续卷数</label>
+                <div class="flex items-center gap-3">
+                  <input type="range" min="0" max="5" :value="settingsStore.dynamicContextSettings.nextVolumes" @input="settingsStore.setDynamicContextSetting('nextVolumes', parseInt(($event.target as HTMLInputElement).value, 10))" class="range-custom flex-1"/>
+                  <span class="text-sm font-medium w-8 text-center text-[#374151]">{{ settingsStore.dynamicContextSettings.nextVolumes }}</span>
+                </div>
+                <p class="setting-description mt-1">自动包含当前内容之后N个卷。</p>
+              </div>
+              <div>
                 <label class="block text-sm font-medium text-[#374151] mb-1.5">前置章节数</label>
                 <div class="flex items-center gap-3">
                   <input type="range" min="0" max="10" :value="settingsStore.dynamicContextSettings.prevChapters" @input="settingsStore.setDynamicContextSetting('prevChapters', parseInt(($event.target as HTMLInputElement).value, 10))" class="range-custom flex-1"/>
@@ -132,16 +150,24 @@
             </div>
             <div class="space-y-3">
               <div class="flex items-center">
+                <input id="include-volume-plot" type="checkbox" :checked="settingsStore.dynamicContextSettings.includeVolumePlot" @change="settingsStore.setDynamicContextSetting('includeVolumePlot', ($event.target as HTMLInputElement).checked)" class="setting-checkbox" />
+                <label for="include-volume-plot" class="ml-3 font-medium text-gray-700">包含卷相关剧情</label>
+              </div>
+              <div class="flex items-center">
+                <input id="include-volume-analysis" type="checkbox" :checked="settingsStore.dynamicContextSettings.includeVolumeAnalysis" @change="settingsStore.setDynamicContextSetting('includeVolumeAnalysis', ($event.target as HTMLInputElement).checked)" class="setting-checkbox" />
+                <label for="include-volume-analysis" class="ml-3 font-medium text-gray-700">包含卷相关分析</label>
+              </div>
+              <div class="flex items-center">
                 <input id="include-plot" type="checkbox" :checked="settingsStore.dynamicContextSettings.includeRelatedPlot" @change="settingsStore.setDynamicContextSetting('includeRelatedPlot', ($event.target as HTMLInputElement).checked)" class="setting-checkbox" />
-                <label for="include-plot" class="ml-3 font-medium text-gray-700">包含相关剧情</label>
+                <label for="include-plot" class="ml-3 font-medium text-gray-700">包含章节相关剧情</label>
               </div>
               <div class="flex items-center">
                 <input id="include-analysis" type="checkbox" :checked="settingsStore.dynamicContextSettings.includeRelatedAnalysis" @change="settingsStore.setDynamicContextSetting('includeRelatedAnalysis', ($event.target as HTMLInputElement).checked)" class="setting-checkbox" />
-                <label for="include-analysis" class="ml-3 font-medium text-gray-700">包含相关分析</label>
+                <label for="include-analysis" class="ml-3 font-medium text-gray-700">包含章节相关分析</label>
               </div>
             </div>
 
-            <p class="setting-description">动态上下文会智能加载目标章节前后的内容，以及与该章节关联的派生内容（剧情、分析），以提供更连贯的创作基础。实际加载的内容可在任务预览时查看。</p>
+            <p class="setting-description">动态上下文会智能加载目标内容前后的信息，以及与该内容关联的派生内容（剧情、分析），以提供更连贯的创作基础。实际加载的内容可在任务预览时查看。</p>
           </div>
         </div>
 

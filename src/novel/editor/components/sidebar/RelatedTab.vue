@@ -59,7 +59,6 @@ const relatedTree = computed((): TreeNode[] => {
 });
 
 const handleSelectNode = (node: TreeNode) => {
-  // 只有在节点有内容时才打开tab，否则切换展开状态
   if ('content' in node && node.content !== undefined) {
     editorStore.openTab(node.id);
   } else if(node.children && node.children.length > 0) {
@@ -76,13 +75,19 @@ const handleContextMenu = (payload: { node: TreeNode; event: MouseEvent }) => {
 };
 
 const handleCommitRename = (payload: { nodeId: string; newTitle: string }) => {
-  if (payload.nodeId.startsWith('custom-others-')) {
-    relatedContentStore.renameCustomOthersNode(payload.nodeId, payload.newTitle);
-  } else if (payload.nodeId.startsWith('custom-')) {
-    relatedContentStore.renameCustomRelatedNode(payload.nodeId, payload.newTitle);
-  } else {
-    relatedContentStore.renameRelatedNode(payload.nodeId, payload.newTitle);
+  if (payload.newTitle.trim()) {
+    if (payload.nodeId.startsWith('custom-others-')) {
+      relatedContentStore.renameCustomOthersNode(payload.nodeId, payload.newTitle);
+    } else if (payload.nodeId.startsWith('custom-')) {
+      relatedContentStore.renameCustomRelatedNode(payload.nodeId, payload.newTitle);
+    } else if (payload.nodeId.startsWith('prompt-')) {
+      relatedContentStore.renamePrompt(payload.nodeId, payload.newTitle);
+    }
+    else {
+      relatedContentStore.renameRelatedNode(payload.nodeId, payload.newTitle);
+    }
   }
+  editorStore.setEditingNodeId(null);
 };
 
 const handleCancelRename = () => {

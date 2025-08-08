@@ -1,4 +1,4 @@
-// src/novel/editor/stores/directoryStore.ts
+// 文件: src/novel/editor/stores/directoryStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { Volume, Chapter } from '@/novel/editor/types';
@@ -82,7 +82,7 @@ export const useDirectoryStore = defineStore('directory', () => {
         };
         directoryData.value.push(newVolume);
         editorStore.setEditingNodeId(newVolume.id);
-        uiStore.toggleNodeExpansion(newVolume.id);
+        uiStore.ensureNodeIsExpanded(newVolume.id);
     };
 
     const addChapterToVolume = (volumeId: string) => {
@@ -99,23 +99,20 @@ export const useDirectoryStore = defineStore('directory', () => {
                 status: 'editing'
             };
             volume.chapters.push(newChapter);
-            uiStore.toggleNodeExpansion(volume.id);
+            uiStore.ensureNodeIsExpanded(volume.id);
             editorStore.openTab(newChapter.id);
             editorStore.setEditingNodeId(newChapter.id);
         }
     };
 
     const renameNode = (nodeId: string, newTitle: string) => {
-        const editorStore = useEditorStore();
         if (!newTitle.trim()) {
-            editorStore.setEditingNodeId(null);
             return;
         }
         const result = findNodeById(nodeId);
         if (result?.node) {
             const trimmedTitle = newTitle.trim();
             result.node.title = trimmedTitle;
-            // 同时更新卷和章节的content
             if (result.node.content) {
                 if (result.node.content.includes('<h1>')) {
                     result.node.content = result.node.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
@@ -124,7 +121,6 @@ export const useDirectoryStore = defineStore('directory', () => {
                 }
             }
         }
-        editorStore.setEditingNodeId(null);
     };
 
     const deleteNode = (nodeId: string) => {
@@ -135,15 +131,17 @@ export const useDirectoryStore = defineStore('directory', () => {
         const derivedContentStore = useDerivedContentStore();
 
         if (result.node.type === 'chapter') {
-            derivedContentStore.deleteDerivedDataForChapter(result.node.id);
+            derivedContentStore.deleteDerivedDataForSource(result.node.id);
+        } else if (result.node.type === 'volume') {
+            result.node.chapters.forEach(chapter => {
+                derivedContentStore.deleteDerivedDataForSource(chapter.id);
+            });
+            derivedContentStore.deleteDerivedDataForSource(result.node.id);
         }
 
         if (result.parent && result.node.type === 'chapter') {
             result.parent.chapters = result.parent.chapters.filter(c => c.id !== nodeId);
         } else if (!result.parent && result.node.type === 'volume') {
-            result.node.chapters.forEach(chapter => {
-                derivedContentStore.deleteDerivedDataForChapter(chapter.id);
-            });
             directoryData.value = directoryData.value.filter(v => v.id !== nodeId);
         }
         editorStore.closeTab(nodeId);

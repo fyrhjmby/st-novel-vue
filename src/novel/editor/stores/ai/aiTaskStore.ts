@@ -1,3 +1,5 @@
+// 文件: src/novel/editor/stores/ai/aiTaskStore.ts
+
 // src/novel/editor/stores/aiTaskStore.ts
 import { defineStore } from 'pinia'
 import { ref, nextTick, computed } from 'vue'
@@ -117,7 +119,7 @@ export const useAITaskStore = defineStore('aiTask', () => {
         let taskTitle: string;
 
         if (taskType === '分析' || taskType === '剧情生成') {
-            const newDerivedItem = derivedContentStore.createDerivedItem(sourceItemId, taskType);
+            const newDerivedItem = derivedContentStore.createDerivedItem(sourceItem, taskType);
             if (!newDerivedItem) {
                 console.error("Failed to create derived item shell.");
                 return;

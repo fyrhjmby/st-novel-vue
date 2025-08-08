@@ -1,3 +1,5 @@
+// 文件: src/novel/editor/stores/promptTemplateStore.ts
+
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { TreeNode, ItemNode, AITaskType, PromptItemNode } from '@novel/editor/types';
@@ -42,8 +44,8 @@ export const usePromptTemplateStore = defineStore('promptTemplate', () => {
         const root: TreeNode = {
             id: 'prompt-root',
             title: '提示词模板',
-            type: 'group',
-            icon: getIconByNodeType('group'),
+            type: 'prompt_root',
+            icon: getIconByNodeType('prompt_root'),
             children: (Object.keys(DEFAULT_PROMPTS) as AITaskType[]).map(taskType => {
                 const groupNode: TreeNode = {
                     id: `prompt-group-${taskType}`,
@@ -122,7 +124,6 @@ export const usePromptTemplateStore = defineStore('promptTemplate', () => {
         if (group && group.children) {
             group.children = group.children.filter(p => p.id !== promptId);
 
-            // 如果删除的是当前选中的prompt，则重置为默认
             if (aiConfigStore.taskConfigs[taskType].selectedPromptId === promptId) {
                 aiConfigStore.setSelectedPromptId(taskType, defaultSelectedPromptIds[taskType]);
             }

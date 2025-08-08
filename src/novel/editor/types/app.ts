@@ -1,3 +1,5 @@
+// 文件: src/novel/editor/types/app.ts
+
 import type { TreeNode, Volume, Chapter, NoteItem, PlotAnalysisItem } from './models';
 
 /**
@@ -69,8 +71,12 @@ export interface ContextBuildResult {
  * 动态上下文的配置项
  */
 export interface DynamicContextSettings {
+    prevVolumes: number;
+    nextVolumes: number;
     prevChapters: number;
     nextChapters: number;
+    includeVolumePlot: boolean;
+    includeVolumeAnalysis: boolean;
     includeRelatedPlot: boolean;
     includeRelatedAnalysis: boolean;
 }

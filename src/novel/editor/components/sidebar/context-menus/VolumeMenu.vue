@@ -15,6 +15,16 @@
       <span>重命名</span>
     </div>
     <div class="context-menu-divider"></div>
+    <p class="menu-title">AI 助手</p>
+    <div @click="emit('ai-action', '分析', node)" class="context-menu-item">
+      <i class="fa-solid fa-magnifying-glass-chart w-4 text-center text-[#F59E0B]"></i>
+      <span>分析卷内容</span>
+    </div>
+    <div @click="emit('ai-action', '剧情生成', node)" class="context-menu-item">
+      <i class="fa-solid fa-feather w-4 text-center text-[#EC4899]"></i>
+      <span>生成卷剧情</span>
+    </div>
+    <div class="context-menu-divider"></div>
     <p class="menu-title">AI 批量任务</p>
     <div @click="emit('ai-action', '分析', node, true)" class="context-menu-item">
       <i class="fa-solid fa-magnifying-glass-chart w-4 text-center text-[#F59E0B]"></i>

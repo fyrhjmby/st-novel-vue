@@ -1,19 +1,16 @@
+// 文件: src/novel/editor/stores/related/nodeOperationStore.ts
 import { defineStore } from 'pinia';
 import { useItemDataStore } from './itemDataStore.ts';
-import { useTreeBuilderStore } from './treeBuilderStore.ts';
 import { useEditorStore } from '@novel/editor/stores/editorStore.ts';
 import { useUIStore } from '@novel/editor/stores/uiStore.ts';
 import { usePromptTemplateStore } from '../promptTemplateStore.ts';
 import { getIconByNodeType } from '@novel/editor/utils/iconUtils.ts';
 import type { TreeNode, ItemNode, GroupNode } from '@novel/editor/types';
 
-// --- 辅助函数 ---
-
-// 在给定的树中递归查找节点
-const _findNodeInTreeRecursive = (nodes: TreeNode[], nodeId: string): { node: TreeNode; parent: TreeNode | null; siblings: TreeNode[] } | null => {
+const _findNodeInTreeRecursive = (nodes: TreeNode[], nodeId: string): { node: TreeNode; parent: TreeNode | null; } | null => {
     for (const node of nodes) {
         if (node.id === nodeId) {
-            return { node, parent: null, siblings: nodes };
+            return { node, parent: null };
         }
         if (node.children) {
             const foundInChild = _findNodeInTreeRecursive(node.children, nodeId);
@@ -28,7 +25,6 @@ const _findNodeInTreeRecursive = (nodes: TreeNode[], nodeId: string): { node: Tr
     return null;
 };
 
-// 在给定的树中查找并移除节点
 const _findAndRemoveNodeInTree = (nodes: TreeNode[], nodeId: string): boolean => {
     for (let i = 0; i < nodes.length; i++) {
         if (nodes[i].id === nodeId) {
@@ -44,49 +40,33 @@ const _findAndRemoveNodeInTree = (nodes: TreeNode[], nodeId: string): boolean =>
 
 export const useNodeOperationStore = defineStore('related-node-operations', () => {
     const itemDataStore = useItemDataStore();
-    const treeBuilderStore = useTreeBuilderStore();
-    const editorStore = useEditorStore();
-    const uiStore = useUIStore();
     const promptTemplateStore = usePromptTemplateStore();
 
-    /**
-     * 在所有相关内容数据中查找节点
-     * @param nodeId - 要查找的节点ID
-     */
-    function findNodeById(nodeId: string): { node: TreeNode; parent: TreeNode | null; siblings: TreeNode[] } | null {
-        // 先从动态树中查找，因为它包含了所有内容
-        const resultInDynamicTree = _findNodeInTreeRecursive(treeBuilderStore.relatedData as TreeNode[], nodeId);
-        if (resultInDynamicTree) return resultInDynamicTree;
-
-        // 作为备用方案，在原始数据源中搜索
-        const staticSources = [
+    function findNodeById(nodeId: string): { node: TreeNode; parent: TreeNode | null; } | null {
+        const sources = [
             itemDataStore.settingsData,
             itemDataStore.plotCustomData,
             itemDataStore.analysisCustomData,
             itemDataStore.othersCustomData
         ];
-        for (const source of staticSources) {
+        for (const source of sources) {
             const result = _findNodeInTreeRecursive(source, nodeId);
             if (result) return result;
         }
+        const promptResult = _findNodeInTreeRecursive(promptTemplateStore.templates, nodeId);
+        if (promptResult) return promptResult;
 
         return null;
     }
 
-    /**
-     * 更新节点内容
-     * @param nodeId - 节点ID
-     * @param content - 新的HTML内容
-     */
     function updateNodeContent(nodeId: string, content: string) {
-        const result = findNodeById(nodeId);
-        if (!result?.node || !('content' in result.node)) return;
-
-        // 特殊处理提示词条目
-        if (result.node.type === 'prompt_item') {
+        if (promptTemplateStore.findPromptById(nodeId)) {
             promptTemplateStore.updatePromptItemContent(nodeId, content);
             return;
         }
+
+        const result = findNodeById(nodeId);
+        if (!result?.node || !('content' in result.node)) return;
 
         (result.node as ItemNode).content = content;
         if (!result.node.isReadOnly) {
@@ -98,12 +78,6 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
         }
     }
 
-    /**
-     * 向节点追加内容
-     * @param nodeId - 节点ID
-     * @param contentToAppend - 要追加的原始文本
-     * @param isAutoApplied - 是否为AI自动应用
-     */
     function appendNodeContent(nodeId: string, contentToAppend: string, isAutoApplied: boolean) {
         const result = findNodeById(nodeId);
         if (result?.node && 'content' in result.node) {
@@ -118,16 +92,13 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
         }
     }
 
-    /**
-     * 在设定的分组下添加新节点（分组或条目）
-     * @param parentId - 父节点ID
-     * @param type - 'group' 或 'item'
-     */
     function addRelatedNode(parentId: string, type: 'group' | 'item') {
-        const result = findNodeById(parentId);
+        const result = _findNodeInTreeRecursive(itemDataStore.settingsData, parentId);
         if (!result?.node || !result.node.children) return;
 
         const parentNode = result.node as GroupNode;
+        const uiStore = useUIStore();
+        const editorStore = useEditorStore();
 
         const itemTypePrefix = parentNode.id.endsWith('s') ? parentNode.id.slice(0, -1) : parentNode.id;
         const newNodeType = type === 'group' ? 'group' : `${itemTypePrefix}_item`;
@@ -155,47 +126,26 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
             uiStore.setEditingNodeId(newNode.id);
             editorStore.openTab(newNode.id);
         }
-
         uiStore.ensureRelatedNodeIsExpanded(parentId);
     }
 
-    /**
-     * 重命名设定节点
-     * @param nodeId - 节点ID
-     * @param newTitle - 新标题
-     */
     function renameRelatedNode(nodeId: string, newTitle: string) {
-        if (!newTitle.trim()) {
-            uiStore.setEditingNodeId(null);
-            return;
-        }
         const result = findNodeById(nodeId);
-        if (result?.node && !result.node.isReadOnly) {
+        if (result?.node && !result.node.isReadOnly && newTitle.trim()) {
             const trimmedTitle = newTitle.trim();
             result.node.title = trimmedTitle;
             if ('content' in result.node && result.node.content && result.node.content.includes('<h1>')) {
                 (result.node as ItemNode).content = (result.node as ItemNode).content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
             }
         }
-        uiStore.setEditingNodeId(null);
     }
 
-    /**
-     * 删除设定节点
-     * @param nodeId - 节点ID
-     */
     function deleteRelatedNode(nodeId: string) {
-        const result = findNodeById(nodeId);
-        if (!result?.node) return;
-
         const wasRemoved = _findAndRemoveNodeInTree(itemDataStore.settingsData, nodeId);
         if (wasRemoved) {
-            editorStore.closeTab(nodeId);
-            if (uiStore.editingNodeId === nodeId) uiStore.setEditingNodeId(null);
+            useEditorStore().closeTab(nodeId);
         }
     }
-
-    // --- Custom Related (Plot/Analysis) ---
 
     function addCustomRelatedNode(target: 'plot' | 'analysis') {
         const dataRef = target === 'plot' ? itemDataStore.plotCustomData : itemDataStore.analysisCustomData;
@@ -208,28 +158,17 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
             content: '<h1>新建自定义条目</h1><p>请在此处填写内容...</p>',
         };
         dataRef.unshift(newNode);
-        uiStore.ensureRelatedNodeIsExpanded(target);
-        uiStore.setEditingNodeId(newNode.id);
-        editorStore.openTab(newNode.id);
-    }
-
-    function renameCustomRelatedNode(nodeId: string, newTitle: string) {
-        renameRelatedNode(nodeId, newTitle);
+        useUIStore().ensureRelatedNodeIsExpanded(target);
+        useEditorStore().openTab(newNode.id);
+        useUIStore().setEditingNodeId(newNode.id);
     }
 
     function deleteCustomRelatedNode(nodeId: string) {
-        const result = findNodeById(nodeId);
-        if (!result?.node) return;
-
         const wasRemoved = _findAndRemoveNodeInTree(itemDataStore.plotCustomData, nodeId) || _findAndRemoveNodeInTree(itemDataStore.analysisCustomData, nodeId);
-
         if (wasRemoved) {
-            editorStore.closeTab(nodeId);
-            if (uiStore.editingNodeId === nodeId) uiStore.setEditingNodeId(null);
+            useEditorStore().closeTab(nodeId);
         }
     }
-
-    // --- Custom Others ---
 
     function addCustomOthersNode() {
         const icon = getIconByNodeType('others_item');
@@ -241,31 +180,23 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
             content: '<h1>新建其他条目</h1><p>请在此处填写内容...</p>',
         };
         itemDataStore.othersCustomData.unshift(newNode);
-        uiStore.ensureRelatedNodeIsExpanded('others');
-        uiStore.setEditingNodeId(newNode.id);
-        editorStore.openTab(newNode.id);
-    }
-
-    function renameCustomOthersNode(nodeId: string, newTitle: string) {
-        renameRelatedNode(nodeId, newTitle);
+        useUIStore().ensureRelatedNodeIsExpanded('others');
+        useEditorStore().openTab(newNode.id);
+        useUIStore().setEditingNodeId(newNode.id);
     }
 
     function deleteCustomOthersNode(nodeId: string) {
-        const result = findNodeById(nodeId);
-        if (!result?.node) return;
-
         const wasRemoved = _findAndRemoveNodeInTree(itemDataStore.othersCustomData, nodeId);
-
         if (wasRemoved) {
-            editorStore.closeTab(nodeId);
-            if (uiStore.editingNodeId === nodeId) uiStore.setEditingNodeId(null);
+            useEditorStore().closeTab(nodeId);
         }
     }
 
-    // --- Prompts ---
     function addPrompt(groupId: string) {
         const newPrompt = promptTemplateStore.addPromptItem(groupId, '新建提示词', '在这里输入你的提示词模板...');
         if (newPrompt) {
+            const uiStore = useUIStore();
+            const editorStore = useEditorStore();
             uiStore.ensureRelatedNodeIsExpanded(groupId);
             editorStore.openTab(newPrompt.id);
             uiStore.setEditingNodeId(newPrompt.id);
@@ -273,17 +204,14 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
     }
 
     function renamePrompt(promptId: string, newTitle: string) {
-        if (!newTitle.trim()) {
-            uiStore.setEditingNodeId(null);
-            return;
+        if (newTitle.trim()) {
+            promptTemplateStore.renamePromptItem(promptId, newTitle.trim());
         }
-        promptTemplateStore.renamePromptItem(promptId, newTitle.trim());
-        uiStore.setEditingNodeId(null);
     }
 
     function deletePrompt(promptId: string) {
         if (promptTemplateStore.deletePromptItem(promptId)) {
-            editorStore.closeTab(promptId);
+            useEditorStore().closeTab(promptId);
         }
     }
 
@@ -295,10 +223,10 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
         renameRelatedNode,
         deleteRelatedNode,
         addCustomRelatedNode,
-        renameCustomRelatedNode,
+        renameCustomRelatedNode: renameRelatedNode,
         deleteCustomRelatedNode,
         addCustomOthersNode,
-        renameCustomOthersNode,
+        renameCustomOthersNode: renameRelatedNode,
         deleteCustomOthersNode,
         addPrompt,
         renamePrompt,

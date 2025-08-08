@@ -37,7 +37,7 @@ import TiptapEditor from './TiptapEditor.vue';
 import FloatingToolbar from './FloatingToolbar.vue';
 import EditorContextMenu from './EditorContextMenu.vue';
 import SearchView from '@novel/editor/views/SearchView.vue';
-import AIChatView from '@/novel/editor/components/ai/AIChatView.vue';
+import AIChatView from '@novel/editor/components/ai/chat/AIChatView.vue';
 import AITaskPanel from '@/novel/editor/components/ai/AITaskPanel.vue';
 import EditorSettings from '@/novel/editor/components/system/settings/EditorSettings.vue';
 import ContextSettings from '@/novel/editor/components/system/settings/ContextSettings.vue';

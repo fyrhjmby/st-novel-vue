@@ -1,8 +1,15 @@
 // == 扫描摘要 ==
 //
-// 跳过的目录 (共 2 个):
+// 跳过的目录 (共 3 个):
 //   - ..\src\novel\editor\components\ai\chat
 //   - ..\src\novel\editor\components\layout
+//   - ..\src\novel\editor\components\modals
+//
+// 跳过的特定文件 (共 4 个):
+//   - ..\src\novel\editor\components\system\HistoryPanel.vue
+//   - ..\src\novel\editor\components\system\settings\EditorSettings.vue
+//   - ..\src\novel\editor\components\system\settings\NovelSettings.vue
+//   - ..\src\novel\editor\components\system\settings\ThemeSettings.vue
 //
 // == 文件内容 ==
 
@@ -48,46 +55,6 @@ export function streamAITask(prompt: string, callbacks: StreamCallbacks): void {
         }
     }, 20); // 调整流式速度
 }
-
-// =
-// 文件: ..\src\novel\editor\components\ai\AIChatView.vue
-//
-
-<template>
-  <div class="flex-1 flex overflow-hidden">
-    <ConversationList />
-
-    <main v-if="activeConversation" class="flex-1 flex flex-col bg-white">
-      <ChatHeader :active-conversation="activeConversation" :current-model="currentModel" />
-
-      <ChatMessageHistory :conversation="activeConversation" :is-receiving="isReceiving" />
-
-      <ChatInputArea />
-
-    </main>
-
-    <div v-else class="flex-1 flex items-center justify-center bg-white text-gray-400">
-      请从左侧选择或新建一个对话
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { onMounted } from 'vue';
-import { useChatStore } from '@novel/editor/stores/ai/chatStore.ts';
-import { storeToRefs } from 'pinia';
-import ConversationList from './chat/ConversationList.vue';
-import ChatMessageHistory from './chat/ChatMessageHistory.vue';
-import ChatInputArea from './chat/ChatInputArea.vue';
-import ChatHeader from './chat/ChatHeader.vue';
-
-const chatStore = useChatStore();
-const { activeConversation, currentModel, isReceiving } = storeToRefs(chatStore);
-
-onMounted(() => {
-  chatStore.fetchConversations();
-});
-</script>
 
 // =
 // 文件: ..\src\novel\editor\components\ai\AIDiffPreview.vue
@@ -449,8 +416,6 @@ const handleApplyChanges = (taskId: string) => {
 // 文件: ..\src\novel\editor\components\content\EditorContextMenu.vue
 //
 
-// 文件: src/novel/editor/components/content/EditorContextMenu.vue
-
 <template>
   <div
       v-if="visible"
@@ -466,6 +431,10 @@ const handleApplyChanges = (taskId: string) => {
     <a @click="handleExecute('润色')" href="#" class="context-menu-item">
       <i class="fa-solid fa-palette w-4 text-center text-[#3B82F6]"></i>
       <span>润色内容</span>
+    </a>
+    <a @click="handleExecute('创作')" href="#" class="context-menu-item">
+      <i class="fa-solid fa-pen-nib w-4 text-center text-violet-500"></i>
+      <span>创作正文</span>
     </a>
     <div class="context-menu-divider"></div>
     <p class="menu-title">分析任务</p>
@@ -970,7 +939,7 @@ import TiptapEditor from './TiptapEditor.vue';
 import FloatingToolbar from './FloatingToolbar.vue';
 import EditorContextMenu from './EditorContextMenu.vue';
 import SearchView from '@novel/editor/views/SearchView.vue';
-import AIChatView from '@/novel/editor/components/ai/AIChatView.vue';
+import AIChatView from '@novel/editor/components/ai/chat/AIChatView.vue';
 import AITaskPanel from '@/novel/editor/components/ai/AITaskPanel.vue';
 import EditorSettings from '@/novel/editor/components/system/settings/EditorSettings.vue';
 import ContextSettings from '@/novel/editor/components/system/settings/ContextSettings.vue';
@@ -1248,237 +1217,9 @@ onBeforeUnmount(() => {
 </style>
 
 // =
-// 文件: ..\src\novel\editor\components\modals\ContextPreviewModal.vue
-//
-
-<template>
-  <div v-if="store.isVisible" class="modal-overlay">
-    <div class="modal-container">
-      <!-- Modal Header -->
-      <header class="modal-header">
-        <div>
-          <h2 class="modal-title">AI 任务确认</h2>
-          <p v-if="store.task" class="modal-subtitle">即将为 <span class="font-semibold text-gray-700">《{{ store.task.title }}》</span> 执行 <span class="font-semibold text-gray-700">【{{ store.task.type }}】</span> 任务</p>
-        </div>
-        <button @click="store.hide()" class="modal-close-button">
-          <i class="fa-solid fa-times"></i>
-        </button>
-      </header>
-
-      <!-- Loading State -->
-      <div v-if="store.isLoading" class="modal-loading-state">
-        <i class="fa-solid fa-spinner fa-spin text-3xl text-gray-400"></i>
-        <p class="mt-4 text-gray-500">正在构建上下文...</p>
-      </div>
-
-      <!-- Content State with Collapsible Panels -->
-      <div v-else-if="store.previewContent" class="modal-content-wrapper">
-        <div v-for="panel in panels" :key="panel.id" class="result-group">
-          <div @click="toggleExpansion(panel.id)" class="result-header">
-            <div class="flex items-center gap-3 min-w-0">
-              <i class="fa-solid fa-chevron-right expand-icon" :class="{ 'expanded': expandedPanelIds.has(panel.id) }"></i>
-              <span class="font-medium truncate">{{ panel.name }}</span>
-            </div>
-            <span class="match-count">{{ formatCharCount(store.previewContent.stats[panel.statKey]) }}</span>
-          </div>
-          <div v-show="expandedPanelIds.has(panel.id)" class="match-list-style-body">
-            <div v-if="panel.id === 'prompt'">
-              <pre class="prompt-preview">{{ store.previewContent.prompt }}</pre>
-            </div>
-            <div v-else class="prose prose-sm max-w-none" v-html="store.previewContent[panel.id] || emptyStateHtml(panel.name)"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Footer -->
-      <footer class="modal-footer">
-        <div v-if="store.previewContent" class="stats-summary">
-          总计上下文: {{ totalCharCount }} 字
-        </div>
-        <button @click="store.hide()" class="button-secondary">取消</button>
-        <button @click="store.execute()" :disabled="store.isLoading" class="button-primary">
-          <i v-if="store.isLoading" class="fa-solid fa-spinner fa-spin mr-2"></i>
-          确认执行
-        </button>
-      </footer>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import { useContextPreviewStore } from '@/novel/editor/stores/contextPreviewStore';
-import type { ContextBuildResult } from '@/novel/editor/types';
-
-type PanelId = 'fixed' | 'dynamic' | 'rag' | 'prompt';
-
-const store = useContextPreviewStore();
-const expandedPanelIds = ref(new Set<PanelId>());
-
-const panels = ref([
-  { id: 'fixed', name: '固定上下文', statKey: 'fixedCharCount' },
-  { id: 'dynamic', name: '动态上下文', statKey: 'dynamicCharCount' },
-  { id: 'rag', name: 'RAG检索', statKey: 'ragCharCount' },
-  { id: 'prompt', name: '最终提示词', statKey: 'promptCharCount' },
-] as const);
-
-watch(() => store.previewContent, (newContent) => {
-  if (newContent) {
-    // Default expand 'fixed' panel only.
-    expandedPanelIds.value.clear();
-    expandedPanelIds.value.add('fixed');
-  }
-}, { immediate: true });
-
-
-const toggleExpansion = (panelId: PanelId) => {
-  if (expandedPanelIds.value.has(panelId)) {
-    expandedPanelIds.value.delete(panelId);
-  } else {
-    expandedPanelIds.value.add(panelId);
-  }
-};
-
-const formatCharCount = (count: number) => {
-  if (count > 1000) return `${(count / 1000).toFixed(1)}k`;
-  return count;
-};
-
-const totalCharCount = computed(() => {
-  if (!store.previewContent?.stats) return 0;
-  const { fixedCharCount, dynamicCharCount, ragCharCount } = store.previewContent.stats;
-  const total = fixedCharCount + dynamicCharCount + ragCharCount;
-  return formatCharCount(total);
-});
-
-const emptyStateHtml = (contextType: string) => {
-  return `<p class="text-gray-400 italic p-4">未配置或未找到${contextType}内容。</p>`;
-};
-</script>
-
-<style scoped>
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(17, 24, 39, 0.6);
-  backdrop-filter: blur(4px);
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-.modal-container {
-  background-color: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-  width: 60vw;
-  height: 85vh;
-  max-width: 960px;
-  max-height: 800px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.modal-header {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-shrink: 0;
-}
-
-.modal-title { font-size: 1.125rem; font-weight: 600; color: #111827; }
-.modal-subtitle { font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem; }
-.modal-subtitle .font-semibold { color: #4B5563; }
-.modal-close-button { color: #9ca3af; padding: 0.5rem; margin: -0.5rem; border-radius: 9999px; transition: background-color 0.2s, color 0.2s; }
-.modal-close-button:hover { background-color: #f3f4f6; color: #1f2937; }
-
-.modal-loading-state {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 1rem;
-}
-
-.modal-content-wrapper {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding: 1rem 1.5rem;
-  background-color: #FFFFFF;
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
-}
-.modal-content-wrapper::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, and Opera */
-}
-
-.result-group { margin-bottom: 0.75rem; }
-.result-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border-radius: 0.5rem; cursor: pointer; background-color: #F9FAFB; transition: background-color 0.2s; }
-.result-header:hover { background-color: #F3F4F6; }
-.expand-icon { transition: transform 0.2s ease; color: #9CA3AF; }
-.expand-icon.expanded { transform: rotate(90deg); }
-.match-count { margin-left: auto; font-size: 0.75rem; background-color: #E5E7EB; color: #4B5563; padding: 0.125rem 0.5rem; border-radius: 99px; flex-shrink: 0; }
-.match-list-style-body { padding-left: 2rem; margin-top: 0.5rem; border-left: 1px solid #F3F4F6; margin-left: 0.9rem; padding-bottom: 0.5rem; }
-
-.prompt-preview {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  font-family: inherit;
-  font-size: 0.875rem;
-  color: #374151;
-  line-height: 1.6;
-  padding-top: 0.5rem;
-}
-.prose {
-  margin-top: 0.75rem;
-  padding-left: 0.5rem;
-}
-
-.modal-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 0.75rem;
-  background-color: #f9fafb;
-  flex-shrink: 0;
-}
-.stats-summary { margin-right: auto; font-size: 0.875rem; color: #6b7280; }
-.button-secondary { padding: 0.5rem 1rem; background-color: white; border: 1px solid #d1d5db; border-radius: 0.5rem; font-weight: 500; color: #374151; transition: background-color 0.2s; }
-.button-secondary:hover { background-color: #f9fafb; }
-
-.button-primary {
-  padding: 0.5rem 1rem;
-  background-color: #4B5563;
-  border: 1px solid transparent;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  color: white;
-  transition: background-color 0.2s;
-  display: flex;
-  align-items: center;
-}
-.button-primary:hover {
-  background-color: #374151;
-}
-.button-primary:disabled {
-  background-color: #9CA3AF;
-  cursor: not-allowed;
-}
-</style>
-
-// =
 // 文件: ..\src\novel\editor\components\sidebar\DirectoryContextMenu.vue
 //
 
-// src/novel/editor/components/sidebar/DirectoryContextMenu.vue
 <template>
   <div
       v-if="visible && menuComponent"
@@ -1495,6 +1236,7 @@ const emptyStateHtml = (contextType: string) => {
         @custom-related-action="handleCustomRelatedAction"
         @custom-others-action="handleOthersAction"
         @note-action="handleNoteAction"
+        @prompt-action="handlePromptAction"
     />
   </div>
 </template>
@@ -1521,6 +1263,8 @@ const menuComponentMap = shallowRef({
   'custom_related': defineAsyncComponent(() => import('./context-menus/CustomRelatedMenu.vue')),
   'note': defineAsyncComponent(() => import('./context-menus/NoteMenu.vue')),
   'setting_root': defineAsyncComponent(() => import('./context-menus/SettingsRootMenu.vue')),
+  'prompt_group': defineAsyncComponent(() => import('./context-menus/PromptGroupMenu.vue')),
+  'prompt_item': defineAsyncComponent(() => import('./context-menus/PromptItemMenu.vue')),
 });
 
 // --- State and Props ---
@@ -1539,6 +1283,11 @@ const notesStore = useNotesStore();
 const menuComponent = computed(() => {
   if (!node.value) return null;
   const { type, id } = node.value;
+
+  // 检查是否为提示词相关节点
+  if (type === 'prompt_group' || type === 'prompt_item') {
+    return menuComponentMap.value[type];
+  }
 
   // Handle custom item types first by ID prefix
   if (id.startsWith('custom-others-')) {
@@ -1577,9 +1326,9 @@ const menuComponent = computed(() => {
 
 // --- Core Logic ---
 const show = (event: MouseEvent, targetNode: TreeNode) => {
-  if (targetNode.isReadOnly || targetNode.type.endsWith('_overview')) {
-    return;
-  }
+  if (targetNode.isOverview) return;
+  if(targetNode.isReadOnly && targetNode.type !== 'prompt_group') return;
+
   node.value = targetNode;
   visible.value = true;
   position.value.x = event.clientX;
@@ -1662,6 +1411,23 @@ const handleNoteAction = (action: string, payload: any) => {
     case 'delete': notesStore.deleteNote(nodeId); break;
   }
 };
+
+const handlePromptAction = (action: string, payload: any) => {
+  hide();
+  switch(action) {
+    case 'newPrompt':
+      relatedContentStore.addPrompt(payload.groupId);
+      break;
+    case 'renamePrompt':
+      editorStore.setEditingNodeId(payload.promptId);
+      break;
+    case 'deletePrompt':
+      if (confirm('确定要删除这个提示词模板吗？')) {
+        relatedContentStore.deletePrompt(payload.promptId);
+      }
+      break;
+  }
+}
 
 // --- Lifecycle ---
 onMounted(() => {
@@ -1751,7 +1517,7 @@ const directoryTree = computed((): VolumeNode[] => {
     title: volume.title,
     icon: getIconByNodeType(volume.type),
     type: 'volume',
-    content: volume.content, // 直接暴露 content
+    content: volume.content,
     originalData: volume,
     children: volume.chapters.map(chapter => ({
       id: chapter.id,
@@ -1759,18 +1525,16 @@ const directoryTree = computed((): VolumeNode[] => {
       icon: getIconByNodeType(chapter.type),
       type: 'chapter',
       status: chapter.status,
-      content: chapter.content, // 直接暴露 content
+      content: chapter.content,
       originalData: chapter,
     })),
   }));
 });
 
 const handleSelectNode = (node: TreeNode) => {
-  // 明确判断，卷和章节都可以被打开编辑
   if (node.type === 'chapter' || node.type === 'volume') {
     editorStore.openTab(node.id);
   } else if(node.children && node.children.length > 0) {
-    // 对于其他有子节点的节点（理论上这里不会走到），作为备用逻辑
     uiStore.toggleNodeExpansion(node.id);
   }
 };
@@ -1789,6 +1553,7 @@ const handleAddNewVolume = () => {
 
 const handleCommitRename = (payload: { nodeId: string; newTitle: string }) => {
   directoryStore.renameNode(payload.nodeId, payload.newTitle);
+  handleCancelRename();
 };
 
 const handleCancelRename = () => {
@@ -2106,7 +1871,6 @@ const relatedTree = computed((): TreeNode[] => {
 });
 
 const handleSelectNode = (node: TreeNode) => {
-  // 只有在节点有内容时才打开tab，否则切换展开状态
   if ('content' in node && node.content !== undefined) {
     editorStore.openTab(node.id);
   } else if(node.children && node.children.length > 0) {
@@ -2123,13 +1887,19 @@ const handleContextMenu = (payload: { node: TreeNode; event: MouseEvent }) => {
 };
 
 const handleCommitRename = (payload: { nodeId: string; newTitle: string }) => {
-  if (payload.nodeId.startsWith('custom-others-')) {
-    relatedContentStore.renameCustomOthersNode(payload.nodeId, payload.newTitle);
-  } else if (payload.nodeId.startsWith('custom-')) {
-    relatedContentStore.renameCustomRelatedNode(payload.nodeId, payload.newTitle);
-  } else {
-    relatedContentStore.renameRelatedNode(payload.nodeId, payload.newTitle);
+  if (payload.newTitle.trim()) {
+    if (payload.nodeId.startsWith('custom-others-')) {
+      relatedContentStore.renameCustomOthersNode(payload.nodeId, payload.newTitle);
+    } else if (payload.nodeId.startsWith('custom-')) {
+      relatedContentStore.renameCustomRelatedNode(payload.nodeId, payload.newTitle);
+    } else if (payload.nodeId.startsWith('prompt-')) {
+      relatedContentStore.renamePrompt(payload.nodeId, payload.newTitle);
+    }
+    else {
+      relatedContentStore.renameRelatedNode(payload.nodeId, payload.newTitle);
+    }
   }
+  editorStore.setEditingNodeId(null);
 };
 
 const handleCancelRename = () => {
@@ -2259,8 +2029,6 @@ const showDirectoryContextMenu = (payload: { node: TreeNode, event: MouseEvent }
 // 文件: ..\src\novel\editor\components\sidebar\TreeView.vue
 //
 
-// 文件: src/novel/editor/components/sidebar/TreeView.vue
-
 <template>
   <ul class="tree-view-list">
     <li v-for="node in nodes" :key="node.id" class="tree-view-item">
@@ -2292,8 +2060,8 @@ const showDirectoryContextMenu = (payload: { node: TreeNode, event: MouseEvent }
               type="text"
               :value="node.title"
               class="rename-input"
-              @blur="handleRenameCommit($event, node.id)"
-              @keydown.enter.prevent="handleRenameCommit($event, node.id)"
+              @blur="handleRenameCommit($event, node)"
+              @keydown.enter.prevent="handleRenameCommit($event, node)"
               @keydown.esc.prevent="handleRenameCancel"
               @click.stop
           />
@@ -2356,7 +2124,7 @@ const emit = defineEmits<{
   (e: 'select-node', node: TreeNode): void;
   (e: 'toggle-expansion', id: string): void;
   (e: 'context-menu', payload: { node: TreeNode, event: MouseEvent }): void;
-  (e: 'commit-rename', payload: { nodeId: string, newTitle: string }): void;
+  (e: 'commit-rename', payload: { nodeId: string, newTitle: string, nodeType: string }): void;
   (e: 'cancel-rename'): void;
 }>();
 
@@ -2378,10 +2146,10 @@ const handleNodeClick = (node: TreeNode) => {
   emit('select-node', node);
 };
 
-const handleRenameCommit = (event: Event, nodeId: string) => {
+const handleRenameCommit = (event: Event, node: TreeNode) => {
   const input = event.target as HTMLInputElement;
   const newTitle = input.value;
-  emit('commit-rename', { nodeId, newTitle });
+  emit('commit-rename', { nodeId: node.id, newTitle, nodeType: node.type });
 };
 
 const handleRenameCancel = () => {
@@ -2790,6 +2558,83 @@ const emit = defineEmits<{
 </style>
 
 // =
+// 文件: ..\src\novel\editor\components\sidebar\context-menus\PromptGroupMenu.vue
+//
+
+<template>
+  <div>
+    <p class="menu-title">模板管理</p>
+    <div @click="emit('prompt-action', 'newPrompt', { groupId: node.id })" class="context-menu-item">
+      <i class="fa-solid fa-plus w-4 text-center"></i>
+      <span>新建提示词</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { TreeNode } from '@/novel/editor/types';
+
+defineProps({
+  node: {
+    type: Object as PropType<TreeNode>,
+    required: true,
+  },
+});
+
+const emit = defineEmits<{
+  (e: 'prompt-action', actionName: string, payload?: any): void;
+}>();
+</script>
+
+<style scoped>
+.context-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; cursor: pointer; user-select: none; transition: background-color 0.15s, color 0.15s; }
+.context-menu-item:hover { background-color: #f3f4f6; }
+.menu-title { padding: 0.25rem 0.75rem; font-size: 0.75rem; color: #9CA3AF; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+</style>
+
+// =
+// 文件: ..\src\novel\editor\components\sidebar\context-menus\PromptItemMenu.vue
+//
+
+<template>
+  <div>
+    <p class="menu-title">模板管理</p>
+    <div @click="emit('prompt-action', 'renamePrompt', { promptId: node.id })" class="context-menu-item">
+      <i class="fa-solid fa-pencil w-4 text-center"></i>
+      <span>重命名</span>
+    </div>
+    <div @click="emit('prompt-action', 'deletePrompt', { promptId: node.id })" class="context-menu-item danger">
+      <i class="fa-solid fa-trash-can w-4 text-center"></i>
+      <span>删除提示词</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+import type { TreeNode } from '@/novel/editor/types';
+
+defineProps({
+  node: {
+    type: Object as PropType<TreeNode>,
+    required: true,
+  },
+});
+
+const emit = defineEmits<{
+  (e: 'prompt-action', actionName: string, payload?: any): void;
+}>();
+</script>
+
+<style scoped>
+.context-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; cursor: pointer; user-select: none; transition: background-color 0.15s, color 0.15s; }
+.context-menu-item:hover { background-color: #f3f4f6; }
+.context-menu-item.danger:hover { background-color: #fee2e2; color: #b91c1c; }
+.menu-title { padding: 0.25rem 0.75rem; font-size: 0.75rem; color: #9CA3AF; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+</style>
+
+// =
 // 文件: ..\src\novel\editor\components\sidebar\context-menus\RootMenu.vue
 //
 
@@ -2884,6 +2729,16 @@ const emit = defineEmits<{
       <span>重命名</span>
     </div>
     <div class="context-menu-divider"></div>
+    <p class="menu-title">AI 助手</p>
+    <div @click="emit('ai-action', '分析', node)" class="context-menu-item">
+      <i class="fa-solid fa-magnifying-glass-chart w-4 text-center text-[#F59E0B]"></i>
+      <span>分析卷内容</span>
+    </div>
+    <div @click="emit('ai-action', '剧情生成', node)" class="context-menu-item">
+      <i class="fa-solid fa-feather w-4 text-center text-[#EC4899]"></i>
+      <span>生成卷剧情</span>
+    </div>
+    <div class="context-menu-divider"></div>
     <p class="menu-title">AI 批量任务</p>
     <div @click="emit('ai-action', '分析', node, true)" class="context-menu-item">
       <i class="fa-solid fa-magnifying-glass-chart w-4 text-center text-[#F59E0B]"></i>
@@ -2932,131 +2787,6 @@ const emit = defineEmits<{
 .context-menu-item.danger:hover { background-color: #fee2e2; color: #b91c1c; }
 .context-menu-divider { height: 1px; background-color: #f3f4f6; margin: 0.5rem 0; }
 .menu-title { padding: 0.25rem 0.75rem; font-size: 0.75rem; color: #9CA3AF; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-</style>
-
-// =
-// 文件: ..\src\novel\editor\components\system\HistoryPanel.vue
-//
-
-<template>
-  <div class="flex-1 flex flex-col bg-white h-full">
-    <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
-      <div>
-        <h1 class="text-lg font-medium text-[#374151] truncate" :title="headerTitle">{{ headerTitle }}</h1>
-        <p class="text-sm text-[#6B7280] mt-1">当前版本 vs AI润色版本 (1小时前)</p>
-      </div>
-      <div class="flex items-center gap-3">
-        <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50 transition-colors flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 12h-4m0 0H8m4 0V8m0 4v4m-4-8l8 8"></path></svg>
-          切换
-        </button>
-        <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors">
-          恢复
-        </button>
-      </div>
-    </header>
-
-    <div class="px-8 py-3 border-b border-gray-100 bg-[#F9FAFB]">
-      <div class="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar-horizontal">
-        <button class="w-7 h-7 flex-shrink-0 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors">
-          <svg class="w-4 h-4 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"></path></svg>
-        </button>
-        <div class="flex gap-2">
-          <div class="text-xs font-medium px-2.5 py-1 rounded-md bg-blue-100 text-blue-700 flex items-center gap-1.5 cursor-pointer flex-shrink-0">
-            <svg class="w-2 h-2" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4"/></svg>
-            当前版本
-          </div>
-          <div class="text-xs font-medium px-2.5 py-1 rounded-md bg-gray-100 text-gray-700 cursor-pointer hover:bg-gray-200 transition-colors flex-shrink-0">
-            AI润色 • 1小时前
-          </div>
-        </div>
-        <button class="w-7 h-7 flex-shrink-0 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors">
-          <svg class="w-4 h-4 text-[#6B7280]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
-        </button>
-      </div>
-    </div>
-
-    <div class="flex-1 p-8 overflow-y-auto custom-scrollbar">
-      <div v-if="targetDocument" class="max-w-3xl mx-auto">
-        <div class="text-[#374151] leading-relaxed text-base">
-          <p>
-            <del class="diff-del">控制台的警报声将卡尔文从浅眠中惊醒。</del>
-            <ins class="diff-add">警报的尖啸犹如一把利刃，划破了卡尔文短暂的假寐。</ins>
-            他猛地坐直，眼前的屏幕上一片红色闪烁。
-          </p>
-        </div>
-      </div>
-      <div v-else class="text-center text-gray-500 py-10">
-        无法加载文档历史记录。
-      </div>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { computed, type PropType } from 'vue';
-import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import type { TabInfo, EditorItem } from '@/novel/editor/types';
-
-const props = defineProps({
-  activeTab: {
-    type: Object as PropType<TabInfo | null>,
-    required: true,
-  },
-});
-
-const editorStore = useEditorStore();
-
-const targetDocumentId = computed(() => {
-  if (!props.activeTab) return null;
-  const parts = props.activeTab.id.split(':');
-  return parts.length === 3 ? parts[2] : null;
-});
-
-const targetDocument = computed((): EditorItem | null => {
-  if (!targetDocumentId.value) return null;
-  return editorStore.findItemById(targetDocumentId.value).node;
-});
-
-const headerTitle = computed(() => {
-  if (!targetDocument.value) return '版本对比';
-  return `《${targetDocument.value.title}》版本对比`;
-});
-
-</script>
-
-<style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-  display: block;
-  width: 6px;
-  height: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-
-.custom-scrollbar-horizontal::-webkit-scrollbar {
-  height: 4px;
-}
-
-.diff-del {
-  background-color: #FEE2E2;
-  text-decoration: line-through;
-  text-decoration-color: #F87171;
-  padding: 2px 1px;
-}
-.diff-add {
-  background-color: #D1FAE5;
-  text-decoration: none;
-  padding: 2px 1px;
-}
 </style>
 
 // =
@@ -3115,12 +2845,12 @@ const headerTitle = computed(() => {
           <label for="prompt-template" class="text-sm font-medium text-[#374151] block mb-3">任务提示词模板</label>
           <select
               id="prompt-template"
-              :value="activeTaskConfig.selected"
+              :value="activeTaskConfig.selectedPromptId"
               @change="handlePromptChange"
               class="w-full text-sm px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
           >
-            <option v-for="prompt in activeTaskConfig.prompts" :key="prompt.name" :value="prompt.name">
-              {{ prompt.name }}
+            <option v-for="prompt in availablePrompts" :key="prompt.id" :value="prompt.id">
+              {{ prompt.title }}
             </option>
           </select>
         </div>
@@ -3153,11 +2883,13 @@ const headerTitle = computed(() => {
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useAIConfigStore } from '@novel/editor/stores/ai/aiConfigStore.ts';
+import { usePromptTemplateStore } from '@novel/editor/stores/promptTemplateStore.ts';
 import type { AITask } from '@/novel/editor/types';
 
 type TaskType = AITask['type'];
 
 const aiConfigStore = useAIConfigStore();
+const promptTemplateStore = usePromptTemplateStore();
 
 const taskInfoMap: Record<TaskType, { name: string; icon: string }> = {
   '润色': { name: '润色', icon: 'fa-solid fa-palette' },
@@ -3168,7 +2900,7 @@ const taskInfoMap: Record<TaskType, { name: string; icon: string }> = {
 };
 
 const availableTasks = computed(() => {
-  return (Object.keys(aiConfigStore.taskPromptConfigs) as TaskType[]).map(id => ({
+  return (Object.keys(aiConfigStore.taskConfigs) as TaskType[]).map(id => ({
     id,
     name: taskInfoMap[id].name,
     icon: taskInfoMap[id].icon
@@ -3178,11 +2910,12 @@ const availableTasks = computed(() => {
 const activeTaskId = ref<TaskType>('润色');
 
 const activeTaskInfo = computed(() => availableTasks.value.find(t => t.id === activeTaskId.value));
-const activeTaskConfig = computed(() => aiConfigStore.taskPromptConfigs[activeTaskId.value]);
+const activeTaskConfig = computed(() => aiConfigStore.taskConfigs[activeTaskId.value]);
+const availablePrompts = computed(() => promptTemplateStore.getPromptsForTask(activeTaskId.value));
 
 const handlePromptChange = (event: Event) => {
-  const selectedName = (event.target as HTMLSelectElement).value;
-  aiConfigStore.setSelectedPrompt(activeTaskId.value, selectedName);
+  const selectedId = (event.target as HTMLSelectElement).value;
+  aiConfigStore.setSelectedPromptId(activeTaskId.value, selectedId);
 };
 </script>
 
@@ -3212,6 +2945,8 @@ const handlePromptChange = (event: Event) => {
 // =
 // 文件: ..\src\novel\editor\components\system\settings\ContextSettings.vue
 //
+
+// 文件: src/novel/editor/components/system/settings/ContextSettings.vue
 
 <template>
   <div class="setting-page-container">
@@ -3329,6 +3064,22 @@ const handlePromptChange = (event: Event) => {
           <div class="setting-control space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               <div>
+                <label class="block text-sm font-medium text-[#374151] mb-1.5">前置卷数</label>
+                <div class="flex items-center gap-3">
+                  <input type="range" min="0" max="5" :value="settingsStore.dynamicContextSettings.prevVolumes" @input="settingsStore.setDynamicContextSetting('prevVolumes', parseInt(($event.target as HTMLInputElement).value, 10))" class="range-custom flex-1"/>
+                  <span class="text-sm font-medium w-8 text-center text-[#374151]">{{ settingsStore.dynamicContextSettings.prevVolumes }}</span>
+                </div>
+                <p class="setting-description mt-1">自动包含当前内容之前的N个卷。</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-[#374151] mb-1.5">后续卷数</label>
+                <div class="flex items-center gap-3">
+                  <input type="range" min="0" max="5" :value="settingsStore.dynamicContextSettings.nextVolumes" @input="settingsStore.setDynamicContextSetting('nextVolumes', parseInt(($event.target as HTMLInputElement).value, 10))" class="range-custom flex-1"/>
+                  <span class="text-sm font-medium w-8 text-center text-[#374151]">{{ settingsStore.dynamicContextSettings.nextVolumes }}</span>
+                </div>
+                <p class="setting-description mt-1">自动包含当前内容之后N个卷。</p>
+              </div>
+              <div>
                 <label class="block text-sm font-medium text-[#374151] mb-1.5">前置章节数</label>
                 <div class="flex items-center gap-3">
                   <input type="range" min="0" max="10" :value="settingsStore.dynamicContextSettings.prevChapters" @input="settingsStore.setDynamicContextSetting('prevChapters', parseInt(($event.target as HTMLInputElement).value, 10))" class="range-custom flex-1"/>
@@ -3347,16 +3098,24 @@ const handlePromptChange = (event: Event) => {
             </div>
             <div class="space-y-3">
               <div class="flex items-center">
+                <input id="include-volume-plot" type="checkbox" :checked="settingsStore.dynamicContextSettings.includeVolumePlot" @change="settingsStore.setDynamicContextSetting('includeVolumePlot', ($event.target as HTMLInputElement).checked)" class="setting-checkbox" />
+                <label for="include-volume-plot" class="ml-3 font-medium text-gray-700">包含卷相关剧情</label>
+              </div>
+              <div class="flex items-center">
+                <input id="include-volume-analysis" type="checkbox" :checked="settingsStore.dynamicContextSettings.includeVolumeAnalysis" @change="settingsStore.setDynamicContextSetting('includeVolumeAnalysis', ($event.target as HTMLInputElement).checked)" class="setting-checkbox" />
+                <label for="include-volume-analysis" class="ml-3 font-medium text-gray-700">包含卷相关分析</label>
+              </div>
+              <div class="flex items-center">
                 <input id="include-plot" type="checkbox" :checked="settingsStore.dynamicContextSettings.includeRelatedPlot" @change="settingsStore.setDynamicContextSetting('includeRelatedPlot', ($event.target as HTMLInputElement).checked)" class="setting-checkbox" />
-                <label for="include-plot" class="ml-3 font-medium text-gray-700">包含相关剧情</label>
+                <label for="include-plot" class="ml-3 font-medium text-gray-700">包含章节相关剧情</label>
               </div>
               <div class="flex items-center">
                 <input id="include-analysis" type="checkbox" :checked="settingsStore.dynamicContextSettings.includeRelatedAnalysis" @change="settingsStore.setDynamicContextSetting('includeRelatedAnalysis', ($event.target as HTMLInputElement).checked)" class="setting-checkbox" />
-                <label for="include-analysis" class="ml-3 font-medium text-gray-700">包含相关分析</label>
+                <label for="include-analysis" class="ml-3 font-medium text-gray-700">包含章节相关分析</label>
               </div>
             </div>
 
-            <p class="setting-description">动态上下文会智能加载目标章节前后的内容，以及与该章节关联的派生内容（剧情、分析），以提供更连贯的创作基础。实际加载的内容可在任务预览时查看。</p>
+            <p class="setting-description">动态上下文会智能加载目标内容前后的信息，以及与该内容关联的派生内容（剧情、分析），以提供更连贯的创作基础。实际加载的内容可在任务预览时查看。</p>
           </div>
         </div>
 
@@ -3506,182 +3265,6 @@ const addSelectedOthersItem = (event: Event) => {
 }
 .content-list-item:last-child {
   border-bottom: none;
-}
-</style>
-
-// =
-// 文件: ..\src\novel\editor\components\system\settings\EditorSettings.vue
-//
-
-<template>
-  <div class="setting-page-wrapper">
-    <div class="page-header">
-      <h2 class="page-title">编辑器设置</h2>
-      <p class="page-description">自定义您的写作环境的外观和行为。</p>
-    </div>
-
-    <div class="setting-group">
-      <div class="setting-item">
-        <label for="font-size" class="setting-label">字体大小</label>
-        <div class="setting-control">
-          <input id="font-size" type="number" value="16" class="setting-input w-24" />
-          <p class="setting-description">编辑器中文本的默认字体大小（单位：像素）。</p>
-        </div>
-      </div>
-      <div class="setting-item">
-        <label for="line-height" class="setting-label">行高</label>
-        <div class="setting-control">
-          <input id="line-height" type="number" step="0.1" value="1.8" class="setting-input w-24" />
-          <p class="setting-description">编辑器中每行文本的高度（相对于字体大小的倍数）。</p>
-        </div>
-      </div>
-      <div class="setting-item">
-        <label for="autosave" class="setting-label">自动保存</label>
-        <div class="setting-control">
-          <div class="flex items-center">
-            <input id="autosave" type="checkbox" checked class="setting-checkbox" />
-            <label for="autosave" class="ml-3 font-medium text-gray-700">启用自动保存</label>
-          </div>
-          <p class="setting-description">在您停止输入后，系统将自动保存您的更改。</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-</script>
-
-<style scoped>
-.setting-page-wrapper { padding: 1rem 2rem; max-width: 56rem; margin: 0 auto; }
-.page-header { padding-bottom: 1.5rem; border-bottom: 1px solid #E5E7EB; margin-bottom: 1.5rem; }
-.page-title { font-size: 1.5rem; font-weight: 600; color: #1F2937; }
-.page-description { color: #6B7280; margin-top: 0.25rem; }
-.setting-group { display: flex; flex-direction: column; }
-.setting-item { display: grid; grid-template-columns: 12rem 1fr; gap: 1rem; padding: 1.5rem 0; border-bottom: 1px solid #E5E7EB; }
-.setting-item:last-child { border-bottom: none; }
-.setting-label { font-size: 0.875rem; font-weight: 500; color: #374151; padding-top: 0.5rem; }
-.setting-control { display: flex; flex-direction: column; gap: 0.5rem; }
-.setting-input { background-color: white; border: 1px solid #D1D5DB; border-radius: 0.375rem; padding: 0.5rem 0.75rem; outline: none; transition: all 0.2s; }
-.setting-input:focus { border-color: #3B82F6; box-shadow: 0 0 0 1px #3B82F6; }
-.setting-description { color: #6B7280; font-size: 0.875rem; }
-.setting-checkbox { height: 1.25rem; width: 1.25rem; border-radius: 0.25rem; border: 1px solid #D1D5DB; color: #2563EB; }
-</style>
-
-// =
-// 文件: ..\src\novel\editor\components\system\settings\NovelSettings.vue
-//
-
-<template>
-  <div class="flex-1 p-8 overflow-auto custom-scrollbar bg-[#FCFCFC]">
-    <div v-if="novelMetadata" class="grid grid-cols-3 gap-8 max-w-6xl mx-auto">
-      <div class="col-span-2 bg-white p-8 space-y-6 rounded-xl border border-gray-100">
-        <h3 class="text-base font-medium text-[#374151]">基本信息</h3>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium text-[#374151] block">小说封面</label>
-          <div class="flex items-center gap-4">
-            <img :src="novelMetadata.cover" class="w-24 h-32 object-cover rounded-lg shadow-sm" alt="Cover">
-            <div>
-              <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50 transition-colors">更换图片</button>
-              <p class="text-xs text-[#9CA3AF] mt-2">JPG, PNG, GIF, 不超过 5MB</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="space-y-2">
-          <label for="novel-title" class="text-sm font-medium text-[#374151] block">小说标题</label>
-          <input type="text" id="novel-title" v-model="novelMetadata.title" class="w-full text-sm px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-        </div>
-
-        <div class="space-y-2">
-          <label for="novel-desc" class="text-sm font-medium text-[#374151] block">小说简介</label>
-          <textarea id="novel-desc" rows="4" v-model="novelMetadata.description" class="w-full text-sm px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition resize-none"></textarea>
-        </div>
-
-        <div class="grid grid-cols-2 gap-6">
-          <div class="space-y-2">
-            <label class="text-sm font-medium text-[#374151] block">类型标签</label>
-            <div class="flex flex-wrap gap-2 items-center">
-              <div v-for="(tag, index) in novelMetadata.tags" :key="index" class="flex items-center gap-1.5 px-2.5 py-1 text-sm rounded-full" :class="tag.class">
-                <span>{{ tag.text }}</span>
-                <button @click="editorStore.removeTag(index)" class="hover:opacity-75">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-              </div>
-              <button @click="editorStore.addTag" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-[#6B7280] rounded-full text-sm font-medium transition-colors">+ 添加</button>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <label class="text-sm font-medium text-[#374151] block">创作状态</label>
-            <select v-model="novelMetadata.status" class="w-full text-sm px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-              <option>连载中</option>
-              <option>已完结</option>
-              <option>暂停更新</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="pt-6 border-t border-gray-100 flex justify-end gap-3">
-          <button @click="editorStore.fetchNovelData('novel-1')" class="px-5 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50 transition-colors">重置</button>
-          <button @click="editorStore.saveMetadata" class="px-5 py-2 bg-[#4B5563] hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors">保存更改</button>
-        </div>
-      </div>
-
-      <div class="col-span-1 space-y-6">
-        <div class="bg-white p-6 rounded-xl border border-gray-100">
-          <h3 class="text-base font-medium text-[#374151]">参考内容管理</h3>
-          <p class="text-sm text-[#9CA3AF] mt-1 mb-4">将其他作品作为参考，AI会借鉴其风格</p>
-
-          <div class="space-y-3">
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <div class="flex items-center gap-3 overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=100" class="w-8 h-10 object-cover rounded flex-shrink-0" alt="Reference Book">
-                <span class="text-sm font-medium text-[#374151] truncate">银河帝国</span>
-              </div>
-              <button class="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 p-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
-              </button>
-            </div>
-          </div>
-
-          <button class="w-full mt-4 flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-lg py-4 text-sm font-medium text-[#9CA3AF] hover:border-blue-500 hover:text-blue-500 transition-all">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"></path></svg>
-            <span>添加参考作品</span>
-          </button>
-        </div>
-      </div>
-    </div>
-    <div v-else class="text-center py-20 text-gray-500">
-      正在加载小说设置...
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import { storeToRefs } from 'pinia';
-
-const editorStore = useEditorStore();
-const { novelMetadata } = storeToRefs(editorStore);
-
-</script>
-
-<style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-  display: block;
-  width: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
 }
 </style>
 
@@ -3888,174 +3471,6 @@ const handleClearAll = () => {
 </style>
 
 // =
-// 文件: ..\src\novel\editor\components\system\settings\ThemeSettings.vue
-//
-
-<template>
-  <div class="setting-page-wrapper custom-scrollbar">
-    <div class="page-header">
-      <h2 class="page-title">主题设置</h2>
-      <p class="page-description">选择一个您喜欢的工作区界面主题。</p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div
-          v-for="theme in themes"
-          :key="theme.id"
-          @click="setActiveTheme(theme.id)"
-          class="theme-card"
-          :class="{ 'active': activeTheme === theme.id }"
-      >
-        <div class="preview-box" :style="{ backgroundColor: theme.preview.bg }">
-          <div class="preview-sidebar" :style="{ backgroundColor: theme.preview.panel }"></div>
-          <div class="preview-main">
-            <div class="preview-header" :style="{ backgroundColor: theme.preview.panel }"></div>
-            <div class="preview-content">
-              <div class="preview-line" :style="{ backgroundColor: theme.preview.text }"></div>
-              <div class="preview-line w-1/2" :style="{ backgroundColor: theme.preview.text }"></div>
-              <div class="preview-line w-3/4" :style="{ backgroundColor: theme.preview.accent }"></div>
-            </div>
-          </div>
-        </div>
-        <div class="theme-info">
-          <h3 class="theme-name">{{ theme.name }}</h3>
-          <p class="theme-desc">{{ theme.description }}</p>
-        </div>
-        <div v-if="activeTheme === theme.id" class="active-check">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"></path></svg>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useUIStore } from '@/novel/editor/stores/uiStore';
-
-type ThemeId = 'default' | 'eye-care' | 'dark';
-
-const uiStore = useUIStore();
-
-const themes = ref([
-  {
-    id: 'default',
-    name: '默认亮色',
-    description: '清晰、简洁的默认主题。',
-    preview: { bg: '#FFFFFF', panel: '#F3F4F6', text: '#D1D5DB', accent: '#60A5FA' }
-  },
-  {
-    id: 'eye-care',
-    name: '护眼模式',
-    description: '柔和的米色背景，适合长时间阅读。',
-    preview: { bg: '#FDFCF9', panel: '#F8F6F2', text: '#DCD9D3', accent: '#F59E0B' }
-  },
-  {
-    id: 'dark',
-    name: '暗黑模式',
-    description: '专为夜间工作设计，减少眩光。',
-    preview: { bg: '#1F2937', panel: '#374151', text: '#4B5563', accent: '#F472B6' }
-  }
-]);
-
-const activeTheme = computed(() => uiStore.uiState.activeTheme);
-
-const setActiveTheme = (themeId: ThemeId) => {
-  uiStore.setTheme(themeId);
-};
-</script>
-
-<style scoped>
-.setting-page-wrapper { padding: 1rem 2rem 4rem; max-width: 64rem; margin: 0 auto; overflow-y: auto; height: 100%; }
-.custom-scrollbar::-webkit-scrollbar { display: block; width: 6px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-.page-header { padding-bottom: 1.5rem; border-bottom: 1px solid #E5E7EB; margin-bottom: 2rem; }
-.page-title { font-size: 1.5rem; font-weight: 600; color: #1F2937; }
-.page-description { color: #6B7280; margin-top: 0.25rem; }
-
-.theme-card {
-  border: 2px solid #E5E7EB;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  position: relative;
-}
-.theme-card:hover {
-  border-color: #9CA3AF;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
-.theme-card.active {
-  border-color: #3B82F6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-}
-
-.preview-box {
-  height: 120px;
-  padding: 12px;
-  display: flex;
-  gap: 8px;
-}
-.preview-sidebar {
-  width: 30%;
-  border-radius: 4px;
-}
-.preview-main {
-  width: 70%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.preview-header {
-  height: 20%;
-  border-radius: 4px;
-}
-.preview-content {
-  height: 80%;
-  border-radius: 4px;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.preview-line {
-  height: 8px;
-  border-radius: 2px;
-  width: 100%;
-}
-
-.theme-info {
-  padding: 1rem;
-  background-color: #F9FAFB;
-}
-.theme-name {
-  font-weight: 500;
-  color: #1F2937;
-}
-.theme-desc {
-  font-size: 0.875rem;
-  color: #6B7280;
-  margin-top: 0.25rem;
-}
-
-.active-check {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 24px;
-  height: 24px;
-  background-color: #3B82F6;
-  border-radius: 9999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 5px rgba(0,0,0,0.2);
-}
-</style>
-
-// =
 // 文件: ..\src\novel\editor\composables\useAITaskExecutor.ts
 //
 
@@ -4110,11 +3525,14 @@ export function useAITaskExecutor() {
 // 文件: ..\src\novel\editor\composables\useContextBuilder.ts
 //
 
+// 文件: src/novel/editor/composables/useContextBuilder.ts
+
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useContextSettingsStore } from '@/novel/editor/stores/contextSettingsStore';
 import { useDerivedContentStore } from '@/novel/editor/stores/derivedContentStore';
 import { useAIConfigStore } from '@novel/editor/stores/ai/aiConfigStore.ts';
-import type { AITask, ContextBuildResult, EditorItem } from '@/novel/editor/types';
+import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
+import type { AITask, ContextBuildResult, Volume, Chapter, DynamicContextSettings } from '@/novel/editor/types';
 
 const stripHtml = (html: string) => {
     if (typeof document === 'undefined') return html;
@@ -4128,79 +3546,172 @@ export function useContextBuilder() {
     const contextSettingsStore = useContextSettingsStore();
     const derivedContentStore = useDerivedContentStore();
     const aiConfigStore = useAIConfigStore();
+    const promptTemplateStore = usePromptTemplateStore();
+
+    const _getVolumeOutlineHtml = (vol: Volume): string => {
+        return `<hr><h3>相关卷大纲: ${vol.title}</h3>${vol.content}`;
+    };
+
+    const _getVolumeFullContextHtml = (vol: Volume, settings: DynamicContextSettings): string => {
+        let html = `<hr><h3>相关卷: ${vol.title}</h3>${vol.content}`;
+        if (settings.includeVolumePlot) {
+            const plot = derivedContentStore.plotItems.find(p => p.sourceId === vol.id);
+            if (plot) html += `<h4>卷剧情: ${plot.title}</h4>${plot.content}`;
+        }
+        if (settings.includeVolumeAnalysis) {
+            const analysis = derivedContentStore.analysisItems.find(a => a.sourceId === vol.id);
+            if (analysis) html += `<h4>卷分析: ${analysis.title}</h4>${analysis.content}`;
+        }
+        return html;
+    };
+
+    const _buildContextForChapterTask = (sourceChapter: Chapter, sourceVolume: Volume): string => {
+        const settings = contextSettingsStore.dynamicContextSettings;
+        const allVolumes = directoryStore.directoryData;
+        let dynamicContextHtml = '';
+
+        const currentVolumeIndex = allVolumes.findIndex(v => v.id === sourceVolume.id);
+        const currentChapterIndex = sourceVolume.chapters.findIndex(c => c.id === sourceChapter.id);
+
+        // 规则一：前置卷只包含大纲
+        const prevVolStart = Math.max(0, currentVolumeIndex - settings.prevVolumes);
+        for (let i = prevVolStart; i < currentVolumeIndex; i++) {
+            dynamicContextHtml += _getVolumeOutlineHtml(allVolumes[i]);
+        }
+
+        // 规则一：当前卷包含完整信息
+        dynamicContextHtml += `<hr><h3>当前卷: ${sourceVolume.title}</h3>${sourceVolume.content}`;
+        if (settings.includeVolumePlot) {
+            const plot = derivedContentStore.plotItems.find(p => p.sourceId === sourceVolume.id);
+            if (plot) dynamicContextHtml += `<h4>卷剧情: ${plot.title}</h4>${plot.content}`;
+        }
+        if (settings.includeVolumeAnalysis) {
+            const analysis = derivedContentStore.analysisItems.find(a => a.sourceId === sourceVolume.id);
+            if (analysis) dynamicContextHtml += `<h4>卷分析: ${analysis.title}</h4>${analysis.content}`;
+        }
+
+        // 规则一：前置章节、后置章节
+        if (currentChapterIndex > -1) {
+            const chapters = sourceVolume.chapters;
+            const prevChapStart = Math.max(0, currentChapterIndex - settings.prevChapters);
+            for (let i = prevChapStart; i < currentChapterIndex; i++) {
+                dynamicContextHtml += `<hr><h3>前文章节: ${chapters[i].title}</h3>${chapters[i].content}`;
+            }
+            const nextChapEnd = Math.min(chapters.length, currentChapterIndex + 1 + settings.nextChapters);
+            for (let i = currentChapterIndex + 1; i < nextChapEnd; i++) {
+                dynamicContextHtml += `<hr><h3>后续章节: ${chapters[i].title}</h3>${chapters[i].content}`;
+            }
+        }
+
+        // 规则一：本章的剧情与分析
+        if (settings.includeRelatedPlot) {
+            derivedContentStore.plotItems.filter(p => p.sourceId === sourceChapter.id).forEach(plot => {
+                dynamicContextHtml += `<hr><h3>与本章相关的剧情</h3>${plot.content}`;
+            });
+        }
+        if (settings.includeRelatedAnalysis) {
+            derivedContentStore.analysisItems.filter(a => a.sourceId === sourceChapter.id).forEach(analysis => {
+                dynamicContextHtml += `<hr><h3>与本章相关的分析</h3>${analysis.content}`;
+            });
+        }
+
+        // 规则一：后置卷只包含大纲
+        const nextVolEnd = Math.min(allVolumes.length, currentVolumeIndex + 1 + settings.nextVolumes);
+        for (let i = currentVolumeIndex + 1; i < nextVolEnd; i++) {
+            dynamicContextHtml += _getVolumeOutlineHtml(allVolumes[i]);
+        }
+
+        return dynamicContextHtml;
+    };
+
+    const _buildContextForVolumeTask = (sourceVolume: Volume): string => {
+        const settings = contextSettingsStore.dynamicContextSettings;
+        const allVolumes = directoryStore.directoryData;
+        let dynamicContextHtml = '';
+        const currentVolumeIndex = allVolumes.findIndex(v => v.id === sourceVolume.id);
+
+        // 规则二：前置卷
+        const prevVolStart = Math.max(0, currentVolumeIndex - settings.prevVolumes);
+        for (let i = prevVolStart; i < currentVolumeIndex; i++) {
+            dynamicContextHtml += _getVolumeFullContextHtml(allVolumes[i], settings);
+        }
+
+        // 规则二：当前卷内容、剧情、分析
+        dynamicContextHtml += `<hr><h3>当前卷大纲: ${sourceVolume.title}</h3>${sourceVolume.content}`;
+        if (settings.includeVolumePlot) {
+            const plot = derivedContentStore.plotItems.find(p => p.sourceId === sourceVolume.id);
+            if (plot) dynamicContextHtml += `<h4>卷剧情: ${plot.title}</h4>${plot.content}`;
+        }
+        if (settings.includeVolumeAnalysis) {
+            const analysis = derivedContentStore.analysisItems.find(a => a.sourceId === sourceVolume.id);
+            if (analysis) dynamicContextHtml += `<h4>卷分析: ${analysis.title}</h4>${analysis.content}`;
+        }
+
+        // 规则二：本卷内的章节剧情与分析
+        sourceVolume.chapters.forEach(chapter => {
+            let chapterDerivedHtml = '';
+            if (settings.includeRelatedPlot) {
+                derivedContentStore.plotItems
+                    .filter(p => p.sourceId === chapter.id)
+                    .forEach(plot => { chapterDerivedHtml += `<h4>剧情: ${plot.title}</h4>${plot.content}`; });
+            }
+            if (settings.includeRelatedAnalysis) {
+                derivedContentStore.analysisItems
+                    .filter(a => a.sourceId === chapter.id)
+                    .forEach(analysis => { chapterDerivedHtml += `<h4>分析: ${analysis.title}</h4>${analysis.content}`; });
+            }
+            if (chapterDerivedHtml) {
+                dynamicContextHtml += `<hr><h3>章节派生内容 (${chapter.title})</h3>${chapterDerivedHtml}`;
+            }
+        });
+
+        // 规则二：后置卷
+        const nextVolEnd = Math.min(allVolumes.length, currentVolumeIndex + 1 + settings.nextVolumes);
+        for (let i = currentVolumeIndex + 1; i < nextVolEnd; i++) {
+            dynamicContextHtml += _getVolumeFullContextHtml(allVolumes[i], settings);
+        }
+
+        return dynamicContextHtml;
+    };
 
     const buildContextForTask = (task: Pick<AITask, 'type' | 'sourceItemId' | 'sourceItemTitle' | 'sourceItemContent'>): ContextBuildResult | null => {
         const { type: taskType, sourceItemId, sourceItemTitle, sourceItemContent } = task;
-
-        // **核心修正**: 直接使用任务快照中的内容作为“待处理内容”
         const mainContentText = stripHtml(sourceItemContent);
 
-        // --- Build Fixed Context ---
         let fixedContextHtml = '';
         contextSettingsStore.selectedContextItems.forEach(item => {
-            if (item.content) {
-                fixedContextHtml += `<hr><h3>相关${item.category}: ${item.group} - ${item.title}</h3>${item.content}`;
-            }
+            if (item.content) fixedContextHtml += `<hr><h3>相关${item.category}: ${item.group} - ${item.title}</h3>${item.content}`;
         });
         contextSettingsStore.selectedOthersItems.forEach(item => {
-            if (item.content) {
-                fixedContextHtml += `<hr><h3>相关${item.category}: ${item.title}</h3>${item.content}`;
-            }
+            if (item.content) fixedContextHtml += `<hr><h3>相关${item.category}: ${item.title}</h3>${item.content}`;
         });
-
         if (contextSettingsStore.customContextContent.trim()) {
             fixedContextHtml += `<hr><h3>自定义固定内容</h3><p>${contextSettingsStore.customContextContent.trim().replace(/\n/g, '<br>')}</p>`;
         }
         const fixedContextText = stripHtml(fixedContextHtml);
 
-        // --- Build Dynamic Context ---
-        // 动态上下文依然需要通过sourceItemId实时查找其在目录中的位置
         let dynamicContextHtml = '';
         const sourceItemResult = directoryStore.findNodeById(sourceItemId);
+        if (!sourceItemResult) return null;
 
-        if (sourceItemResult && sourceItemResult.node.type === 'chapter') {
-            const { parent: volume, siblings: chapters } = sourceItemResult;
-            const chapterIndex = chapters.findIndex(c => c.id === sourceItemId);
+        const { node: sourceNode, parent: sourceParent } = sourceItemResult;
 
-            if (volume && chapterIndex > -1) {
-                const prevStart = Math.max(0, chapterIndex - contextSettingsStore.dynamicContextSettings.prevChapters);
-                for (let i = prevStart; i < chapterIndex; i++) {
-                    const prevChapter = chapters[i] as EditorItem;
-                    if ('content' in prevChapter && prevChapter.content) {
-                        dynamicContextHtml += `<hr><h3>前文章节: ${prevChapter.title}</h3>${prevChapter.content}`;
-                    }
-                }
-
-                const nextEnd = Math.min(chapters.length, chapterIndex + 1 + contextSettingsStore.dynamicContextSettings.nextChapters);
-                for (let i = chapterIndex + 1; i < nextEnd; i++) {
-                    const nextChapter = chapters[i] as EditorItem;
-                    if ('content' in nextChapter && nextChapter.content) {
-                        dynamicContextHtml += `<hr><h3>后续章节内容: ${nextChapter.title}</h3>${nextChapter.content}`;
-                    }
-                }
-
-                if (contextSettingsStore.dynamicContextSettings.includeRelatedPlot) {
-                    const relatedPlots = derivedContentStore.plotItems.filter(p => p.sourceChapterId === sourceItemId);
-                    if(relatedPlots.length > 0) {
-                        dynamicContextHtml += `<hr><h3>与本章相关的剧情</h3>`;
-                        relatedPlots.forEach(plot => { dynamicContextHtml += plot.content; });
-                    }
-                }
-                if (contextSettingsStore.dynamicContextSettings.includeRelatedAnalysis) {
-                    const relatedAnalyses = derivedContentStore.analysisItems.filter(a => a.sourceChapterId === sourceItemId);
-                    if(relatedAnalyses.length > 0) {
-                        dynamicContextHtml += `<hr><h3>与本章相关的分析</h3>`;
-                        relatedAnalyses.forEach(analysis => { dynamicContextHtml += analysis.content; });
-                    }
-                }
-            }
+        if (sourceNode.type === 'chapter' && sourceParent) {
+            dynamicContextHtml = _buildContextForChapterTask(sourceNode, sourceParent);
+        } else if (sourceNode.type === 'volume') {
+            dynamicContextHtml = _buildContextForVolumeTask(sourceNode);
         }
         const dynamicContextText = stripHtml(dynamicContextHtml);
 
-        // --- Build RAG & Final Prompt ---
         const ragContext = contextSettingsStore.isRagEnabled ? '【RAG智能检索功能已开启，将根据任务内容自动查询知识库...】' : 'RAG检索已禁用或未返回任何结果。';
-        const taskConfig = aiConfigStore.taskPromptConfigs[taskType];
-        const selectedPromptTemplate = taskConfig.prompts.find(p => p.name === taskConfig.selected)?.template || `请为《${sourceItemTitle}》执行“${taskType}”任务。`;
+        const taskConfig = aiConfigStore.taskConfigs[taskType];
+        const promptNode = promptTemplateStore.findPromptById(taskConfig.selectedPromptId);
+        let selectedPromptTemplate = `请为《${sourceItemTitle}》执行“${taskType}”任务。`;
+        if (promptNode?.content) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = promptNode.content;
+            selectedPromptTemplate = (tempDiv.querySelector('pre')?.textContent || selectedPromptTemplate).replace(/{{sourceItemTitle}}/g, sourceItemTitle);
+        }
 
         const prompt = `[任务提示词]
 ${selectedPromptTemplate}
@@ -4661,58 +4172,47 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { AITaskType } from '@novel/editor/types';
 
-// 定义每种任务类型的默认提示词模板
-const defaultPrompts: Record<AITaskType, { name: string, template: string }[]> = {
-    '润色': [
-        { name: '默认润色提示词', template: '你是一名专业的小说编辑，请根据上下文，对以下“待处理内容”进行润色，使其更具文采和表现力。' },
-        { name: '增强创造性提示词', template: '你是一名富有想象力的作家，请跳出常规，用更具创造性和独特风格的语言重写以下“待处理内容”，可以适度偏离原文。' }
-    ],
-    '续写': [
-        { name: '默认续写提示词', template: '你是一名小说家，请根据所有上下文信息，紧接着“待处理内容”的结尾，自然地续写接下来的故事情节。' },
-        { name: '增强戏剧性提示词', template: '你是一名顶尖的剧本编剧，请在续写时增加戏剧性冲突或意外转折，让故事更有张力。' }
-    ],
-    '分析': [
-        { name: '默认分析提示词', template: '请作为一个文学评论家，分析以下“待处理内容”的结构、角色动态、潜在主题和写作风格。' },
-        { name: '深度结构分析提示词', template: '请从叙事技巧、象征意义和读者情感引导等角度，深度剖析以下“待处理内容”，并提出改进建议。' }
-    ],
-    '剧情生成': [
-        { name: '默认剧情生成提示词', template: '你是一名创意编剧，请根据“待处理内容”中描写的场景或事件，生成一段相关的、有趣的后续剧情大纲。' },
-        { name: '生成反转剧情提示词', template: '你是一名擅长制造悬念的编剧，请根据“待处理内容”，构思一个包含意外反转的后续剧情大纲。' }
-    ],
-    '创作': [
-        { name: '默认创作提示词', template: '你是一位小说家，请根据“动态上下文”（其中可能包含剧情大纲和分析）以及“固定上下文”，为标题为《{{sourceItemTitle}}》的章节创作完整的正文内容。“待处理内容”是旧版或草稿，可作为参考，但你的主要任务是生成全新的、完整的章节。' },
-    ],
+// 定义每种任务类型默认选中的提示词ID
+const defaultSelectedPromptIds: Record<AITaskType, string> = {
+    '润色': 'prompt-polish-default',
+    '续写': 'prompt-continue-default',
+    '分析': 'prompt-analyze-default',
+    '剧情生成': 'prompt-plot-default',
+    '创作': 'prompt-create-default',
 };
 
 export const useAIConfigStore = defineStore('aiConfig', () => {
-    const taskPromptConfigs = ref<Record<AITaskType, { prompts: { name: string, template: string }[], selected: string }>>({
-        '润色': { prompts: defaultPrompts['润色'], selected: defaultPrompts['润色'][0].name },
-        '续写': { prompts: defaultPrompts['续写'], selected: defaultPrompts['续写'][0].name },
-        '分析': { prompts: defaultPrompts['分析'], selected: defaultPrompts['分析'][0].name },
-        '剧情生成': { prompts: defaultPrompts['剧情生成'], selected: defaultPrompts['剧情生成'][0].name },
-        '创作': { prompts: defaultPrompts['创作'], selected: defaultPrompts['创作'][0].name },
+    // 状态结构简化，只存储选中ID和其他配置
+    const taskConfigs = ref<Record<AITaskType, { selectedPromptId: string }>>({
+        '润色': { selectedPromptId: defaultSelectedPromptIds['润色'] },
+        '续写': { selectedPromptId: defaultSelectedPromptIds['续写'] },
+        '分析': { selectedPromptId: defaultSelectedPromptIds['分析'] },
+        '剧情生成': { selectedPromptId: defaultSelectedPromptIds['剧情生成'] },
+        '创作': { selectedPromptId: defaultSelectedPromptIds['创作'] },
     });
 
     /**
-     * 更新指定任务类型选择的提示词
+     * 更新指定任务类型选择的提示词ID
      * @param taskType 要更新的任务类型
-     * @param promptName 选择的提示词名称
+     * @param promptId 选择的提示词ID
      */
-    const setSelectedPrompt = (taskType: AITaskType, promptName: string) => {
-        if (taskPromptConfigs.value[taskType]) {
-            taskPromptConfigs.value[taskType].selected = promptName;
+    const setSelectedPromptId = (taskType: AITaskType, promptId: string) => {
+        if (taskConfigs.value[taskType]) {
+            taskConfigs.value[taskType].selectedPromptId = promptId;
         }
     };
 
     return {
-        taskPromptConfigs,
-        setSelectedPrompt,
+        taskConfigs,
+        setSelectedPromptId,
     };
 });
 
 // =
 // 文件: ..\src\novel\editor\stores\ai\aiTaskStore.ts
 //
+
+// 文件: src/novel/editor/stores/ai/aiTaskStore.ts
 
 // src/novel/editor/stores/aiTaskStore.ts
 import { defineStore } from 'pinia'
@@ -4833,7 +4333,7 @@ export const useAITaskStore = defineStore('aiTask', () => {
         let taskTitle: string;
 
         if (taskType === '分析' || taskType === '剧情生成') {
-            const newDerivedItem = derivedContentStore.createDerivedItem(sourceItemId, taskType);
+            const newDerivedItem = derivedContentStore.createDerivedItem(sourceItem, taskType);
             if (!newDerivedItem) {
                 console.error("Failed to create derived item shell.");
                 return;
@@ -5119,6 +4619,8 @@ export const useContextPreviewStore = defineStore('contextPreview', () => {
 // 文件: ..\src\novel\editor\stores\contextSettingsStore.ts
 //
 
+// 文件: src/novel/editor/stores/contextSettingsStore.ts
+
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { ContextItem, TreeNode, DynamicContextSettings } from '@/novel/editor/types';
@@ -5137,8 +4639,12 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
     const selectedOthersItems = ref<ContextItem[]>([]);
     const customContextContent = ref('');
     const dynamicContextSettings = ref<DynamicContextSettings>({
+        prevVolumes: 0,
+        nextVolumes: 0,
         prevChapters: 1,
         nextChapters: 0,
+        includeVolumePlot: false,
+        includeVolumeAnalysis: false,
         includeRelatedPlot: true,
         includeRelatedAnalysis: true,
     });
@@ -5254,40 +4760,36 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { PlotAnalysisItem, AITaskType } from '@/novel/editor/types';
-import { useDirectoryStore } from './directoryStore';
+import type { PlotAnalysisItem, AITaskType, EditorItem } from '@/novel/editor/types';
 
 export const useDerivedContentStore = defineStore('derivedContent', () => {
-    // 数据结构从 Map<string, Item> 改为 ref<Item[]>
     const plotItems = ref<PlotAnalysisItem[]>([]);
     const analysisItems = ref<PlotAnalysisItem[]>([]);
 
     /**
-     * 为指定章节创建一个新的派生内容项（占位符）。
-     * @param sourceChapterId - 源章节的ID
+     * 为指定源（章节或卷）创建一个新的派生内容项（占位符）。
+     * @param sourceNode - 源节点对象 (章节或卷)
      * @param taskType - 任务类型 ('分析' 或 '剧情生成')
      * @returns 新创建的派生内容项
      */
-    function createDerivedItem(sourceChapterId: string, taskType: AITaskType): PlotAnalysisItem | null {
+    function createDerivedItem(sourceNode: EditorItem, taskType: AITaskType): PlotAnalysisItem | null {
         if (taskType !== '分析' && taskType !== '剧情生成') return null;
+        if (sourceNode.type !== 'chapter' && sourceNode.type !== 'volume') return null;
 
-        const directoryStore = useDirectoryStore();
-        const chapterResult = directoryStore.findNodeById(sourceChapterId);
-        if (!chapterResult || chapterResult.node.type !== 'chapter') return null;
 
-        const chapter = chapterResult.node;
         const now = new Date();
         const timestamp = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 
         const derivedType: PlotAnalysisItem['type'] = taskType === '分析' ? 'analysis' : 'plot';
         const titleSuffix = taskType;
+        const titlePrefix = sourceNode.type === 'volume' ? '卷' : '';
 
         const newItem: PlotAnalysisItem = {
             id: `${derivedType}_${now.getTime()}`, // 使用时间戳保证ID唯一
             type: derivedType,
-            sourceChapterId: sourceChapterId,
-            title: `《${chapter.title}》${titleSuffix} - ${timestamp}`,
-            content: `<h1>《${chapter.title}》${titleSuffix} - ${timestamp}</h1><p>AI正在生成内容，请稍候...</p>`
+            sourceId: sourceNode.id,
+            title: `《${titlePrefix}${sourceNode.title}》${titleSuffix} - ${timestamp}`,
+            content: `<h1>《${titlePrefix}${sourceNode.title}》${titleSuffix} - ${timestamp}</h1><p>AI正在生成内容，请稍候...</p>`
         };
 
         if (derivedType === 'analysis') {
@@ -5316,7 +4818,6 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
         const derivedItem = findItemById(nodeId);
         if (derivedItem) {
             derivedItem.content = content;
-            // 标题不再从内容中提取，以保留时间戳
         }
     }
 
@@ -5336,12 +4837,12 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
     }
 
     /**
-     * 删除与指定章节ID关联的所有派生数据。
-     * @param chapterId - 源章节的ID
+     * 删除与指定源ID关联的所有派生数据。
+     * @param sourceId - 源的ID
      */
-    function deleteDerivedDataForChapter(chapterId: string) {
-        plotItems.value = plotItems.value.filter(item => item.sourceChapterId !== chapterId);
-        analysisItems.value = analysisItems.value.filter(item => item.sourceChapterId !== chapterId);
+    function deleteDerivedDataForSource(sourceId: string) {
+        plotItems.value = plotItems.value.filter(item => item.sourceId !== sourceId);
+        analysisItems.value = analysisItems.value.filter(item => item.sourceId !== sourceId);
     }
 
 
@@ -5352,7 +4853,7 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
         findItemById,
         updateNodeContent,
         appendNodeContent,
-        deleteDerivedDataForChapter,
+        deleteDerivedDataForSource,
     };
 });
 
@@ -5360,7 +4861,7 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
 // 文件: ..\src\novel\editor\stores\directoryStore.ts
 //
 
-// src/novel/editor/stores/directoryStore.ts
+// 文件: src/novel/editor/stores/directoryStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { Volume, Chapter } from '@/novel/editor/types';
@@ -5444,7 +4945,7 @@ export const useDirectoryStore = defineStore('directory', () => {
         };
         directoryData.value.push(newVolume);
         editorStore.setEditingNodeId(newVolume.id);
-        uiStore.toggleNodeExpansion(newVolume.id);
+        uiStore.ensureNodeIsExpanded(newVolume.id);
     };
 
     const addChapterToVolume = (volumeId: string) => {
@@ -5461,23 +4962,20 @@ export const useDirectoryStore = defineStore('directory', () => {
                 status: 'editing'
             };
             volume.chapters.push(newChapter);
-            uiStore.toggleNodeExpansion(volume.id);
+            uiStore.ensureNodeIsExpanded(volume.id);
             editorStore.openTab(newChapter.id);
             editorStore.setEditingNodeId(newChapter.id);
         }
     };
 
     const renameNode = (nodeId: string, newTitle: string) => {
-        const editorStore = useEditorStore();
         if (!newTitle.trim()) {
-            editorStore.setEditingNodeId(null);
             return;
         }
         const result = findNodeById(nodeId);
         if (result?.node) {
             const trimmedTitle = newTitle.trim();
             result.node.title = trimmedTitle;
-            // 同时更新卷和章节的content
             if (result.node.content) {
                 if (result.node.content.includes('<h1>')) {
                     result.node.content = result.node.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
@@ -5486,7 +4984,6 @@ export const useDirectoryStore = defineStore('directory', () => {
                 }
             }
         }
-        editorStore.setEditingNodeId(null);
     };
 
     const deleteNode = (nodeId: string) => {
@@ -5497,15 +4994,17 @@ export const useDirectoryStore = defineStore('directory', () => {
         const derivedContentStore = useDerivedContentStore();
 
         if (result.node.type === 'chapter') {
-            derivedContentStore.deleteDerivedDataForChapter(result.node.id);
+            derivedContentStore.deleteDerivedDataForSource(result.node.id);
+        } else if (result.node.type === 'volume') {
+            result.node.chapters.forEach(chapter => {
+                derivedContentStore.deleteDerivedDataForSource(chapter.id);
+            });
+            derivedContentStore.deleteDerivedDataForSource(result.node.id);
         }
 
         if (result.parent && result.node.type === 'chapter') {
             result.parent.chapters = result.parent.chapters.filter(c => c.id !== nodeId);
         } else if (!result.parent && result.node.type === 'volume') {
-            result.node.chapters.forEach(chapter => {
-                derivedContentStore.deleteDerivedDataForChapter(chapter.id);
-            });
             directoryData.value = directoryData.value.filter(v => v.id !== nodeId);
         }
         editorStore.closeTab(nodeId);
@@ -5634,6 +5133,7 @@ import { useDirectoryStore } from '../directoryStore';
 import { useRelatedContentStore } from '../relatedContentStore';
 import { useNotesStore } from '../notesStore';
 import { useDerivedContentStore } from '../derivedContentStore';
+import { usePromptTemplateStore } from '../promptTemplateStore';
 import type { EditorItem, SystemViewInfo, TreeNode, PlotAnalysisItem } from '@/novel/editor/types';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
 
@@ -5655,6 +5155,7 @@ export const useItemStore = defineStore('editor-item', () => {
     const relatedContentStore = useRelatedContentStore();
     const notesStore = useNotesStore();
     const derivedContentStore = useDerivedContentStore();
+    const promptTemplateStore = usePromptTemplateStore();
 
     function findItemById(id: string): { node: EditorItem | null; source: string | null } {
         // 1. Check for System Views
@@ -5681,15 +5182,21 @@ export const useItemStore = defineStore('editor-item', () => {
             return { node: derivedItem as PlotAnalysisItem, source: 'derived' };
         }
 
-        // 3. Check Directory
+        // 3. Check for Prompt Templates
+        const promptItem = promptTemplateStore.findPromptById(id);
+        if (promptItem) {
+            return { node: promptItem, source: 'prompt' };
+        }
+
+        // 4. Check Directory
         let dirResult = directoryStore.findNodeById(id);
         if (dirResult?.node) return { node: dirResult.node, source: 'directory' };
 
-        // 4. Check Related Content (Settings & Custom Items)
+        // 5. Check Related Content (Settings & Custom Items)
         const relatedResult = relatedContentStore.findNodeById(id);
         if(relatedResult?.node) return { node: relatedResult.node, source: 'related' };
 
-        // 5. Check Notes
+        // 6. Check Notes
         const note = notesStore.findNoteById(id);
         if (note) return { node: note, source: 'notes' };
 
@@ -5703,6 +5210,7 @@ export const useItemStore = defineStore('editor-item', () => {
             case 'related': relatedContentStore.updateNodeContent(id, content); break;
             case 'notes': notesStore.updateNoteContent(id, content); break;
             case 'derived': derivedContentStore.updateNodeContent(id, content); break;
+            case 'prompt': promptTemplateStore.updatePromptItemContent(id, content); break;
         }
     }
 
@@ -6094,6 +5602,163 @@ export const useNotesStore = defineStore('notes', () => {
 });
 
 // =
+// 文件: ..\src\novel\editor\stores\promptTemplateStore.ts
+//
+
+// 文件: src/novel/editor/stores/promptTemplateStore.ts
+
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+import type { TreeNode, ItemNode, AITaskType, PromptItemNode } from '@novel/editor/types';
+import { getIconByNodeType } from '@novel/editor/utils/iconUtils';
+import { useAIConfigStore } from './ai/aiConfigStore';
+
+const DEFAULT_PROMPTS: Record<AITaskType, { id: string, name: string, template: string }[]> = {
+    '润色': [
+        { id: 'prompt-polish-default', name: '默认润色', template: '你是一名专业的小说编辑，请根据上下文，对以下“待处理内容”进行润色，使其更具文采和表现力。' },
+        { id: 'prompt-polish-creative', name: '增强创造性', template: '你是一名富有想象力的作家，请跳出常规，用更具创造性和独特风格的语言重写以下“待处理内容”，可以适度偏离原文。' }
+    ],
+    '续写': [
+        { id: 'prompt-continue-default', name: '默认续写', template: '你是一名小说家，请根据所有上下文信息，紧接着“待处理内容”的结尾，自然地续写接下来的故事情节。' },
+        { id: 'prompt-continue-dramatic', name: '增强戏剧性', template: '你是一名顶尖的剧本编剧，请在续写时增加戏剧性冲突或意外转折，让故事更有张力。' }
+    ],
+    '分析': [
+        { id: 'prompt-analyze-default', name: '默认分析', template: '请作为一个文学评论家，分析以下“待处理内容”的结构、角色动态、潜在主题和写作风格。' },
+        { id: 'prompt-analyze-deep', name: '深度结构分析', template: '请从叙事技巧、象征意义和读者情感引导等角度，深度剖析以下“待处理内容”，并提出改进建议。' }
+    ],
+    '剧情生成': [
+        { id: 'prompt-plot-default', name: '默认剧情生成', template: '你是一名创意编剧，请根据“待处理内容”中描写的场景或事件，生成一段相关的、有趣的后续剧情大纲。' },
+        { id: 'prompt-plot-twist', name: '生成反转剧情', template: '你是一名擅长制造悬念的编剧，请根据“待处理内容”，构思一个包含意外反转的后续剧情大纲。' }
+    ],
+    '创作': [
+        { id: 'prompt-create-default', name: '默认创作', template: '你是一位小说家，请根据“动态上下文”（其中可能包含剧情大纲和分析）以及“固定上下文”，为标题为《{{sourceItemTitle}}》的章节创作完整的正文内容。“待处理内容”是旧版或草稿，可作为参考，但你的主要任务是生成全新的、完整的章节。' },
+    ],
+};
+
+const defaultSelectedPromptIds: Record<AITaskType, string> = {
+    '润色': 'prompt-polish-default',
+    '续写': 'prompt-continue-default',
+    '分析': 'prompt-analyze-default',
+    '剧情生成': 'prompt-plot-default',
+    '创作': 'prompt-create-default',
+};
+
+
+export const usePromptTemplateStore = defineStore('promptTemplate', () => {
+    const promptTree = ref<TreeNode[]>([]);
+
+    function _buildInitialTree(): TreeNode[] {
+        const root: TreeNode = {
+            id: 'prompt-root',
+            title: '提示词模板',
+            type: 'prompt_root',
+            icon: getIconByNodeType('prompt_root'),
+            children: (Object.keys(DEFAULT_PROMPTS) as AITaskType[]).map(taskType => {
+                const groupNode: TreeNode = {
+                    id: `prompt-group-${taskType}`,
+                    title: `${taskType}提示词`,
+                    type: 'prompt_group',
+                    icon: getIconByNodeType(taskType),
+                    isReadOnly: true,
+                    originalData: { taskType },
+                    children: DEFAULT_PROMPTS[taskType].map(prompt => ({
+                        id: prompt.id,
+                        title: prompt.name,
+                        type: 'prompt_item',
+                        icon: getIconByNodeType('prompt_item'),
+                        content: `<pre>${prompt.template}</pre>`,
+                        originalData: { taskType },
+                    }))
+                };
+                return groupNode;
+            })
+        };
+        return [root];
+    }
+
+    const templates = computed(() => {
+        if (promptTree.value.length === 0) {
+            promptTree.value = _buildInitialTree();
+        }
+        return promptTree.value;
+    });
+
+    const getPromptsForTask = (taskType: AITaskType): ItemNode[] => {
+        const group = templates.value[0]?.children?.find(g => (g as any).originalData.taskType === taskType);
+        return (group?.children as ItemNode[] || []);
+    };
+
+    function findPromptById(promptId: string): { prompt: PromptItemNode, group: TreeNode } | null {
+        for (const group of templates.value[0]?.children || []) {
+            const prompt = group.children?.find(p => p.id === promptId);
+            if(prompt) return { prompt: prompt as PromptItemNode, group };
+        }
+        return null;
+    }
+
+    function addPromptItem(groupId: string, title: string, template: string): PromptItemNode | null {
+        const group = templates.value[0]?.children?.find(g => g.id === groupId);
+        if (!group || !group.children) return null;
+
+        const taskType = group.originalData.taskType;
+        const newItem: PromptItemNode = {
+            id: `prompt-custom-${Date.now()}`,
+            title: title,
+            type: 'prompt_item',
+            icon: getIconByNodeType('prompt_item'),
+            content: `<pre>${template}</pre>`,
+            originalData: { taskType },
+        };
+        group.children.push(newItem);
+        return newItem;
+    }
+
+    function renamePromptItem(promptId: string, newTitle: string) {
+        const result = findPromptById(promptId);
+        if (result) {
+            result.prompt.title = newTitle;
+        }
+    }
+
+    function deletePromptItem(promptId: string) {
+        const aiConfigStore = useAIConfigStore();
+        const result = findPromptById(promptId);
+        if (!result) return false;
+
+        const { prompt, group } = result;
+        const taskType = prompt.originalData.taskType;
+
+        if (group && group.children) {
+            group.children = group.children.filter(p => p.id !== promptId);
+
+            if (aiConfigStore.taskConfigs[taskType].selectedPromptId === promptId) {
+                aiConfigStore.setSelectedPromptId(taskType, defaultSelectedPromptIds[taskType]);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    function updatePromptItemContent(promptId: string, newContent: string) {
+        const result = findPromptById(promptId);
+        if (result) {
+            result.prompt.content = newContent;
+        }
+    }
+
+
+    return {
+        templates,
+        getPromptsForTask,
+        findPromptById: (id: string) => findPromptById(id)?.prompt || null,
+        addPromptItem,
+        renamePromptItem,
+        deletePromptItem,
+        updatePromptItemContent,
+    };
+});
+
+// =
 // 文件: ..\src\novel\editor\stores\related\itemDataStore.ts
 //
 
@@ -6136,21 +5801,19 @@ export const useItemDataStore = defineStore('related-item-data', () => {
 // 文件: ..\src\novel\editor\stores\related\nodeOperationStore.ts
 //
 
+// 文件: src/novel/editor/stores/related/nodeOperationStore.ts
 import { defineStore } from 'pinia';
 import { useItemDataStore } from './itemDataStore.ts';
-import { useTreeBuilderStore } from './treeBuilderStore.ts';
 import { useEditorStore } from '@novel/editor/stores/editorStore.ts';
 import { useUIStore } from '@novel/editor/stores/uiStore.ts';
+import { usePromptTemplateStore } from '../promptTemplateStore.ts';
 import { getIconByNodeType } from '@novel/editor/utils/iconUtils.ts';
 import type { TreeNode, ItemNode, GroupNode } from '@novel/editor/types';
 
-// --- 辅助函数 ---
-
-// 在给定的树中递归查找节点
-const _findNodeInTreeRecursive = (nodes: TreeNode[], nodeId: string): { node: TreeNode; parent: TreeNode | null; siblings: TreeNode[] } | null => {
+const _findNodeInTreeRecursive = (nodes: TreeNode[], nodeId: string): { node: TreeNode; parent: TreeNode | null; } | null => {
     for (const node of nodes) {
         if (node.id === nodeId) {
-            return { node, parent: null, siblings: nodes };
+            return { node, parent: null };
         }
         if (node.children) {
             const foundInChild = _findNodeInTreeRecursive(node.children, nodeId);
@@ -6165,7 +5828,6 @@ const _findNodeInTreeRecursive = (nodes: TreeNode[], nodeId: string): { node: Tr
     return null;
 };
 
-// 在给定的树中查找并移除节点
 const _findAndRemoveNodeInTree = (nodes: TreeNode[], nodeId: string): boolean => {
     for (let i = 0; i < nodes.length; i++) {
         if (nodes[i].id === nodeId) {
@@ -6181,54 +5843,44 @@ const _findAndRemoveNodeInTree = (nodes: TreeNode[], nodeId: string): boolean =>
 
 export const useNodeOperationStore = defineStore('related-node-operations', () => {
     const itemDataStore = useItemDataStore();
-    const treeBuilderStore = useTreeBuilderStore();
-    const editorStore = useEditorStore();
-    const uiStore = useUIStore();
+    const promptTemplateStore = usePromptTemplateStore();
 
-    /**
-     * 在所有相关内容数据中查找节点
-     * @param nodeId - 要查找的节点ID
-     */
-    function findNodeById(nodeId: string): { node: TreeNode; parent: TreeNode | null; siblings: TreeNode[] } | null {
-        const staticSources = [
+    function findNodeById(nodeId: string): { node: TreeNode; parent: TreeNode | null; } | null {
+        const sources = [
             itemDataStore.settingsData,
             itemDataStore.plotCustomData,
             itemDataStore.analysisCustomData,
             itemDataStore.othersCustomData
         ];
-        for (const source of staticSources) {
+        for (const source of sources) {
             const result = _findNodeInTreeRecursive(source, nodeId);
             if (result) return result;
         }
-        // 作为备用方案，在完整的动态树中搜索（用于查找派生内容等）
-        return _findNodeInTreeRecursive(treeBuilderStore.relatedData as TreeNode[], nodeId);
+        const promptResult = _findNodeInTreeRecursive(promptTemplateStore.templates, nodeId);
+        if (promptResult) return promptResult;
+
+        return null;
     }
 
-    /**
-     * 更新节点内容
-     * @param nodeId - 节点ID
-     * @param content - 新的HTML内容
-     */
     function updateNodeContent(nodeId: string, content: string) {
+        if (promptTemplateStore.findPromptById(nodeId)) {
+            promptTemplateStore.updatePromptItemContent(nodeId, content);
+            return;
+        }
+
         const result = findNodeById(nodeId);
-        if (result?.node && 'content' in result.node) {
-            (result.node as ItemNode).content = content;
-            if (!result.node.isReadOnly) {
-                const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
-                const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
-                if (newTitle && newTitle !== result.node.title) {
-                    result.node.title = newTitle;
-                }
+        if (!result?.node || !('content' in result.node)) return;
+
+        (result.node as ItemNode).content = content;
+        if (!result.node.isReadOnly) {
+            const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
+            const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
+            if (newTitle && newTitle !== result.node.title) {
+                result.node.title = newTitle;
             }
         }
     }
 
-    /**
-     * 向节点追加内容
-     * @param nodeId - 节点ID
-     * @param contentToAppend - 要追加的原始文本
-     * @param isAutoApplied - 是否为AI自动应用
-     */
     function appendNodeContent(nodeId: string, contentToAppend: string, isAutoApplied: boolean) {
         const result = findNodeById(nodeId);
         if (result?.node && 'content' in result.node) {
@@ -6243,16 +5895,13 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
         }
     }
 
-    /**
-     * 在设定的分组下添加新节点（分组或条目）
-     * @param parentId - 父节点ID
-     * @param type - 'group' 或 'item'
-     */
     function addRelatedNode(parentId: string, type: 'group' | 'item') {
-        const result = findNodeById(parentId);
+        const result = _findNodeInTreeRecursive(itemDataStore.settingsData, parentId);
         if (!result?.node || !result.node.children) return;
 
         const parentNode = result.node as GroupNode;
+        const uiStore = useUIStore();
+        const editorStore = useEditorStore();
 
         const itemTypePrefix = parentNode.id.endsWith('s') ? parentNode.id.slice(0, -1) : parentNode.id;
         const newNodeType = type === 'group' ? 'group' : `${itemTypePrefix}_item`;
@@ -6280,47 +5929,26 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
             uiStore.setEditingNodeId(newNode.id);
             editorStore.openTab(newNode.id);
         }
-
         uiStore.ensureRelatedNodeIsExpanded(parentId);
     }
 
-    /**
-     * 重命名设定节点
-     * @param nodeId - 节点ID
-     * @param newTitle - 新标题
-     */
     function renameRelatedNode(nodeId: string, newTitle: string) {
-        if (!newTitle.trim()) {
-            uiStore.setEditingNodeId(null);
-            return;
-        }
         const result = findNodeById(nodeId);
-        if (result?.node && !result.node.isReadOnly) {
+        if (result?.node && !result.node.isReadOnly && newTitle.trim()) {
             const trimmedTitle = newTitle.trim();
             result.node.title = trimmedTitle;
             if ('content' in result.node && result.node.content && result.node.content.includes('<h1>')) {
                 (result.node as ItemNode).content = (result.node as ItemNode).content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
             }
         }
-        uiStore.setEditingNodeId(null);
     }
 
-    /**
-     * 删除设定节点
-     * @param nodeId - 节点ID
-     */
     function deleteRelatedNode(nodeId: string) {
-        const result = findNodeById(nodeId);
-        if (!result?.node) return;
-
         const wasRemoved = _findAndRemoveNodeInTree(itemDataStore.settingsData, nodeId);
         if (wasRemoved) {
-            editorStore.closeTab(nodeId);
-            if (uiStore.editingNodeId === nodeId) uiStore.setEditingNodeId(null);
+            useEditorStore().closeTab(nodeId);
         }
     }
-
-    // --- Custom Related (Plot/Analysis) ---
 
     function addCustomRelatedNode(target: 'plot' | 'analysis') {
         const dataRef = target === 'plot' ? itemDataStore.plotCustomData : itemDataStore.analysisCustomData;
@@ -6333,28 +5961,17 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
             content: '<h1>新建自定义条目</h1><p>请在此处填写内容...</p>',
         };
         dataRef.unshift(newNode);
-        uiStore.ensureRelatedNodeIsExpanded(target);
-        uiStore.setEditingNodeId(newNode.id);
-        editorStore.openTab(newNode.id);
-    }
-
-    function renameCustomRelatedNode(nodeId: string, newTitle: string) {
-        renameRelatedNode(nodeId, newTitle);
+        useUIStore().ensureRelatedNodeIsExpanded(target);
+        useEditorStore().openTab(newNode.id);
+        useUIStore().setEditingNodeId(newNode.id);
     }
 
     function deleteCustomRelatedNode(nodeId: string) {
-        const result = findNodeById(nodeId);
-        if (!result?.node) return;
-
         const wasRemoved = _findAndRemoveNodeInTree(itemDataStore.plotCustomData, nodeId) || _findAndRemoveNodeInTree(itemDataStore.analysisCustomData, nodeId);
-
         if (wasRemoved) {
-            editorStore.closeTab(nodeId);
-            if (uiStore.editingNodeId === nodeId) uiStore.setEditingNodeId(null);
+            useEditorStore().closeTab(nodeId);
         }
     }
-
-    // --- Custom Others ---
 
     function addCustomOthersNode() {
         const icon = getIconByNodeType('others_item');
@@ -6366,24 +5983,38 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
             content: '<h1>新建其他条目</h1><p>请在此处填写内容...</p>',
         };
         itemDataStore.othersCustomData.unshift(newNode);
-        uiStore.ensureRelatedNodeIsExpanded('others');
-        uiStore.setEditingNodeId(newNode.id);
-        editorStore.openTab(newNode.id);
-    }
-
-    function renameCustomOthersNode(nodeId: string, newTitle: string) {
-        renameRelatedNode(nodeId, newTitle);
+        useUIStore().ensureRelatedNodeIsExpanded('others');
+        useEditorStore().openTab(newNode.id);
+        useUIStore().setEditingNodeId(newNode.id);
     }
 
     function deleteCustomOthersNode(nodeId: string) {
-        const result = findNodeById(nodeId);
-        if (!result?.node) return;
-
         const wasRemoved = _findAndRemoveNodeInTree(itemDataStore.othersCustomData, nodeId);
-
         if (wasRemoved) {
-            editorStore.closeTab(nodeId);
-            if (uiStore.editingNodeId === nodeId) uiStore.setEditingNodeId(null);
+            useEditorStore().closeTab(nodeId);
+        }
+    }
+
+    function addPrompt(groupId: string) {
+        const newPrompt = promptTemplateStore.addPromptItem(groupId, '新建提示词', '在这里输入你的提示词模板...');
+        if (newPrompt) {
+            const uiStore = useUIStore();
+            const editorStore = useEditorStore();
+            uiStore.ensureRelatedNodeIsExpanded(groupId);
+            editorStore.openTab(newPrompt.id);
+            uiStore.setEditingNodeId(newPrompt.id);
+        }
+    }
+
+    function renamePrompt(promptId: string, newTitle: string) {
+        if (newTitle.trim()) {
+            promptTemplateStore.renamePromptItem(promptId, newTitle.trim());
+        }
+    }
+
+    function deletePrompt(promptId: string) {
+        if (promptTemplateStore.deletePromptItem(promptId)) {
+            useEditorStore().closeTab(promptId);
         }
     }
 
@@ -6395,11 +6026,14 @@ export const useNodeOperationStore = defineStore('related-node-operations', () =
         renameRelatedNode,
         deleteRelatedNode,
         addCustomRelatedNode,
-        renameCustomRelatedNode,
+        renameCustomRelatedNode: renameRelatedNode,
         deleteCustomRelatedNode,
         addCustomOthersNode,
-        renameCustomOthersNode,
+        renameCustomOthersNode: renameRelatedNode,
         deleteCustomOthersNode,
+        addPrompt,
+        renamePrompt,
+        deletePrompt,
     };
 });
 
@@ -6495,42 +6129,50 @@ export const useOverviewStore = defineStore('related-overview', () => {
 // 文件: ..\src\novel\editor\stores\related\treeBuilderStore.ts
 //
 
+// 文件: src/novel/editor/stores/related/treeBuilderStore.ts
+
 import { defineStore } from 'pinia';
 import { computed } from 'vue';
 import { useItemDataStore } from './itemDataStore.ts';
 import { useDirectoryStore } from '@novel/editor/stores/directoryStore.ts';
 import { useDerivedContentStore } from '@novel/editor/stores/derivedContentStore.ts';
+import { usePromptTemplateStore } from '@novel/editor/stores/promptTemplateStore';
 import { getIconByNodeType } from '@novel/editor/utils/iconUtils.ts';
-import type { TreeNode, RootNode, PlotAnalysisItem } from '@novel/editor/types';
+import type { TreeNode, RootNode, PlotAnalysisItem, ItemNode } from '@novel/editor/types';
 
 export const useTreeBuilderStore = defineStore('related-tree-builder', () => {
     const itemDataStore = useItemDataStore();
     const directoryStore = useDirectoryStore();
     const derivedContentStore = useDerivedContentStore();
+    const promptTemplateStore = usePromptTemplateStore();
 
     /**
      * 响应式地构建完整的相关内容树，供UI使用
      */
     const relatedData = computed((): TreeNode[] => {
-        // 清理无效的派生数据
-        const allChapterIds = new Set(directoryStore.directoryData.flatMap(v => v.chapters.map(c => c.id)));
-        derivedContentStore.plotItems = derivedContentStore.plotItems.filter(i => allChapterIds.has(i.sourceChapterId));
-        derivedContentStore.analysisItems = derivedContentStore.analysisItems.filter(i => allChapterIds.has(i.sourceChapterId));
+        // 清理无效的派生内容
+        const allValidSourceIds = new Set(directoryStore.directoryData.flatMap(v => [v.id, ...v.chapters.map(c => c.id)]));
+        derivedContentStore.plotItems = derivedContentStore.plotItems.filter(i => allValidSourceIds.has(i.sourceId));
+        derivedContentStore.analysisItems = derivedContentStore.analysisItems.filter(i => allValidSourceIds.has(i.sourceId));
 
-        // 辅助函数，用于构建派生内容的子树
-        const buildDerivedTree = (
-            type: 'plot' | 'analysis',
-            dataArray: PlotAnalysisItem[]
-        ): TreeNode[] => {
-            return directoryStore.directoryData.map(volume => ({
-                id: `${type}_vol_${volume.id}`,
-                title: volume.title,
-                type: 'group',
-                icon: getIconByNodeType('volume'),
-                isReadOnly: true,
-                children: volume.chapters
+        const buildDerivedContentTree = (type: 'plot' | 'analysis', dataArray: PlotAnalysisItem[]): TreeNode[] => {
+            return directoryStore.directoryData.map(volume => {
+                // 查找与此卷直接相关的派生项
+                const derivedForVolume = dataArray
+                    .filter(item => item.sourceId === volume.id)
+                    .map(item => ({
+                        id: item.id,
+                        title: item.title,
+                        type: `${type}_item` as ItemNode['type'],
+                        icon: getIconByNodeType(`${type}_item`),
+                        originalData: item,
+                        content: item.content
+                    }));
+
+                // 为此卷下的章节查找派生项并分组
+                const derivedForChapters = volume.chapters
                     .map(chapter => {
-                        const derivedForChapter = dataArray.filter(item => item.sourceChapterId === chapter.id);
+                        const derivedForChapter = dataArray.filter(item => item.sourceId === chapter.id);
                         if (derivedForChapter.length === 0) return null;
 
                         return {
@@ -6542,32 +6184,59 @@ export const useTreeBuilderStore = defineStore('related-tree-builder', () => {
                             children: derivedForChapter.map(item => ({
                                 id: item.id,
                                 title: item.title,
-                                type: `${type}_item`,
+                                type: `${type}_item` as ItemNode['type'],
                                 icon: getIconByNodeType(`${type}_item`),
                                 originalData: item,
                                 content: item.content
                             }))
                         };
                     })
-                    .filter((c): c is TreeNode => c !== null)
-            })).filter(vol => vol.children.length > 0);
+                    .filter((c): c is TreeNode => c !== null);
+
+                // 如果该卷及其章节都没有派生内容，则不显示该卷的节点
+                if (derivedForVolume.length === 0 && derivedForChapters.length === 0) {
+                    return null;
+                }
+
+                return {
+                    id: `${type}_vol_group_${volume.id}`,
+                    title: volume.title,
+                    type: 'group',
+                    icon: getIconByNodeType('volume'),
+                    isReadOnly: true,
+                    children: [
+                        ...derivedForVolume,
+                        ...derivedForChapters
+                    ]
+                };
+            }).filter((v): v is TreeNode => v !== null);
         };
 
-        // 构建各个根节点
+        const allPlotItems = derivedContentStore.plotItems;
+        const allAnalysisItems = derivedContentStore.analysisItems;
+
         const plotTree: RootNode = {
             id: 'plot', title: '剧情', type: 'root', icon: getIconByNodeType('plot'),
-            children: [...itemDataStore.plotCustomData, ...buildDerivedTree('plot', derivedContentStore.plotItems)]
+            children: [
+                ...itemDataStore.plotCustomData,
+                ...buildDerivedContentTree('plot', allPlotItems)
+            ]
         };
         const analysisTree: RootNode = {
             id: 'analysis', title: '分析', type: 'root', icon: getIconByNodeType('analysis'),
-            children: [...itemDataStore.analysisCustomData, ...buildDerivedTree('analysis', derivedContentStore.analysisItems)]
+            children: [
+                ...itemDataStore.analysisCustomData,
+                ...buildDerivedContentTree('analysis', allAnalysisItems)
+            ]
         };
         const othersTree: RootNode = {
             id: 'others', title: '其他', type: 'root', icon: getIconByNodeType('others'),
-            children: [...itemDataStore.othersCustomData]
+            children: [
+                ...promptTemplateStore.templates,
+                ...itemDataStore.othersCustomData
+            ]
         };
 
-        // 组合并返回最终的树结构
         return [...itemDataStore.settingsData, plotTree, analysisTree, othersTree];
     });
 
@@ -6580,19 +6249,20 @@ export const useTreeBuilderStore = defineStore('related-tree-builder', () => {
 // 文件: ..\src\novel\editor\stores\relatedContentStore.ts
 //
 
-
 import { defineStore } from 'pinia';
 import { computed } from 'vue';
 import { useItemDataStore } from '@novel/editor/stores/related/itemDataStore';
 import { useTreeBuilderStore } from '@novel/editor/stores/related/treeBuilderStore';
 import { useNodeOperationStore } from '@novel/editor/stores/related/nodeOperationStore';
 import { useOverviewStore } from '@novel/editor/stores/related/overviewStore';
+import { usePromptTemplateStore } from './promptTemplateStore';
 
 export const useRelatedContentStore = defineStore('relatedContent', () => {
     // 实例化所有子模块
     const itemDataStore = useItemDataStore();
     const treeBuilderStore = useTreeBuilderStore();
     const nodeOperationStore = useNodeOperationStore();
+    const promptTemplateStore = usePromptTemplateStore();
 
     // 初始化总览内容的监听逻辑
     useOverviewStore();
@@ -6606,8 +6276,13 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
     const relatedData = computed(() => treeBuilderStore.relatedData);
 
     // --- Actions ---
-    // 从子模块中导出所有方法，保持接口不变
-    const { fetchRelatedData } = itemDataStore;
+
+    function fetchRelatedData(settings: any[], plot: any[], analysis: any[], others: any[]) {
+        // 访问 promptTemplates 计算属性以确保其被初始化
+        const _ = promptTemplateStore.templates;
+        itemDataStore.fetchRelatedData(settings, plot, analysis, others);
+    }
+
     const {
         findNodeById,
         updateNodeContent,
@@ -6621,6 +6296,9 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         addCustomOthersNode,
         renameCustomOthersNode,
         deleteCustomOthersNode,
+        addPrompt,
+        renamePrompt,
+        deletePrompt,
     } = nodeOperationStore;
 
     return {
@@ -6644,6 +6322,9 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         addCustomOthersNode,
         renameCustomOthersNode,
         deleteCustomOthersNode,
+        addPrompt,
+        renamePrompt,
+        deletePrompt,
     };
 });
 
@@ -6751,6 +6432,7 @@ export const useSearchStore = defineStore('search', () => {
 // 文件: ..\src\novel\editor\stores\uiStore.ts
 //
 
+// 文件: src/novel/editor/stores/uiStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { EditorItem, EditorUIState } from '@/novel/editor/types';
@@ -6762,7 +6444,7 @@ export const useUIStore = defineStore('ui', () => {
         expandedRelatedNodeIds: new Set(),
         autoOpenAIPanel: true,
         activeTheme: 'default',
-        concurrentTaskLimit: 3, // 新增：默认并发数为3
+        concurrentTaskLimit: 3,
         taskApplicationStrategy: {
             mode: 'manual', // 'manual', 'auto', 'delayed'
             delaySeconds: 3,
@@ -6802,6 +6484,12 @@ export const useUIStore = defineStore('ui', () => {
         }
     };
 
+    const ensureNodeIsExpanded = (nodeId: string) => {
+        if (!uiState.value.expandedNodeIds.has(nodeId)) {
+            uiState.value.expandedNodeIds.add(nodeId);
+        }
+    };
+
     const toggleRelatedNodeExpansion = (nodeId: string) => {
         if (uiState.value.expandedRelatedNodeIds.has(nodeId)) {
             uiState.value.expandedRelatedNodeIds.delete(nodeId);
@@ -6837,6 +6525,7 @@ export const useUIStore = defineStore('ui', () => {
         setConcurrentTaskLimit,
         setTaskApplicationStrategy,
         toggleNodeExpansion,
+        ensureNodeIsExpanded,
         toggleRelatedNodeExpansion,
         ensureRelatedNodeIsExpanded,
         showReaderMode,
@@ -6847,6 +6536,8 @@ export const useUIStore = defineStore('ui', () => {
 // =
 // 文件: ..\src\novel\editor\types\app.ts
 //
+
+// 文件: src/novel/editor/types/app.ts
 
 import type { TreeNode, Volume, Chapter, NoteItem, PlotAnalysisItem } from './models';
 
@@ -6919,8 +6610,12 @@ export interface ContextBuildResult {
  * 动态上下文的配置项
  */
 export interface DynamicContextSettings {
+    prevVolumes: number;
+    nextVolumes: number;
     prevChapters: number;
     nextChapters: number;
+    includeVolumePlot: boolean;
+    includeVolumeAnalysis: boolean;
     includeRelatedPlot: boolean;
     includeRelatedAnalysis: boolean;
 }
@@ -7038,8 +6733,7 @@ export * from './ui';
 // 文件: ..\src\novel\editor\types\models.ts
 //
 
-// src/novel/editor/types/models.ts
-
+// 文件: src/novel/editor/types/models.ts
 
 /**
  * 卷（目录的一级）
@@ -7073,7 +6767,7 @@ export interface PlotAnalysisItem {
     id: string; // 派生ID, e.g., 'plot_ch-1'
     type: 'plot' | 'analysis'; // 明确其类型
     icon?: string;
-    sourceChapterId: string; // 源章节ID, e.g., 'ch-1'
+    sourceId: string; // 源ID, e.g., 'ch-1' or 'vol-1'
     title: string; // 派生标题, e.g., '第一章 剧情'
     content: string; // 生成的内容 (HTML)
 }
@@ -7136,6 +6830,7 @@ interface BaseNode {
     children?: TreeNode[];
     isReadOnly?: boolean;
     isOverview?: boolean;
+    originalData?: any;
 }
 
 export type AnyNode = Volume | Chapter | NoteItem | PlotAnalysisItem;
@@ -7167,7 +6862,7 @@ export interface GroupNode extends BaseNode {
     children: TreeNode[];
 }
 export interface ItemNode extends BaseNode {
-    type: `${string}_item`; // e.g., character_item, plot_item
+    type: `${string}_item`; // e.g., character_item, plot_item, prompt_item
     content: string;
     originalData?: AnyNode;
     children?: never;
@@ -7180,13 +6875,27 @@ export interface OverviewNode extends BaseNode {
     children?: never;
 }
 
+// --- 新增：提示词模板节点 ---
+export interface PromptGroupNode extends BaseNode {
+    type: 'prompt_group';
+    children: PromptItemNode[];
+}
+export interface PromptItemNode extends BaseNode {
+    type: 'prompt_item';
+    content: string; // <pre>template</pre>
+    children?: never;
+}
+
+
 export type TreeNode =
     | RootNode
     | GroupNode
     | ItemNode
     | OverviewNode
     | VolumeNode
-    | ChapterNode;
+    | ChapterNode
+    | PromptGroupNode
+    | PromptItemNode;
 
 // =
 // 文件: ..\src\novel\editor\types\ui.ts
@@ -7243,6 +6952,19 @@ const ICON_MAP: Record<string, string> = {
     // 相关内容 - 其他 (Related - Others)
     'others': 'fa-solid fa-puzzle-piece', // 其他根节点
     'others_item': 'fa-regular fa-file-zipper', // 其他条目
+
+    // 新增：提示词模板 (Prompt Templates)
+    'prompt_root': 'fa-solid fa-flask-vial text-cyan-600',
+    'prompt_group': 'fa-solid fa-layer-group text-sky-600',
+    'prompt_item': 'fa-regular fa-comment-dots text-sky-500',
+
+    // 新增：AI任务类型作为分组图标
+    '润色': 'fa-solid fa-palette text-blue-500',
+    '续写': 'fa-solid fa-wand-magic-sparkles text-gray-600',
+    '分析': 'fa-solid fa-magnifying-glass-chart text-amber-500',
+    '剧情生成': 'fa-solid fa-feather text-pink-500',
+    '创作': 'fa-solid fa-pen-nib text-violet-500',
+
 
     // 笔记 (Notes)
     'note': 'fa-solid fa-note-sticky text-yellow-500',
