@@ -1,4 +1,4 @@
-import type { Conversation } from '@/novel/editor/types/chatTypes';
+import type { Conversation } from '@novel/editor/types/chatTypes.ts';
 
 export const mockChatConversations: Conversation[] = [
     {

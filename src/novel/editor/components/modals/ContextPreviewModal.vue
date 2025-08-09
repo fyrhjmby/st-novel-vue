@@ -1,6 +1,6 @@
 <template>
-  <div v-if="store.isVisible" class="modal-overlay">
-    <div class="modal-container">
+  <div v-if="store.isVisible" class="modal-overlay" @click.self="store.hide()">
+    <div class="modal-container" role="dialog" aria-modal="true">
       <!-- Modal Header -->
       <header class="modal-header">
         <div>
@@ -26,7 +26,7 @@
               <i class="fa-solid fa-chevron-right expand-icon" :class="{ 'expanded': expandedPanelIds.has(panel.id) }"></i>
               <span class="font-medium truncate">{{ panel.name }}</span>
             </div>
-            <span class="match-count">{{ formatCharCount(store.previewContent.stats[panel.statKey]) }}</span>
+            <span class="match-count">{{ formatCharCount(store.previewContent.stats[panel.statKey]) }} 字</span>
           </div>
           <div v-show="expandedPanelIds.has(panel.id)" class="match-list-style-body">
             <div v-if="panel.id === 'prompt'">
@@ -57,7 +57,7 @@ import { ref, computed, watch } from 'vue';
 import { useContextPreviewStore } from '@/novel/editor/stores/contextPreviewStore';
 import type { ContextBuildResult } from '@/novel/editor/types';
 
-type PanelId = 'fixed' | 'dynamic' | 'rag' | 'prompt';
+type PanelId = 'fixed' | 'dynamic' | 'reference' | 'rag' | 'prompt';
 
 const store = useContextPreviewStore();
 const expandedPanelIds = ref(new Set<PanelId>());
@@ -65,15 +65,19 @@ const expandedPanelIds = ref(new Set<PanelId>());
 const panels = ref([
   { id: 'fixed', name: '固定上下文', statKey: 'fixedCharCount' },
   { id: 'dynamic', name: '动态上下文', statKey: 'dynamicCharCount' },
+  { id: 'reference', name: '参考书籍上下文', statKey: 'referenceCharCount' },
   { id: 'rag', name: 'RAG检索', statKey: 'ragCharCount' },
   { id: 'prompt', name: '最终提示词', statKey: 'promptCharCount' },
 ] as const);
 
 watch(() => store.previewContent, (newContent) => {
   if (newContent) {
-    // Default expand 'fixed' panel only.
+    // Default expand panels with content.
     expandedPanelIds.value.clear();
-    expandedPanelIds.value.add('fixed');
+    if (newContent.fixed) expandedPanelIds.value.add('fixed');
+    if (newContent.dynamic) expandedPanelIds.value.add('dynamic');
+    if (newContent.reference) expandedPanelIds.value.add('reference');
+    expandedPanelIds.value.add('prompt'); // Always expand prompt
   }
 }, { immediate: true });
 
@@ -86,15 +90,16 @@ const toggleExpansion = (panelId: PanelId) => {
   }
 };
 
-const formatCharCount = (count: number) => {
+const formatCharCount = (count: number | undefined) => {
+  if(count === undefined) return 0;
   if (count > 1000) return `${(count / 1000).toFixed(1)}k`;
   return count;
 };
 
 const totalCharCount = computed(() => {
-  if (!store.previewContent?.stats) return 0;
-  const { fixedCharCount, dynamicCharCount, ragCharCount } = store.previewContent.stats;
-  const total = fixedCharCount + dynamicCharCount + ragCharCount;
+  if (!store.previewContent?.stats) return '0';
+  const { fixedCharCount, dynamicCharCount, referenceCharCount, ragCharCount } = store.previewContent.stats;
+  const total = (fixedCharCount || 0) + (dynamicCharCount || 0) + (referenceCharCount || 0) + (ragCharCount || 0);
   return formatCharCount(total);
 });
 
@@ -141,7 +146,7 @@ const emptyStateHtml = (contextType: string) => {
 .modal-title { font-size: 1.125rem; font-weight: 600; color: #111827; }
 .modal-subtitle { font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem; }
 .modal-subtitle .font-semibold { color: #4B5563; }
-.modal-close-button { color: #9ca3af; padding: 0.5rem; margin: -0.5rem; border-radius: 9999px; transition: background-color 0.2s, color 0.2s; }
+.modal-close-button { color: #9ca3af; padding: 0.5rem; margin: -0.5rem; border-radius: 9999px; transition: background-color 0.2s, color 0.2s; background: none; border: none; cursor: pointer;}
 .modal-close-button:hover { background-color: #f3f4f6; color: #1f2937; }
 
 .modal-loading-state {
@@ -170,7 +175,7 @@ const emptyStateHtml = (contextType: string) => {
 .result-header:hover { background-color: #F3F4F6; }
 .expand-icon { transition: transform 0.2s ease; color: #9CA3AF; }
 .expand-icon.expanded { transform: rotate(90deg); }
-.match-count { margin-left: auto; font-size: 0.75rem; background-color: #E5E7EB; color: #4B5563; padding: 0.125rem 0.5rem; border-radius: 99px; flex-shrink: 0; }
+.match-count { margin-left: auto; font-size: 0.75rem; background-color: #E5E7EB; color: #4B5563; padding: 0.125rem 0.5rem; border-radius: 99px; flex-shrink: 0; font-family: monospace; }
 .match-list-style-body { padding-left: 2rem; margin-top: 0.5rem; border-left: 1px solid #F3F4F6; margin-left: 0.9rem; padding-bottom: 0.5rem; }
 
 .prompt-preview {
@@ -186,6 +191,8 @@ const emptyStateHtml = (contextType: string) => {
   margin-top: 0.75rem;
   padding-left: 0.5rem;
 }
+.prose :deep(hr) { margin: 1rem 0; }
+.prose :deep(h1), .prose :deep(h2), .prose :deep(h3), .prose :deep(h4) { margin-bottom: 0.5rem; }
 
 .modal-footer {
   padding: 1rem 1.5rem;
@@ -198,7 +205,7 @@ const emptyStateHtml = (contextType: string) => {
   flex-shrink: 0;
 }
 .stats-summary { margin-right: auto; font-size: 0.875rem; color: #6b7280; }
-.button-secondary { padding: 0.5rem 1rem; background-color: white; border: 1px solid #d1d5db; border-radius: 0.5rem; font-weight: 500; color: #374151; transition: background-color 0.2s; }
+.button-secondary { padding: 0.5rem 1rem; background-color: white; border: 1px solid #d1d5db; border-radius: 0.5rem; font-weight: 500; color: #374151; transition: background-color 0.2s; cursor: pointer; }
 .button-secondary:hover { background-color: #f9fafb; }
 
 .button-primary {
@@ -211,6 +218,7 @@ const emptyStateHtml = (contextType: string) => {
   transition: background-color 0.2s;
   display: flex;
   align-items: center;
+  cursor: pointer;
 }
 .button-primary:hover {
   background-color: #374151;

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Conversation, ChatMessage, AIModel } from '@novel/editor/types/chatTypes.ts';
-import { mockChatConversations } from '@novel/editor/data/chatData.ts';
+import { mockChatConversations } from '@novel/editor/components/ai/chat/chatData.ts';
 
 export const useChatStore = defineStore('editorChat', () => {
     // --- State ---

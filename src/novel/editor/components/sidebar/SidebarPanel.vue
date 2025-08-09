@@ -19,7 +19,7 @@ import { ref, computed, defineAsyncComponent } from 'vue';
 import DirectoryContextMenu from './DirectoryContextMenu.vue';
 import type { TreeNode } from './TreeView.vue';
 
-type TabId = 'directory' | 'related' | 'notes';
+type TabId = 'directory' | 'related' | 'notes' | 'references';
 
 const props = defineProps<{
   activeTabId: TabId | null;
@@ -31,12 +31,14 @@ const titles: Record<TabId, string> = {
   directory: '目录大纲',
   related: '相关内容',
   notes: '章节笔记',
+  references: '参考书目',
 };
 
 const tabComponents: Record<TabId, any> = {
   directory: defineAsyncComponent(() => import('./DirectoryTab.vue')),
   related: defineAsyncComponent(() => import('./RelatedTab.vue')),
   notes: defineAsyncComponent(() => import('./NotesTab.vue')),
+  references: defineAsyncComponent(() => import('./ReferencesTab.vue')),
 };
 
 const activeTabComponent = computed(() => {

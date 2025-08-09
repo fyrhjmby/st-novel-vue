@@ -112,6 +112,7 @@ watch(() => props.editingNodeId, (newId, oldId) => {
 
 const handleNodeClick = (node: TreeNode) => {
   if (props.editingNodeId === node.id) return;
+  // Always emit the select-node event and let the parent decide the action.
   emit('select-node', node);
 };
 

@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-type TabId = 'directory' | 'related' | 'notes';
+type TabId = 'directory' | 'related' | 'notes' | 'references';
 type ActionId = 'system:search' | 'system:ai_chat';
 
 interface Tab {
@@ -69,6 +69,7 @@ const mainTabs = ref<Tab[]>([
   { id: 'directory', title: '目录', icon: 'fa-solid fa-list-ul' },
   { id: 'related', title: '相关', icon: 'fa-solid fa-sitemap' },
   { id: 'notes', title: '笔记', icon: 'fa-solid fa-book-medical' },
+  { id: 'references', title: '参考书', icon: 'fa-solid fa-book-bookmark' },
 ]);
 
 const actionButtons = ref<ActionButton[]>([

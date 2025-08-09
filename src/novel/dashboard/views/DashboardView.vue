@@ -1,6 +1,3 @@
-// =
-// 文件: ..\src/novel/dashboard/views/DashboardView.vue
-//
 <!-- 文件路径: src/novel/dashboard/views/DashboardView.vue -->
 
 <template>
@@ -44,15 +41,30 @@
           :key="novel.id"
           class="group bg-white rounded-xl border border-gray-100 p-4 flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1"
       >
-        <router-link :to="`/novel/editor?id=${novel.id}`" class="block aspect-[4/5] relative w-full mb-4 rounded-lg overflow-hidden">
+        <router-link :to="`/novel/editor?id=${novel.id}`" @click="handleNovelClick(novel)" class="block aspect-[4/5] relative w-full mb-4 rounded-lg overflow-hidden">
           <img :src="novel.cover" class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Book Cover">
           <div class="absolute top-0 left-0 w-full h-full bg-black/5 group-hover:bg-black/10 transition-colors"></div>
         </router-link>
 
         <div class="flex flex-col flex-grow">
-          <h3 class="text-sm font-medium text-[#374151] leading-tight truncate">
-            <router-link :to="`/novel/editor?id=${novel.id}`" class="hover:text-blue-600 transition-colors">{{ novel.title }}</router-link>
-          </h3>
+          <div class="flex justify-between items-start">
+            <h3 class="text-sm font-medium text-[#374151] leading-tight truncate pr-2 flex-grow">
+              <router-link :to="`/novel/editor?id=${novel.id}`" @click="handleNovelClick(novel)" class="hover:text-blue-600 transition-colors">{{ novel.title }}</router-link>
+            </h3>
+            <div class="relative flex-shrink-0">
+              <button @click.stop="toggleDropdown(novel.id)" class="text-gray-400 hover:text-gray-600 rounded-full w-6 h-6 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path></svg>
+              </button>
+              <div v-if="activeDropdown === novel.id" class="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
+                <div class="py-1">
+                  <button @click="handleDeleteNovel(novel.id)" class="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center gap-2 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.09-2.134H8.09a2.09 2.09 0 00-2.09 2.134v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                    <span>删除小说</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
           <p class="text-xs text-[#9CA3AF] mt-1">{{ novel.chapters }}章 · {{ novel.status.text }}</p>
           <div class="mt-auto pt-3">
             <div class="border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-gray-400">
@@ -76,20 +88,53 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, onBeforeUnmount, ref } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useDashboardStore } from '@/novel/dashboard/stores/dashboardStore';
+import { useNovelStore } from '@/novel/dashboard/stores/novelStore';
+import { useRecentStore } from '@/novel/dashboard/stores/recentStore';
+import type { Novel } from '@/novel/types';
 
-const dashboardStore = useDashboardStore();
-
+const novelStore = useNovelStore();
+const recentStore = useRecentStore();
 const {
   filteredNovels,
   availableCategories,
   searchQuery,
   selectedCategory
-} = storeToRefs(dashboardStore);
+} = storeToRefs(novelStore);
+
+const activeDropdown = ref<string | null>(null);
+
+const toggleDropdown = (novelId: string) => {
+  activeDropdown.value = activeDropdown.value === novelId ? null : novelId;
+};
+
+const closeDropdown = () => {
+  activeDropdown.value = null;
+};
+
+const handleDeleteNovel = (novelId: string) => {
+  if (confirm('您确定要将这本小说移至回收站吗？')) {
+    novelStore.deleteNovel(novelId);
+    closeDropdown();
+  }
+};
+
+const handleNovelClick = (novel: Novel) => {
+  recentStore.logRecentAccess(novel);
+};
 
 onMounted(() => {
-  dashboardStore.fetchAllData();
+  novelStore.fetchNovels();
+  recentStore.fetchRecentItems();
+  window.addEventListener('click', (e) => {
+    if (!(e.target as HTMLElement).closest('.relative')) {
+      closeDropdown();
+    }
+  });
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('click', closeDropdown);
 });
 </script>

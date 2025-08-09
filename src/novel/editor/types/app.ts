@@ -57,13 +57,15 @@ export interface ContextItem {
 export interface ContextBuildResult {
     fixed: string;
     dynamic: string;
+    reference: string;
     rag: string;
     prompt: string;
     stats: {
         fixedCharCount: number;
         dynamicCharCount: number;
-        ragCharCount: number;
+        referenceCharCount: number;
         promptCharCount: number;
+        ragCharCount: number;
     };
 }
 
@@ -82,12 +84,24 @@ export interface DynamicContextSettings {
 }
 
 /**
+ * 参考书上下文的配置项
+ */
+export interface ReferenceContextSettings {
+    includeContent: boolean;
+    includeAnalysis: boolean;
+    includePlot: boolean;
+    includeVolumeInfo: boolean;
+}
+
+
+/**
  * 编辑器UI状态
  * 用于定义 uiStore 中的 uiState
  */
 export interface EditorUIState {
     expandedNodeIds: Set<string>;
     expandedRelatedNodeIds: Set<string>;
+    expandedReferenceNodeIds: Set<string>;
     autoOpenAIPanel: boolean;
     activeTheme: 'default' | 'eye-care' | 'dark';
     concurrentTaskLimit: number;

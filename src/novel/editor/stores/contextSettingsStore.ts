@@ -2,7 +2,7 @@
 
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { ContextItem, TreeNode, DynamicContextSettings } from '@/novel/editor/types';
+import type { ContextItem, TreeNode, DynamicContextSettings, ReferenceContextSettings } from '@/novel/editor/types';
 import { useRelatedContentStore } from './relatedContentStore';
 
 const stripHtml = (html: string) => {
@@ -26,6 +26,12 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
         includeVolumeAnalysis: false,
         includeRelatedPlot: true,
         includeRelatedAnalysis: true,
+    });
+    const referenceContextSettings = ref<ReferenceContextSettings>({
+        includeContent: true,
+        includeAnalysis: false,
+        includePlot: false,
+        includeVolumeInfo: false,
     });
     const isRagEnabled = ref(false);
 
@@ -113,6 +119,12 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
         }
     };
 
+    const setReferenceContextSetting = (key: keyof ReferenceContextSettings, value: boolean) => {
+        if (key in referenceContextSettings.value) {
+            referenceContextSettings.value[key] = value as never;
+        }
+    };
+
     return {
         needsPreview,
         fixedContextPresets,
@@ -121,6 +133,7 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
         selectedOthersItems,
         customContextContent,
         dynamicContextSettings,
+        referenceContextSettings,
         isRagEnabled,
         addFixedContextItem,
         removeFixedContextItem,
@@ -128,5 +141,6 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
         removeOthersContextItem,
         setCustomContextContent,
         setDynamicContextSetting,
+        setReferenceContextSetting,
     };
 });

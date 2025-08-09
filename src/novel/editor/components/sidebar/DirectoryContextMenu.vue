@@ -106,6 +106,8 @@ const menuComponent = computed(() => {
 const show = (event: MouseEvent, targetNode: TreeNode) => {
   if (targetNode.isOverview) return;
   if(targetNode.isReadOnly && targetNode.type !== 'prompt_group') return;
+  // Disable context menu for all reference-related nodes
+  if (targetNode.type.startsWith('reference_')) return;
 
   node.value = targetNode;
   visible.value = true;

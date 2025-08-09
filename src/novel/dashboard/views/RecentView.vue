@@ -1,6 +1,4 @@
-// =
-// 文件: ..\src/novel/dashboard/views/RecentView.vue
-//
+<!-- 文件路径: src/novel/dashboard/views/RecentView.vue -->
 
 <template>
   <div class="flex-1 p-8 overflow-auto bg-[#FCFCFC] hide-scrollbar">
@@ -57,13 +55,12 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useDashboardStore } from '@/novel/dashboard/stores/dashboardStore';
+import { useRecentStore } from '@/novel/dashboard/stores/recentStore';
 
-const dashboardStore = useDashboardStore();
-
-const { groupedRecentItems } = storeToRefs(dashboardStore);
+const recentStore = useRecentStore();
+const { groupedRecentItems } = storeToRefs(recentStore);
 
 onMounted(() => {
-  dashboardStore.fetchAllData();
+  recentStore.fetchRecentItems();
 });
 </script>

@@ -65,15 +65,16 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import { useDashboardStore } from '@/novel/dashboard/store/dashboardStore';
+import { useNovelStore } from '@/novel/dashboard/stores/novelStore';
+import type { NovelCategory } from '@/novel/types';
 
-const dashboardStore = useDashboardStore();
+const novelStore = useNovelStore();
 const router = useRouter();
 
 const newNovelData = reactive({
   title: '',
   synopsis: '',
-  category: '',
+  category: '' as NovelCategory | '',
 });
 
 const handleCreateNovel = () => {
@@ -81,8 +82,7 @@ const handleCreateNovel = () => {
     alert('请填写小说标题和分类');
     return;
   }
-  dashboardStore.createNovel(newNovelData);
-  // 创建成功后跳转到仪表盘页面
+  novelStore.createNovel(newNovelData as { title: string; synopsis: string; category: NovelCategory });
   router.push('/novel/dashboard');
 };
 </script>

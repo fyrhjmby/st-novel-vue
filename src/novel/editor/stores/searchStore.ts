@@ -4,6 +4,7 @@ import type { SearchResult, EditorItem, TreeNode } from '@/novel/editor/types';
 import { useDirectoryStore } from './directoryStore';
 import { useRelatedContentStore } from './relatedContentStore';
 import { useNotesStore } from './notesStore';
+import { useReferenceStore } from './referenceStore';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
 
 export const useSearchStore = defineStore('search', () => {
@@ -35,6 +36,7 @@ export const useSearchStore = defineStore('search', () => {
         const directoryStore = useDirectoryStore();
         const relatedContentStore = useRelatedContentStore();
         const notesStore = useNotesStore();
+        const referenceStore = useReferenceStore();
 
         const processItem = (item: EditorItem) => {
             if (item.type === 'system' || !('content' in item) || !item.content) return;
@@ -78,6 +80,7 @@ export const useSearchStore = defineStore('search', () => {
         flattenRelated(relatedContentStore.settingsData);
         flattenRelated(relatedContentStore.plotCustomData);
         flattenRelated(relatedContentStore.analysisCustomData);
+        flattenRelated(referenceStore.referenceData); // Search in reference books
 
         notesStore.notes.forEach(processItem);
 

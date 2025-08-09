@@ -86,9 +86,6 @@ export const useEditorStore = defineStore('editor-facade', () => {
         toggleHistoryPanel: systemViewStore.toggleHistoryPanel,
         openReaderView: systemViewStore.openReaderView,
         fetchNovelData: metadataStore.fetchNovelData,
-        removeTag: metadataStore.removeTag,
-        addTag: metadataStore.addTag,
-        saveMetadata: metadataStore.saveMetadata,
         getTabsForPane,
         getActiveTabForPane,
     };

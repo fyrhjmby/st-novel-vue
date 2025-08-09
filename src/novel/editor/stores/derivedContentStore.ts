@@ -1,5 +1,4 @@
-// 文件: src/novel/editor/stores/derivedContentStore.ts
-
+// 文件: ..\src\novel\editor\stores\derivedContentStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { PlotAnalysisItem, AITaskType, EditorItem } from '@/novel/editor/types';
@@ -7,6 +6,16 @@ import type { PlotAnalysisItem, AITaskType, EditorItem } from '@/novel/editor/ty
 export const useDerivedContentStore = defineStore('derivedContent', () => {
     const plotItems = ref<PlotAnalysisItem[]>([]);
     const analysisItems = ref<PlotAnalysisItem[]>([]);
+
+    /**
+     * 从项目数据中获取派生内容。
+     * @param plotData - 项目中存储的剧情数据
+     * @param analysisData - 项目中存储的分析数据
+     */
+    function fetchDerivedData(plotData: PlotAnalysisItem[], analysisData: PlotAnalysisItem[]) {
+        plotItems.value = plotData;
+        analysisItems.value = analysisData;
+    }
 
     /**
      * 为指定源（章节或卷）创建一个新的派生内容项（占位符）。
@@ -91,6 +100,7 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
     return {
         plotItems,
         analysisItems,
+        fetchDerivedData,
         createDerivedItem,
         findItemById,
         updateNodeContent,

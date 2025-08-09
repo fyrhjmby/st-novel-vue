@@ -1,9 +1,7 @@
-
-
 /**
  * 侧边活动栏（ActivityBar）的标签页ID
  */
-export type ActivityBarTabId = 'directory' | 'related' | 'notes';
+export type ActivityBarTabId = 'directory' | 'related' | 'notes' | 'references';
 
 /**
  * 侧边活动栏（ActivityBar）的直接动作按钮ID

@@ -50,6 +50,12 @@ const ICON_MAP: Record<string, string> = {
     // 笔记 (Notes)
     'note': 'fa-solid fa-note-sticky text-yellow-500',
 
+    // 新增：参考书 (Reference Books)
+    'reference_book': 'fa-solid fa-book-bookmark text-indigo-500',
+    'reference_content_item': 'fa-regular fa-folder text-gray-500',
+    'reference_volume': 'fa-solid fa-book-open text-purple-500',
+    'reference_chapter': 'fa-regular fa-file-lines text-gray-600',
+
     // 通用根节点和默认
     'root': 'fa-solid fa-sitemap text-gray-500',
     'default': 'fa-solid fa-question text-gray-400'

@@ -3,9 +3,10 @@
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useContextSettingsStore } from '@/novel/editor/stores/contextSettingsStore';
 import { useDerivedContentStore } from '@/novel/editor/stores/derivedContentStore';
+import { useReferenceStore } from '@/novel/editor/stores/referenceStore';
 import { useAIConfigStore } from '@novel/editor/stores/ai/aiConfigStore.ts';
 import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
-import type { AITask, ContextBuildResult, Volume, Chapter, DynamicContextSettings } from '@/novel/editor/types';
+import type { AITask, ContextBuildResult, Volume, Chapter, DynamicContextSettings, ReferenceContextSettings, TreeNode } from '@/novel/editor/types';
 
 const stripHtml = (html: string) => {
     if (typeof document === 'undefined') return html;
@@ -14,10 +15,24 @@ const stripHtml = (html: string) => {
     return tmp.textContent || tmp.innerText || "";
 };
 
+const _findDerivedItemsRecursive = (nodes: TreeNode[], sourceId: string): TreeNode[] => {
+    let results: TreeNode[] = [];
+    for (const node of nodes) {
+        if (node.originalData?.sourceId === sourceId) {
+            results.push(node);
+        }
+        if (node.children) {
+            results = [...results, ..._findDerivedItemsRecursive(node.children, sourceId)];
+        }
+    }
+    return results;
+}
+
 export function useContextBuilder() {
     const directoryStore = useDirectoryStore();
     const contextSettingsStore = useContextSettingsStore();
     const derivedContentStore = useDerivedContentStore();
+    const referenceStore = useReferenceStore();
     const aiConfigStore = useAIConfigStore();
     const promptTemplateStore = usePromptTemplateStore();
 
@@ -46,13 +61,11 @@ export function useContextBuilder() {
         const currentVolumeIndex = allVolumes.findIndex(v => v.id === sourceVolume.id);
         const currentChapterIndex = sourceVolume.chapters.findIndex(c => c.id === sourceChapter.id);
 
-        // 规则一：前置卷只包含大纲
         const prevVolStart = Math.max(0, currentVolumeIndex - settings.prevVolumes);
         for (let i = prevVolStart; i < currentVolumeIndex; i++) {
             dynamicContextHtml += _getVolumeOutlineHtml(allVolumes[i]);
         }
 
-        // 规则一：当前卷包含完整信息
         dynamicContextHtml += `<hr><h3>当前卷: ${sourceVolume.title}</h3>${sourceVolume.content}`;
         if (settings.includeVolumePlot) {
             const plot = derivedContentStore.plotItems.find(p => p.sourceId === sourceVolume.id);
@@ -63,7 +76,6 @@ export function useContextBuilder() {
             if (analysis) dynamicContextHtml += `<h4>卷分析: ${analysis.title}</h4>${analysis.content}`;
         }
 
-        // 规则一：前置章节、后置章节
         if (currentChapterIndex > -1) {
             const chapters = sourceVolume.chapters;
             const prevChapStart = Math.max(0, currentChapterIndex - settings.prevChapters);
@@ -76,7 +88,6 @@ export function useContextBuilder() {
             }
         }
 
-        // 规则一：本章的剧情与分析
         if (settings.includeRelatedPlot) {
             derivedContentStore.plotItems.filter(p => p.sourceId === sourceChapter.id).forEach(plot => {
                 dynamicContextHtml += `<hr><h3>与本章相关的剧情</h3>${plot.content}`;
@@ -88,7 +99,6 @@ export function useContextBuilder() {
             });
         }
 
-        // 规则一：后置卷只包含大纲
         const nextVolEnd = Math.min(allVolumes.length, currentVolumeIndex + 1 + settings.nextVolumes);
         for (let i = currentVolumeIndex + 1; i < nextVolEnd; i++) {
             dynamicContextHtml += _getVolumeOutlineHtml(allVolumes[i]);
@@ -103,13 +113,11 @@ export function useContextBuilder() {
         let dynamicContextHtml = '';
         const currentVolumeIndex = allVolumes.findIndex(v => v.id === sourceVolume.id);
 
-        // 规则二：前置卷
         const prevVolStart = Math.max(0, currentVolumeIndex - settings.prevVolumes);
         for (let i = prevVolStart; i < currentVolumeIndex; i++) {
             dynamicContextHtml += _getVolumeFullContextHtml(allVolumes[i], settings);
         }
 
-        // 规则二：当前卷内容、剧情、分析
         dynamicContextHtml += `<hr><h3>当前卷大纲: ${sourceVolume.title}</h3>${sourceVolume.content}`;
         if (settings.includeVolumePlot) {
             const plot = derivedContentStore.plotItems.find(p => p.sourceId === sourceVolume.id);
@@ -120,7 +128,6 @@ export function useContextBuilder() {
             if (analysis) dynamicContextHtml += `<h4>卷分析: ${analysis.title}</h4>${analysis.content}`;
         }
 
-        // 规则二：本卷内的章节剧情与分析
         sourceVolume.chapters.forEach(chapter => {
             let chapterDerivedHtml = '';
             if (settings.includeRelatedPlot) {
@@ -138,7 +145,6 @@ export function useContextBuilder() {
             }
         });
 
-        // 规则二：后置卷
         const nextVolEnd = Math.min(allVolumes.length, currentVolumeIndex + 1 + settings.nextVolumes);
         for (let i = currentVolumeIndex + 1; i < nextVolEnd; i++) {
             dynamicContextHtml += _getVolumeFullContextHtml(allVolumes[i], settings);
@@ -146,6 +152,62 @@ export function useContextBuilder() {
 
         return dynamicContextHtml;
     };
+
+    const _buildReferenceContextHtmlByIndex = (sourceNode: Chapter | Volume, vIndex: number, cIndex: number | null, settings: ReferenceContextSettings): string => {
+        if (!referenceStore.referenceData.length || vIndex < 0) return '';
+
+        let referenceContextHtml = '';
+
+        for (const refBook of referenceStore.referenceData) {
+            const directoryRoot = refBook.children?.find(c => c.id.startsWith('ref-dir-'));
+            if (!directoryRoot) continue;
+
+            const refVolumeNode = directoryRoot.children?.[vIndex];
+            if (!refVolumeNode) continue;
+
+            let matchingNode: TreeNode | null = null;
+            let matchingParent: TreeNode | null = null;
+
+            if (sourceNode.type === 'volume') {
+                matchingNode = refVolumeNode;
+            } else if (sourceNode.type === 'chapter' && cIndex !== null && cIndex >= 0) {
+                matchingNode = refVolumeNode.children?.[cIndex] ?? null;
+                matchingParent = refVolumeNode;
+            }
+
+            if (matchingNode) {
+                referenceContextHtml += `<hr><h3>参考书籍《${refBook.title}》中的匹配内容: ${matchingNode.title}</h3>`;
+
+                if (settings.includeContent && 'content' in matchingNode && matchingNode.content) {
+                    referenceContextHtml += `<h4>正文</h4>${matchingNode.content}`;
+                }
+
+                if (settings.includeVolumeInfo && matchingParent && matchingParent.type.endsWith('volume') && 'content' in matchingParent && matchingParent.content) {
+                    referenceContextHtml += `<h4>所属卷信息</h4>${matchingParent.content}`;
+                }
+
+                if (settings.includePlot) {
+                    const plotRoot = refBook.children?.find(c => c.id.startsWith('ref-plot-'));
+                    if (plotRoot) {
+                        const plotItems = _findDerivedItemsRecursive(plotRoot.children || [], matchingNode.id);
+                        if (plotItems.length > 0) {
+                            referenceContextHtml += `<h4>相关剧情</h4>` + plotItems.map(p => 'content' in p ? p.content : '').join('<hr>');
+                        }
+                    }
+                }
+                if (settings.includeAnalysis) {
+                    const analysisRoot = refBook.children?.find(c => c.id.startsWith('ref-analysis-'));
+                    if (analysisRoot) {
+                        const analysisItems = _findDerivedItemsRecursive(analysisRoot.children || [], matchingNode.id);
+                        if (analysisItems.length > 0) {
+                            referenceContextHtml += `<h4>相关分析</h4>` + analysisItems.map(a => 'content' in a ? a.content : '').join('<hr>');
+                        }
+                    }
+                }
+            }
+        }
+        return referenceContextHtml;
+    }
 
     const buildContextForTask = (task: Pick<AITask, 'type' | 'sourceItemId' | 'sourceItemTitle' | 'sourceItemContent'>): ContextBuildResult | null => {
         const { type: taskType, sourceItemId, sourceItemTitle, sourceItemContent } = task;
@@ -176,6 +238,14 @@ export function useContextBuilder() {
         }
         const dynamicContextText = stripHtml(dynamicContextHtml);
 
+        let referenceContextHtml = '';
+        if ((sourceNode.type === 'chapter' && sourceParent) || sourceNode.type === 'volume') {
+            const vIndex = directoryStore.directoryData.findIndex(v => v.id === (sourceParent?.id || sourceNode.id));
+            const cIndex = sourceNode.type === 'chapter' && sourceParent ? sourceParent.chapters.findIndex(c => c.id === sourceNode.id) : null;
+            referenceContextHtml = _buildReferenceContextHtmlByIndex(sourceNode, vIndex, cIndex, contextSettingsStore.referenceContextSettings);
+        }
+        const referenceContextText = stripHtml(referenceContextHtml);
+
         const ragContext = contextSettingsStore.isRagEnabled ? '【RAG智能检索功能已开启，将根据任务内容自动查询知识库...】' : 'RAG检索已禁用或未返回任何结果。';
         const taskConfig = aiConfigStore.taskConfigs[taskType];
         const promptNode = promptTemplateStore.findPromptById(taskConfig.selectedPromptId);
@@ -198,6 +268,9 @@ ${fixedContextText.trim() || '无'}
 # 动态上下文
 ${dynamicContextText.trim() || '无'}
 
+# 参考书籍上下文
+${referenceContextText.trim() || '无'}
+
 # RAG检索信息
 ${ragContext.trim() || '无'}
 
@@ -210,11 +283,13 @@ ${mainContentText.trim() || '无'}
         return {
             fixed: fixedContextHtml.trim(),
             dynamic: dynamicContextHtml.trim(),
+            reference: referenceContextHtml.trim(),
             rag: ragContext,
             prompt: prompt,
             stats: {
                 fixedCharCount: fixedContextText.trim().length,
                 dynamicCharCount: dynamicContextText.trim().length,
+                referenceCharCount: referenceContextText.trim().length,
                 ragCharCount: ragContext.trim().length,
                 promptCharCount: prompt.trim().length
             }

@@ -1,9 +1,12 @@
+// 文件: src/novel/editor/stores/modules/itemStore.ts
+
 import { defineStore } from 'pinia';
 import { useDirectoryStore } from '../directoryStore';
 import { useRelatedContentStore } from '../relatedContentStore';
 import { useNotesStore } from '../notesStore';
 import { useDerivedContentStore } from '../derivedContentStore';
 import { usePromptTemplateStore } from '../promptTemplateStore';
+import { useReferenceStore } from '../referenceStore'; // 引入新的 reference store
 import type { EditorItem, SystemViewInfo, TreeNode, PlotAnalysisItem } from '@/novel/editor/types';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
 
@@ -26,6 +29,7 @@ export const useItemStore = defineStore('editor-item', () => {
     const notesStore = useNotesStore();
     const derivedContentStore = useDerivedContentStore();
     const promptTemplateStore = usePromptTemplateStore();
+    const referenceStore = useReferenceStore(); // 实例化新的 store
 
     function findItemById(id: string): { node: EditorItem | null; source: string | null } {
         // 1. Check for System Views
@@ -70,6 +74,10 @@ export const useItemStore = defineStore('editor-item', () => {
         const note = notesStore.findNoteById(id);
         if (note) return { node: note, source: 'notes' };
 
+        // 7. Check Reference Books (New)
+        const refResult = referenceStore.findNodeById(id);
+        if (refResult?.node) return { node: refResult.node, source: 'reference' };
+
         return { node: null, source: null };
     }
 
@@ -81,6 +89,7 @@ export const useItemStore = defineStore('editor-item', () => {
             case 'notes': notesStore.updateNoteContent(id, content); break;
             case 'derived': derivedContentStore.updateNodeContent(id, content); break;
             case 'prompt': promptTemplateStore.updatePromptItemContent(id, content); break;
+            // Reference books are read-only, no update case needed for now
         }
     }
 
@@ -91,6 +100,7 @@ export const useItemStore = defineStore('editor-item', () => {
             case 'related': relatedContentStore.appendNodeContent(itemId, content, auto); break;
             case 'notes': notesStore.appendNoteContent(itemId, content, auto); break;
             case 'derived': derivedContentStore.appendNodeContent(itemId, content, auto); break;
+            // Reference books are read-only, no append case needed for now
         }
     }
 

@@ -1,7 +1,4 @@
-// =
-// 文件: ..\src/novel/dashboard/views/TrashView.vue
-//
-// 文件: src\novel\dashboard\views\TrashView.vue
+<!-- 文件路径: src/novel/dashboard/views/TrashView.vue -->
 
 <template>
   <div class="flex-1 p-8 overflow-auto bg-[#FCFCFC] hide-scrollbar">
@@ -28,10 +25,10 @@
         </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
-        <tr v-if="dashboardStore.trashedItems.length === 0">
+        <tr v-if="trashStore.trashedItems.length === 0">
           <td colspan="5" class="text-center py-10 text-gray-500">回收站是空的</td>
         </tr>
-        <tr v-for="item in dashboardStore.trashedItems" :key="item.id" class="hover:bg-gray-50/50 transition-colors">
+        <tr v-for="item in trashStore.trashedItems" :key="item.id" class="hover:bg-gray-50/50 transition-colors">
           <td class="px-6 py-4 font-medium text-[#374151] flex items-center gap-3">
             <span class="text-gray-400 w-5 h-5 flex-shrink-0" v-html="item.icon"></span>
             <span>{{ item.name }}</span>
@@ -47,8 +44,8 @@
             </div>
           </td>
           <td class="px-6 py-4 text-right space-x-4">
-            <button @click="dashboardStore.restoreNovel(item.id)" class="font-medium text-blue-600 hover:text-blue-800 transition-colors">恢复</button>
-            <button @click="dashboardStore.deleteItemPermanently(item.id)" class="font-medium text-red-600 hover:text-red-800 transition-colors">永久删除</button>
+            <button @click="trashStore.restoreItem(item.id)" class="font-medium text-blue-600 hover:text-blue-800 transition-colors">恢复</button>
+            <button @click="trashStore.deleteItemPermanently(item.id)" class="font-medium text-red-600 hover:text-red-800 transition-colors">永久删除</button>
           </td>
         </tr>
         </tbody>
@@ -59,11 +56,11 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import { useDashboardStore } from '@/novel/dashboard/stores/dashboardStore';
+import { useTrashStore } from '@/novel/dashboard/stores/trashStore';
 
-const dashboardStore = useDashboardStore();
+const trashStore = useTrashStore();
 
 onMounted(() => {
-  dashboardStore.fetchAllData();
+  trashStore.fetchTrashedItems();
 });
 </script>

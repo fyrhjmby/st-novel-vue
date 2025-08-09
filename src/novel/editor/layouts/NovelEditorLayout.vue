@@ -10,8 +10,8 @@
             <span>返回</span>
           </router-link>
           <span class="text-gray-300">/</span>
-          <!-- 静态小说标题 -->
-          <span class="font-medium text-gray-800 text-sm">星际漫游者</span>
+          <!-- 动态小说标题 -->
+          <span class="font-medium text-gray-800 text-sm">{{ editorStore.novelMetadata?.title }}</span>
         </div>
         <div class="flex items-center gap-4">
           <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
@@ -45,10 +45,12 @@
 <script setup lang="ts">
 import '@/novel/assets/styles/main.css';
 import { computed } from 'vue';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
 import ContextPreviewModal from '@/novel/editor/components/modals/ContextPreviewModal.vue';
 import ReaderModeOverlay from '@novel/editor/views/ReaderModeOverlay.vue';
 
+const editorStore = useEditorStore();
 const uiStore = useUIStore();
 const themeClass = computed(() => {
   if (uiStore.uiState.activeTheme === 'default') return '';

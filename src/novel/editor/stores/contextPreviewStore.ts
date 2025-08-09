@@ -39,8 +39,8 @@ export const useContextPreviewStore = defineStore('contextPreview', () => {
             console.error('Context Preview Error: Could not find target item or item has no content.', previewTask.targetItemId);
             // Handle the error state in the UI
             previewContent.value = {
-                fixed: '', dynamic: '', rag: '', prompt: '错误：无法加载上下文。目标文档不存在或无内容。',
-                stats: { fixedCharCount: 0, dynamicCharCount: 0, ragCharCount: 0, promptCharCount: 0 }
+                fixed: '', dynamic: '', reference: '', rag: '', prompt: '错误：无法加载上下文。目标文档不存在或无内容。',
+                stats: { fixedCharCount: 0, dynamicCharCount: 0, referenceCharCount: 0, ragCharCount: 0, promptCharCount: 0 }
             };
         }
 

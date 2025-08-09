@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	rootDirs := []string{"../src/novel/editor"}
+	rootDirs := []string{"../src/novel"}
 	outputFileName := "editor.txt"
 	// 定义要屏蔽（不进行递归读取）的目录名称列表。
 	excludedDirs := []string{"chat","layout","modals"}

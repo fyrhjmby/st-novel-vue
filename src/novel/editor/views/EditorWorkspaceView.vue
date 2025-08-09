@@ -23,6 +23,7 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { useRoute } from 'vue-router';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
 import ActivityBar from '@/novel/editor/components/layout/ActivityBar.vue';
@@ -31,11 +32,12 @@ import MainPane from '@/novel/editor/components/content/MainPane.vue';
 import StatusBar from '@/novel/editor/components/layout/StatusBar.vue';
 import ManageMenu from '@/novel/editor/components/layout/ManageMenu.vue';
 
-type ActivityTabId = 'directory' | 'related' | 'notes';
+type ActivityTabId = 'directory' | 'related' | 'notes' | 'references';
 type ActionId = 'system:search' | 'system:ai_chat' | string;
 
 const editorStore = useEditorStore();
 const uiStore = useUIStore();
+const route = useRoute();
 
 const activeActivityBarTab = ref<ActivityTabId | null>('directory');
 const isSidebarVisible = ref(true);
@@ -99,7 +101,14 @@ const handleMenuAction = (actionId: ActionId) => {
 };
 
 onMounted(() => {
-  editorStore.fetchNovelData('default-novel');
+  const novelId = route.query.id as string;
+  if (novelId) {
+    editorStore.fetchNovelData(novelId);
+  } else {
+    // Fallback or error handling
+    console.warn("No novel ID provided in URL, loading default or showing error.");
+    editorStore.fetchNovelData('novel-1'); // Fallback to a default novel
+  }
 });
 
 onBeforeUnmount(() => {

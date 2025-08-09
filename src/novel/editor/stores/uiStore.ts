@@ -8,6 +8,7 @@ export const useUIStore = defineStore('ui', () => {
     const uiState = ref<EditorUIState>({
         expandedNodeIds: new Set(),
         expandedRelatedNodeIds: new Set(),
+        expandedReferenceNodeIds: new Set(),
         autoOpenAIPanel: true,
         activeTheme: 'default',
         concurrentTaskLimit: 3,
@@ -70,6 +71,20 @@ export const useUIStore = defineStore('ui', () => {
         }
     };
 
+    const toggleReferenceNodeExpansion = (nodeId: string) => {
+        if (uiState.value.expandedReferenceNodeIds.has(nodeId)) {
+            uiState.value.expandedReferenceNodeIds.delete(nodeId);
+        } else {
+            uiState.value.expandedReferenceNodeIds.add(nodeId);
+        }
+    };
+
+    const ensureReferenceNodeIsExpanded = (nodeId: string) => {
+        if (!uiState.value.expandedReferenceNodeIds.has(nodeId)) {
+            uiState.value.expandedReferenceNodeIds.add(nodeId);
+        }
+    };
+
     const showReaderMode = (item: EditorItem) => {
         readerModeItem.value = item;
         isReaderModeVisible.value = true;
@@ -94,6 +109,8 @@ export const useUIStore = defineStore('ui', () => {
         ensureNodeIsExpanded,
         toggleRelatedNodeExpansion,
         ensureRelatedNodeIsExpanded,
+        toggleReferenceNodeExpansion,
+        ensureReferenceNodeIsExpanded,
         showReaderMode,
         hideReaderMode,
     };

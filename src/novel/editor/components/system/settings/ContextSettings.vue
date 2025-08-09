@@ -1,5 +1,3 @@
-// 文件: src/novel/editor/components/system/settings/ContextSettings.vue
-
 <template>
   <div class="setting-page-container">
     <div class="setting-page-wrapper">
@@ -166,8 +164,30 @@
                 <label for="include-analysis" class="ml-3 font-medium text-gray-700">包含章节相关分析</label>
               </div>
             </div>
-
             <p class="setting-description">动态上下文会智能加载目标内容前后的信息，以及与该内容关联的派生内容（剧情、分析），以提供更连贯的创作基础。实际加载的内容可在任务预览时查看。</p>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <label for="reference-context" class="setting-label">参考书籍上下文</label>
+          <div class="setting-control space-y-3">
+            <div class="flex items-center">
+              <input id="ref-include-content" type="checkbox" :checked="settingsStore.referenceContextSettings.includeContent" @change="settingsStore.setReferenceContextSetting('includeContent', ($event.target as HTMLInputElement).checked)" class="setting-checkbox" />
+              <label for="ref-include-content" class="ml-3 font-medium text-gray-700">包含正文</label>
+            </div>
+            <div class="flex items-center">
+              <input id="ref-include-plot" type="checkbox" :checked="settingsStore.referenceContextSettings.includePlot" @change="settingsStore.setReferenceContextSetting('includePlot', ($event.target as HTMLInputElement).checked)" class="setting-checkbox" />
+              <label for="ref-include-plot" class="ml-3 font-medium text-gray-700">包含剧情</label>
+            </div>
+            <div class="flex items-center">
+              <input id="ref-include-analysis" type="checkbox" :checked="settingsStore.referenceContextSettings.includeAnalysis" @change="settingsStore.setReferenceContextSetting('includeAnalysis', ($event.target as HTMLInputElement).checked)" class="setting-checkbox" />
+              <label for="ref-include-analysis" class="ml-3 font-medium text-gray-700">包含分析</label>
+            </div>
+            <div class="flex items-center">
+              <input id="ref-include-volume-info" type="checkbox" :checked="settingsStore.referenceContextSettings.includeVolumeInfo" @change="settingsStore.setReferenceContextSetting('includeVolumeInfo', ($event.target as HTMLInputElement).checked)" class="setting-checkbox" />
+              <label for="ref-include-volume-info" class="ml-3 font-medium text-gray-700">包含所属卷信息</label>
+            </div>
+            <p class="setting-description mt-2">当AI任务针对某一章节或卷时，自动从已添加的参考书籍中查找同名章节/卷，并将其相关内容（正文、剧情、分析等）注入上下文。这有助于AI模仿或借鉴参考书的风格与结构。</p>
           </div>
         </div>
 

@@ -151,6 +151,25 @@ export interface PromptItemNode extends BaseNode {
     children?: never;
 }
 
+// --- 新增：参考书节点 ---
+export interface ReferenceBookNode extends BaseNode {
+    type: 'reference_book';
+    children: TreeNode[];
+}
+export interface ReferenceContentNode extends BaseNode {
+    type: 'reference_content_item';
+    children?: TreeNode[];
+}
+export interface ReferenceVolumeNode extends BaseNode {
+    type: 'reference_volume';
+    children: ReferenceChapterNode[];
+}
+export interface ReferenceChapterNode extends BaseNode {
+    type: 'reference_chapter';
+    content: string;
+    children?: never;
+}
+
 
 export type TreeNode =
     | RootNode
@@ -160,4 +179,8 @@ export type TreeNode =
     | VolumeNode
     | ChapterNode
     | PromptGroupNode
-    | PromptItemNode;
+    | PromptItemNode
+    | ReferenceBookNode
+    | ReferenceContentNode
+    | ReferenceVolumeNode
+    | ReferenceChapterNode;
