@@ -8,8 +8,17 @@
       </div>
     </header>
     <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div v-for="prompt in favoritePrompts" :key="prompt.title" class="bg-white rounded-xl p-6 border border-gray-100 hover:border-gray-200 transition-all hover:shadow-sm cursor-pointer group">
+      <div v-if="promptStore.isLoading" class="text-center py-10 text-gray-500">
+        正在加载...
+      </div>
+      <div v-else-if="promptStore.error" class="text-center py-10 text-red-500">
+        {{ promptStore.error }}
+      </div>
+      <div v-else-if="promptStore.myFavoritePrompts.length === 0" class="text-center py-10 text-gray-500">
+        您还没有收藏任何提示词。
+      </div>
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <router-link v-for="prompt in promptStore.myFavoritePrompts" :key="prompt.id" :to="{ name: 'prompt-detail', params: { id: prompt.id } }" class="bg-white rounded-xl p-6 border border-gray-100 hover:border-gray-200 transition-all hover:shadow-sm cursor-pointer group block">
           <div class="flex items-start justify-between mb-4">
             <div class="w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform" :class="prompt.iconBgClass" v-html="prompt.icon"></div>
             <span class="text-xs font-medium px-2 py-1 rounded-md" :class="prompt.tagClass">{{ prompt.tag }}</span>
@@ -32,39 +41,21 @@
               <span class="text-[#6B7280]">{{ prompt.author }}</span>
             </div>
           </div>
-        </div>
+        </router-link>
       </div>
     </div>
   </main>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted } from 'vue';
+import { usePromptStore } from '@/prompt/stores/promptStore';
 
-const favoritePrompts = ref([
-  {
-    title: '爆款文案生成器',
-    description: '根据产品特点和目标用户，生成引人注目的营销文案。',
-    icon: `<svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L13.196 5.196z"/></svg>`,
-    iconBgClass: 'bg-purple-50',
-    tag: '写作',
-    tagClass: 'text-[#3B82F6] bg-blue-50',
-    likes: '2.3k',
-    views: '18.5k',
-    author: '王小美',
-    authorAvatarClass: 'bg-gradient-to-br from-pink-100 to-rose-100'
-  },
-  {
-    title: '代码优化助手',
-    description: '分析代码并提供性能优化、可读性改进的建议。',
-    icon: `<svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>`,
-    iconBgClass: 'bg-green-50',
-    tag: '编程',
-    tagClass: 'text-[#EF4444] bg-red-50',
-    likes: '956',
-    views: '7.2k',
-    author: '张程序',
-    authorAvatarClass: 'bg-gradient-to-br from-blue-100 to-cyan-100'
+const promptStore = usePromptStore();
+
+onMounted(() => {
+  if (promptStore.prompts.length === 0) {
+    promptStore.fetchAllPrompts();
   }
-]);
+});
 </script>
