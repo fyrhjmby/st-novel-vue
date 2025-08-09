@@ -1,39 +1,45 @@
-import { defineStore, storeToRefs } from 'pinia';
-import { computed } from 'vue';
-import { useMetadataStore } from './modules/metadataStore';
-import { getAllNovelProjects, getNovelProject } from '@/novel/services/novelProjectService';
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import { useMetadataStore } from '@novel/editor/stores/editor-state/metadataStore';
+import { novelSettingsService } from '@/novel/editor/services/novelSettingsService';
 import type { NovelProject } from '@/novel/editor/types/project';
+import type { NovelMetadata } from '@/novel/editor/types';
 
 export const useNovelSettingsStore = defineStore('novel-settings', () => {
     const metadataStore = useMetadataStore();
-    const { novelMetadata, currentNovelId } = storeToRefs(metadataStore);
 
-    const referencedNovels = computed((): NovelProject[] => {
-        if (!novelMetadata.value?.referenceNovelIds) return [];
-        return novelMetadata.value.referenceNovelIds
-            .map(id => getNovelProject(id))
-            .filter((p): p is NovelProject => p !== undefined);
-    });
+    // State: No longer computed, but refs updated by an action.
+    const novelMetadata = ref<NovelMetadata | null>(null);
+    const referencedNovels = ref<NovelProject[]>([]);
+    const availableReferenceNovels = ref<NovelProject[]>([]);
 
-    const availableReferenceNovels = computed((): NovelProject[] => {
-        const allNovels = getAllNovelProjects();
-        if (!novelMetadata.value) return allNovels;
-
-        const currentAndReferencedIds = new Set([
-            ...novelMetadata.value.referenceNovelIds,
-            novelMetadata.value.id
-        ]);
-
-        return allNovels.filter(novel => !currentAndReferencedIds.has(novel.metadata.id));
-    });
+    /**
+     * Loads and populates all data needed for the settings view.
+     * This is the central point for refreshing the store's state.
+     */
+    function loadSettingsData() {
+        const meta = metadataStore.novelMetadata;
+        novelMetadata.value = meta;
+        if (meta) {
+            referencedNovels.value = novelSettingsService.getReferencedNovels(meta.referenceNovelIds);
+            availableReferenceNovels.value = novelSettingsService.getAvailableReferenceNovels(meta);
+        } else {
+            referencedNovels.value = [];
+            availableReferenceNovels.value = novelSettingsService.getAvailableReferenceNovels(null);
+        }
+    }
 
     const addReferenceNovel = (novelId: string) => {
         if (!novelId) return;
         metadataStore.addReferenceNovel(novelId);
+        // After core data is changed, reload our UI-specific data.
+        loadSettingsData();
     };
 
     const removeReferenceNovel = (novelId: string) => {
         metadataStore.removeReferenceNovel(novelId);
+        // After core data is changed, reload our UI-specific data.
+        loadSettingsData();
     };
 
     const addTag = () => {
@@ -49,8 +55,8 @@ export const useNovelSettingsStore = defineStore('novel-settings', () => {
     };
 
     const resetMetadata = () => {
-        if (currentNovelId.value) {
-            metadataStore.fetchNovelData(currentNovelId.value);
+        if (metadataStore.currentNovelId) {
+            metadataStore.fetchNovelData(metadataStore.currentNovelId);
         }
     };
 
@@ -58,6 +64,7 @@ export const useNovelSettingsStore = defineStore('novel-settings', () => {
         novelMetadata,
         referencedNovels,
         availableReferenceNovels,
+        loadSettingsData,
         addReferenceNovel,
         removeReferenceNovel,
         addTag,

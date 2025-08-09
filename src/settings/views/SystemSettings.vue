@@ -3,7 +3,10 @@
     <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
       <h1 class="text-lg font-medium text-[#374151]">系统设置</h1>
     </header>
-    <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] space-y-8">
+    <div v-if="store.isLoading" class="flex-1 flex items-center justify-center bg-[#FCFCFC]">
+      <p>加载中...</p>
+    </div>
+    <div v-else class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] space-y-8">
       <div class="bg-white rounded-xl p-6 border border-gray-100">
         <h3 class="text-base font-medium text-[#374151] mb-1">外观</h3>
         <p class="text-sm text-[#9CA3AF] mb-6">自定义平台的外观和显示</p>
@@ -11,7 +14,7 @@
           <div>
             <label class="text-sm font-medium text-[#374151] mb-4 block">主题模式</label>
             <div class="grid grid-cols-3 gap-4">
-              <label v-for="theme in themes" :key="theme.name" @click="activeTheme = theme.name" class="rounded-lg p-4 text-center cursor-pointer border-2 transition-colors" :class="activeTheme === theme.name ? 'border-blue-500' : 'border-transparent hover:border-gray-300'">
+              <label v-for="theme in themes" :key="theme.name" @click="store.updateTheme(theme.name)" class="rounded-lg p-4 text-center cursor-pointer border-2 transition-colors" :class="activeTheme === theme.name ? 'border-blue-500' : 'border-transparent hover:border-gray-300'">
                 <div class="w-full h-16 rounded-md mb-2 flex items-center justify-center" :class="theme.previewClass"></div>
                 <span class="text-sm font-medium text-gray-700">{{ theme.name }}</span>
               </label>
@@ -24,6 +27,7 @@
               <div class="flex-1 relative">
                 <div class="slider-track">
                   <div class="slider-fill" :style="{width: zoomLevel + '%'}"></div>
+                  <input type="range" min="0" max="100" :value="zoomLevel" @input="store.updateZoomLevel(parseInt($event.target.value))" class="absolute w-full h-full opacity-0 cursor-pointer">
                   <div class="slider-thumb" :style="{left: zoomLevel + '%'}"></div>
                 </div>
               </div>
@@ -40,7 +44,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-medium text-[#374151] mb-2 block">界面语言</label>
-            <select class="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563] bg-white">
+            <select v-model="language" class="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563] bg-white">
               <option>简体中文</option>
               <option>English</option>
               <option>繁體中文</option>
@@ -49,7 +53,7 @@
           </div>
           <div>
             <label class="text-sm font-medium text-[#374151] mb-2 block">日期格式</label>
-            <select class="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563] bg-white">
+            <select v-model="dateFormat" class="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563] bg-white">
               <option>YYYY-MM-DD</option>
               <option>DD/MM/YYYY</option>
               <option>MM/DD/YYYY</option>
@@ -66,7 +70,7 @@
               <h4 class="text-sm font-medium text-[#374151]">{{ item.title }}</h4>
               <p class="text-xs text-[#9CA3AF] mt-1">{{ item.description }}</p>
             </div>
-            <button @click="item.enabled = !item.enabled" class="toggle-switch" :class="{active: item.enabled}"></button>
+            <button @click="store.updateSetting('notification', item.title, !item.enabled)" class="toggle-switch" :class="{active: item.enabled}"></button>
           </div>
         </div>
       </div>
@@ -88,7 +92,7 @@
               <h4 class="text-sm font-medium text-[#374151]">{{ item.title }}</h4>
               <p class="text-xs text-[#9CA3AF] mt-1">{{ item.description }}</p>
             </div>
-            <button @click="item.enabled = !item.enabled" class="toggle-switch" :class="{active: item.enabled}"></button>
+            <button @click="store.updateSetting('app', item.title, !item.enabled)" class="toggle-switch" :class="{active: item.enabled}"></button>
           </div>
         </div>
       </div>
@@ -117,33 +121,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useSystemSettingsStore } from '@/settings/stores/systemSettingsStore';
 
-const activeTheme = ref('浅色');
-const themes = ref([
-  { name: '浅色', previewClass: 'bg-white border border-gray-200' },
-  { name: '深色', previewClass: 'bg-gray-800 border border-gray-700' },
-  { name: '跟随系统', previewClass: 'bg-gradient-to-tr from-white to-gray-800 border border-gray-400' },
-]);
+const store = useSystemSettingsStore();
+const {
+  themes,
+  activeTheme,
+  zoomLevel,
+  language,
+  dateFormat,
+  notificationSettings,
+  appSettings,
+} = storeToRefs(store);
 
-// 假设滑块范围是0-100
-const zoomLevel = ref(50);
-
-const notificationSettings = reactive([
-  { title: '产品更新', description: '获取关于新功能和改进的通知', enabled: true },
-  { title: '使用提醒', description: '接近配额限制时收到提醒', enabled: true },
-  { title: '安全警报', description: '异常登录或API使用时立即通知', enabled: true },
-  { title: '营销邮件', description: '接收产品推荐和优惠信息', enabled: false },
-]);
-
-const appSettings = reactive([
-  { title: '自动保存对话', description: '自动保存所有对话历史', enabled: true },
-  { title: '快捷键启用', description: '使用键盘快捷键提高效率', enabled: true },
-  { title: '开发者模式', description: '显示高级选项和调试信息', enabled: false },
-]);
-
+onMounted(() => {
+  store.initializeSettings();
+});
 </script>
 
 <style scoped>
 @import '../style.css';
+/* We need to hide the default range input appearance */
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  width: 100%;
+}
 </style>

@@ -103,10 +103,9 @@ const handleReferenceSelect = (event: Event) => {
   const selectedId = selectElement.value;
   if (selectedId) {
     settingsStore.addReferenceNovel(selectedId);
-    selectElement.value = ''; // Reset the select after adding
+    selectElement.value = '';
   }
 };
-
 </script>
 
 <style scoped>

@@ -20,13 +20,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed, defineAsyncComponent, shallowRef } from 'vue';
+// ..\src\novel\editor\components\sidebar\DirectoryContextMenu.vue
+import { ref, computed, onMounted, onBeforeUnmount, defineAsyncComponent, shallowRef } from 'vue';
 import type { TreeNode } from '@/novel/editor/types';
 import { useAITaskExecutor } from '@/novel/editor/composables/useAITaskExecutor';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
 import { useNotesStore } from '@/novel/editor/stores/notesStore';
+import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
+import { useUIStore } from '@/novel/editor/stores/uiStore';
 import type { AITask } from '@/novel/editor/types';
 
 // --- 组件映射 ---
@@ -56,6 +59,7 @@ const editorStore = useEditorStore();
 const directoryStore = useDirectoryStore();
 const relatedContentStore = useRelatedContentStore();
 const notesStore = useNotesStore();
+const promptTemplateStore = usePromptTemplateStore();
 
 // --- Computed ---
 const menuComponent = computed(() => {
@@ -194,16 +198,25 @@ const handleNoteAction = (action: string, payload: any) => {
 
 const handlePromptAction = (action: string, payload: any) => {
   hide();
+  const uiStore = useUIStore();
+
   switch(action) {
     case 'newPrompt':
-      relatedContentStore.addPrompt(payload.groupId);
+      const newNode = promptTemplateStore.addPrompt(payload.groupId, '新建提示词', '在这里输入你的提示词模板...');
+      if (newNode) {
+        uiStore.ensureRelatedNodeIsExpanded(payload.groupId);
+        editorStore.openTab(newNode.id);
+        uiStore.setEditingNodeId(newNode.id);
+      }
       break;
     case 'renamePrompt':
       editorStore.setEditingNodeId(payload.promptId);
       break;
     case 'deletePrompt':
       if (confirm('确定要删除这个提示词模板吗？')) {
-        relatedContentStore.deletePrompt(payload.promptId);
+        if (promptTemplateStore.deletePrompt(payload.promptId)) {
+          editorStore.closeTab(payload.promptId);
+        }
       }
       break;
   }

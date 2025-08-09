@@ -1,86 +1,43 @@
-// 文件: src/novel/editor/stores/directoryStore.ts
+// src/novel/editor/stores/directoryStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { Volume, Chapter } from '@/novel/editor/types';
 import { useEditorStore } from './editorStore';
 import { useUIStore } from './uiStore';
 import { useDerivedContentStore } from './derivedContentStore';
-
-type DirectoryNode = Volume | Chapter;
+import * as directoryService from '@/novel/editor/services/directoryService';
 
 export const useDirectoryStore = defineStore('directory', () => {
     const directoryData = ref<Volume[]>([]);
-
-    const _findNodeRecursive = (nodes: DirectoryNode[], nodeId: string): { node: DirectoryNode; parent: Volume | null; siblings: DirectoryNode[] } | null => {
-        for (const node of nodes) {
-            if (node.id === nodeId) {
-                return { node, parent: null, siblings: nodes };
-            }
-            if (node.type === 'volume' && node.chapters) {
-                const chapterResult = node.chapters.find(c => c.id === nodeId);
-                if (chapterResult) {
-                    return { node: chapterResult, parent: node, siblings: node.chapters };
-                }
-            }
-        }
-        return null;
-    };
 
     const fetchDirectoryData = (data: Volume[]) => {
         directoryData.value = data;
     };
 
     const findNodeById = (nodeId: string) => {
-        return _findNodeRecursive(directoryData.value, nodeId);
+        return directoryService.findNodeById(directoryData.value, nodeId);
     };
 
     const updateChapterContent = (nodeId: string, content: string) => {
         const result = findNodeById(nodeId);
         if (result && (result.node.type === 'chapter' || result.node.type === 'volume')) {
-            const item = result.node;
-            item.content = content;
-
-            if (item.type === 'chapter') {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = content;
-                item.wordCount = tempDiv.textContent?.trim().length || 0;
-            }
-
-            const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
-            const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
-            if (newTitle && newTitle !== item.title) {
-                item.title = newTitle;
-            }
+            directoryService.updateNodeContent(result.node, content);
         }
     };
 
     const appendChapterContent = (nodeId: string, contentToAppend: string, isAutoApplied: boolean) => {
         const result = findNodeById(nodeId);
         if (result && result.node.type === 'chapter') {
-            const chapter = result.node;
-            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
-            let htmlToAppend = paragraphs;
-            if (isAutoApplied) {
-                htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
-            }
-            chapter.content += htmlToAppend;
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = chapter.content;
-            chapter.wordCount = tempDiv.textContent?.trim().length || 0;
+            directoryService.appendChapterContent(result.node, contentToAppend, isAutoApplied);
         }
     };
 
     const addNewVolume = () => {
         const uiStore = useUIStore();
         const editorStore = useEditorStore();
-        const newVolume: Volume = {
-            id: `vol-${Date.now()}`,
-            type: 'volume',
-            title: '新建卷',
-            content: `<h1>新建卷</h1>`,
-            chapters: [],
-        };
+        const newVolume = directoryService.createVolume();
         directoryData.value.push(newVolume);
+
         editorStore.setEditingNodeId(newVolume.id);
         uiStore.ensureNodeIsExpanded(newVolume.id);
     };
@@ -90,15 +47,9 @@ export const useDirectoryStore = defineStore('directory', () => {
         if (volume) {
             const editorStore = useEditorStore();
             const uiStore = useUIStore();
-            const newChapter: Chapter = {
-                id: `ch-${Date.now()}`,
-                type: 'chapter',
-                title: '新建章节',
-                wordCount: 0,
-                content: '<h1>新建章节</h1>',
-                status: 'editing'
-            };
+            const newChapter = directoryService.createChapter();
             volume.chapters.push(newChapter);
+
             uiStore.ensureNodeIsExpanded(volume.id);
             editorStore.openTab(newChapter.id);
             editorStore.setEditingNodeId(newChapter.id);
@@ -106,20 +57,9 @@ export const useDirectoryStore = defineStore('directory', () => {
     };
 
     const renameNode = (nodeId: string, newTitle: string) => {
-        if (!newTitle.trim()) {
-            return;
-        }
         const result = findNodeById(nodeId);
         if (result?.node) {
-            const trimmedTitle = newTitle.trim();
-            result.node.title = trimmedTitle;
-            if (result.node.content) {
-                if (result.node.content.includes('<h1>')) {
-                    result.node.content = result.node.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
-                } else {
-                    result.node.content = `<h1>${trimmedTitle}</h1>` + result.node.content;
-                }
-            }
+            directoryService.renameNode(result.node, newTitle);
         }
     };
 
@@ -127,6 +67,7 @@ export const useDirectoryStore = defineStore('directory', () => {
         const result = findNodeById(nodeId);
         if (!result) return;
 
+        // Coordination logic: Must happen before data is deleted
         const editorStore = useEditorStore();
         const derivedContentStore = useDerivedContentStore();
 
@@ -139,13 +80,14 @@ export const useDirectoryStore = defineStore('directory', () => {
             derivedContentStore.deleteDerivedDataForSource(result.node.id);
         }
 
-        if (result.parent && result.node.type === 'chapter') {
-            result.parent.chapters = result.parent.chapters.filter(c => c.id !== nodeId);
-        } else if (!result.parent && result.node.type === 'volume') {
-            directoryData.value = directoryData.value.filter(v => v.id !== nodeId);
+        // Data manipulation logic
+        const wasDeleted = directoryService.deleteNode(directoryData.value, nodeId);
+
+        // UI update logic
+        if (wasDeleted) {
+            editorStore.closeTab(nodeId);
+            if (editorStore.editingNodeId === nodeId) editorStore.setEditingNodeId(null);
         }
-        editorStore.closeTab(nodeId);
-        if (editorStore.editingNodeId === nodeId) editorStore.setEditingNodeId(null);
     };
 
     return {

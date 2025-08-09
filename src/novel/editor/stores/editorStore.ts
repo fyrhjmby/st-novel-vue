@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia';
 import { computed } from 'vue';
-import { usePaneStore, type EditorPane } from './modules/paneStore';
-import { useTabStore } from './modules/tabStore';
-import { useItemStore } from './modules/itemStore';
-import { useSystemViewStore } from './modules/systemViewStore';
-import { useMetadataStore } from './modules/metadataStore';
+import { usePaneStore, type EditorPane } from '@novel/editor/stores/editor-state/paneStore';
+import { useTabStore } from '@novel/editor/stores/editor-state/tabStore';
+import { useItemStore } from '@novel/editor/stores/editor-state/itemStore';
+import { useSystemViewStore } from '@novel/editor/stores/editor-state/systemViewStore';
+import { useMetadataStore } from '@novel/editor/stores/editor-state/metadataStore';
 import { useUIStore } from './uiStore';
 import type { TabInfo } from '@/novel/editor/types';
 

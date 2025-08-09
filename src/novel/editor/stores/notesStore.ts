@@ -1,13 +1,12 @@
-
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { NoteItem } from '@/novel/editor/types';
 import { useEditorStore } from './editorStore';
 import { useUIStore } from './uiStore';
+import { noteService } from '@/novel/editor/services/noteService';
 
 export const useNotesStore = defineStore('notes', () => {
     const notes = ref<NoteItem[]>([]);
-
 
     const fetchNotes = (data: NoteItem[]) => {
         notes.value = data;
@@ -18,41 +17,30 @@ export const useNotesStore = defineStore('notes', () => {
     };
 
     const updateNoteContent = (noteId: string, content: string) => {
-        const note = findNoteById(noteId);
-        if (note) {
-            note.content = content;
-            const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
-            const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : note.title;
-            if (newTitle) {
-                note.title = newTitle;
-            }
-        }
+        const noteIndex = notes.value.findIndex(n => n.id === noteId);
+        if (noteIndex === -1) return;
+
+        const originalNote = notes.value[noteIndex];
+        const updatedNote = noteService.updateNoteWithNewContent(originalNote, content);
+        notes.value.splice(noteIndex, 1, updatedNote);
     };
 
     const appendNoteContent = (noteId: string, contentToAppend: string, isAutoApplied: boolean) => {
         const note = findNoteById(noteId);
         if (note) {
-            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
-            let htmlToAppend = paragraphs;
-            if (isAutoApplied) {
-                htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
-            }
-            if (!note.content) note.content = "";
-            note.content += htmlToAppend;
+            note.content = noteService.appendContentToNote(note.content, contentToAppend, isAutoApplied);
         }
     };
 
     const renameNote = (noteId: string, newTitle: string) => {
         const uiStore = useUIStore();
-        const note = findNoteById(noteId);
-        if (note && newTitle.trim()) {
+        const noteIndex = notes.value.findIndex(n => n.id === noteId);
+
+        if (noteIndex !== -1 && newTitle.trim()) {
+            const originalNote = notes.value[noteIndex];
             const trimmedTitle = newTitle.trim();
-            note.title = trimmedTitle;
-            if (note.content.includes('<h1>')) {
-                note.content = note.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
-            } else {
-                note.content = `<h1>${trimmedTitle}</h1>` + note.content;
-            }
+            const updatedNote = noteService.renameNote(originalNote, trimmedTitle);
+            notes.value.splice(noteIndex, 1, updatedNote);
         }
         uiStore.setEditingNodeId(null);
     };
@@ -60,14 +48,10 @@ export const useNotesStore = defineStore('notes', () => {
     const addNote = (title: string, content: string = '') => {
         const editorStore = useEditorStore();
         const uiStore = useUIStore();
-        const newNote: NoteItem = {
-            id: `note-${Date.now()}`,
-            type: 'note',
-            title: title,
-            content: `<h1>${title}</h1><p>${content}</p>`,
-            timestamp: new Date().toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-        };
+
+        const newNote = noteService.createNote(title, content);
         notes.value.unshift(newNote);
+
         editorStore.openTab(newNote.id);
         uiStore.setEditingNodeId(newNote.id);
     };

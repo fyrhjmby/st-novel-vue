@@ -1,4 +1,4 @@
-// src/novel/editor/components/sidebar/RelatedTab.vue
+
 <template>
   <div class="related-tab-container">
     <div class="header">
@@ -42,6 +42,7 @@ import TreeView from './TreeView.vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
+import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
 import type { TreeNode } from '@/novel/editor/types';
 
 const emit = defineEmits<{
@@ -50,6 +51,7 @@ const emit = defineEmits<{
 
 const editorStore = useEditorStore();
 const relatedContentStore = useRelatedContentStore();
+const promptTemplateStore = usePromptTemplateStore();
 const uiStore = useUIStore();
 
 const activeNodeId = computed(() => editorStore.activeTabId);
@@ -81,7 +83,8 @@ const handleCommitRename = (payload: { nodeId: string; newTitle: string }) => {
     } else if (payload.nodeId.startsWith('custom-')) {
       relatedContentStore.renameCustomRelatedNode(payload.nodeId, payload.newTitle);
     } else if (payload.nodeId.startsWith('prompt-')) {
-      relatedContentStore.renamePrompt(payload.nodeId, payload.newTitle);
+      // ** FIX: Call the correct store for renaming prompts **
+      promptTemplateStore.renamePrompt(payload.nodeId, payload.newTitle);
     }
     else {
       relatedContentStore.renameRelatedNode(payload.nodeId, payload.newTitle);
@@ -105,7 +108,6 @@ const handleAddNewCustomAnalysis = () => {
 const handleAddNewCustomOthers = () => {
   relatedContentStore.addCustomOthersNode();
 };
-
 </script>
 <style scoped>
 .related-tab-container { padding: 1rem; overflow-y: auto; height: 100%; display: flex; flex-direction: column; }

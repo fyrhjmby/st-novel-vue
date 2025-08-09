@@ -40,7 +40,7 @@
 <script setup lang="ts">
 import { computed, ref, type PropType } from 'vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import type { EditorPane } from '@/novel/editor/stores/modules/paneStore';
+import type { EditorPane } from '@novel/editor/stores/editor-state/paneStore';
 import PaneActions from '../layout/PaneActions.vue';
 import BreadcrumbsBar from '../layout/BreadcrumbsBar.vue';
 import PaneContentDispatcher from './PaneContentDispatcher.vue';

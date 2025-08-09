@@ -1,3 +1,4 @@
+/* src/settings/style.css */
 
 .toggle-switch {
     width: 44px;
@@ -38,7 +39,7 @@
     background: #fafafa;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
-    padding: 20px;
+    /* padding is now handled inside the component */
     transition: all 0.2s;
 }
 
@@ -47,18 +48,24 @@
     background: #f9fafb;
 }
 
-.editable-field {
-    position: relative;
-    cursor: pointer;
+/* NEW STYLE FOR INPUTS */
+.settings-input {
+    width: 100%;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    line-height: inherit;
 }
-
-.editable-field:hover .edit-icon {
-    opacity: 1;
-}
-
-.edit-icon {
-    opacity: 0;
-    transition: opacity 0.2s;
+.settings-input:focus {
+    outline: none;
+    background-color: rgba(75, 85, 99, 0.05);
+    padding: 4px 8px; /* Add some padding on focus */
+    margin: -4px -8px; /* Counteract padding to prevent layout shift */
+    border-radius: 4px;
 }
 
 .plan-card-settings {

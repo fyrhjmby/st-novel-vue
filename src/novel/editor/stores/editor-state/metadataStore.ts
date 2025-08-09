@@ -1,4 +1,3 @@
-// 文件: ..\src\novel\editor\stores\modules\metadataStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { getNovelProject } from '@/novel/services/novelProjectService';
@@ -11,6 +10,7 @@ import { useUIStore } from '../uiStore';
 import { usePaneStore } from './paneStore';
 import { useTabStore } from './tabStore';
 import { useDerivedContentStore } from '../derivedContentStore';
+import { useNovelSettingsStore } from '../novelSettingsStore';
 
 export const useMetadataStore = defineStore('editor-metadata', () => {
     const novelMetadata = ref<NovelMetadata | null>(null);
@@ -35,6 +35,7 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
         const uiStore = useUIStore();
         const paneStore = usePaneStore();
         const tabStore = useTabStore();
+        const novelSettingsStore = useNovelSettingsStore();
 
         directoryStore.fetchDirectoryData(projectData.directoryData);
         relatedContentStore.fetchRelatedData(
@@ -49,7 +50,10 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
         );
         notesStore.fetchNotes(projectData.noteData);
         novelMetadata.value = JSON.parse(JSON.stringify(projectData.metadata));
-        referenceStore.fetchData(projectData.metadata.referenceNovelIds);
+        referenceStore.loadReferences(projectData.metadata.referenceNovelIds);
+
+        // Notify NovelSettingsStore to update its state
+        novelSettingsStore.loadSettingsData();
 
         paneStore.initializePanes();
         const firstChapterId = projectData.directoryData[0]?.chapters[0]?.id;
@@ -81,7 +85,8 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
         }
         novelMetadata.value.referenceNovelIds.push(novelIdToAdd);
         const referenceStore = useReferenceStore();
-        referenceStore.fetchData(novelMetadata.value.referenceNovelIds);
+        referenceStore.loadReferences(novelMetadata.value.referenceNovelIds);
+        // No need to call settings store here, as the caller (settingsStore) will do it.
     }
 
     function removeReferenceNovel(novelIdToRemove: string) {
@@ -92,7 +97,8 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
         if (index > -1) {
             novelMetadata.value.referenceNovelIds.splice(index, 1);
             const referenceStore = useReferenceStore();
-            referenceStore.fetchData(novelMetadata.value.referenceNovelIds);
+            referenceStore.loadReferences(novelMetadata.value.referenceNovelIds);
+            // No need to call settings store here, as the caller (settingsStore) will do it.
         }
     }
 

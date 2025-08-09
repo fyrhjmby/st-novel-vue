@@ -7,8 +7,10 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    AddApiModal: typeof import('./../settings/components/AddApiModal.vue')['default']
     AIAssistantMenu: typeof import('./../novel/components/GlobalAIAssistant/AIAssistantMenu.vue')['default']
     AITaskConfigModal: typeof import('./../novel/components/GlobalAIAssistant/AITaskConfigModal.vue')['default']
+    ApiConfigModal: typeof import('./../settings/components/ApiConfigModal.vue')['default']
     EditorAIPanel: typeof import('./../novel/components/editor/EditorAIPanel.vue')['default']
     EditorContent: typeof import('./../novel/components/editor/EditorContent.vue')['default']
     EditorSidebar: typeof import('./../novel/components/editor/EditorSidebar.vue')['default']
@@ -20,5 +22,6 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SettingsSidebar: typeof import('./../settings/components/SettingsSidebar.vue')['default']
+    UsageTrendChart: typeof import('./../settings/components/UsageTrendChart.vue')['default']
   }
 }

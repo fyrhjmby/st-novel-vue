@@ -371,7 +371,7 @@ defineExpose({ show, hide });
 
 import { computed, ref, type PropType } from 'vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import type { EditorPane } from '@/novel/editor/stores/modules/paneStore';
+import type { EditorPane } from '@novel/editor/stores/editor-state/paneStore';
 import PaneActions from '../layout/PaneActions.vue';
 import BreadcrumbsBar from '../layout/BreadcrumbsBar.vue';
 import PaneContentDispatcher from './PaneContentDispatcher.vue';
@@ -962,13 +962,16 @@ const emptyStateHtml = (contextType: string) => {
 // 文件: ..\src\novel\editor\components\sidebar\DirectoryContextMenu.vue
 //
 
-import { ref, onMounted, onBeforeUnmount, computed, defineAsyncComponent, shallowRef } from 'vue';
+// ..\src\novel\editor\components\sidebar\DirectoryContextMenu.vue
+import { ref, computed, onMounted, onBeforeUnmount, defineAsyncComponent, shallowRef } from 'vue';
 import type { TreeNode } from '@/novel/editor/types';
 import { useAITaskExecutor } from '@/novel/editor/composables/useAITaskExecutor';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
 import { useNotesStore } from '@/novel/editor/stores/notesStore';
+import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
+import { useUIStore } from '@/novel/editor/stores/uiStore';
 import type { AITask } from '@/novel/editor/types';
 
 // --- 组件映射 ---
@@ -998,6 +1001,7 @@ const editorStore = useEditorStore();
 const directoryStore = useDirectoryStore();
 const relatedContentStore = useRelatedContentStore();
 const notesStore = useNotesStore();
+const promptTemplateStore = usePromptTemplateStore();
 
 // --- Computed ---
 const menuComponent = computed(() => {
@@ -1136,16 +1140,25 @@ const handleNoteAction = (action: string, payload: any) => {
 
 const handlePromptAction = (action: string, payload: any) => {
   hide();
+  const uiStore = useUIStore();
+
   switch(action) {
     case 'newPrompt':
-      relatedContentStore.addPrompt(payload.groupId);
+      const newNode = promptTemplateStore.addPrompt(payload.groupId, '新建提示词', '在这里输入你的提示词模板...');
+      if (newNode) {
+        uiStore.ensureRelatedNodeIsExpanded(payload.groupId);
+        editorStore.openTab(newNode.id);
+        uiStore.setEditingNodeId(newNode.id);
+      }
       break;
     case 'renamePrompt':
       editorStore.setEditingNodeId(payload.promptId);
       break;
     case 'deletePrompt':
       if (confirm('确定要删除这个提示词模板吗？')) {
-        relatedContentStore.deletePrompt(payload.promptId);
+        if (promptTemplateStore.deletePrompt(payload.promptId)) {
+          editorStore.closeTab(payload.promptId);
+        }
       }
       break;
   }
@@ -1363,6 +1376,7 @@ import TreeView from './TreeView.vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
+import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
 import type { TreeNode } from '@/novel/editor/types';
 
 const emit = defineEmits<{
@@ -1371,6 +1385,7 @@ const emit = defineEmits<{
 
 const editorStore = useEditorStore();
 const relatedContentStore = useRelatedContentStore();
+const promptTemplateStore = usePromptTemplateStore();
 const uiStore = useUIStore();
 
 const activeNodeId = computed(() => editorStore.activeTabId);
@@ -1402,7 +1417,8 @@ const handleCommitRename = (payload: { nodeId: string; newTitle: string }) => {
     } else if (payload.nodeId.startsWith('custom-')) {
       relatedContentStore.renameCustomRelatedNode(payload.nodeId, payload.newTitle);
     } else if (payload.nodeId.startsWith('prompt-')) {
-      relatedContentStore.renamePrompt(payload.nodeId, payload.newTitle);
+      // ** FIX: Call the correct store for renaming prompts **
+      promptTemplateStore.renamePrompt(payload.nodeId, payload.newTitle);
     }
     else {
       relatedContentStore.renameRelatedNode(payload.nodeId, payload.newTitle);
@@ -1879,7 +1895,7 @@ const handleReferenceSelect = (event: Event) => {
   const selectedId = selectElement.value;
   if (selectedId) {
     settingsStore.addReferenceNovel(selectedId);
-    selectElement.value = ''; // Reset the select after adding
+    selectElement.value = '';
   }
 };
 
@@ -2355,6 +2371,1069 @@ export const editorRoutes: Array<RouteRecordRaw> = [
 ]
 
 // =
+// 文件: ..\src\novel\editor\services\ai\AITaskExecutionService.ts
+//
+
+// src/novel/editor/services/ai/AITaskExecutionService.ts
+import { useAITaskStore } from '@novel/editor/stores/ai/aiTaskStore';
+import { useUIStore } from '@novel/editor/stores/uiStore';
+import { useContextBuilder } from '@novel/editor/composables/useContextBuilder';
+import { streamAITask } from '@novel/editor/api/aiService';
+import type { AITask } from '@/novel/editor/types';
+
+const { buildContextForTask } = useContextBuilder();
+
+function executeTaskAndStream(task: AITask) {
+    const aiTaskStore = useAITaskStore();
+
+    aiTaskStore.updateTaskStatus(task.id, 'processing');
+
+    // 如果任务没有最终提示词，立即构建它
+    if (!task.finalPrompt) {
+        const contextResult = buildContextForTask(task);
+        if (!contextResult || !contextResult.prompt) {
+            aiTaskStore.updateTaskError(task.id, '上下文构建失败，无法生成最终提示词。');
+            processQueue(); // 继续处理下一个任务
+            return;
+        }
+        task.finalPrompt = contextResult.prompt;
+    }
+
+    const promptToUse = task.finalPrompt;
+
+    streamAITask(promptToUse, {
+        onChunk: (chunk) => {
+            aiTaskStore.appendGeneratedContent(task.id, chunk);
+        },
+        onComplete: () => {
+            aiTaskStore.completeTask(task.id);
+            processQueue(); // 完成后处理下一个
+        },
+        onError: (error) => {
+            aiTaskStore.updateTaskError(task.id, error);
+            processQueue(); // 出错后也处理下一个
+        }
+    });
+}
+
+/**
+ * 处理任务队列。检查当前正在执行的任务数是否达到并发上限，
+ * 如果没有，则从等待队列中取出任务开始执行。
+ */
+export function processQueue() {
+    const uiStore = useUIStore();
+    const aiTaskStore = useAITaskStore();
+
+    const limit = uiStore.uiState.concurrentTaskLimit;
+    const processingCount = aiTaskStore.tasks.filter(t => t.status === 'processing').length;
+
+    if (processingCount >= limit) {
+        return;
+    }
+
+    const canStartCount = limit - processingCount;
+    const pendingTasks = aiTaskStore.tasks.filter(t => t.status === 'pending');
+
+    const tasksToStart = pendingTasks.slice(0, canStartCount);
+
+    for (const task of tasksToStart) {
+        executeTaskAndStream(task);
+    }
+}
+
+// =
+// 文件: ..\src\novel\editor\services\ai\AITaskFactory.ts
+//
+
+// src/novel/editor/services/ai/AITaskFactory.ts
+import { useEditorStore } from '@novel/editor/stores/editorStore';
+import { useDerivedContentStore } from '@novel/editor/stores/derivedContentStore';
+import type { AITask, AITaskType } from '@/novel/editor/types';
+
+/**
+ * 创建一个新的AI任务对象。
+ * @param taskType AI任务的类型。
+ * @param sourceItemId 源文档的ID。
+ * @param finalPrompt 可选的，预先构建好的最终提示词。
+ * @returns 一个结构完整的AITask对象，如果源项目无效则返回null。
+ */
+export async function createTask(taskType: AITaskType, sourceItemId: string, finalPrompt?: string): Promise<AITask | null> {
+    const editorStore = useEditorStore();
+    const derivedContentStore = useDerivedContentStore();
+
+    const { node: sourceItem } = editorStore.findItemById(sourceItemId);
+    if (!sourceItem || !('content' in sourceItem) || typeof sourceItem.content !== 'string') {
+        console.error("AI Task Factory Error: Source item not found or has no content.", sourceItemId);
+        return null;
+    }
+
+    let targetItemId: string;
+    let taskTitle: string;
+
+    if (taskType === '分析' || taskType === '剧情生成') {
+        const newDerivedItem = derivedContentStore.createDerivedItem(sourceItem, taskType);
+        if (!newDerivedItem) {
+            console.error("AI Task Factory Error: Failed to create derived item shell.");
+            return null;
+        }
+        targetItemId = newDerivedItem.id;
+        taskTitle = newDerivedItem.title;
+    } else {
+        targetItemId = sourceItemId;
+        taskTitle = `${taskType}《${sourceItem.title}》`;
+    }
+
+    const newTask: AITask = {
+        id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        title: taskTitle,
+        type: taskType,
+        sourceItemId: sourceItemId,
+        targetItemId: targetItemId,
+        sourceItemTitle: sourceItem.title,
+        sourceItemContent: sourceItem.content,
+        status: 'pending',
+        generatedContent: '',
+        finalPrompt: finalPrompt,
+        createdAt: new Date(),
+    };
+
+    return newTask;
+}
+
+// =
+// 文件: ..\src\novel\editor\services\chatService.ts
+//
+
+// src/novel/editor/services/chatService.ts
+import type { Conversation, ChatMessage } from '@novel/editor/types/chatTypes';
+import { mockChatConversations } from '@/novel/editor/components/ai/chat/chatData';
+
+/**
+ * 获取所有聊天对话。
+ * @returns 对话列表。
+ */
+export function getConversations(): Conversation[] {
+    return mockChatConversations;
+}
+
+/**
+ * 创建一个新的、空的对话对象。
+ * @returns 一个新的 Conversation 对象。
+ */
+export function createConversation(): Conversation {
+    return {
+        id: `conv-${Date.now()}`,
+        title: '新建对话',
+        summary: '暂无摘要',
+        createdAt: '刚刚',
+        messages: [],
+    };
+}
+
+/**
+ * 发送一条消息并模拟接收AI的回复。
+ * @param userInput - 用户输入的文本。
+ * @returns 一个包含用户消息和AI回复消息的对象。
+ */
+export async function sendMessage(userInput: string): Promise<{ userMessage: ChatMessage; aiResponse: ChatMessage }> {
+    const userMessage: ChatMessage = {
+        id: `msg-${Date.now()}`,
+        role: 'user',
+        content: userInput,
+        timestamp: new Date().toISOString(),
+    };
+
+    // 模拟网络延迟和AI思考时间
+    await new Promise(res => setTimeout(res, 1500));
+
+    const aiResponse: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        role: 'ai',
+        content: `这是对您关于 "${userInput.substring(0, 10)}..." 的回复。AI正在思考中...`,
+        timestamp: new Date().toISOString(),
+    };
+
+    return { userMessage, aiResponse };
+}
+
+// =
+// 文件: ..\src\novel\editor\services\directoryService.ts
+//
+
+// src/novel/editor/services/directoryService.ts
+import type { Volume, Chapter } from '@/novel/editor/types';
+
+type DirectoryNode = Volume | Chapter;
+
+function _findNodeRecursive(nodes: DirectoryNode[], nodeId: string): { node: DirectoryNode; parent: Volume | null; siblings: DirectoryNode[] } | null {
+    for (const node of nodes) {
+        if (node.id === nodeId) {
+            return { node, parent: null, siblings: nodes };
+        }
+        if (node.type === 'volume' && node.chapters) {
+            const chapterResult = node.chapters.find(c => c.id === nodeId);
+            if (chapterResult) {
+                return { node: chapterResult, parent: node, siblings: node.chapters };
+            }
+        }
+    }
+    return null;
+}
+
+export function findNodeById(nodes: Volume[], nodeId: string) {
+    return _findNodeRecursive(nodes, nodeId);
+}
+
+export function createVolume(): Volume {
+    return {
+        id: `vol-${Date.now()}`,
+        type: 'volume',
+        title: '新建卷',
+        content: `<h1>新建卷</h1>`,
+        chapters: [],
+    };
+}
+
+export function createChapter(): Chapter {
+    return {
+        id: `ch-${Date.now()}`,
+        type: 'chapter',
+        title: '新建章节',
+        wordCount: 0,
+        content: '<h1>新建章节</h1>',
+        status: 'editing'
+    };
+}
+
+export function updateNodeContent(node: Volume | Chapter, content: string) {
+    node.content = content;
+
+    if (node.type === 'chapter') {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+        node.wordCount = tempDiv.textContent?.trim().length || 0;
+    }
+
+    const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
+    const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
+    if (newTitle && newTitle !== node.title) {
+        node.title = newTitle;
+    }
+}
+
+export function appendChapterContent(chapter: Chapter, contentToAppend: string, isAutoApplied: boolean) {
+    const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
+    let htmlToAppend = paragraphs;
+    if (isAutoApplied) {
+        htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
+    }
+    chapter.content += htmlToAppend;
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = chapter.content;
+    chapter.wordCount = tempDiv.textContent?.trim().length || 0;
+}
+
+export function renameNode(node: DirectoryNode, newTitle: string) {
+    if (!newTitle.trim()) {
+        return;
+    }
+    const trimmedTitle = newTitle.trim();
+    node.title = trimmedTitle;
+    if (node.content) {
+        if (node.content.includes('<h1>')) {
+            node.content = node.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
+        } else {
+            node.content = `<h1>${trimmedTitle}</h1>` + node.content;
+        }
+    }
+}
+
+export function deleteNode(nodes: Volume[], nodeId: string): boolean {
+    const result = findNodeById(nodes, nodeId);
+    if (!result) return false;
+
+    if (result.parent && result.node.type === 'chapter') {
+        const index = result.parent.chapters.findIndex(c => c.id === nodeId);
+        if (index > -1) {
+            result.parent.chapters.splice(index, 1);
+            return true;
+        }
+    } else if (!result.parent && result.node.type === 'volume') {
+        const index = nodes.findIndex(v => v.id === nodeId);
+        if (index > -1) {
+            nodes.splice(index, 1);
+            return true;
+        }
+    }
+    return false;
+}
+
+// =
+// 文件: ..\src\novel\editor\services\noteService.ts
+//
+
+import type { NoteItem } from '@/novel/editor/types';
+
+class NoteService {
+
+    /**
+     * 创建一个新的笔记对象
+     * @param title - 笔记的初始标题
+     * @param content - 笔记的初始内容（纯文本）
+     * @returns 一个完整的 NoteItem 对象
+     */
+    public createNote(title: string, content: string = ''): NoteItem {
+        return {
+            id: `note-${Date.now()}`,
+            type: 'note',
+            title: title,
+            content: `<h1>${title}</h1><p>${content}</p>`,
+            timestamp: new Date().toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+        };
+    }
+
+    /**
+     * 根据新的HTML内容更新笔记对象，并同步标题
+     * @param note - 要更新的原始笔记对象
+     * @param newContent - 新的HTML内容
+     * @returns 一个被更新后的新笔记对象副本
+     */
+    public updateNoteWithNewContent(note: NoteItem, newContent: string): NoteItem {
+        const updatedNote = { ...note, content: newContent };
+
+        const h1Match = newContent.match(/<h1[^>]*>(.*?)<\/h1>/);
+        const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : note.title;
+
+        if (newTitle) {
+            updatedNote.title = newTitle;
+        }
+
+        return updatedNote;
+    }
+
+    /**
+     * 将文本内容附加到现有笔记内容的末尾
+     * @param originalContent - 原始HTML内容
+     * @param contentToAppend - 要附加的纯文本内容
+     * @param isAutoApplied - 是否为AI自动应用，若是则添加一个标记
+     * @returns 附加了新内容的完整HTML字符串
+     */
+    public appendContentToNote(originalContent: string, contentToAppend: string, isAutoApplied: boolean): string {
+        const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
+        let htmlToAppend = paragraphs;
+        if (isAutoApplied) {
+            htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
+        }
+        return (originalContent || "") + htmlToAppend;
+    }
+
+    /**
+     * 根据新标题更新笔记对象，并同步内容中的<h1>标签
+     * @param note - 要更新的原始笔记对象
+     * @param newTitle - 新的标题
+     * @returns 一个被更新后的新笔记对象副本
+     */
+    public renameNote(note: NoteItem, newTitle: string): NoteItem {
+        const updatedNote = { ...note, title: newTitle };
+        if (updatedNote.content.includes('<h1>')) {
+            updatedNote.content = updatedNote.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${newTitle}</h1>`);
+        } else {
+            updatedNote.content = `<h1>${newTitle}</h1>` + updatedNote.content;
+        }
+        return updatedNote;
+    }
+}
+
+export const noteService = new NoteService();
+
+// =
+// 文件: ..\src\novel\editor\services\novelSettingsService.ts
+//
+
+import { getAllNovelProjects, getNovelProject } from '@/novel/services/novelProjectService';
+import type { NovelProject } from '@/novel/editor/types/project';
+import type { NovelMetadata } from '@/novel/editor/types';
+
+class NovelSettingsService {
+
+    /**
+     * 根据ID数组获取完整的小说项目对象列表。
+     * @param novelIds - 要获取的小说ID数组。
+     * @returns 完整的小说项目对象数组。
+     */
+    public getReferencedNovels(novelIds: string[]): NovelProject[] {
+        if (!novelIds) return [];
+        return novelIds
+            .map(id => getNovelProject(id))
+            .filter((p): p is NovelProject => p !== undefined);
+    }
+
+    /**
+     * 获取可供添加为参考书的所有其他小说项目。
+     * @param novelMetadata - 当前正在编辑的小说的元数据。
+     * @returns 可用的参考小说项目数组。
+     */
+    public getAvailableReferenceNovels(novelMetadata: NovelMetadata | null): NovelProject[] {
+        const allNovels = getAllNovelProjects();
+        if (!novelMetadata) return allNovels;
+
+        const currentAndReferencedIds = new Set([
+            ...novelMetadata.referenceNovelIds,
+            novelMetadata.id
+        ]);
+
+        return allNovels.filter(novel => !currentAndReferencedIds.has(novel.metadata.id));
+    }
+}
+
+export const novelSettingsService = new NovelSettingsService();
+
+// =
+// 文件: ..\src\novel\editor\services\promptService.ts
+//
+
+import type { TreeNode, AITaskType } from '@novel/editor/types';
+import { getIconByNodeType } from '@novel/editor/utils/iconUtils';
+
+const DEFAULT_PROMPTS: Record<AITaskType, { id: string, name: string, template: string }[]> = {
+    '润色': [
+        { id: 'prompt-polish-default', name: '默认润色', template: '你是一名专业的小说编辑，请根据上下文，对以下“待处理内容”进行润色，使其更具文采和表现力。' },
+        { id: 'prompt-polish-creative', name: '增强创造性', template: '你是一名富有想象力的作家，请跳出常规，用更具创造性和独特风格的语言重写以下“待处理内容”，可以适度偏离原文。' }
+    ],
+    '续写': [
+        { id: 'prompt-continue-default', name: '默认续写', template: '你是一名小说家，请根据所有上下文信息，紧接着“待处理内容”的结尾，自然地续写接下来的故事情节。' },
+        { id: 'prompt-continue-dramatic', name: '增强戏剧性', template: '你是一名顶尖的剧本编剧，请在续写时增加戏剧性冲突或意外转折，让故事更有张力。' }
+    ],
+    '分析': [
+        { id: 'prompt-analyze-default', name: '默认分析', template: '请作为一个文学评论家，分析以下“待处理内容”的结构、角色动态、潜在主题和写作风格。' },
+        { id: 'prompt-analyze-deep', name: '深度结构分析', template: '请从叙事技巧、象征意义和读者情感引导等角度，深度剖析以下“待处理内容”，并提出改进建议。' }
+    ],
+    '剧情生成': [
+        { id: 'prompt-plot-default', name: '默认剧情生成', template: '你是一名创意编剧，请根据“待处理内容”中描写的场景或事件，生成一段相关的、有趣的后续剧情大纲。' },
+        { id: 'prompt-plot-twist', name: '生成反转剧情', template: '你是一名擅长制造悬念的编剧，请根据“待处理内容”，构思一个包含意外反转的后续剧情大纲。' }
+    ],
+    '创作': [
+        { id: 'prompt-create-default', name: '默认创作', template: '你是一位小说家，请根据“动态上下文”（其中可能包含剧情大纲和分析）以及“固定上下文”，为标题为《{{sourceItemTitle}}》的章节创作完整的正文内容。“待处理内容”是旧版或草稿，可作为参考，但你的主要任务是生成全新的、完整的章节。' },
+    ],
+};
+
+class PromptService {
+
+    public buildInitialTree(): TreeNode[] {
+        const root: TreeNode = {
+            id: 'prompt-root',
+            title: '提示词模板',
+            type: 'prompt_root',
+            icon: getIconByNodeType('prompt_root'),
+            children: (Object.keys(DEFAULT_PROMPTS) as AITaskType[]).map(taskType => {
+                const groupNode: TreeNode = {
+                    id: `prompt-group-${taskType}`,
+                    title: `${taskType}提示词`,
+                    type: 'prompt_group',
+                    icon: getIconByNodeType(taskType),
+                    isReadOnly: true,
+                    originalData: { taskType },
+                    children: DEFAULT_PROMPTS[taskType].map(prompt => ({
+                        id: prompt.id,
+                        title: prompt.name,
+                        type: 'prompt_item',
+                        icon: getIconByNodeType('prompt_item'),
+                        content: `<pre>${prompt.template}</pre>`,
+                        originalData: { taskType },
+                    }))
+                };
+                return groupNode;
+            })
+        };
+        return [root];
+    }
+}
+
+export const promptService = new PromptService();
+
+// =
+// 文件: ..\src\novel\editor\services\referenceService.ts
+//
+
+import type { TreeNode, ItemNode, PlotAnalysisItem, Volume, Chapter } from '@/novel/editor/types';
+import type { NovelProject } from '@/novel/editor/types/project';
+import { getNovelProject } from '@/novel/services/novelProjectService';
+import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
+
+class ReferenceService {
+
+    private makeNodesReadOnly(nodes: TreeNode[]): TreeNode[] {
+        return nodes.map(node => {
+            const newNode: TreeNode = { ...node, isReadOnly: true };
+            if (newNode.children) {
+                newNode.children = this.makeNodesReadOnly(newNode.children);
+            }
+            if (newNode.isOverview) {
+                newNode.content = `<p class="overview-placeholder">参考书中所有内容均为只读。</p>`;
+            }
+            return newNode;
+        });
+    }
+
+    private projectToTreeNode(project: NovelProject): TreeNode {
+        const rootNode: TreeNode = {
+            id: `ref-book-${project.metadata.id}`,
+            type: 'reference_book',
+            title: project.metadata.title,
+            icon: getIconByNodeType('reference_book'),
+            children: []
+        };
+
+        const directoryNode: TreeNode = {
+            id: `ref-dir-${project.metadata.id}`,
+            type: 'reference_content_item',
+            title: '目录',
+            icon: 'fa-regular fa-folder-open',
+            children: this.makeNodesReadOnly(project.directoryData.map((vol: Volume) => ({
+                id: vol.id,
+                title: vol.title,
+                type: 'reference_volume',
+                icon: getIconByNodeType('reference_volume'),
+                content: vol.content,
+                isReadOnly: true,
+                children: vol.chapters.map((chap: Chapter) => ({
+                    id: chap.id,
+                    title: chap.title,
+                    type: 'reference_chapter',
+                    icon: getIconByNodeType('reference_chapter'),
+                    content: chap.content,
+                    isReadOnly: true
+                }))
+            })))
+        };
+        rootNode.children?.push(directoryNode);
+
+        const buildRefDerivedContentTree = (type: 'plot' | 'analysis', dataArray: PlotAnalysisItem[] | undefined, directory: Volume[]): TreeNode[] => {
+            if (!dataArray || dataArray.length === 0) return [];
+
+            return directory.map((volume: Volume) => {
+                const derivedForVolume = dataArray
+                    .filter((item: PlotAnalysisItem) => item.sourceId === volume.id)
+                    .map((item: PlotAnalysisItem) => ({
+                        id: item.id,
+                        title: item.title,
+                        type: `${type}_item` as ItemNode['type'],
+                        icon: getIconByNodeType(`${type}_item`),
+                        content: item.content,
+                        originalData: item
+                    }));
+
+                const derivedForChapters = volume.chapters
+                    .map((chapter: Chapter) => {
+                        const itemsForChapter = dataArray.filter((item: PlotAnalysisItem) => item.sourceId === chapter.id);
+                        if (itemsForChapter.length === 0) return null;
+
+                        return {
+                            id: `ref-derived-group-${type}-${chapter.id}`,
+                            title: chapter.title,
+                            type: 'group',
+                            icon: getIconByNodeType('chapter'),
+                            children: itemsForChapter.map((item: PlotAnalysisItem) => ({
+                                id: item.id,
+                                title: item.title,
+                                type: `${type}_item` as ItemNode['type'],
+                                icon: getIconByNodeType(`${type}_item`),
+                                content: item.content,
+                                originalData: item
+                            }))
+                        };
+                    })
+                    .filter((c: TreeNode | null): c is TreeNode => c !== null);
+
+                if (derivedForVolume.length === 0 && derivedForChapters.length === 0) {
+                    return null;
+                }
+
+                return {
+                    id: `ref-derived-group-${type}-${volume.id}`,
+                    title: volume.title,
+                    type: 'group',
+                    icon: getIconByNodeType('volume'),
+                    children: [
+                        ...derivedForVolume,
+                        ...derivedForChapters
+                    ]
+                };
+            }).filter((v: TreeNode | null): v is TreeNode => v !== null);
+        };
+
+        const plotTree = buildRefDerivedContentTree('plot', project.derivedPlotData, project.directoryData);
+        const plotNode: TreeNode = {
+            id: `ref-plot-${project.metadata.id}`,
+            type: 'reference_content_item',
+            title: '剧情',
+            icon: getIconByNodeType('plot'),
+            children: this.makeNodesReadOnly([
+                ...project.plotCustomData,
+                ...plotTree
+            ])
+        };
+        if (plotNode.children && plotNode.children.length > 0) {
+            rootNode.children?.push(plotNode);
+        }
+
+        const analysisTree = buildRefDerivedContentTree('analysis', project.derivedAnalysisData, project.directoryData);
+        const analysisNode: TreeNode = {
+            id: `ref-analysis-${project.metadata.id}`,
+            type: 'reference_content_item',
+            title: '分析',
+            icon: getIconByNodeType('analysis'),
+            children: this.makeNodesReadOnly([
+                ...project.analysisCustomData,
+                ...analysisTree
+            ])
+        };
+        if (analysisNode.children && analysisNode.children.length > 0) {
+            rootNode.children?.push(analysisNode);
+        }
+
+        const settingsRoot = project.settingsData.find(n => n.id === 'setting');
+        if (settingsRoot && settingsRoot.children) {
+            const settingsNode: TreeNode = {
+                id: `ref-settings-${project.metadata.id}`,
+                type: 'reference_content_item',
+                title: settingsRoot.title,
+                icon: getIconByNodeType('setting'),
+                children: this.makeNodesReadOnly(settingsRoot.children)
+            };
+            rootNode.children?.push(settingsNode);
+        }
+
+        return rootNode;
+    }
+
+    public buildReferenceTree(referenceNovelIds: string[]): TreeNode[] {
+        if (!referenceNovelIds || referenceNovelIds.length === 0) {
+            return [];
+        }
+
+        const newReferenceData = referenceNovelIds
+            .map(novelId => {
+                const project = getNovelProject(novelId);
+                return project ? this.projectToTreeNode(project) : null;
+            })
+            .filter((node): node is TreeNode => node !== null);
+
+        return newReferenceData;
+    }
+}
+
+export const referenceService = new ReferenceService();
+
+// =
+// 文件: ..\src\novel\editor\services\related\nodeOperationService.ts
+//
+
+// src/novel/editor/services/related/nodeOperationService.ts
+import { getIconByNodeType } from '@novel/editor/utils/iconUtils.ts';
+import type { TreeNode, ItemNode, GroupNode } from '@novel/editor/types';
+
+// Private helper function
+const _findNodeInTreeRecursive = (nodes: TreeNode[], nodeId: string): { node: TreeNode; parent: TreeNode | null; } | null => {
+    for (const node of nodes) {
+        if (node.id === nodeId) {
+            return { node, parent: null };
+        }
+        if (node.children) {
+            const foundInChild = _findNodeInTreeRecursive(node.children, nodeId);
+            if (foundInChild) {
+                if (!foundInChild.parent) {
+                    foundInChild.parent = node;
+                }
+                return foundInChild;
+            }
+        }
+    }
+    return null;
+};
+
+// Private helper function
+const _findAndRemoveNodeInTree = (nodes: TreeNode[], nodeId: string): boolean => {
+    for (let i = 0; i < nodes.length; i++) {
+        if (nodes[i].id === nodeId) {
+            nodes.splice(i, 1);
+            return true;
+        }
+        if (nodes[i].children && _findAndRemoveNodeInTree(nodes[i].children, nodeId)) {
+            return true;
+        }
+    }
+    return false;
+};
+
+export function findNodeById(nodeId: string, allDataSources: TreeNode[][]): { node: TreeNode; parent: TreeNode | null; } | null {
+    for (const source of allDataSources) {
+        const result = _findNodeInTreeRecursive(source, nodeId);
+        if (result) return result;
+    }
+    return null;
+}
+
+export function createRelatedNode(parentNode: GroupNode, type: 'group' | 'item'): GroupNode | ItemNode {
+    const itemTypePrefix = parentNode.id.endsWith('s') ? parentNode.id.slice(0, -1) : parentNode.id;
+    const newNodeType = type === 'group' ? 'group' : `${itemTypePrefix}_item`;
+    const newNodeIcon = getIconByNodeType(newNodeType);
+
+    if (type === 'group') {
+        const newNode: GroupNode = {
+            id: `group-${Date.now()}`,
+            title: '新建分组',
+            type: 'group',
+            icon: newNodeIcon,
+            children: [],
+        };
+        return newNode;
+    } else { // type === 'item'
+        const newNode: ItemNode = {
+            id: `item-${Date.now()}`,
+            title: '新建条目',
+            type: newNodeType as ItemNode['type'],
+            icon: newNodeIcon,
+            content: '<h1>新建条目</h1><p>请在此处填写内容...</p>',
+        };
+        return newNode;
+    }
+}
+
+export function createCustomNode(type: 'plot' | 'analysis' | 'others'): ItemNode {
+    const itemType = type === 'others' ? 'others_item' : `${type}_item`;
+    const icon = getIconByNodeType(itemType);
+    const title = type === 'others' ? '新建其他条目' : '新建自定义条目';
+
+    const newNode: ItemNode = {
+        id: `custom-${type}-${Date.now()}`,
+        title: title,
+        type: itemType as ItemNode['type'],
+        icon: icon,
+        content: `<h1>${title}</h1><p>请在此处填写内容...</p>`,
+    };
+    return newNode;
+}
+
+export function deleteNode(nodeId: string, allDataSources: TreeNode[][]): boolean {
+    for (const source of allDataSources) {
+        if (_findAndRemoveNodeInTree(source, nodeId)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+export function renameNode(node: TreeNode, newTitle: string) {
+    if (node && !node.isReadOnly && newTitle.trim()) {
+        const trimmedTitle = newTitle.trim();
+        node.title = trimmedTitle;
+        if ('content' in node && node.content && node.content.includes('<h1>')) {
+            (node as ItemNode).content = (node as ItemNode).content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
+        }
+    }
+}
+
+export function updateNodeContent(node: ItemNode, content: string) {
+    node.content = content;
+    if (!node.isReadOnly) {
+        const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
+        const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
+        if (newTitle && newTitle !== node.title) {
+            node.title = newTitle;
+        }
+    }
+}
+
+export function appendNodeContent(node: ItemNode, contentToAppend: string, isAutoApplied: boolean) {
+    const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
+    let htmlToAppend = paragraphs;
+    if (isAutoApplied) {
+        htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
+    }
+    if (!node.content) node.content = "";
+    node.content += htmlToAppend;
+}
+
+// =
+// 文件: ..\src\novel\editor\services\related\overviewService.ts
+//
+
+// src/novel/editor/services/related/overviewService.ts
+import type { TreeNode, GroupNode, ItemNode, OverviewNode } from '@novel/editor/types';
+
+/**
+ * 辅助函数，用于降低内容中标题的级别 (e.g., h1 -> h2)
+ * @param htmlContent - HTML 字符串
+ * @returns 降级后的 HTML 字符串
+ */
+const demoteHeadings = (htmlContent: string): string => {
+    if (typeof document === 'undefined') return htmlContent; // Guard for SSR
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+
+    const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5');
+    headings.forEach(heading => {
+        const level = parseInt(heading.tagName.charAt(1), 10);
+        const newLevel = Math.min(6, level + 1); // 最多降到 h6
+        const newHeading = document.createElement(`h${newLevel}`);
+        newHeading.innerHTML = heading.innerHTML;
+        for (const attr of heading.attributes) {
+            newHeading.setAttribute(attr.name, attr.value);
+        }
+        heading.parentNode?.replaceChild(newHeading, heading);
+    });
+    return tempDiv.innerHTML;
+};
+
+
+/**
+ * 更新单个分组节点下的总览内容。
+ * @param groupNode - 包含总览节点的父分组节点。
+ */
+function updateOverviewContentForGroup(groupNode: GroupNode) {
+    if (!groupNode.children) return;
+
+    const overviewNode = groupNode.children.find(child => child.isOverview) as OverviewNode | undefined;
+    if (!overviewNode) return;
+
+    const itemsToSummarize = groupNode.children.filter(child => child.type.endsWith('_item') && !child.isOverview) as ItemNode[];
+
+    const itemContents = itemsToSummarize.map(item => item.content ? demoteHeadings(item.content) : '').filter(Boolean);
+
+    overviewNode.content = `<h1>${overviewNode.title}</h1>` + (itemContents.length > 0 ? itemContents.join('<hr>') : `<p class="overview-placeholder">此分类下暂无内容，请添加条目。</p>`);
+}
+
+/**
+ * 遍历整个设定树，更新所有找到的总览节点。
+ * @param settingsData - 设定的树形数据 (可直接修改)
+ */
+export function updateAllOverviewContent(settingsData: TreeNode[]) {
+    const findAndProcess = (nodes: TreeNode[]) => {
+        for (const node of nodes) {
+            if (node.type === 'group' && node.children?.some(c => c.isOverview)) {
+                updateOverviewContentForGroup(node as GroupNode);
+            }
+            if (node.children) {
+                findAndProcess(node.children);
+            }
+        }
+    };
+    findAndProcess(settingsData);
+}
+
+// =
+// 文件: ..\src\novel\editor\services\related\treeBuilderService.ts
+//
+
+// src/novel/editor/services/related/treeBuilderService.ts
+import { getIconByNodeType } from '@novel/editor/utils/iconUtils.ts';
+import type { TreeNode, RootNode, PlotAnalysisItem, ItemNode, Volume } from '@novel/editor/types';
+
+function buildDerivedContentTree(
+    type: 'plot' | 'analysis',
+    dataArray: PlotAnalysisItem[],
+    directoryData: Volume[]
+): TreeNode[] {
+    return directoryData.map(volume => {
+        const derivedForVolume = dataArray
+            .filter(item => item.sourceId === volume.id)
+            .map(item => ({
+                id: item.id,
+                title: item.title,
+                type: `${type}_item` as ItemNode['type'],
+                icon: getIconByNodeType(`${type}_item`),
+                originalData: item,
+                content: item.content
+            }));
+
+        const derivedForChapters = volume.chapters
+            .map(chapter => {
+                const derivedForChapter = dataArray.filter(item => item.sourceId === chapter.id);
+                if (derivedForChapter.length === 0) return null;
+
+                return {
+                    id: `${type}_ch_group_${chapter.id}`,
+                    title: chapter.title,
+                    type: 'group',
+                    icon: getIconByNodeType('chapter'),
+                    isReadOnly: true,
+                    children: derivedForChapter.map(item => ({
+                        id: item.id,
+                        title: item.title,
+                        type: `${type}_item` as ItemNode['type'],
+                        icon: getIconByNodeType(`${type}_item`),
+                        originalData: item,
+                        content: item.content
+                    }))
+                };
+            })
+            .filter((c): c is TreeNode => c !== null);
+
+        if (derivedForVolume.length === 0 && derivedForChapters.length === 0) {
+            return null;
+        }
+
+        return {
+            id: `${type}_vol_group_${volume.id}`,
+            title: volume.title,
+            type: 'group',
+            icon: getIconByNodeType('volume'),
+            isReadOnly: true,
+            children: [
+                ...derivedForVolume,
+                ...derivedForChapters
+            ]
+        };
+    }).filter((v): v is TreeNode => v !== null);
+}
+
+/**
+ * 构建完整的 "相关内容" 侧边栏树。
+ */
+export function buildRelatedTree(
+    settingsData: TreeNode[],
+    plotCustomData: TreeNode[],
+    analysisCustomData: TreeNode[],
+    othersCustomData: TreeNode[],
+    promptTree: TreeNode[],
+    plotItems: PlotAnalysisItem[],
+    analysisItems: PlotAnalysisItem[],
+    directoryData: Volume[]
+): TreeNode[] {
+    const plotDerivedTree = buildDerivedContentTree('plot', plotItems, directoryData);
+    const analysisDerivedTree = buildDerivedContentTree('analysis', analysisItems, directoryData);
+
+    const plotTree: RootNode = {
+        id: 'plot', title: '剧情', type: 'root', icon: getIconByNodeType('plot'),
+        children: [
+            ...plotCustomData,
+            ...plotDerivedTree
+        ]
+    };
+
+    const analysisTree: RootNode = {
+        id: 'analysis', title: '分析', type: 'root', icon: getIconByNodeType('analysis'),
+        children: [
+            ...analysisCustomData,
+            ...analysisDerivedTree
+        ]
+    };
+
+    const othersTree: RootNode = {
+        id: 'others', title: '其他', type: 'root', icon: getIconByNodeType('others'),
+        children: [
+            ...promptTree,
+            ...othersCustomData
+        ]
+    };
+
+    return [...settingsData, plotTree, analysisTree, othersTree];
+}
+
+// =
+// 文件: ..\src\novel\editor\services\searchService.ts
+//
+
+import type { SearchResult, EditorItem, TreeNode } from '@/novel/editor/types';
+import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
+import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
+import { useNotesStore } from '@/novel/editor/stores/notesStore';
+import { useReferenceStore } from '@/novel/editor/stores/referenceStore';
+import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
+
+class SearchService {
+    private get directoryStore() { return useDirectoryStore(); }
+    private get relatedContentStore() { return useRelatedContentStore(); }
+    private get notesStore() { return useNotesStore(); }
+    private get referenceStore() { return useReferenceStore(); }
+
+    public search(query: string): SearchResult[] {
+        if (!query || query.trim().length < 1) {
+            return [];
+        }
+
+        const lowerCaseQuery = query.toLowerCase();
+        const resultsMap = new Map<string, SearchResult>();
+        const tempDiv = document.createElement('div');
+
+        const processItem = (item: EditorItem) => {
+            if (item.type === 'system' || !('content' in item) || !item.content) return;
+
+            tempDiv.innerHTML = item.content;
+            const textContent = tempDiv.textContent || '';
+            const lowerCaseText = textContent.toLowerCase();
+
+            // 1. 检查标题是否匹配
+            const titleMatch = item.title.toLowerCase().includes(lowerCaseQuery);
+
+            // 2. 检查内容是否匹配
+            let contentMatches = false;
+            const regex = new RegExp(`(.{0,30})(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})(.{0,30})`, 'gi');
+            let match;
+            const matchesForThisItem: { context: string }[] = [];
+
+            while ((match = regex.exec(textContent)) !== null) {
+                contentMatches = true;
+                if (matchesForThisItem.length < 5) { // Limit matches per item
+                    const context = `${match[1]}<mark>${match[2]}</mark>${match[3]}`;
+                    matchesForThisItem.push({ context: `...${context}...` });
+                } else {
+                    break;
+                }
+            }
+
+            // 如果标题或内容任一匹配，则加入结果列表
+            if(titleMatch || contentMatches){
+                if (!resultsMap.has(item.id)) {
+                    resultsMap.set(item.id, {
+                        id: item.id,
+                        title: item.title,
+                        icon: getIconByNodeType(item.type),
+                        item: item,
+                        matches: []
+                    });
+                }
+                const result = resultsMap.get(item.id)!;
+
+                // 如果是因为内容匹配，添加匹配片段
+                if(contentMatches){
+                    result.matches.push(...matchesForThisItem);
+                }
+                // 如果只是标题匹配，可以添加一个特殊的 "match" 来注明
+                else if (titleMatch) {
+                    result.matches.push({ context: `<span class="italic text-gray-500">标题匹配</span>` });
+                }
+            }
+        };
+
+        // 遍历所有数据源
+        this.directoryStore.directoryData.forEach(vol => {
+            processItem(vol);
+            vol.chapters.forEach(processItem);
+        });
+
+        const flattenAndProcess = (nodes: TreeNode[]) => {
+            nodes.forEach(node => {
+                if ('content' in node && node.content) {
+                    processItem(node as EditorItem);
+                }
+                if (node.children) flattenAndProcess(node.children);
+            });
+        };
+
+        flattenAndProcess(this.relatedContentStore.relatedData);
+        flattenAndProcess(this.referenceStore.referenceData);
+
+        this.notesStore.notes.forEach(processItem);
+
+        return Array.from(resultsMap.values());
+    }
+}
+
+export const searchService = new SearchService();
+
+// =
 // 文件: ..\src\novel\editor\stores\ai\aiConfigStore.ts
 //
 
@@ -2402,17 +3481,15 @@ export const useAIConfigStore = defineStore('aiConfig', () => {
 // 文件: ..\src\novel\editor\stores\ai\aiTaskStore.ts
 //
 
-// 文件: src/novel/editor/stores/ai/aiTaskStore.ts
-
-// src/novel/editor/stores/aiTaskStore.ts
-import { defineStore } from 'pinia'
-import { ref, nextTick, computed } from 'vue'
-import { useEditorStore } from '../editorStore.ts'
-import { useUIStore } from '../uiStore.ts'
-import { useDerivedContentStore } from '../derivedContentStore.ts';
-import type { AITask, Volume, AITaskType } from '@novel/editor/types';
-import { useContextBuilder } from '@novel/editor/composables/useContextBuilder.ts';
-import { streamAITask } from '@novel/editor/api/aiService.ts';
+// src/novel/editor/stores/ai/aiTaskStore.ts
+import { defineStore } from 'pinia';
+import { ref, computed, nextTick } from 'vue';
+import { useEditorStore } from '../editorStore';
+import { useUIStore } from '../uiStore';
+import { useDerivedContentStore } from '../derivedContentStore';
+import * as AITaskFactory from '@/novel/editor/services/ai/AITaskFactory';
+import { processQueue } from '@/novel/editor/services/ai/AITaskExecutionService';
+import type { AITask, Volume, AITaskType, AITaskStatus } from '@novel/editor/types';
 
 const formatContentForEditor = (title: string, rawContent: string): string => {
     const body = rawContent.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p}</p>`).join('');
@@ -2424,139 +3501,51 @@ export const useAITaskStore = defineStore('aiTask', () => {
     const editorStore = useEditorStore();
     const uiStore = useUIStore();
     const derivedContentStore = useDerivedContentStore();
-    const { buildContextForTask } = useContextBuilder();
 
     const activeTasksCount = computed(() => {
         return tasks.value.filter(t => t.status === 'processing' || t.status === 'pending').length;
     });
 
-    const _executeTaskAndStream = (taskId: string) => {
+    // --- State Mutation Actions ---
+    const updateTaskStatus = (taskId: string, status: AITaskStatus) => {
         const task = tasks.value.find(t => t.id === taskId);
-        if (!task) return;
-
-        task.status = 'processing';
-        task.generatedContent = '';
-
-        if (!task.finalPrompt) {
-            // **核心修正**: 直接将任务对象传给上下文构建器
-            const contextResult = buildContextForTask(task);
-            if (!contextResult || !contextResult.prompt) {
-                task.status = 'failed';
-                task.error = '上下文构建失败，无法生成最终提示词。';
-                nextTick(_processQueue);
-                return;
-            }
-            task.finalPrompt = contextResult.prompt;
-        }
-
-        const promptToUse = task.finalPrompt;
-
-        streamAITask(promptToUse, {
-            onChunk: (chunk) => {
-                const currentTask = tasks.value.find(t => t.id === taskId);
-                if (currentTask && currentTask.status === 'processing') {
-                    currentTask.generatedContent += chunk;
-                }
-            },
-            onComplete: () => {
-                const currentTask = tasks.value.find(t => t.id === taskId);
-                if (currentTask && currentTask.status === 'processing') {
-                    currentTask.status = 'completed';
-                    if (currentTask.type === '润色' || currentTask.type === '续写') {
-                        const strategy = uiStore.uiState.taskApplicationStrategy;
-                        switch (strategy.mode) {
-                            case 'auto':
-                                applyChanges(currentTask.id, true);
-                                break;
-                            case 'delayed':
-                                setTimeout(() => {
-                                    const taskAfterDelay = tasks.value.find(t => t.id === taskId);
-                                    if (taskAfterDelay && taskAfterDelay.status === 'completed') {
-                                        applyChanges(taskId, true);
-                                    }
-                                }, strategy.delaySeconds * 1000);
-                                break;
-                            case 'manual':
-                                break;
-                        }
-                    }
-                    _processQueue();
-                }
-            },
-            onError: (error) => {
-                const currentTask = tasks.value.find(t => t.id === taskId);
-                if (currentTask && currentTask.status === 'processing') {
-                    currentTask.status = 'failed';
-                    currentTask.error = error;
-                    _processQueue();
-                }
-            }
-        });
-    }
-
-    const _processQueue = () => {
-        const limit = uiStore.uiState.concurrentTaskLimit;
-        const processingCount = tasks.value.filter(t => t.status === 'processing').length;
-
-        if (processingCount >= limit) {
-            return;
-        }
-
-        const canStartCount = limit - processingCount;
-        const pendingTasks = tasks.value.filter(t => t.status === 'pending');
-
-        const tasksToStart = pendingTasks.slice(0, canStartCount);
-
-        for (const task of tasksToStart) {
-            _executeTaskAndStream(task.id);
+        if (task) {
+            task.status = status;
         }
     };
 
+    const updateTaskError = (taskId: string, error: string) => {
+        const task = tasks.value.find(t => t.id === taskId);
+        if (task) {
+            task.status = 'failed';
+            task.error = error;
+        }
+    };
+
+    const appendGeneratedContent = (taskId: string, chunk: string) => {
+        const task = tasks.value.find(t => t.id === taskId);
+        if (task && task.status === 'processing') {
+            task.generatedContent += chunk;
+        }
+    };
+
+    // --- Complex Actions ---
     const startTask = async (taskType: AITaskType, sourceItemId: string, finalPrompt?: string) => {
-        const { node: sourceItem } = editorStore.findItemById(sourceItemId);
-        if (!sourceItem || !('content' in sourceItem) || typeof sourceItem.content !== 'string') {
-            console.error("AI Task Error: Source item not found or has no content.", sourceItemId);
-            return;
-        }
+        const newTask = await AITaskFactory.createTask(taskType, sourceItemId, finalPrompt);
+        if (!newTask) return;
 
-        let targetItemId: string;
-        let taskTitle: string;
-
-        if (taskType === '分析' || taskType === '剧情生成') {
-            const newDerivedItem = derivedContentStore.createDerivedItem(sourceItem, taskType);
-            if (!newDerivedItem) {
-                console.error("Failed to create derived item shell.");
-                return;
-            }
-            targetItemId = newDerivedItem.id;
-            taskTitle = newDerivedItem.title;
-
+        // Open tab for derived content immediately
+        if (newTask.type === '分析' || newTask.type === '剧情生成') {
             await nextTick();
-            editorStore.openTab(targetItemId);
-        } else {
-            targetItemId = sourceItemId;
-            taskTitle = `${taskType}《${sourceItem.title}》`;
+            editorStore.openTab(newTask.targetItemId);
         }
-
-        const newTask: AITask = {
-            id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            title: taskTitle,
-            type: taskType,
-            sourceItemId: sourceItemId,
-            targetItemId: targetItemId,
-            sourceItemTitle: sourceItem.title, // **核心修正**: 添加标题快照
-            sourceItemContent: sourceItem.content, // **核心修正**: 添加内容快照
-            status: 'pending',
-            generatedContent: '',
-            finalPrompt: finalPrompt,
-            createdAt: new Date(),
-        };
 
         tasks.value.unshift(newTask);
+
         if (uiStore.uiState.autoOpenAIPanel && editorStore.activePaneId) {
             editorStore.ensureAIPanelIsOpen(editorStore.activePaneId);
         }
-        nextTick(_processQueue);
+        nextTick(processQueue);
     };
 
     const startBatchTaskForVolume = (taskType: AITaskType, volume: Volume) => {
@@ -2564,6 +3553,34 @@ export const useAITaskStore = defineStore('aiTask', () => {
         volume.chapters.forEach(chapter => {
             startTask(taskType, chapter.id, undefined);
         });
+    };
+
+    const completeTask = (taskId: string) => {
+        const task = tasks.value.find(t => t.id === taskId);
+        if (task && task.status === 'processing') {
+            task.status = 'completed';
+
+            // Handle auto-application logic
+            if (task.type === '润色' || task.type === '续写') {
+                const strategy = uiStore.uiState.taskApplicationStrategy;
+                switch (strategy.mode) {
+                    case 'auto':
+                        applyChanges(taskId, true);
+                        break;
+                    case 'delayed':
+                        setTimeout(() => {
+                            const taskAfterDelay = tasks.value.find(t => t.id === taskId);
+                            if (taskAfterDelay && taskAfterDelay.status === 'completed') {
+                                applyChanges(taskId, true);
+                            }
+                        }, strategy.delaySeconds * 1000);
+                        break;
+                    case 'manual':
+                        // Do nothing
+                        break;
+                }
+            }
+        }
     };
 
     const applyChanges = (taskId: string, isAutoApplied: boolean = false) => {
@@ -2592,8 +3609,8 @@ export const useAITaskStore = defineStore('aiTask', () => {
             task.status = 'pending';
             task.error = undefined;
             task.generatedContent = '';
-            task.finalPrompt = undefined; // 清除旧的prompt，强制重新构建
-            nextTick(_processQueue);
+            task.finalPrompt = undefined; // Force prompt rebuild
+            nextTick(processQueue);
         }
     };
 
@@ -2602,11 +3619,24 @@ export const useAITaskStore = defineStore('aiTask', () => {
     };
 
     const clearAllTasks = () => {
+        // Here we might need a way to signal cancellation to the execution service in a real scenario
         tasks.value = [];
     };
 
     return {
-        tasks, activeTasksCount, startTask, startBatchTaskForVolume, applyChanges, retryTask, clearCompletedTasks, clearAllTasks
+        tasks,
+        activeTasksCount,
+        startTask,
+        startBatchTaskForVolume,
+        applyChanges,
+        retryTask,
+        clearCompletedTasks,
+        clearAllTasks,
+        // Methods for execution service
+        updateTaskStatus,
+        updateTaskError,
+        appendGeneratedContent,
+        completeTask
     };
 });
 
@@ -2614,106 +3644,72 @@ export const useAITaskStore = defineStore('aiTask', () => {
 // 文件: ..\src\novel\editor\stores\ai\chatStore.ts
 //
 
+// src/novel/editor/stores/ai/chatStore.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { Conversation, ChatMessage, AIModel } from '@novel/editor/types/chatTypes.ts';
-import { mockChatConversations } from '@novel/editor/components/ai/chat/chatData.ts';
+import type { Conversation, AIModel } from '@novel/editor/types/chatTypes';
+import * as chatService from '@/novel/editor/services/chatService';
 
 export const useChatStore = defineStore('editorChat', () => {
     // --- State ---
-
-    // 所有对话的列表
     const conversations = ref<Conversation[]>([]);
-    // 当前激活的对话ID
     const activeConversationId = ref<string | null>(null);
-    // 当前可用的AI模型
     const currentModel = ref<AIModel>({ id: 'gpt-4o', name: 'GPT-4o', status: 'online' });
-    // 输入框中的内容
     const messageInput = ref<string>('');
-    // 标志位，表示AI是否正在回复中
     const isReceiving = ref<boolean>(false);
 
     // --- Getters (Computed) ---
-
-    // 根据 activeConversationId 获取当前完整的对话对象
     const activeConversation = computed(() => {
         if (!activeConversationId.value) return null;
         return conversations.value.find(c => c.id === activeConversationId.value) ?? null;
     });
 
-    // 当前对话的 token 统计 (简化版)
     const currentTokenCount = computed(() => {
         if (!activeConversation.value) return 0;
         return activeConversation.value.messages.reduce((acc, msg) => acc + msg.content.length, 0);
     });
 
     // --- Actions ---
-
-    /**
-     * 初始化或从后端获取聊天数据
-     */
     const fetchConversations = () => {
-        // 从模块专属的数据文件加载模拟数据
-        conversations.value = mockChatConversations;
-
-        // 默认激活第一个对话
+        conversations.value = chatService.getConversations();
         if (conversations.value.length > 0 && !activeConversationId.value) {
             activeConversationId.value = conversations.value[0].id;
         }
     };
 
-    /**
-     * 新建一个对话
-     */
     const createNewConversation = () => {
-        const newConv: Conversation = {
-            id: `conv-${Date.now()}`,
-            title: '新建对话',
-            summary: '暂无摘要',
-            createdAt: '刚刚',
-            messages: [],
-        };
+        const newConv = chatService.createConversation();
         conversations.value.unshift(newConv);
         activeConversationId.value = newConv.id;
     };
 
-    /**
-     * 切换当前对话
-     * @param conversationId - 要切换到的对话ID
-     */
     const selectConversation = (conversationId: string) => {
         activeConversationId.value = conversationId;
     };
 
-    /**
-     * 发送消息
-     */
     const sendMessage = async () => {
-        if (!messageInput.value.trim() || !activeConversation.value || isReceiving.value) {
+        const userInput = messageInput.value.trim();
+        if (!userInput || !activeConversation.value || isReceiving.value) {
             return;
         }
 
-        const userMessage: ChatMessage = {
-            id: `msg-${Date.now()}`,
-            role: 'user',
-            content: messageInput.value,
-            timestamp: new Date().toISOString(),
-        };
-        activeConversation.value.messages.push(userMessage);
-        messageInput.value = ''; // 清空输入框
-
-        // 模拟AI回复
+        const currentActiveConv = activeConversation.value;
+        messageInput.value = ''; // Clear input immediately
         isReceiving.value = true;
-        await new Promise(res => setTimeout(res, 1500)); // 模拟网络延迟
 
-        const aiResponse: ChatMessage = {
-            id: `msg-${Date.now() + 1}`,
-            role: 'ai',
-            content: `这是对您关于 "${userMessage.content.substring(0, 10)}..." 的回复。AI正在思考中...`,
-            timestamp: new Date().toISOString(),
-        };
-        activeConversation.value.messages.push(aiResponse);
-        isReceiving.value = false;
+        try {
+            const { userMessage, aiResponse } = await chatService.sendMessage(userInput);
+            // Ensure the conversation is still active before pushing messages
+            if (activeConversation.value === currentActiveConv) {
+                currentActiveConv.messages.push(userMessage);
+                currentActiveConv.messages.push(aiResponse);
+            }
+        } catch (error) {
+            console.error("Failed to send message:", error);
+            // Optionally, push an error message to the chat
+        } finally {
+            isReceiving.value = false;
+        }
     };
 
     return {
@@ -3075,89 +4071,46 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
 // 文件: ..\src\novel\editor\stores\directoryStore.ts
 //
 
-// 文件: src/novel/editor/stores/directoryStore.ts
+// src/novel/editor/stores/directoryStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { Volume, Chapter } from '@/novel/editor/types';
 import { useEditorStore } from './editorStore';
 import { useUIStore } from './uiStore';
 import { useDerivedContentStore } from './derivedContentStore';
-
-type DirectoryNode = Volume | Chapter;
+import * as directoryService from '@/novel/editor/services/directoryService';
 
 export const useDirectoryStore = defineStore('directory', () => {
     const directoryData = ref<Volume[]>([]);
-
-    const _findNodeRecursive = (nodes: DirectoryNode[], nodeId: string): { node: DirectoryNode; parent: Volume | null; siblings: DirectoryNode[] } | null => {
-        for (const node of nodes) {
-            if (node.id === nodeId) {
-                return { node, parent: null, siblings: nodes };
-            }
-            if (node.type === 'volume' && node.chapters) {
-                const chapterResult = node.chapters.find(c => c.id === nodeId);
-                if (chapterResult) {
-                    return { node: chapterResult, parent: node, siblings: node.chapters };
-                }
-            }
-        }
-        return null;
-    };
 
     const fetchDirectoryData = (data: Volume[]) => {
         directoryData.value = data;
     };
 
     const findNodeById = (nodeId: string) => {
-        return _findNodeRecursive(directoryData.value, nodeId);
+        return directoryService.findNodeById(directoryData.value, nodeId);
     };
 
     const updateChapterContent = (nodeId: string, content: string) => {
         const result = findNodeById(nodeId);
         if (result && (result.node.type === 'chapter' || result.node.type === 'volume')) {
-            const item = result.node;
-            item.content = content;
-
-            if (item.type === 'chapter') {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = content;
-                item.wordCount = tempDiv.textContent?.trim().length || 0;
-            }
-
-            const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
-            const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
-            if (newTitle && newTitle !== item.title) {
-                item.title = newTitle;
-            }
+            directoryService.updateNodeContent(result.node, content);
         }
     };
 
     const appendChapterContent = (nodeId: string, contentToAppend: string, isAutoApplied: boolean) => {
         const result = findNodeById(nodeId);
         if (result && result.node.type === 'chapter') {
-            const chapter = result.node;
-            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
-            let htmlToAppend = paragraphs;
-            if (isAutoApplied) {
-                htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
-            }
-            chapter.content += htmlToAppend;
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = chapter.content;
-            chapter.wordCount = tempDiv.textContent?.trim().length || 0;
+            directoryService.appendChapterContent(result.node, contentToAppend, isAutoApplied);
         }
     };
 
     const addNewVolume = () => {
         const uiStore = useUIStore();
         const editorStore = useEditorStore();
-        const newVolume: Volume = {
-            id: `vol-${Date.now()}`,
-            type: 'volume',
-            title: '新建卷',
-            content: `<h1>新建卷</h1>`,
-            chapters: [],
-        };
+        const newVolume = directoryService.createVolume();
         directoryData.value.push(newVolume);
+
         editorStore.setEditingNodeId(newVolume.id);
         uiStore.ensureNodeIsExpanded(newVolume.id);
     };
@@ -3167,15 +4120,9 @@ export const useDirectoryStore = defineStore('directory', () => {
         if (volume) {
             const editorStore = useEditorStore();
             const uiStore = useUIStore();
-            const newChapter: Chapter = {
-                id: `ch-${Date.now()}`,
-                type: 'chapter',
-                title: '新建章节',
-                wordCount: 0,
-                content: '<h1>新建章节</h1>',
-                status: 'editing'
-            };
+            const newChapter = directoryService.createChapter();
             volume.chapters.push(newChapter);
+
             uiStore.ensureNodeIsExpanded(volume.id);
             editorStore.openTab(newChapter.id);
             editorStore.setEditingNodeId(newChapter.id);
@@ -3183,20 +4130,9 @@ export const useDirectoryStore = defineStore('directory', () => {
     };
 
     const renameNode = (nodeId: string, newTitle: string) => {
-        if (!newTitle.trim()) {
-            return;
-        }
         const result = findNodeById(nodeId);
         if (result?.node) {
-            const trimmedTitle = newTitle.trim();
-            result.node.title = trimmedTitle;
-            if (result.node.content) {
-                if (result.node.content.includes('<h1>')) {
-                    result.node.content = result.node.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
-                } else {
-                    result.node.content = `<h1>${trimmedTitle}</h1>` + result.node.content;
-                }
-            }
+            directoryService.renameNode(result.node, newTitle);
         }
     };
 
@@ -3204,6 +4140,7 @@ export const useDirectoryStore = defineStore('directory', () => {
         const result = findNodeById(nodeId);
         if (!result) return;
 
+        // Coordination logic: Must happen before data is deleted
         const editorStore = useEditorStore();
         const derivedContentStore = useDerivedContentStore();
 
@@ -3216,13 +4153,14 @@ export const useDirectoryStore = defineStore('directory', () => {
             derivedContentStore.deleteDerivedDataForSource(result.node.id);
         }
 
-        if (result.parent && result.node.type === 'chapter') {
-            result.parent.chapters = result.parent.chapters.filter(c => c.id !== nodeId);
-        } else if (!result.parent && result.node.type === 'volume') {
-            directoryData.value = directoryData.value.filter(v => v.id !== nodeId);
+        // Data manipulation logic
+        const wasDeleted = directoryService.deleteNode(directoryData.value, nodeId);
+
+        // UI update logic
+        if (wasDeleted) {
+            editorStore.closeTab(nodeId);
+            if (editorStore.editingNodeId === nodeId) editorStore.setEditingNodeId(null);
         }
-        editorStore.closeTab(nodeId);
-        if (editorStore.editingNodeId === nodeId) editorStore.setEditingNodeId(null);
     };
 
     return {
@@ -3239,16 +4177,468 @@ export const useDirectoryStore = defineStore('directory', () => {
 });
 
 // =
+// 文件: ..\src\novel\editor\stores\editor-state\itemStore.ts
+//
+
+import { defineStore } from 'pinia';
+import { useDirectoryStore } from '../directoryStore';
+import { useRelatedContentStore } from '../relatedContentStore';
+import { useNotesStore } from '../notesStore';
+import { useDerivedContentStore } from '../derivedContentStore';
+import { usePromptTemplateStore } from '../promptTemplateStore';
+import { useReferenceStore } from '../referenceStore';
+import type { EditorItem, SystemViewInfo, TreeNode, PlotAnalysisItem } from '@/novel/editor/types';
+import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
+
+export const SYSTEM_VIEWS: Record<string, SystemViewInfo> = {
+    'system:search': { id: 'system:search', type: 'system', component: 'SearchView', title: '搜索', icon: 'fa-solid fa-magnifying-glass' },
+    'system:ai_chat': { id: 'system:ai_chat', type: 'system', component: 'AIChatView', title: 'AI 聊天', icon: 'fa-solid fa-wand-magic-sparkles' },
+    'system:ai_tasks': { id: 'system:ai_tasks', type: 'system', component: 'AITaskPanel', title: 'AI 任务', icon: 'fa-solid fa-list-check' },
+    'system:settings_editor': { id: 'system:settings_editor', type: 'system', component: 'EditorSettings', title: '编辑器设置', icon: 'fa-solid fa-pencil' },
+    'system:settings_context': { id: 'system:settings_context', type: 'system', component: 'ContextSettings', title: '上下文管理', icon: 'fa-solid fa-book-open-reader' },
+    'system:settings_tasks': { id: 'system:settings_tasks', type: 'system', component: 'TaskSettings', title: '任务管理', icon: 'fa-solid fa-list-check' },
+    'system:settings_ai_config': { id: 'system:settings_ai_config', type: 'system', component: 'AIConfigSettings', title: 'AI 任务配置', icon: 'fa-solid fa-microchip' },
+    'system:settings_novel': { id: 'system:settings_novel', type: 'system', component: 'NovelSettings', title: '小说设置', icon: 'fa-solid fa-swatchbook' },
+    'system:settings_theme': { id: 'system:settings_theme', type: 'system', component: 'ThemeSettings', title: '主题设置', icon: 'fa-solid fa-palette' },
+    'system:history': { id: 'system:history', type: 'system', component: 'HistoryPanel', title: '版本历史', icon: 'fa-solid fa-code-compare' },
+};
+
+export const useItemStore = defineStore('editor-item', () => {
+    const directoryStore = useDirectoryStore();
+    const relatedContentStore = useRelatedContentStore();
+    const notesStore = useNotesStore();
+    const derivedContentStore = useDerivedContentStore();
+    const promptTemplateStore = usePromptTemplateStore();
+    const referenceStore = useReferenceStore();
+
+    function findItemById(id: string): { node: EditorItem | null; source: string | null } {
+        // 1. Check for System Views
+        if (id.startsWith('system:')) {
+            const parts = id.split(':');
+            const baseId = parts.length > 2 && (parts[1] === 'history') ? parts.slice(0, 2).join(':') : id;
+            const systemView = SYSTEM_VIEWS[baseId];
+            if (systemView) {
+                if (parts.length > 2 && (parts[1] === 'history')) {
+                    const targetId = parts[2];
+                    const { node: targetNode } = findItemById(targetId);
+                    return {
+                        node: targetNode ? { ...systemView, id, title: `《${targetNode.title}》 ${systemView.title}` } : null,
+                        source: 'system'
+                    };
+                }
+                return { node: systemView, source: 'system' };
+            }
+        }
+
+        // 2. Check for AI Derived Items
+        const derivedItem = derivedContentStore.findItemById(id);
+        if (derivedItem) {
+            return { node: derivedItem as PlotAnalysisItem, source: 'derived' };
+        }
+
+        // 3. Check for Prompt Templates
+        const promptItem = promptTemplateStore.findPromptById(id);
+        if (promptItem) {
+            return { node: promptItem, source: 'prompt' };
+        }
+
+        // 4. Check Directory
+        let dirResult = directoryStore.findNodeById(id);
+        if (dirResult?.node) return { node: dirResult.node, source: 'directory' };
+
+        // 5. Check Related Content (Settings & Custom Items)
+        const relatedResult = relatedContentStore.findNodeById(id);
+        if(relatedResult?.node) return { node: relatedResult.node, source: 'related' };
+
+        // 6. Check Notes
+        const note = notesStore.findNoteById(id);
+        if (note) return { node: note, source: 'notes' };
+
+        // 7. Check Reference Books (New)
+        const refResult = referenceStore.findNodeById(id);
+        if (refResult?.node) return { node: refResult.node, source: 'reference' };
+
+        return { node: null, source: null };
+    }
+
+    function updateItemContentById(id: string, content: string) {
+        const { source } = findItemById(id);
+        switch (source) {
+            case 'directory': directoryStore.updateChapterContent(id, content); break;
+            case 'related': relatedContentStore.updateNodeContent(id, content); break;
+            case 'notes': notesStore.updateNoteContent(id, content); break;
+            case 'derived': derivedContentStore.updateNodeContent(id, content); break;
+            case 'prompt': promptTemplateStore.updatePromptContent(id, content); break;
+        }
+    }
+
+    function appendContentToItem(itemId: string, content: string, auto: boolean) {
+        const { source } = findItemById(itemId);
+        switch (source) {
+            case 'directory': directoryStore.appendChapterContent(itemId, content, auto); break;
+            case 'related': relatedContentStore.appendNodeContent(itemId, content, auto); break;
+            case 'notes': notesStore.appendNoteContent(itemId, content, auto); break;
+            case 'derived': derivedContentStore.appendNodeContent(itemId, content, auto); break;
+        }
+    }
+
+    return { findItemById, updateItemContentById, appendContentToItem, getIconByNodeType };
+});
+
+// =
+// 文件: ..\src\novel\editor\stores\editor-state\metadataStore.ts
+//
+
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import { getNovelProject } from '@/novel/services/novelProjectService';
+import type { NovelMetadata } from '@/novel/editor/types/project';
+import { useDirectoryStore } from '../directoryStore';
+import { useRelatedContentStore } from '../relatedContentStore';
+import { useNotesStore } from '../notesStore';
+import { useReferenceStore } from '../referenceStore';
+import { useUIStore } from '../uiStore';
+import { usePaneStore } from './paneStore';
+import { useTabStore } from './tabStore';
+import { useDerivedContentStore } from '../derivedContentStore';
+import { useNovelSettingsStore } from '../novelSettingsStore';
+
+export const useMetadataStore = defineStore('editor-metadata', () => {
+    const novelMetadata = ref<NovelMetadata | null>(null);
+    const currentNovelId = ref<string | null>(null);
+
+    function fetchNovelData(novelId: string) {
+        console.log(`Fetching data for novel: ${novelId}`);
+        const projectData = getNovelProject(novelId);
+
+        if (!projectData) {
+            console.error(`Novel project with ID "${novelId}" not found.`);
+            return;
+        }
+
+        currentNovelId.value = novelId;
+
+        const directoryStore = useDirectoryStore();
+        const relatedContentStore = useRelatedContentStore();
+        const notesStore = useNotesStore();
+        const referenceStore = useReferenceStore();
+        const derivedContentStore = useDerivedContentStore();
+        const uiStore = useUIStore();
+        const paneStore = usePaneStore();
+        const tabStore = useTabStore();
+        const novelSettingsStore = useNovelSettingsStore();
+
+        directoryStore.fetchDirectoryData(projectData.directoryData);
+        relatedContentStore.fetchRelatedData(
+            projectData.settingsData,
+            projectData.plotCustomData,
+            projectData.analysisCustomData,
+            projectData.othersCustomData
+        );
+        derivedContentStore.fetchDerivedData(
+            projectData.derivedPlotData || [],
+            projectData.derivedAnalysisData || []
+        );
+        notesStore.fetchNotes(projectData.noteData);
+        novelMetadata.value = JSON.parse(JSON.stringify(projectData.metadata));
+        referenceStore.loadReferences(projectData.metadata.referenceNovelIds);
+
+        // Notify NovelSettingsStore to update its state
+        novelSettingsStore.loadSettingsData();
+
+        paneStore.initializePanes();
+        const firstChapterId = projectData.directoryData[0]?.chapters[0]?.id;
+        if (firstChapterId) {
+            tabStore.openTab(firstChapterId);
+        }
+
+        uiStore.uiState.expandedNodeIds.clear();
+        uiStore.uiState.expandedRelatedNodeIds.clear();
+        uiStore.uiState.expandedReferenceNodeIds.clear();
+
+        if (projectData.directoryData.length > 0) {
+            uiStore.uiState.expandedNodeIds.add(projectData.directoryData[0].id);
+        }
+        uiStore.uiState.expandedRelatedNodeIds.add('setting');
+        uiStore.uiState.expandedRelatedNodeIds.add('characters');
+        uiStore.uiState.expandedRelatedNodeIds.add('plot');
+        uiStore.uiState.expandedRelatedNodeIds.add('analysis');
+        uiStore.uiState.expandedRelatedNodeIds.add('others');
+        if (projectData.metadata.referenceNovelIds.length > 0) {
+            const firstRefBookId = `ref-book-${projectData.metadata.referenceNovelIds[0]}`;
+            uiStore.uiState.expandedReferenceNodeIds.add(firstRefBookId);
+        }
+    }
+
+    function addReferenceNovel(novelIdToAdd: string) {
+        if (!novelMetadata.value || novelMetadata.value.referenceNovelIds.includes(novelIdToAdd)) {
+            return;
+        }
+        novelMetadata.value.referenceNovelIds.push(novelIdToAdd);
+        const referenceStore = useReferenceStore();
+        referenceStore.loadReferences(novelMetadata.value.referenceNovelIds);
+        // No need to call settings store here, as the caller (settingsStore) will do it.
+    }
+
+    function removeReferenceNovel(novelIdToRemove: string) {
+        if (!novelMetadata.value) {
+            return;
+        }
+        const index = novelMetadata.value.referenceNovelIds.indexOf(novelIdToRemove);
+        if (index > -1) {
+            novelMetadata.value.referenceNovelIds.splice(index, 1);
+            const referenceStore = useReferenceStore();
+            referenceStore.loadReferences(novelMetadata.value.referenceNovelIds);
+            // No need to call settings store here, as the caller (settingsStore) will do it.
+        }
+    }
+
+    function removeTag(tagIndex: number) {
+        if (novelMetadata.value) {
+            novelMetadata.value.tags.splice(tagIndex, 1);
+        }
+    }
+
+    function addTag() {
+        if (!novelMetadata.value) return;
+        const newTagText = prompt("输入新标签:");
+        if (newTagText?.trim()) {
+            novelMetadata.value.tags.push({ text: newTagText, class: 'bg-gray-100 text-gray-800' });
+        }
+    }
+
+    function saveMetadata() {
+        if (!novelMetadata.value) return;
+        console.log('Saving metadata:', JSON.parse(JSON.stringify(novelMetadata.value)));
+        alert('小说设置已保存！');
+    }
+
+    return {
+        novelMetadata,
+        currentNovelId,
+        fetchNovelData,
+        addReferenceNovel,
+        removeReferenceNovel,
+        removeTag,
+        addTag,
+        saveMetadata,
+    };
+});
+
+// =
+// 文件: ..\src\novel\editor\stores\editor-state\paneStore.ts
+//
+
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+
+export interface EditorPane {
+    id: string;
+    openTabIds: string[];
+    activeTabId: string | null;
+}
+
+export const usePaneStore = defineStore('editor-pane', () => {
+    const panes = ref<EditorPane[]>([]);
+    const activePaneId = ref<string | null>(null);
+
+    function initializePanes() {
+        if (panes.value.length > 0) return;
+        const initialPaneId = `pane-${Date.now()}`;
+        panes.value.push({ id: initialPaneId, openTabIds: [], activeTabId: null });
+        activePaneId.value = initialPaneId;
+    }
+
+    function setActivePane(paneId: string) {
+        if (panes.value.some(p => p.id === paneId)) {
+            activePaneId.value = paneId;
+        }
+    }
+
+    function splitPane(sourcePaneId: string): string {
+        const sourcePaneIndex = panes.value.findIndex(p => p.id === sourcePaneId);
+        if (sourcePaneIndex === -1) return '';
+
+        const newPaneId = `pane-${Date.now()}`;
+        const newPane: EditorPane = { id: newPaneId, openTabIds: [], activeTabId: null };
+        panes.value.splice(sourcePaneIndex + 1, 0, newPane);
+
+        return newPaneId;
+    }
+
+    function closePane(paneId: string) {
+        if (panes.value.length <= 1) return;
+        const paneIndex = panes.value.findIndex(p => p.id === paneId);
+        if (paneIndex === -1) return;
+
+        panes.value.splice(paneIndex, 1);
+        if (activePaneId.value === paneId) {
+            const newActiveIndex = Math.max(0, paneIndex - 1);
+            activePaneId.value = panes.value[newActiveIndex]?.id || null;
+        }
+    }
+
+    return {
+        panes,
+        activePaneId,
+        initializePanes,
+        setActivePane,
+        splitPane,
+        closePane,
+    };
+});
+
+// =
+// 文件: ..\src\novel\editor\stores\editor-state\systemViewStore.ts
+//
+
+import { defineStore } from 'pinia';
+import { usePaneStore } from './paneStore';
+import { useTabStore } from './tabStore';
+import { useUIStore } from '../uiStore';
+import { useEditorStore } from '../editorStore';
+
+export const useSystemViewStore = defineStore('editor-system-view', () => {
+    const paneStore = usePaneStore();
+    const tabStore = useTabStore();
+    const uiStore = useUIStore();
+
+    function toggleAIPanel(sourcePaneId: string) {
+        const aiTaskPane = paneStore.panes.find(p => p.openTabIds.includes('system:ai_tasks'));
+        if (aiTaskPane) {
+            paneStore.closePane(aiTaskPane.id);
+        } else {
+            const newPaneId = paneStore.splitPane(sourcePaneId);
+            if(newPaneId) tabStore.openTab('system:ai_tasks', newPaneId);
+            paneStore.setActivePane(sourcePaneId);
+        }
+    }
+
+    function ensureAIPanelIsOpen(sourcePaneId: string) {
+        if (!paneStore.panes.some(p => p.openTabIds.includes('system:ai_tasks'))) {
+            const newPaneId = paneStore.splitPane(sourcePaneId);
+            if(newPaneId) tabStore.openTab('system:ai_tasks', newPaneId);
+            paneStore.setActivePane(sourcePaneId);
+        }
+    }
+
+    function toggleHistoryPanel(sourcePaneId: string) {
+        const sourcePane = paneStore.panes.find(p => p.id === sourcePaneId);
+        if (!sourcePane?.activeTabId || sourcePane.activeTabId.startsWith('system:')) return;
+
+        const historyTabId = `system:history:${sourcePane.activeTabId}`;
+        const historyPane = paneStore.panes.find(p => p.openTabIds.includes(historyTabId));
+
+        if (historyPane) {
+            paneStore.closePane(historyPane.id);
+        } else {
+            const newPaneId = paneStore.splitPane(sourcePaneId);
+            if(newPaneId) tabStore.openTab(historyTabId, newPaneId);
+            paneStore.setActivePane(sourcePaneId);
+        }
+    }
+
+    function openReaderView() {
+        const editorStore = useEditorStore();
+        const activeItem = editorStore.activeTab?.item;
+        if (activeItem && 'content' in activeItem) {
+            uiStore.showReaderMode(activeItem);
+        } else {
+            console.warn('Cannot open reader mode: no active document with content.');
+        }
+    }
+
+    return {
+        toggleAIPanel,
+        ensureAIPanelIsOpen,
+        toggleHistoryPanel,
+        openReaderView,
+    };
+});
+
+// =
+// 文件: ..\src\novel\editor\stores\editor-state\tabStore.ts
+//
+
+import { defineStore } from 'pinia';
+import { usePaneStore } from './paneStore';
+import { useUIStore } from '../uiStore';
+import { useItemStore } from './itemStore';
+
+export const useTabStore = defineStore('editor-tab', () => {
+    const paneStore = usePaneStore();
+    const uiStore = useUIStore();
+    const itemStore = useItemStore();
+
+    function openTab(itemId: string, targetPaneId?: string) {
+        const paneId = targetPaneId || paneStore.activePaneId;
+        if (!paneId) return;
+
+        let pane = paneStore.panes.find(p => p.id === paneId);
+        if (!pane) return;
+
+        const { node } = itemStore.findItemById(itemId);
+        if (!node || (node.type !== 'system' && !('content' in node))) {
+            if (node?.type === 'volume' || node?.type === 'group') {
+                uiStore.toggleNodeExpansion(itemId);
+            } else if (node) {
+                uiStore.toggleRelatedNodeExpansion(itemId);
+            }
+            return;
+        }
+
+        const existingTabPane = paneStore.panes.find(p => p.openTabIds.includes(itemId));
+        if (existingTabPane) {
+            existingTabPane.activeTabId = itemId;
+            paneStore.setActivePane(existingTabPane.id);
+            return;
+        }
+
+        if (!pane.openTabIds.includes(itemId)) {
+            pane.openTabIds.push(itemId);
+        }
+        pane.activeTabId = itemId;
+        paneStore.setActivePane(paneId);
+    }
+
+    function closeTab(itemId: string, paneId?: string) {
+        const targetPaneId = paneId || paneStore.panes.find(p => p.openTabIds.includes(itemId))?.id;
+        if (!targetPaneId) return;
+
+        const pane = paneStore.panes.find(p => p.id === targetPaneId);
+        if (!pane) return;
+
+        const index = pane.openTabIds.indexOf(itemId);
+        if (index === -1) return;
+
+        pane.openTabIds.splice(index, 1);
+        if (pane.activeTabId === itemId) {
+            const newActiveIndex = Math.max(0, index - 1);
+            pane.activeTabId = pane.openTabIds[newActiveIndex] || null;
+        }
+
+        if (pane.openTabIds.length === 0 && paneStore.panes.length > 1) {
+            paneStore.closePane(pane.id);
+        }
+    }
+
+    return {
+        openTab,
+        closeTab,
+    };
+});
+
+// =
 // 文件: ..\src\novel\editor\stores\editorStore.ts
 //
 
 import { defineStore } from 'pinia';
 import { computed } from 'vue';
-import { usePaneStore, type EditorPane } from './modules/paneStore';
-import { useTabStore } from './modules/tabStore';
-import { useItemStore } from './modules/itemStore';
-import { useSystemViewStore } from './modules/systemViewStore';
-import { useMetadataStore } from './modules/metadataStore';
+import { usePaneStore, type EditorPane } from '@novel/editor/stores/editor-state/paneStore';
+import { useTabStore } from '@novel/editor/stores/editor-state/tabStore';
+import { useItemStore } from '@novel/editor/stores/editor-state/itemStore';
+import { useSystemViewStore } from '@novel/editor/stores/editor-state/systemViewStore';
+import { useMetadataStore } from '@novel/editor/stores/editor-state/metadataStore';
 import { useUIStore } from './uiStore';
 import type { TabInfo } from '@/novel/editor/types';
 
@@ -3336,469 +4726,18 @@ export const useEditorStore = defineStore('editor-facade', () => {
 });
 
 // =
-// 文件: ..\src\novel\editor\stores\modules\itemStore.ts
-//
-
-// 文件: src/novel/editor/stores/modules/itemStore.ts
-
-import { defineStore } from 'pinia';
-import { useDirectoryStore } from '../directoryStore';
-import { useRelatedContentStore } from '../relatedContentStore';
-import { useNotesStore } from '../notesStore';
-import { useDerivedContentStore } from '../derivedContentStore';
-import { usePromptTemplateStore } from '../promptTemplateStore';
-import { useReferenceStore } from '../referenceStore'; // 引入新的 reference store
-import type { EditorItem, SystemViewInfo, TreeNode, PlotAnalysisItem } from '@/novel/editor/types';
-import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
-
-export const SYSTEM_VIEWS: Record<string, SystemViewInfo> = {
-    'system:search': { id: 'system:search', type: 'system', component: 'SearchView', title: '搜索', icon: 'fa-solid fa-magnifying-glass' },
-    'system:ai_chat': { id: 'system:ai_chat', type: 'system', component: 'AIChatView', title: 'AI 聊天', icon: 'fa-solid fa-wand-magic-sparkles' },
-    'system:ai_tasks': { id: 'system:ai_tasks', type: 'system', component: 'AITaskPanel', title: 'AI 任务', icon: 'fa-solid fa-list-check' },
-    'system:settings_editor': { id: 'system:settings_editor', type: 'system', component: 'EditorSettings', title: '编辑器设置', icon: 'fa-solid fa-pencil' },
-    'system:settings_context': { id: 'system:settings_context', type: 'system', component: 'ContextSettings', title: '上下文管理', icon: 'fa-solid fa-book-open-reader' },
-    'system:settings_tasks': { id: 'system:settings_tasks', type: 'system', component: 'TaskSettings', title: '任务管理', icon: 'fa-solid fa-list-check' },
-    'system:settings_ai_config': { id: 'system:settings_ai_config', type: 'system', component: 'AIConfigSettings', title: 'AI 任务配置', icon: 'fa-solid fa-microchip' },
-    'system:settings_novel': { id: 'system:settings_novel', type: 'system', component: 'NovelSettings', title: '小说设置', icon: 'fa-solid fa-swatchbook' },
-    'system:settings_theme': { id: 'system:settings_theme', type: 'system', component: 'ThemeSettings', title: '主题设置', icon: 'fa-solid fa-palette' },
-    'system:history': { id: 'system:history', type: 'system', component: 'HistoryPanel', title: '版本历史', icon: 'fa-solid fa-code-compare' },
-};
-
-export const useItemStore = defineStore('editor-item', () => {
-    const directoryStore = useDirectoryStore();
-    const relatedContentStore = useRelatedContentStore();
-    const notesStore = useNotesStore();
-    const derivedContentStore = useDerivedContentStore();
-    const promptTemplateStore = usePromptTemplateStore();
-    const referenceStore = useReferenceStore(); // 实例化新的 store
-
-    function findItemById(id: string): { node: EditorItem | null; source: string | null } {
-        // 1. Check for System Views
-        if (id.startsWith('system:')) {
-            const parts = id.split(':');
-            const baseId = parts.length > 2 && (parts[1] === 'history') ? parts.slice(0, 2).join(':') : id;
-            const systemView = SYSTEM_VIEWS[baseId];
-            if (systemView) {
-                if (parts.length > 2 && (parts[1] === 'history')) {
-                    const targetId = parts[2];
-                    const { node: targetNode } = findItemById(targetId);
-                    return {
-                        node: targetNode ? { ...systemView, id, title: `《${targetNode.title}》 ${systemView.title}` } : null,
-                        source: 'system'
-                    };
-                }
-                return { node: systemView, source: 'system' };
-            }
-        }
-
-        // 2. Check for AI Derived Items
-        const derivedItem = derivedContentStore.findItemById(id);
-        if (derivedItem) {
-            return { node: derivedItem as PlotAnalysisItem, source: 'derived' };
-        }
-
-        // 3. Check for Prompt Templates
-        const promptItem = promptTemplateStore.findPromptById(id);
-        if (promptItem) {
-            return { node: promptItem, source: 'prompt' };
-        }
-
-        // 4. Check Directory
-        let dirResult = directoryStore.findNodeById(id);
-        if (dirResult?.node) return { node: dirResult.node, source: 'directory' };
-
-        // 5. Check Related Content (Settings & Custom Items)
-        const relatedResult = relatedContentStore.findNodeById(id);
-        if(relatedResult?.node) return { node: relatedResult.node, source: 'related' };
-
-        // 6. Check Notes
-        const note = notesStore.findNoteById(id);
-        if (note) return { node: note, source: 'notes' };
-
-        // 7. Check Reference Books (New)
-        const refResult = referenceStore.findNodeById(id);
-        if (refResult?.node) return { node: refResult.node, source: 'reference' };
-
-        return { node: null, source: null };
-    }
-
-    function updateItemContentById(id: string, content: string) {
-        const { source } = findItemById(id);
-        switch (source) {
-            case 'directory': directoryStore.updateChapterContent(id, content); break;
-            case 'related': relatedContentStore.updateNodeContent(id, content); break;
-            case 'notes': notesStore.updateNoteContent(id, content); break;
-            case 'derived': derivedContentStore.updateNodeContent(id, content); break;
-            case 'prompt': promptTemplateStore.updatePromptItemContent(id, content); break;
-            // Reference books are read-only, no update case needed for now
-        }
-    }
-
-    function appendContentToItem(itemId: string, content: string, auto: boolean) {
-        const { source } = findItemById(itemId);
-        switch (source) {
-            case 'directory': directoryStore.appendChapterContent(itemId, content, auto); break;
-            case 'related': relatedContentStore.appendNodeContent(itemId, content, auto); break;
-            case 'notes': notesStore.appendNoteContent(itemId, content, auto); break;
-            case 'derived': derivedContentStore.appendNodeContent(itemId, content, auto); break;
-            // Reference books are read-only, no append case needed for now
-        }
-    }
-
-    return { findItemById, updateItemContentById, appendContentToItem, getIconByNodeType };
-});
-
-// =
-// 文件: ..\src\novel\editor\stores\modules\metadataStore.ts
-//
-
-// 文件: ..\src\novel\editor\stores\modules\metadataStore.ts
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
-import { getNovelProject } from '@/novel/services/novelProjectService';
-import type { NovelMetadata } from '@/novel/editor/types/project';
-import { useDirectoryStore } from '../directoryStore';
-import { useRelatedContentStore } from '../relatedContentStore';
-import { useNotesStore } from '../notesStore';
-import { useReferenceStore } from '../referenceStore';
-import { useUIStore } from '../uiStore';
-import { usePaneStore } from './paneStore';
-import { useTabStore } from './tabStore';
-import { useDerivedContentStore } from '../derivedContentStore';
-
-export const useMetadataStore = defineStore('editor-metadata', () => {
-    const novelMetadata = ref<NovelMetadata | null>(null);
-    const currentNovelId = ref<string | null>(null);
-
-    function fetchNovelData(novelId: string) {
-        console.log(`Fetching data for novel: ${novelId}`);
-        const projectData = getNovelProject(novelId);
-
-        if (!projectData) {
-            console.error(`Novel project with ID "${novelId}" not found.`);
-            return;
-        }
-
-        currentNovelId.value = novelId;
-
-        const directoryStore = useDirectoryStore();
-        const relatedContentStore = useRelatedContentStore();
-        const notesStore = useNotesStore();
-        const referenceStore = useReferenceStore();
-        const derivedContentStore = useDerivedContentStore();
-        const uiStore = useUIStore();
-        const paneStore = usePaneStore();
-        const tabStore = useTabStore();
-
-        directoryStore.fetchDirectoryData(projectData.directoryData);
-        relatedContentStore.fetchRelatedData(
-            projectData.settingsData,
-            projectData.plotCustomData,
-            projectData.analysisCustomData,
-            projectData.othersCustomData
-        );
-        derivedContentStore.fetchDerivedData(
-            projectData.derivedPlotData || [],
-            projectData.derivedAnalysisData || []
-        );
-        notesStore.fetchNotes(projectData.noteData);
-        novelMetadata.value = JSON.parse(JSON.stringify(projectData.metadata));
-        referenceStore.fetchData(projectData.metadata.referenceNovelIds);
-
-        paneStore.initializePanes();
-        const firstChapterId = projectData.directoryData[0]?.chapters[0]?.id;
-        if (firstChapterId) {
-            tabStore.openTab(firstChapterId);
-        }
-
-        uiStore.uiState.expandedNodeIds.clear();
-        uiStore.uiState.expandedRelatedNodeIds.clear();
-        uiStore.uiState.expandedReferenceNodeIds.clear();
-
-        if (projectData.directoryData.length > 0) {
-            uiStore.uiState.expandedNodeIds.add(projectData.directoryData[0].id);
-        }
-        uiStore.uiState.expandedRelatedNodeIds.add('setting');
-        uiStore.uiState.expandedRelatedNodeIds.add('characters');
-        uiStore.uiState.expandedRelatedNodeIds.add('plot');
-        uiStore.uiState.expandedRelatedNodeIds.add('analysis');
-        uiStore.uiState.expandedRelatedNodeIds.add('others');
-        if (projectData.metadata.referenceNovelIds.length > 0) {
-            const firstRefBookId = `ref-book-${projectData.metadata.referenceNovelIds[0]}`;
-            uiStore.uiState.expandedReferenceNodeIds.add(firstRefBookId);
-        }
-    }
-
-    function addReferenceNovel(novelIdToAdd: string) {
-        if (!novelMetadata.value || novelMetadata.value.referenceNovelIds.includes(novelIdToAdd)) {
-            return;
-        }
-        novelMetadata.value.referenceNovelIds.push(novelIdToAdd);
-        const referenceStore = useReferenceStore();
-        referenceStore.fetchData(novelMetadata.value.referenceNovelIds);
-    }
-
-    function removeReferenceNovel(novelIdToRemove: string) {
-        if (!novelMetadata.value) {
-            return;
-        }
-        const index = novelMetadata.value.referenceNovelIds.indexOf(novelIdToRemove);
-        if (index > -1) {
-            novelMetadata.value.referenceNovelIds.splice(index, 1);
-            const referenceStore = useReferenceStore();
-            referenceStore.fetchData(novelMetadata.value.referenceNovelIds);
-        }
-    }
-
-    function removeTag(tagIndex: number) {
-        if (novelMetadata.value) {
-            novelMetadata.value.tags.splice(tagIndex, 1);
-        }
-    }
-
-    function addTag() {
-        if (!novelMetadata.value) return;
-        const newTagText = prompt("输入新标签:");
-        if (newTagText?.trim()) {
-            novelMetadata.value.tags.push({ text: newTagText, class: 'bg-gray-100 text-gray-800' });
-        }
-    }
-
-    function saveMetadata() {
-        if (!novelMetadata.value) return;
-        console.log('Saving metadata:', JSON.parse(JSON.stringify(novelMetadata.value)));
-        alert('小说设置已保存！');
-    }
-
-    return {
-        novelMetadata,
-        currentNovelId,
-        fetchNovelData,
-        addReferenceNovel,
-        removeReferenceNovel,
-        removeTag,
-        addTag,
-        saveMetadata,
-    };
-});
-
-// =
-// 文件: ..\src\novel\editor\stores\modules\paneStore.ts
-//
-
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
-
-export interface EditorPane {
-    id: string;
-    openTabIds: string[];
-    activeTabId: string | null;
-}
-
-export const usePaneStore = defineStore('editor-pane', () => {
-    const panes = ref<EditorPane[]>([]);
-    const activePaneId = ref<string | null>(null);
-
-    function initializePanes() {
-        if (panes.value.length > 0) return;
-        const initialPaneId = `pane-${Date.now()}`;
-        panes.value.push({ id: initialPaneId, openTabIds: [], activeTabId: null });
-        activePaneId.value = initialPaneId;
-    }
-
-    function setActivePane(paneId: string) {
-        if (panes.value.some(p => p.id === paneId)) {
-            activePaneId.value = paneId;
-        }
-    }
-
-    function splitPane(sourcePaneId: string): string {
-        const sourcePaneIndex = panes.value.findIndex(p => p.id === sourcePaneId);
-        if (sourcePaneIndex === -1) return '';
-
-        const newPaneId = `pane-${Date.now()}`;
-        const newPane: EditorPane = { id: newPaneId, openTabIds: [], activeTabId: null };
-        panes.value.splice(sourcePaneIndex + 1, 0, newPane);
-
-        return newPaneId;
-    }
-
-    function closePane(paneId: string) {
-        if (panes.value.length <= 1) return;
-        const paneIndex = panes.value.findIndex(p => p.id === paneId);
-        if (paneIndex === -1) return;
-
-        panes.value.splice(paneIndex, 1);
-        if (activePaneId.value === paneId) {
-            const newActiveIndex = Math.max(0, paneIndex - 1);
-            activePaneId.value = panes.value[newActiveIndex]?.id || null;
-        }
-    }
-
-    return {
-        panes,
-        activePaneId,
-        initializePanes,
-        setActivePane,
-        splitPane,
-        closePane,
-    };
-});
-
-// =
-// 文件: ..\src\novel\editor\stores\modules\systemViewStore.ts
-//
-
-import { defineStore } from 'pinia';
-import { usePaneStore } from './paneStore';
-import { useTabStore } from './tabStore';
-import { useUIStore } from '../uiStore';
-import { useEditorStore } from '../editorStore';
-
-export const useSystemViewStore = defineStore('editor-system-view', () => {
-    const paneStore = usePaneStore();
-    const tabStore = useTabStore();
-    const uiStore = useUIStore();
-
-    function toggleAIPanel(sourcePaneId: string) {
-        const aiTaskPane = paneStore.panes.find(p => p.openTabIds.includes('system:ai_tasks'));
-        if (aiTaskPane) {
-            paneStore.closePane(aiTaskPane.id);
-        } else {
-            const newPaneId = paneStore.splitPane(sourcePaneId);
-            if(newPaneId) tabStore.openTab('system:ai_tasks', newPaneId);
-            paneStore.setActivePane(sourcePaneId);
-        }
-    }
-
-    function ensureAIPanelIsOpen(sourcePaneId: string) {
-        if (!paneStore.panes.some(p => p.openTabIds.includes('system:ai_tasks'))) {
-            const newPaneId = paneStore.splitPane(sourcePaneId);
-            if(newPaneId) tabStore.openTab('system:ai_tasks', newPaneId);
-            paneStore.setActivePane(sourcePaneId);
-        }
-    }
-
-    function toggleHistoryPanel(sourcePaneId: string) {
-        const sourcePane = paneStore.panes.find(p => p.id === sourcePaneId);
-        if (!sourcePane?.activeTabId || sourcePane.activeTabId.startsWith('system:')) return;
-
-        const historyTabId = `system:history:${sourcePane.activeTabId}`;
-        const historyPane = paneStore.panes.find(p => p.openTabIds.includes(historyTabId));
-
-        if (historyPane) {
-            paneStore.closePane(historyPane.id);
-        } else {
-            const newPaneId = paneStore.splitPane(sourcePaneId);
-            if(newPaneId) tabStore.openTab(historyTabId, newPaneId);
-            paneStore.setActivePane(sourcePaneId);
-        }
-    }
-
-    function openReaderView() {
-        const editorStore = useEditorStore();
-        const activeItem = editorStore.activeTab?.item;
-        if (activeItem && 'content' in activeItem) {
-            uiStore.showReaderMode(activeItem);
-        } else {
-            console.warn('Cannot open reader mode: no active document with content.');
-        }
-    }
-
-    return {
-        toggleAIPanel,
-        ensureAIPanelIsOpen,
-        toggleHistoryPanel,
-        openReaderView,
-    };
-});
-
-// =
-// 文件: ..\src\novel\editor\stores\modules\tabStore.ts
-//
-
-import { defineStore } from 'pinia';
-import { usePaneStore } from './paneStore';
-import { useUIStore } from '../uiStore';
-import { useItemStore } from './itemStore';
-
-export const useTabStore = defineStore('editor-tab', () => {
-    const paneStore = usePaneStore();
-    const uiStore = useUIStore();
-    const itemStore = useItemStore();
-
-    function openTab(itemId: string, targetPaneId?: string) {
-        const paneId = targetPaneId || paneStore.activePaneId;
-        if (!paneId) return;
-
-        let pane = paneStore.panes.find(p => p.id === paneId);
-        if (!pane) return;
-
-        const { node } = itemStore.findItemById(itemId);
-        if (!node || (node.type !== 'system' && !('content' in node))) {
-            if (node?.type === 'volume' || node?.type === 'group') {
-                uiStore.toggleNodeExpansion(itemId);
-            } else if (node) {
-                uiStore.toggleRelatedNodeExpansion(itemId);
-            }
-            return;
-        }
-
-        const existingTabPane = paneStore.panes.find(p => p.openTabIds.includes(itemId));
-        if (existingTabPane) {
-            existingTabPane.activeTabId = itemId;
-            paneStore.setActivePane(existingTabPane.id);
-            return;
-        }
-
-        if (!pane.openTabIds.includes(itemId)) {
-            pane.openTabIds.push(itemId);
-        }
-        pane.activeTabId = itemId;
-        paneStore.setActivePane(paneId);
-    }
-
-    function closeTab(itemId: string, paneId?: string) {
-        const targetPaneId = paneId || paneStore.panes.find(p => p.openTabIds.includes(itemId))?.id;
-        if (!targetPaneId) return;
-
-        const pane = paneStore.panes.find(p => p.id === targetPaneId);
-        if (!pane) return;
-
-        const index = pane.openTabIds.indexOf(itemId);
-        if (index === -1) return;
-
-        pane.openTabIds.splice(index, 1);
-        if (pane.activeTabId === itemId) {
-            const newActiveIndex = Math.max(0, index - 1);
-            pane.activeTabId = pane.openTabIds[newActiveIndex] || null;
-        }
-
-        if (pane.openTabIds.length === 0 && paneStore.panes.length > 1) {
-            paneStore.closePane(pane.id);
-        }
-    }
-
-    return {
-        openTab,
-        closeTab,
-    };
-});
-
-// =
 // 文件: ..\src\novel\editor\stores\notesStore.ts
 //
-
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { NoteItem } from '@/novel/editor/types';
 import { useEditorStore } from './editorStore';
 import { useUIStore } from './uiStore';
+import { noteService } from '@/novel/editor/services/noteService';
 
 export const useNotesStore = defineStore('notes', () => {
     const notes = ref<NoteItem[]>([]);
-
 
     const fetchNotes = (data: NoteItem[]) => {
         notes.value = data;
@@ -3809,41 +4748,30 @@ export const useNotesStore = defineStore('notes', () => {
     };
 
     const updateNoteContent = (noteId: string, content: string) => {
-        const note = findNoteById(noteId);
-        if (note) {
-            note.content = content;
-            const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
-            const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : note.title;
-            if (newTitle) {
-                note.title = newTitle;
-            }
-        }
+        const noteIndex = notes.value.findIndex(n => n.id === noteId);
+        if (noteIndex === -1) return;
+
+        const originalNote = notes.value[noteIndex];
+        const updatedNote = noteService.updateNoteWithNewContent(originalNote, content);
+        notes.value.splice(noteIndex, 1, updatedNote);
     };
 
     const appendNoteContent = (noteId: string, contentToAppend: string, isAutoApplied: boolean) => {
         const note = findNoteById(noteId);
         if (note) {
-            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
-            let htmlToAppend = paragraphs;
-            if (isAutoApplied) {
-                htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
-            }
-            if (!note.content) note.content = "";
-            note.content += htmlToAppend;
+            note.content = noteService.appendContentToNote(note.content, contentToAppend, isAutoApplied);
         }
     };
 
     const renameNote = (noteId: string, newTitle: string) => {
         const uiStore = useUIStore();
-        const note = findNoteById(noteId);
-        if (note && newTitle.trim()) {
+        const noteIndex = notes.value.findIndex(n => n.id === noteId);
+
+        if (noteIndex !== -1 && newTitle.trim()) {
+            const originalNote = notes.value[noteIndex];
             const trimmedTitle = newTitle.trim();
-            note.title = trimmedTitle;
-            if (note.content.includes('<h1>')) {
-                note.content = note.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
-            } else {
-                note.content = `<h1>${trimmedTitle}</h1>` + note.content;
-            }
+            const updatedNote = noteService.renameNote(originalNote, trimmedTitle);
+            notes.value.splice(noteIndex, 1, updatedNote);
         }
         uiStore.setEditingNodeId(null);
     };
@@ -3851,14 +4779,10 @@ export const useNotesStore = defineStore('notes', () => {
     const addNote = (title: string, content: string = '') => {
         const editorStore = useEditorStore();
         const uiStore = useUIStore();
-        const newNote: NoteItem = {
-            id: `note-${Date.now()}`,
-            type: 'note',
-            title: title,
-            content: `<h1>${title}</h1><p>${content}</p>`,
-            timestamp: new Date().toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-        };
+
+        const newNote = noteService.createNote(title, content);
         notes.value.unshift(newNote);
+
         editorStore.openTab(newNote.id);
         uiStore.setEditingNodeId(newNote.id);
     };
@@ -3888,42 +4812,48 @@ export const useNotesStore = defineStore('notes', () => {
 // 文件: ..\src\novel\editor\stores\novelSettingsStore.ts
 //
 
-import { defineStore, storeToRefs } from 'pinia';
-import { computed } from 'vue';
-import { useMetadataStore } from './modules/metadataStore';
-import { getAllNovelProjects, getNovelProject } from '@/novel/services/novelProjectService';
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import { useMetadataStore } from '@novel/editor/stores/editor-state/metadataStore';
+import { novelSettingsService } from '@/novel/editor/services/novelSettingsService';
 import type { NovelProject } from '@/novel/editor/types/project';
+import type { NovelMetadata } from '@/novel/editor/types';
 
 export const useNovelSettingsStore = defineStore('novel-settings', () => {
     const metadataStore = useMetadataStore();
-    const { novelMetadata, currentNovelId } = storeToRefs(metadataStore);
 
-    const referencedNovels = computed((): NovelProject[] => {
-        if (!novelMetadata.value?.referenceNovelIds) return [];
-        return novelMetadata.value.referenceNovelIds
-            .map(id => getNovelProject(id))
-            .filter((p): p is NovelProject => p !== undefined);
-    });
+    // State: No longer computed, but refs updated by an action.
+    const novelMetadata = ref<NovelMetadata | null>(null);
+    const referencedNovels = ref<NovelProject[]>([]);
+    const availableReferenceNovels = ref<NovelProject[]>([]);
 
-    const availableReferenceNovels = computed((): NovelProject[] => {
-        const allNovels = getAllNovelProjects();
-        if (!novelMetadata.value) return allNovels;
-
-        const currentAndReferencedIds = new Set([
-            ...novelMetadata.value.referenceNovelIds,
-            novelMetadata.value.id
-        ]);
-
-        return allNovels.filter(novel => !currentAndReferencedIds.has(novel.metadata.id));
-    });
+    /**
+     * Loads and populates all data needed for the settings view.
+     * This is the central point for refreshing the store's state.
+     */
+    function loadSettingsData() {
+        const meta = metadataStore.novelMetadata;
+        novelMetadata.value = meta;
+        if (meta) {
+            referencedNovels.value = novelSettingsService.getReferencedNovels(meta.referenceNovelIds);
+            availableReferenceNovels.value = novelSettingsService.getAvailableReferenceNovels(meta);
+        } else {
+            referencedNovels.value = [];
+            availableReferenceNovels.value = novelSettingsService.getAvailableReferenceNovels(null);
+        }
+    }
 
     const addReferenceNovel = (novelId: string) => {
         if (!novelId) return;
         metadataStore.addReferenceNovel(novelId);
+        // After core data is changed, reload our UI-specific data.
+        loadSettingsData();
     };
 
     const removeReferenceNovel = (novelId: string) => {
         metadataStore.removeReferenceNovel(novelId);
+        // After core data is changed, reload our UI-specific data.
+        loadSettingsData();
     };
 
     const addTag = () => {
@@ -3939,8 +4869,8 @@ export const useNovelSettingsStore = defineStore('novel-settings', () => {
     };
 
     const resetMetadata = () => {
-        if (currentNovelId.value) {
-            metadataStore.fetchNovelData(currentNovelId.value);
+        if (metadataStore.currentNovelId) {
+            metadataStore.fetchNovelData(metadataStore.currentNovelId);
         }
     };
 
@@ -3948,6 +4878,7 @@ export const useNovelSettingsStore = defineStore('novel-settings', () => {
         novelMetadata,
         referencedNovels,
         availableReferenceNovels,
+        loadSettingsData,
         addReferenceNovel,
         removeReferenceNovel,
         addTag,
@@ -3961,35 +4892,12 @@ export const useNovelSettingsStore = defineStore('novel-settings', () => {
 // 文件: ..\src\novel\editor\stores\promptTemplateStore.ts
 //
 
-// 文件: src/novel/editor/stores/promptTemplateStore.ts
-
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import type { TreeNode, ItemNode, AITaskType, PromptItemNode } from '@novel/editor/types';
 import { getIconByNodeType } from '@novel/editor/utils/iconUtils';
+import { promptService } from '@/novel/editor/services/promptService';
 import { useAIConfigStore } from './ai/aiConfigStore';
-
-const DEFAULT_PROMPTS: Record<AITaskType, { id: string, name: string, template: string }[]> = {
-    '润色': [
-        { id: 'prompt-polish-default', name: '默认润色', template: '你是一名专业的小说编辑，请根据上下文，对以下“待处理内容”进行润色，使其更具文采和表现力。' },
-        { id: 'prompt-polish-creative', name: '增强创造性', template: '你是一名富有想象力的作家，请跳出常规，用更具创造性和独特风格的语言重写以下“待处理内容”，可以适度偏离原文。' }
-    ],
-    '续写': [
-        { id: 'prompt-continue-default', name: '默认续写', template: '你是一名小说家，请根据所有上下文信息，紧接着“待处理内容”的结尾，自然地续写接下来的故事情节。' },
-        { id: 'prompt-continue-dramatic', name: '增强戏剧性', template: '你是一名顶尖的剧本编剧，请在续写时增加戏剧性冲突或意外转折，让故事更有张力。' }
-    ],
-    '分析': [
-        { id: 'prompt-analyze-default', name: '默认分析', template: '请作为一个文学评论家，分析以下“待处理内容”的结构、角色动态、潜在主题和写作风格。' },
-        { id: 'prompt-analyze-deep', name: '深度结构分析', template: '请从叙事技巧、象征意义和读者情感引导等角度，深度剖析以下“待处理内容”，并提出改进建议。' }
-    ],
-    '剧情生成': [
-        { id: 'prompt-plot-default', name: '默认剧情生成', template: '你是一名创意编剧，请根据“待处理内容”中描写的场景或事件，生成一段相关的、有趣的后续剧情大纲。' },
-        { id: 'prompt-plot-twist', name: '生成反转剧情', template: '你是一名擅长制造悬念的编剧，请根据“待处理内容”，构思一个包含意外反转的后续剧情大纲。' }
-    ],
-    '创作': [
-        { id: 'prompt-create-default', name: '默认创作', template: '你是一位小说家，请根据“动态上下文”（其中可能包含剧情大纲和分析）以及“固定上下文”，为标题为《{{sourceItemTitle}}》的章节创作完整的正文内容。“待处理内容”是旧版或草稿，可作为参考，但你的主要任务是生成全新的、完整的章节。' },
-    ],
-};
 
 const defaultSelectedPromptIds: Record<AITaskType, string> = {
     '润色': 'prompt-polish-default',
@@ -3999,65 +4907,40 @@ const defaultSelectedPromptIds: Record<AITaskType, string> = {
     '创作': 'prompt-create-default',
 };
 
-
 export const usePromptTemplateStore = defineStore('promptTemplate', () => {
+    // State: Use a simple ref, not a computed property, for the main data tree.
     const promptTree = ref<TreeNode[]>([]);
 
-    function _buildInitialTree(): TreeNode[] {
-        const root: TreeNode = {
-            id: 'prompt-root',
-            title: '提示词模板',
-            type: 'prompt_root',
-            icon: getIconByNodeType('prompt_root'),
-            children: (Object.keys(DEFAULT_PROMPTS) as AITaskType[]).map(taskType => {
-                const groupNode: TreeNode = {
-                    id: `prompt-group-${taskType}`,
-                    title: `${taskType}提示词`,
-                    type: 'prompt_group',
-                    icon: getIconByNodeType(taskType),
-                    isReadOnly: true,
-                    originalData: { taskType },
-                    children: DEFAULT_PROMPTS[taskType].map(prompt => ({
-                        id: prompt.id,
-                        title: prompt.name,
-                        type: 'prompt_item',
-                        icon: getIconByNodeType('prompt_item'),
-                        content: `<pre>${prompt.template}</pre>`,
-                        originalData: { taskType },
-                    }))
-                };
-                return groupNode;
-            })
-        };
-        return [root];
+    /**
+     * Action to initialize the prompt tree if it's empty.
+     * This should be called once when the editor loads.
+     */
+    function initialize() {
+        if (promptTree.value.length === 0) {
+            promptTree.value = promptService.buildInitialTree();
+        }
     }
 
-    const templates = computed(() => {
-        if (promptTree.value.length === 0) {
-            promptTree.value = _buildInitialTree();
-        }
-        return promptTree.value;
-    });
-
     const getPromptsForTask = (taskType: AITaskType): ItemNode[] => {
-        const group = templates.value[0]?.children?.find(g => (g as any).originalData.taskType === taskType);
+        const group = promptTree.value[0]?.children?.find(g => (g as any).originalData.taskType === taskType);
         return (group?.children as ItemNode[] || []);
     };
 
     function findPromptById(promptId: string): { prompt: PromptItemNode, group: TreeNode } | null {
-        for (const group of templates.value[0]?.children || []) {
+        if (!promptTree.value[0]?.children) return null;
+        for (const group of promptTree.value[0].children) {
             const prompt = group.children?.find(p => p.id === promptId);
             if(prompt) return { prompt: prompt as PromptItemNode, group };
         }
         return null;
     }
 
-    function addPromptItem(groupId: string, title: string, template: string): PromptItemNode | null {
-        const group = templates.value[0]?.children?.find(g => g.id === groupId);
+    function addPrompt(groupId: string, title: string, template: string): PromptItemNode | null {
+        const group = promptTree.value[0]?.children?.find(g => g.id === groupId);
         if (!group || !group.children) return null;
 
         const taskType = group.originalData.taskType;
-        const newItem: PromptItemNode = {
+        const newNode: PromptItemNode = {
             id: `prompt-custom-${Date.now()}`,
             title: title,
             type: 'prompt_item',
@@ -4065,18 +4948,18 @@ export const usePromptTemplateStore = defineStore('promptTemplate', () => {
             content: `<pre>${template}</pre>`,
             originalData: { taskType },
         };
-        group.children.push(newItem);
-        return newItem;
+        group.children.push(newNode);
+        return newNode;
     }
 
-    function renamePromptItem(promptId: string, newTitle: string) {
+    function renamePrompt(promptId: string, newTitle: string) {
         const result = findPromptById(promptId);
-        if (result) {
-            result.prompt.title = newTitle;
+        if (result && newTitle.trim()) {
+            result.prompt.title = newTitle.trim();
         }
     }
 
-    function deletePromptItem(promptId: string) {
+    function deletePrompt(promptId: string): boolean {
         const aiConfigStore = useAIConfigStore();
         const result = findPromptById(promptId);
         if (!result) return false;
@@ -4085,32 +4968,35 @@ export const usePromptTemplateStore = defineStore('promptTemplate', () => {
         const taskType = prompt.originalData.taskType;
 
         if (group && group.children) {
-            group.children = group.children.filter(p => p.id !== promptId);
+            const index = group.children.findIndex(p => p.id === promptId);
+            if (index > -1) {
+                group.children.splice(index, 1);
 
-            if (aiConfigStore.taskConfigs[taskType].selectedPromptId === promptId) {
-                aiConfigStore.setSelectedPromptId(taskType, defaultSelectedPromptIds[taskType]);
+                if (aiConfigStore.taskConfigs[taskType].selectedPromptId === promptId) {
+                    aiConfigStore.setSelectedPromptId(taskType, defaultSelectedPromptIds[taskType]);
+                }
+                return true;
             }
-            return true;
         }
         return false;
     }
 
-    function updatePromptItemContent(promptId: string, newContent: string) {
+    function updatePromptContent(promptId: string, newContent: string) {
         const result = findPromptById(promptId);
         if (result) {
             result.prompt.content = newContent;
         }
     }
 
-
     return {
-        templates,
+        promptTree,
+        initialize,
         getPromptsForTask,
         findPromptById: (id: string) => findPromptById(id)?.prompt || null,
-        addPromptItem,
-        renamePromptItem,
-        deletePromptItem,
-        updatePromptItemContent,
+        addPrompt,
+        renamePrompt,
+        deletePrompt,
+        updatePromptContent,
     };
 });
 
@@ -4118,159 +5004,10 @@ export const usePromptTemplateStore = defineStore('promptTemplate', () => {
 // 文件: ..\src\novel\editor\stores\referenceStore.ts
 //
 
-
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { TreeNode, ItemNode, PlotAnalysisItem, Volume, Chapter } from '@/novel/editor/types';
-import type { NovelProject } from '@/novel/editor/types/project';
-import { getNovelProject } from '@/novel/services/novelProjectService';
-import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
-
-const makeNodesReadOnly = (nodes: TreeNode[]): TreeNode[] => {
-    return nodes.map(node => {
-        const newNode: TreeNode = { ...node, isReadOnly: true };
-        if (newNode.children) {
-            newNode.children = makeNodesReadOnly(newNode.children);
-        }
-        if (newNode.isOverview) {
-            newNode.content = `<p class="overview-placeholder">参考书中所有内容均为只读。</p>`;
-        }
-        return newNode;
-    });
-};
-
-const projectToTreeNode = (project: NovelProject): TreeNode => {
-    const rootNode: TreeNode = {
-        id: `ref-book-${project.metadata.id}`,
-        type: 'reference_book',
-        title: project.metadata.title,
-        icon: getIconByNodeType('reference_book'),
-        children: []
-    };
-
-    const directoryNode: TreeNode = {
-        id: `ref-dir-${project.metadata.id}`,
-        type: 'reference_content_item',
-        title: '目录',
-        icon: 'fa-regular fa-folder-open',
-        children: makeNodesReadOnly(project.directoryData.map((vol: Volume) => ({
-            id: vol.id,
-            title: vol.title,
-            type: 'reference_volume',
-            icon: getIconByNodeType('reference_volume'),
-            content: vol.content,
-            isReadOnly: true,
-            children: vol.chapters.map((chap: Chapter) => ({
-                id: chap.id,
-                title: chap.title,
-                type: 'reference_chapter',
-                icon: getIconByNodeType('reference_chapter'),
-                content: chap.content,
-                isReadOnly: true
-            }))
-        })))
-    };
-    rootNode.children?.push(directoryNode);
-
-    const buildRefDerivedContentTree = (type: 'plot' | 'analysis', dataArray: PlotAnalysisItem[] | undefined, directory: Volume[]): TreeNode[] => {
-        if (!dataArray || dataArray.length === 0) return [];
-
-        return directory.map((volume: Volume) => {
-            const derivedForVolume = dataArray
-                .filter((item: PlotAnalysisItem) => item.sourceId === volume.id)
-                .map((item: PlotAnalysisItem) => ({
-                    id: item.id,
-                    title: item.title,
-                    type: `${type}_item` as ItemNode['type'],
-                    icon: getIconByNodeType(`${type}_item`),
-                    content: item.content,
-                    originalData: item
-                }));
-
-            const derivedForChapters = volume.chapters
-                .map((chapter: Chapter) => {
-                    const itemsForChapter = dataArray.filter((item: PlotAnalysisItem) => item.sourceId === chapter.id);
-                    if (itemsForChapter.length === 0) return null;
-
-                    return {
-                        id: `ref-derived-group-${type}-${chapter.id}`,
-                        title: chapter.title,
-                        type: 'group',
-                        icon: getIconByNodeType('chapter'),
-                        children: itemsForChapter.map((item: PlotAnalysisItem) => ({
-                            id: item.id,
-                            title: item.title,
-                            type: `${type}_item` as ItemNode['type'],
-                            icon: getIconByNodeType(`${type}_item`),
-                            content: item.content,
-                            originalData: item
-                        }))
-                    };
-                })
-                .filter((c: TreeNode | null): c is TreeNode => c !== null);
-
-            if (derivedForVolume.length === 0 && derivedForChapters.length === 0) {
-                return null;
-            }
-
-            return {
-                id: `ref-derived-group-${type}-${volume.id}`,
-                title: volume.title,
-                type: 'group',
-                icon: getIconByNodeType('volume'),
-                children: [
-                    ...derivedForVolume,
-                    ...derivedForChapters
-                ]
-            };
-        }).filter((v: TreeNode | null): v is TreeNode => v !== null);
-    };
-
-    const plotTree = buildRefDerivedContentTree('plot', project.derivedPlotData, project.directoryData);
-    const plotNode: TreeNode = {
-        id: `ref-plot-${project.metadata.id}`,
-        type: 'reference_content_item',
-        title: '剧情',
-        icon: getIconByNodeType('plot'),
-        children: makeNodesReadOnly([
-            ...project.plotCustomData,
-            ...plotTree
-        ])
-    };
-    if (plotNode.children && plotNode.children.length > 0) {
-        rootNode.children?.push(plotNode);
-    }
-
-    const analysisTree = buildRefDerivedContentTree('analysis', project.derivedAnalysisData, project.directoryData);
-    const analysisNode: TreeNode = {
-        id: `ref-analysis-${project.metadata.id}`,
-        type: 'reference_content_item',
-        title: '分析',
-        icon: getIconByNodeType('analysis'),
-        children: makeNodesReadOnly([
-            ...project.analysisCustomData,
-            ...analysisTree
-        ])
-    };
-    if (analysisNode.children && analysisNode.children.length > 0) {
-        rootNode.children?.push(analysisNode);
-    }
-
-    const settingsRoot = project.settingsData.find(n => n.id === 'setting');
-    if (settingsRoot && settingsRoot.children) {
-        const settingsNode: TreeNode = {
-            id: `ref-settings-${project.metadata.id}`,
-            type: 'reference_content_item',
-            title: settingsRoot.title,
-            icon: getIconByNodeType('setting'),
-            children: makeNodesReadOnly(settingsRoot.children)
-        };
-        rootNode.children?.push(settingsNode);
-    }
-
-    return rootNode;
-};
-
+import type { TreeNode } from '@/novel/editor/types';
+import { referenceService } from '@/novel/editor/services/referenceService';
 
 const _findNodeRecursive = (nodes: TreeNode[], nodeId: string): { node: TreeNode; parent: TreeNode | null; } | null => {
     for (const node of nodes) {
@@ -4293,20 +5030,8 @@ const _findNodeRecursive = (nodes: TreeNode[], nodeId: string): { node: TreeNode
 export const useReferenceStore = defineStore('reference', () => {
     const referenceData = ref<TreeNode[]>([]);
 
-    const fetchData = (referenceNovelIds: string[]) => {
-        if (!referenceNovelIds) {
-            referenceData.value = [];
-            return;
-        }
-
-        const newReferenceData = referenceNovelIds
-            .map(novelId => {
-                const project = getNovelProject(novelId);
-                return project ? projectToTreeNode(project) : null;
-            })
-            .filter((node): node is TreeNode => node !== null);
-
-        referenceData.value = newReferenceData;
+    const loadReferences = (referenceNovelIds: string[]) => {
+        referenceData.value = referenceService.buildReferenceTree(referenceNovelIds);
     };
 
     const findNodeById = (nodeId: string): { node: TreeNode; parent: TreeNode | null; } | null => {
@@ -4315,495 +5040,8 @@ export const useReferenceStore = defineStore('reference', () => {
 
     return {
         referenceData,
-        fetchData,
+        loadReferences,
         findNodeById
-    };
-});
-
-// =
-// 文件: ..\src\novel\editor\stores\related\itemDataStore.ts
-//
-
-// src/novel/editor/stores/modules/related/itemDataStore.ts
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
-import type { TreeNode } from '@novel/editor/types';
-
-export const useItemDataStore = defineStore('related-item-data', () => {
-    // 原始数据状态
-    const settingsData = ref<TreeNode[]>([]);
-    const plotCustomData = ref<TreeNode[]>([]);
-    const analysisCustomData = ref<TreeNode[]>([]);
-    const othersCustomData = ref<TreeNode[]>([]);
-
-    /**
-     * 从外部获取数据并填充 store
-     * @param settings - 设定的树形数据
-     * @param plot - 自定义剧情数据
-     * @param analysis - 自定义分析数据
-     * @param others - 其他自定义数据
-     */
-    function fetchRelatedData(settings: TreeNode[], plot: TreeNode[], analysis: TreeNode[], others: TreeNode[]) {
-        settingsData.value = settings;
-        plotCustomData.value = plot;
-        analysisCustomData.value = analysis;
-        othersCustomData.value = others;
-    }
-
-    return {
-        settingsData,
-        plotCustomData,
-        analysisCustomData,
-        othersCustomData,
-        fetchRelatedData,
-    };
-});
-
-// =
-// 文件: ..\src\novel\editor\stores\related\nodeOperationStore.ts
-//
-
-// 文件: src/novel/editor/stores/related/nodeOperationStore.ts
-import { defineStore } from 'pinia';
-import { useItemDataStore } from './itemDataStore.ts';
-import { useEditorStore } from '@novel/editor/stores/editorStore.ts';
-import { useUIStore } from '@novel/editor/stores/uiStore.ts';
-import { usePromptTemplateStore } from '../promptTemplateStore.ts';
-import { getIconByNodeType } from '@novel/editor/utils/iconUtils.ts';
-import type { TreeNode, ItemNode, GroupNode } from '@novel/editor/types';
-
-const _findNodeInTreeRecursive = (nodes: TreeNode[], nodeId: string): { node: TreeNode; parent: TreeNode | null; } | null => {
-    for (const node of nodes) {
-        if (node.id === nodeId) {
-            return { node, parent: null };
-        }
-        if (node.children) {
-            const foundInChild = _findNodeInTreeRecursive(node.children, nodeId);
-            if (foundInChild) {
-                if (!foundInChild.parent) {
-                    foundInChild.parent = node;
-                }
-                return foundInChild;
-            }
-        }
-    }
-    return null;
-};
-
-const _findAndRemoveNodeInTree = (nodes: TreeNode[], nodeId: string): boolean => {
-    for (let i = 0; i < nodes.length; i++) {
-        if (nodes[i].id === nodeId) {
-            nodes.splice(i, 1);
-            return true;
-        }
-        if (nodes[i].children && _findAndRemoveNodeInTree(nodes[i].children, nodeId)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-export const useNodeOperationStore = defineStore('related-node-operations', () => {
-    const itemDataStore = useItemDataStore();
-    const promptTemplateStore = usePromptTemplateStore();
-
-    function findNodeById(nodeId: string): { node: TreeNode; parent: TreeNode | null; } | null {
-        const sources = [
-            itemDataStore.settingsData,
-            itemDataStore.plotCustomData,
-            itemDataStore.analysisCustomData,
-            itemDataStore.othersCustomData
-        ];
-        for (const source of sources) {
-            const result = _findNodeInTreeRecursive(source, nodeId);
-            if (result) return result;
-        }
-        const promptResult = _findNodeInTreeRecursive(promptTemplateStore.templates, nodeId);
-        if (promptResult) return promptResult;
-
-        return null;
-    }
-
-    function updateNodeContent(nodeId: string, content: string) {
-        if (promptTemplateStore.findPromptById(nodeId)) {
-            promptTemplateStore.updatePromptItemContent(nodeId, content);
-            return;
-        }
-
-        const result = findNodeById(nodeId);
-        if (!result?.node || !('content' in result.node)) return;
-
-        (result.node as ItemNode).content = content;
-        if (!result.node.isReadOnly) {
-            const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
-            const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
-            if (newTitle && newTitle !== result.node.title) {
-                result.node.title = newTitle;
-            }
-        }
-    }
-
-    function appendNodeContent(nodeId: string, contentToAppend: string, isAutoApplied: boolean) {
-        const result = findNodeById(nodeId);
-        if (result?.node && 'content' in result.node) {
-            const itemNode = result.node as ItemNode;
-            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
-            let htmlToAppend = paragraphs;
-            if (isAutoApplied) {
-                htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
-            }
-            if (!itemNode.content) itemNode.content = "";
-            itemNode.content += htmlToAppend;
-        }
-    }
-
-    function addRelatedNode(parentId: string, type: 'group' | 'item') {
-        const result = _findNodeInTreeRecursive(itemDataStore.settingsData, parentId);
-        if (!result?.node || !result.node.children) return;
-
-        const parentNode = result.node as GroupNode;
-        const uiStore = useUIStore();
-        const editorStore = useEditorStore();
-
-        const itemTypePrefix = parentNode.id.endsWith('s') ? parentNode.id.slice(0, -1) : parentNode.id;
-        const newNodeType = type === 'group' ? 'group' : `${itemTypePrefix}_item`;
-        const newNodeIcon = getIconByNodeType(newNodeType);
-
-        if (type === 'group') {
-            const newNode: GroupNode = {
-                id: `group-${Date.now()}`,
-                title: '新建分组',
-                type: 'group',
-                icon: newNodeIcon,
-                children: [],
-            };
-            parentNode.children.push(newNode);
-            uiStore.setEditingNodeId(newNode.id);
-        } else { // type === 'item'
-            const newNode: ItemNode = {
-                id: `item-${Date.now()}`,
-                title: '新建条目',
-                type: newNodeType as ItemNode['type'],
-                icon: newNodeIcon,
-                content: '<h1>新建条目</h1><p>请在此处填写内容...</p>',
-            };
-            parentNode.children.push(newNode);
-            uiStore.setEditingNodeId(newNode.id);
-            editorStore.openTab(newNode.id);
-        }
-        uiStore.ensureRelatedNodeIsExpanded(parentId);
-    }
-
-    function renameRelatedNode(nodeId: string, newTitle: string) {
-        const result = findNodeById(nodeId);
-        if (result?.node && !result.node.isReadOnly && newTitle.trim()) {
-            const trimmedTitle = newTitle.trim();
-            result.node.title = trimmedTitle;
-            if ('content' in result.node && result.node.content && result.node.content.includes('<h1>')) {
-                (result.node as ItemNode).content = (result.node as ItemNode).content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
-            }
-        }
-    }
-
-    function deleteRelatedNode(nodeId: string) {
-        const wasRemoved = _findAndRemoveNodeInTree(itemDataStore.settingsData, nodeId);
-        if (wasRemoved) {
-            useEditorStore().closeTab(nodeId);
-        }
-    }
-
-    function addCustomRelatedNode(target: 'plot' | 'analysis') {
-        const dataRef = target === 'plot' ? itemDataStore.plotCustomData : itemDataStore.analysisCustomData;
-        const icon = getIconByNodeType(`${target}_item`);
-        const newNode: ItemNode = {
-            id: `custom-${target}-${Date.now()}`,
-            title: '新建自定义条目',
-            type: `${target}_item`,
-            icon: icon,
-            content: '<h1>新建自定义条目</h1><p>请在此处填写内容...</p>',
-        };
-        dataRef.unshift(newNode);
-        useUIStore().ensureRelatedNodeIsExpanded(target);
-        useEditorStore().openTab(newNode.id);
-        useUIStore().setEditingNodeId(newNode.id);
-    }
-
-    function deleteCustomRelatedNode(nodeId: string) {
-        const wasRemoved = _findAndRemoveNodeInTree(itemDataStore.plotCustomData, nodeId) || _findAndRemoveNodeInTree(itemDataStore.analysisCustomData, nodeId);
-        if (wasRemoved) {
-            useEditorStore().closeTab(nodeId);
-        }
-    }
-
-    function addCustomOthersNode() {
-        const icon = getIconByNodeType('others_item');
-        const newNode: ItemNode = {
-            id: `custom-others-${Date.now()}`,
-            title: '新建其他条目',
-            type: 'others_item',
-            icon: icon,
-            content: '<h1>新建其他条目</h1><p>请在此处填写内容...</p>',
-        };
-        itemDataStore.othersCustomData.unshift(newNode);
-        useUIStore().ensureRelatedNodeIsExpanded('others');
-        useEditorStore().openTab(newNode.id);
-        useUIStore().setEditingNodeId(newNode.id);
-    }
-
-    function deleteCustomOthersNode(nodeId: string) {
-        const wasRemoved = _findAndRemoveNodeInTree(itemDataStore.othersCustomData, nodeId);
-        if (wasRemoved) {
-            useEditorStore().closeTab(nodeId);
-        }
-    }
-
-    function addPrompt(groupId: string) {
-        const newPrompt = promptTemplateStore.addPromptItem(groupId, '新建提示词', '在这里输入你的提示词模板...');
-        if (newPrompt) {
-            const uiStore = useUIStore();
-            const editorStore = useEditorStore();
-            uiStore.ensureRelatedNodeIsExpanded(groupId);
-            editorStore.openTab(newPrompt.id);
-            uiStore.setEditingNodeId(newPrompt.id);
-        }
-    }
-
-    function renamePrompt(promptId: string, newTitle: string) {
-        if (newTitle.trim()) {
-            promptTemplateStore.renamePromptItem(promptId, newTitle.trim());
-        }
-    }
-
-    function deletePrompt(promptId: string) {
-        if (promptTemplateStore.deletePromptItem(promptId)) {
-            useEditorStore().closeTab(promptId);
-        }
-    }
-
-    return {
-        findNodeById,
-        updateNodeContent,
-        appendNodeContent,
-        addRelatedNode,
-        renameRelatedNode,
-        deleteRelatedNode,
-        addCustomRelatedNode,
-        renameCustomRelatedNode: renameRelatedNode,
-        deleteCustomRelatedNode,
-        addCustomOthersNode,
-        renameCustomOthersNode: renameRelatedNode,
-        deleteCustomOthersNode,
-        addPrompt,
-        renamePrompt,
-        deletePrompt,
-    };
-});
-
-// =
-// 文件: ..\src\novel\editor\stores\related\overviewStore.ts
-//
-
-// src/novel/editor/stores/modules/related/overviewStore.ts
-import { defineStore } from 'pinia';
-import { watch } from 'vue';
-import { useItemDataStore } from './itemDataStore.ts';
-import type { TreeNode, GroupNode, ItemNode, OverviewNode } from '@novel/editor/types';
-
-/**
- * 这个 store 专门用于管理和更新“总览”节点的内容。
- * 它通过 watch 监听 settingsData 的变化，自动重新生成总览。
- */
-export const useOverviewStore = defineStore('related-overview', () => {
-    const itemDataStore = useItemDataStore();
-
-    /**
-     * 更新单个分组节点下的总览内容。
-     * @param groupNode - 包含总览节点的父分组节点。
-     */
-    function updateOverviewContent(groupNode: GroupNode) {
-        if (!groupNode.children) return;
-
-        const overviewNode = groupNode.children.find(child => child.isOverview) as OverviewNode | undefined;
-        if (!overviewNode) return;
-
-        // 筛选出需要被汇总的普通条目
-        const itemsToSummarize = groupNode.children.filter(child => child.type.endsWith('_item') && !child.isOverview) as ItemNode[];
-
-        // 辅助函数，用于降低内容中标题的级别 (e.g., h1 -> h2)
-        const demoteHeadings = (htmlContent: string): string => {
-            if (typeof document === 'undefined') return htmlContent; // Guard for SSR
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlContent;
-
-            // 将 h1, h2, h3 等标题降级
-            const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5');
-            headings.forEach(heading => {
-                const level = parseInt(heading.tagName.charAt(1), 10);
-                const newLevel = Math.min(6, level + 1); // 最多降到 h6
-                const newHeading = document.createElement(`h${newLevel}`);
-                newHeading.innerHTML = heading.innerHTML;
-                for (const attr of heading.attributes) {
-                    newHeading.setAttribute(attr.name, attr.value);
-                }
-                heading.parentNode?.replaceChild(newHeading, heading);
-            });
-            return tempDiv.innerHTML;
-        };
-
-        // 拼接所有条目的内容
-        const itemContents = itemsToSummarize.map(item => item.content ? demoteHeadings(item.content) : '').filter(Boolean);
-
-        // 更新总览节点的内容
-        overviewNode.content = `<h1>${overviewNode.title}</h1>` + (itemContents.length > 0 ? itemContents.join('<hr>') : `<p class="overview-placeholder">此分类下暂无内容，请添加条目。</p>`);
-    }
-
-    /**
-     * 遍历整个设定树，更新所有找到的总览节点。
-     */
-    function updateAllOverviewContent() {
-        const findAndProcess = (nodes: TreeNode[]) => {
-            for (const node of nodes) {
-                if (node.type === 'group' && node.children?.some(c => c.isOverview)) {
-                    updateOverviewContent(node as GroupNode);
-                }
-                if (node.children) {
-                    findAndProcess(node.children);
-                }
-            }
-        };
-        findAndProcess(itemDataStore.settingsData);
-    }
-
-    // 监听原始数据变化，自动更新总览
-    watch(
-        () => itemDataStore.settingsData,
-        () => {
-            updateAllOverviewContent();
-        },
-        { deep: true, immediate: true } // immediate确保初始化时也能执行
-    );
-
-    // 这个 store 主要通过 watch effect 工作，所以返回空对象
-    return {};
-});
-
-// =
-// 文件: ..\src\novel\editor\stores\related\treeBuilderStore.ts
-//
-
-// 文件: src/novel/editor/stores/related/treeBuilderStore.ts
-
-import { defineStore } from 'pinia';
-import { computed } from 'vue';
-import { useItemDataStore } from './itemDataStore.ts';
-import { useDirectoryStore } from '@novel/editor/stores/directoryStore.ts';
-import { useDerivedContentStore } from '@novel/editor/stores/derivedContentStore.ts';
-import { usePromptTemplateStore } from '@novel/editor/stores/promptTemplateStore';
-import { getIconByNodeType } from '@novel/editor/utils/iconUtils.ts';
-import type { TreeNode, RootNode, PlotAnalysisItem, ItemNode } from '@novel/editor/types';
-
-export const useTreeBuilderStore = defineStore('related-tree-builder', () => {
-    const itemDataStore = useItemDataStore();
-    const directoryStore = useDirectoryStore();
-    const derivedContentStore = useDerivedContentStore();
-    const promptTemplateStore = usePromptTemplateStore();
-
-    /**
-     * 响应式地构建完整的相关内容树，供UI使用
-     */
-    const relatedData = computed((): TreeNode[] => {
-        // 清理无效的派生内容
-        const allValidSourceIds = new Set(directoryStore.directoryData.flatMap(v => [v.id, ...v.chapters.map(c => c.id)]));
-        derivedContentStore.plotItems = derivedContentStore.plotItems.filter(i => allValidSourceIds.has(i.sourceId));
-        derivedContentStore.analysisItems = derivedContentStore.analysisItems.filter(i => allValidSourceIds.has(i.sourceId));
-
-        const buildDerivedContentTree = (type: 'plot' | 'analysis', dataArray: PlotAnalysisItem[]): TreeNode[] => {
-            return directoryStore.directoryData.map(volume => {
-                // 查找与此卷直接相关的派生项
-                const derivedForVolume = dataArray
-                    .filter(item => item.sourceId === volume.id)
-                    .map(item => ({
-                        id: item.id,
-                        title: item.title,
-                        type: `${type}_item` as ItemNode['type'],
-                        icon: getIconByNodeType(`${type}_item`),
-                        originalData: item,
-                        content: item.content
-                    }));
-
-                // 为此卷下的章节查找派生项并分组
-                const derivedForChapters = volume.chapters
-                    .map(chapter => {
-                        const derivedForChapter = dataArray.filter(item => item.sourceId === chapter.id);
-                        if (derivedForChapter.length === 0) return null;
-
-                        return {
-                            id: `${type}_ch_group_${chapter.id}`,
-                            title: chapter.title,
-                            type: 'group',
-                            icon: getIconByNodeType('chapter'),
-                            isReadOnly: true,
-                            children: derivedForChapter.map(item => ({
-                                id: item.id,
-                                title: item.title,
-                                type: `${type}_item` as ItemNode['type'],
-                                icon: getIconByNodeType(`${type}_item`),
-                                originalData: item,
-                                content: item.content
-                            }))
-                        };
-                    })
-                    .filter((c): c is TreeNode => c !== null);
-
-                // 如果该卷及其章节都没有派生内容，则不显示该卷的节点
-                if (derivedForVolume.length === 0 && derivedForChapters.length === 0) {
-                    return null;
-                }
-
-                return {
-                    id: `${type}_vol_group_${volume.id}`,
-                    title: volume.title,
-                    type: 'group',
-                    icon: getIconByNodeType('volume'),
-                    isReadOnly: true,
-                    children: [
-                        ...derivedForVolume,
-                        ...derivedForChapters
-                    ]
-                };
-            }).filter((v): v is TreeNode => v !== null);
-        };
-
-        const allPlotItems = derivedContentStore.plotItems;
-        const allAnalysisItems = derivedContentStore.analysisItems;
-
-        const plotTree: RootNode = {
-            id: 'plot', title: '剧情', type: 'root', icon: getIconByNodeType('plot'),
-            children: [
-                ...itemDataStore.plotCustomData,
-                ...buildDerivedContentTree('plot', allPlotItems)
-            ]
-        };
-        const analysisTree: RootNode = {
-            id: 'analysis', title: '分析', type: 'root', icon: getIconByNodeType('analysis'),
-            children: [
-                ...itemDataStore.analysisCustomData,
-                ...buildDerivedContentTree('analysis', allAnalysisItems)
-            ]
-        };
-        const othersTree: RootNode = {
-            id: 'others', title: '其他', type: 'root', icon: getIconByNodeType('others'),
-            children: [
-                ...promptTemplateStore.templates,
-                ...itemDataStore.othersCustomData
-            ]
-        };
-
-        return [...itemDataStore.settingsData, plotTree, analysisTree, othersTree];
-    });
-
-    return {
-        relatedData,
     };
 });
 
@@ -4812,56 +5050,145 @@ export const useTreeBuilderStore = defineStore('related-tree-builder', () => {
 //
 
 import { defineStore } from 'pinia';
-import { computed } from 'vue';
-import { useItemDataStore } from '@novel/editor/stores/related/itemDataStore';
-import { useTreeBuilderStore } from '@novel/editor/stores/related/treeBuilderStore';
-import { useNodeOperationStore } from '@novel/editor/stores/related/nodeOperationStore';
-import { useOverviewStore } from '@novel/editor/stores/related/overviewStore';
-import { usePromptTemplateStore } from './promptTemplateStore';
+import { ref, computed, watch } from 'vue';
+import * as nodeOperationService from '@/novel/editor/services/related/nodeOperationService';
+import * as treeBuilderService from '@/novel/editor/services/related/treeBuilderService';
+import { updateAllOverviewContent } from '@/novel/editor/services/related/overviewService';
+import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
+import { useDerivedContentStore } from '@/novel/editor/stores/derivedContentStore';
+import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+import { useUIStore } from '@/novel/editor/stores/uiStore';
+import type { TreeNode, ItemNode, GroupNode } from '@/novel/editor/types';
 
 export const useRelatedContentStore = defineStore('relatedContent', () => {
-    // 实例化所有子模块
-    const itemDataStore = useItemDataStore();
-    const treeBuilderStore = useTreeBuilderStore();
-    const nodeOperationStore = useNodeOperationStore();
+    // --- State ---
+    const settingsData = ref<TreeNode[]>([]);
+    const plotCustomData = ref<TreeNode[]>([]);
+    const analysisCustomData = ref<TreeNode[]>([]);
+    const othersCustomData = ref<TreeNode[]>([]);
+
+    // --- Dependencies ---
+    const directoryStore = useDirectoryStore();
+    const derivedContentStore = useDerivedContentStore();
     const promptTemplateStore = usePromptTemplateStore();
+    const editorStore = useEditorStore();
+    const uiStore = useUIStore();
 
-    // 初始化总览内容的监听逻辑
-    useOverviewStore();
+    // --- Computed ---
+    const relatedData = computed(() => {
+        // Filter out derived items whose source has been deleted
+        const allValidSourceIds = new Set(directoryStore.directoryData.flatMap(v => [v.id, ...v.chapters.map(c => c.id)]));
+        const validPlotItems = derivedContentStore.plotItems.filter(i => allValidSourceIds.has(i.sourceId));
+        const validAnalysisItems = derivedContentStore.analysisItems.filter(i => allValidSourceIds.has(i.sourceId));
 
-    // --- State & Computed ---
-    // 从子模块中导出状态和计算属性
-    const settingsData = computed(() => itemDataStore.settingsData);
-    const plotCustomData = computed(() => itemDataStore.plotCustomData);
-    const analysisCustomData = computed(() => itemDataStore.analysisCustomData);
-    const othersCustomData = computed(() => itemDataStore.othersCustomData);
-    const relatedData = computed(() => treeBuilderStore.relatedData);
+        return treeBuilderService.buildRelatedTree(
+            settingsData.value,
+            plotCustomData.value,
+            analysisCustomData.value,
+            othersCustomData.value,
+            promptTemplateStore.promptTree,
+            validPlotItems,
+            validAnalysisItems,
+            directoryStore.directoryData
+        );
+    });
+
+    const allDataSources = computed(() => [
+        settingsData.value,
+        plotCustomData.value,
+        analysisCustomData.value,
+        othersCustomData.value
+    ]);
+
+    // --- Watchers ---
+    watch(settingsData, (newData) => {
+        updateAllOverviewContent(newData);
+    }, { deep: true });
 
     // --- Actions ---
-
     function fetchRelatedData(settings: any[], plot: any[], analysis: any[], others: any[]) {
-        // 访问 promptTemplates 计算属性以确保其被初始化
-        const _ = promptTemplateStore.templates;
-        itemDataStore.fetchRelatedData(settings, plot, analysis, others);
+        promptTemplateStore.initialize();
+        settingsData.value = settings;
+        plotCustomData.value = plot;
+        analysisCustomData.value = analysis;
+        othersCustomData.value = others;
     }
 
-    const {
-        findNodeById,
-        updateNodeContent,
-        appendNodeContent,
-        addRelatedNode,
-        renameRelatedNode,
-        deleteRelatedNode,
-        addCustomRelatedNode,
-        renameCustomRelatedNode,
-        deleteCustomRelatedNode,
-        addCustomOthersNode,
-        renameCustomOthersNode,
-        deleteCustomOthersNode,
-        addPrompt,
-        renamePrompt,
-        deletePrompt,
-    } = nodeOperationStore;
+    function findNodeById(nodeId: string): { node: TreeNode; parent: TreeNode | null; } | null {
+        return nodeOperationService.findNodeById(nodeId, allDataSources.value);
+    }
+
+    function updateNodeContent(nodeId: string, content: string) {
+        const result = findNodeById(nodeId);
+        if (result?.node && 'content' in result.node) {
+            nodeOperationService.updateNodeContent(result.node as ItemNode, content);
+        }
+    }
+
+    function appendNodeContent(nodeId: string, contentToAppend: string, isAutoApplied: boolean) {
+        const result = findNodeById(nodeId);
+        if (result?.node && 'content' in result.node) {
+            nodeOperationService.appendNodeContent(result.node as ItemNode, contentToAppend, isAutoApplied);
+        }
+    }
+
+    function renameRelatedNode(nodeId: string, newTitle: string) {
+        const result = findNodeById(nodeId);
+        if (result?.node) {
+            nodeOperationService.renameNode(result.node, newTitle);
+        }
+    }
+
+    // --- Action: Add ---
+    function addRelatedNode(parentId: string, type: 'group' | 'item') {
+        const result = findNodeById(parentId);
+        if (!result?.node || !result.node.children) return;
+
+        const parentNode = result.node as GroupNode;
+        const newNode = nodeOperationService.createRelatedNode(parentNode, type);
+        parentNode.children.push(newNode);
+
+        uiStore.ensureRelatedNodeIsExpanded(parentId);
+        uiStore.setEditingNodeId(newNode.id);
+        if (newNode.type.endsWith('_item')) {
+            editorStore.openTab(newNode.id);
+        }
+    }
+
+    function addCustomRelatedNode(target: 'plot' | 'analysis') {
+        const dataRef = target === 'plot' ? plotCustomData : analysisCustomData;
+        const newNode = nodeOperationService.createCustomNode(target);
+        dataRef.value.unshift(newNode);
+
+        uiStore.ensureRelatedNodeIsExpanded(target);
+        editorStore.openTab(newNode.id);
+        uiStore.setEditingNodeId(newNode.id);
+    }
+
+    function addCustomOthersNode() {
+        const newNode = nodeOperationService.createCustomNode('others');
+        othersCustomData.value.unshift(newNode);
+        uiStore.ensureRelatedNodeIsExpanded('others');
+        editorStore.openTab(newNode.id);
+        uiStore.setEditingNodeId(newNode.id);
+    }
+
+    // --- Action: Delete ---
+    function deleteNode(nodeId: string): boolean {
+        const wasRemoved = nodeOperationService.deleteNode(nodeId, allDataSources.value);
+        if (wasRemoved) {
+            editorStore.closeTab(nodeId);
+        }
+        return wasRemoved;
+    }
+    const deleteRelatedNode = deleteNode;
+    const deleteCustomRelatedNode = deleteNode;
+    const deleteCustomOthersNode = deleteNode;
+
+    // --- Actions with specific naming for context menus ---
+    const renameCustomRelatedNode = renameRelatedNode;
+    const renameCustomOthersNode = renameRelatedNode;
 
     return {
         // State & Computed
@@ -4884,9 +5211,6 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         addCustomOthersNode,
         renameCustomOthersNode,
         deleteCustomOthersNode,
-        addPrompt,
-        renamePrompt,
-        deletePrompt,
     };
 });
 
@@ -4896,12 +5220,8 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { SearchResult, EditorItem, TreeNode } from '@/novel/editor/types';
-import { useDirectoryStore } from './directoryStore';
-import { useRelatedContentStore } from './relatedContentStore';
-import { useNotesStore } from './notesStore';
-import { useReferenceStore } from './referenceStore';
-import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
+import type { SearchResult } from '@/novel/editor/types';
+import { searchService } from '@/novel/editor/services/searchService';
 
 export const useSearchStore = defineStore('search', () => {
     const searchQuery = ref('');
@@ -4909,78 +5229,17 @@ export const useSearchStore = defineStore('search', () => {
     const hasSearched = ref(false);
     const results = ref<SearchResult[]>([]);
 
+    const performSearch = (query: string) => {
+        hasSearched.value = true;
+        lastSearchedQuery.value = query;
+        results.value = searchService.search(query);
+    };
+
     const clearSearch = () => {
         searchQuery.value = '';
         lastSearchedQuery.value = '';
         hasSearched.value = false;
         results.value = [];
-    };
-
-    const performSearch = (query: string) => {
-        results.value = [];
-        hasSearched.value = true;
-        lastSearchedQuery.value = query;
-
-        if (!query || query.trim().length < 1) {
-            return;
-        }
-
-        const lowerCaseQuery = query.toLowerCase();
-        const resultsMap = new Map<string, SearchResult>();
-        const tempDiv = document.createElement('div');
-
-        const directoryStore = useDirectoryStore();
-        const relatedContentStore = useRelatedContentStore();
-        const notesStore = useNotesStore();
-        const referenceStore = useReferenceStore();
-
-        const processItem = (item: EditorItem) => {
-            if (item.type === 'system' || !('content' in item) || !item.content) return;
-
-            tempDiv.innerHTML = item.content;
-            const textContent = tempDiv.textContent || '';
-            const lowerCaseText = textContent.toLowerCase();
-
-            if (lowerCaseText.includes(lowerCaseQuery)) {
-                if (!resultsMap.has(item.id)) {
-                    resultsMap.set(item.id, {
-                        id: item.id,
-                        title: item.title,
-                        icon: getIconByNodeType(item.type),
-                        item: item,
-                        matches: []
-                    });
-                }
-
-                const result = resultsMap.get(item.id)!;
-                const regex = new RegExp(`(.{0,30})(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})(.{0,30})`, 'gi');
-                let match;
-                while ((match = regex.exec(textContent)) !== null) {
-                    if (result.matches.length >= 5) break; // Limit matches per item
-                    const context = `${match[1]}<mark>${match[2]}</mark>${match[3]}`;
-                    result.matches.push({ context: `...${context}...` });
-                }
-            }
-        };
-
-        directoryStore.directoryData.forEach(vol => vol.chapters.forEach(processItem));
-
-        const flattenRelated = (nodes: TreeNode[]) => {
-            nodes.forEach(node => {
-                if ('content' in node && node.content) {
-                    processItem(node as EditorItem);
-                }
-                if (node.children) flattenRelated(node.children);
-            });
-        };
-        flattenRelated(relatedContentStore.settingsData);
-        flattenRelated(relatedContentStore.plotCustomData);
-        flattenRelated(relatedContentStore.analysisCustomData);
-        flattenRelated(referenceStore.referenceData); // Search in reference books
-
-        notesStore.notes.forEach(processItem);
-
-        results.value = Array.from(resultsMap.values());
     };
 
     return {

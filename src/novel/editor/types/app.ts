@@ -1,3 +1,4 @@
+// ..\src\novel\editor\types\app.ts
 // 文件: src/novel/editor/types/app.ts
 
 import type { TreeNode, Volume, Chapter, NoteItem, PlotAnalysisItem } from './models';
@@ -11,6 +12,18 @@ export type AITaskStatus = 'pending' | 'processing' | 'completed' | 'failed' | '
  * AI 任务类型 (用户界面显示名称)
  */
 export type AITaskType = '润色' | '续写' | '分析' | '剧情生成' | '创作';
+
+/**
+ * AI 提供商（模型）配置
+ */
+export interface AIProviderConfig {
+    id: string;
+    name: string;
+    model: string;
+    temperature: number;
+    maxTokens: number;
+    description: string;
+}
 
 /**
  * AI 任务对象
@@ -28,6 +41,7 @@ export interface AITask {
     finalPrompt?: string;
     error?: string;
     createdAt: Date;
+    aiConfig: AIProviderConfig; // 新增：任务执行时使用的AI配置
 }
 
 /**

@@ -1,14 +1,12 @@
-// 文件: src/novel/editor/stores/ai/aiTaskStore.ts
-
-// src/novel/editor/stores/aiTaskStore.ts
-import { defineStore } from 'pinia'
-import { ref, nextTick, computed } from 'vue'
-import { useEditorStore } from '../editorStore.ts'
-import { useUIStore } from '../uiStore.ts'
-import { useDerivedContentStore } from '../derivedContentStore.ts';
-import type { AITask, Volume, AITaskType } from '@novel/editor/types';
-import { useContextBuilder } from '@novel/editor/composables/useContextBuilder.ts';
-import { streamAITask } from '@novel/editor/api/aiService.ts';
+// src/novel/editor/stores/ai/aiTaskStore.ts
+import { defineStore } from 'pinia';
+import { ref, computed, nextTick } from 'vue';
+import { useEditorStore } from '../editorStore';
+import { useUIStore } from '../uiStore';
+import { useDerivedContentStore } from '../derivedContentStore';
+import * as AITaskFactory from '@/novel/editor/services/ai/AITaskFactory';
+import { processQueue } from '@/novel/editor/services/ai/AITaskExecutionService';
+import type { AITask, Volume, AITaskType, AITaskStatus } from '@novel/editor/types';
 
 const formatContentForEditor = (title: string, rawContent: string): string => {
     const body = rawContent.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p}</p>`).join('');
@@ -20,139 +18,51 @@ export const useAITaskStore = defineStore('aiTask', () => {
     const editorStore = useEditorStore();
     const uiStore = useUIStore();
     const derivedContentStore = useDerivedContentStore();
-    const { buildContextForTask } = useContextBuilder();
 
     const activeTasksCount = computed(() => {
         return tasks.value.filter(t => t.status === 'processing' || t.status === 'pending').length;
     });
 
-    const _executeTaskAndStream = (taskId: string) => {
+    // --- State Mutation Actions ---
+    const updateTaskStatus = (taskId: string, status: AITaskStatus) => {
         const task = tasks.value.find(t => t.id === taskId);
-        if (!task) return;
-
-        task.status = 'processing';
-        task.generatedContent = '';
-
-        if (!task.finalPrompt) {
-            // **核心修正**: 直接将任务对象传给上下文构建器
-            const contextResult = buildContextForTask(task);
-            if (!contextResult || !contextResult.prompt) {
-                task.status = 'failed';
-                task.error = '上下文构建失败，无法生成最终提示词。';
-                nextTick(_processQueue);
-                return;
-            }
-            task.finalPrompt = contextResult.prompt;
-        }
-
-        const promptToUse = task.finalPrompt;
-
-        streamAITask(promptToUse, {
-            onChunk: (chunk) => {
-                const currentTask = tasks.value.find(t => t.id === taskId);
-                if (currentTask && currentTask.status === 'processing') {
-                    currentTask.generatedContent += chunk;
-                }
-            },
-            onComplete: () => {
-                const currentTask = tasks.value.find(t => t.id === taskId);
-                if (currentTask && currentTask.status === 'processing') {
-                    currentTask.status = 'completed';
-                    if (currentTask.type === '润色' || currentTask.type === '续写') {
-                        const strategy = uiStore.uiState.taskApplicationStrategy;
-                        switch (strategy.mode) {
-                            case 'auto':
-                                applyChanges(currentTask.id, true);
-                                break;
-                            case 'delayed':
-                                setTimeout(() => {
-                                    const taskAfterDelay = tasks.value.find(t => t.id === taskId);
-                                    if (taskAfterDelay && taskAfterDelay.status === 'completed') {
-                                        applyChanges(taskId, true);
-                                    }
-                                }, strategy.delaySeconds * 1000);
-                                break;
-                            case 'manual':
-                                break;
-                        }
-                    }
-                    _processQueue();
-                }
-            },
-            onError: (error) => {
-                const currentTask = tasks.value.find(t => t.id === taskId);
-                if (currentTask && currentTask.status === 'processing') {
-                    currentTask.status = 'failed';
-                    currentTask.error = error;
-                    _processQueue();
-                }
-            }
-        });
-    }
-
-    const _processQueue = () => {
-        const limit = uiStore.uiState.concurrentTaskLimit;
-        const processingCount = tasks.value.filter(t => t.status === 'processing').length;
-
-        if (processingCount >= limit) {
-            return;
-        }
-
-        const canStartCount = limit - processingCount;
-        const pendingTasks = tasks.value.filter(t => t.status === 'pending');
-
-        const tasksToStart = pendingTasks.slice(0, canStartCount);
-
-        for (const task of tasksToStart) {
-            _executeTaskAndStream(task.id);
+        if (task) {
+            task.status = status;
         }
     };
 
+    const updateTaskError = (taskId: string, error: string) => {
+        const task = tasks.value.find(t => t.id === taskId);
+        if (task) {
+            task.status = 'failed';
+            task.error = error;
+        }
+    };
+
+    const appendGeneratedContent = (taskId: string, chunk: string) => {
+        const task = tasks.value.find(t => t.id === taskId);
+        if (task && task.status === 'processing') {
+            task.generatedContent += chunk;
+        }
+    };
+
+    // --- Complex Actions ---
     const startTask = async (taskType: AITaskType, sourceItemId: string, finalPrompt?: string) => {
-        const { node: sourceItem } = editorStore.findItemById(sourceItemId);
-        if (!sourceItem || !('content' in sourceItem) || typeof sourceItem.content !== 'string') {
-            console.error("AI Task Error: Source item not found or has no content.", sourceItemId);
-            return;
-        }
+        const newTask = await AITaskFactory.createTask(taskType, sourceItemId, finalPrompt);
+        if (!newTask) return;
 
-        let targetItemId: string;
-        let taskTitle: string;
-
-        if (taskType === '分析' || taskType === '剧情生成') {
-            const newDerivedItem = derivedContentStore.createDerivedItem(sourceItem, taskType);
-            if (!newDerivedItem) {
-                console.error("Failed to create derived item shell.");
-                return;
-            }
-            targetItemId = newDerivedItem.id;
-            taskTitle = newDerivedItem.title;
-
+        // Open tab for derived content immediately
+        if (newTask.type === '分析' || newTask.type === '剧情生成') {
             await nextTick();
-            editorStore.openTab(targetItemId);
-        } else {
-            targetItemId = sourceItemId;
-            taskTitle = `${taskType}《${sourceItem.title}》`;
+            editorStore.openTab(newTask.targetItemId);
         }
-
-        const newTask: AITask = {
-            id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            title: taskTitle,
-            type: taskType,
-            sourceItemId: sourceItemId,
-            targetItemId: targetItemId,
-            sourceItemTitle: sourceItem.title, // **核心修正**: 添加标题快照
-            sourceItemContent: sourceItem.content, // **核心修正**: 添加内容快照
-            status: 'pending',
-            generatedContent: '',
-            finalPrompt: finalPrompt,
-            createdAt: new Date(),
-        };
 
         tasks.value.unshift(newTask);
+
         if (uiStore.uiState.autoOpenAIPanel && editorStore.activePaneId) {
             editorStore.ensureAIPanelIsOpen(editorStore.activePaneId);
         }
-        nextTick(_processQueue);
+        nextTick(processQueue);
     };
 
     const startBatchTaskForVolume = (taskType: AITaskType, volume: Volume) => {
@@ -160,6 +70,34 @@ export const useAITaskStore = defineStore('aiTask', () => {
         volume.chapters.forEach(chapter => {
             startTask(taskType, chapter.id, undefined);
         });
+    };
+
+    const completeTask = (taskId: string) => {
+        const task = tasks.value.find(t => t.id === taskId);
+        if (task && task.status === 'processing') {
+            task.status = 'completed';
+
+            // Handle auto-application logic
+            if (task.type === '润色' || task.type === '续写') {
+                const strategy = uiStore.uiState.taskApplicationStrategy;
+                switch (strategy.mode) {
+                    case 'auto':
+                        applyChanges(taskId, true);
+                        break;
+                    case 'delayed':
+                        setTimeout(() => {
+                            const taskAfterDelay = tasks.value.find(t => t.id === taskId);
+                            if (taskAfterDelay && taskAfterDelay.status === 'completed') {
+                                applyChanges(taskId, true);
+                            }
+                        }, strategy.delaySeconds * 1000);
+                        break;
+                    case 'manual':
+                        // Do nothing
+                        break;
+                }
+            }
+        }
     };
 
     const applyChanges = (taskId: string, isAutoApplied: boolean = false) => {
@@ -188,8 +126,8 @@ export const useAITaskStore = defineStore('aiTask', () => {
             task.status = 'pending';
             task.error = undefined;
             task.generatedContent = '';
-            task.finalPrompt = undefined; // 清除旧的prompt，强制重新构建
-            nextTick(_processQueue);
+            task.finalPrompt = undefined; // Force prompt rebuild
+            nextTick(processQueue);
         }
     };
 
@@ -198,10 +136,23 @@ export const useAITaskStore = defineStore('aiTask', () => {
     };
 
     const clearAllTasks = () => {
+        // Here we might need a way to signal cancellation to the execution service in a real scenario
         tasks.value = [];
     };
 
     return {
-        tasks, activeTasksCount, startTask, startBatchTaskForVolume, applyChanges, retryTask, clearCompletedTasks, clearAllTasks
+        tasks,
+        activeTasksCount,
+        startTask,
+        startBatchTaskForVolume,
+        applyChanges,
+        retryTask,
+        clearCompletedTasks,
+        clearAllTasks,
+        // Methods for execution service
+        updateTaskStatus,
+        updateTaskError,
+        appendGeneratedContent,
+        completeTask
     };
 });

@@ -1,10 +1,11 @@
+<!-- src/settings/views/UsageLogs.vue -->
 <template>
   <main class="flex-1 bg-white flex flex-col">
     <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
       <h1 class="text-lg font-medium text-[#374151]">用量与日志</h1>
       <div class="flex items-center gap-3">
         <div class="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
-          <button v-for="tab in timeTabs" :key="tab" @click="activeTimeTab = tab" :class="{'bg-white shadow-sm text-[#374151]': activeTimeTab === tab, 'text-[#6B7280]': activeTimeTab !== tab}" class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors">
+          <button v-for="tab in timeTabs" :key="tab" @click="store.changePeriod(tab)" :class="{'bg-white shadow-sm text-[#374151]': filters.period === tab, 'text-[#6B7280]': filters.period !== tab}" class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors">
             {{ tab }}
           </button>
         </div>
@@ -15,7 +16,10 @@
         </button>
       </div>
     </header>
-    <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] space-y-6">
+    <div v-if="store.isLoading && logs.length === 0" class="flex-1 flex items-center justify-center bg-[#FCFCFC]">
+      <p>加载中...</p>
+    </div>
+    <div v-else class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] space-y-6" :class="{'opacity-50': store.isLoading}">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div v-for="stat in stats" :key="stat.label" class="bg-white rounded-xl p-4 border border-gray-100">
           <div class="flex items-center justify-between mb-3">
@@ -36,29 +40,28 @@
           <h3 class="text-base font-medium text-[#374151]">使用趋势</h3>
           <div class="flex items-center gap-4">
             <div class="flex items-center gap-2">
-              <div class="w-3 h-3 bg-blue-500 rounded"></div>
+              <div class="w-3 h-3 bg-blue-500 rounded-sm"></div>
               <span class="text-xs text-[#6B7280]">请求数</span>
             </div>
             <div class="flex items-center gap-2">
-              <div class="w-3 h-3 bg-purple-500 rounded"></div>
-              <span class="text-xs text-[#6B7280]">Token消耗</span>
+              <div class="w-3 h-3 bg-purple-500 rounded-sm"></div>
+              <span class="text-xs text-[#6B7280]">Token消耗 (k)</span>
             </div>
           </div>
         </div>
-        <div class="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-          <p class="text-gray-400 text-sm">[交互式图表 - 展示30天使用趋势]</p>
-        </div>
+        <UsageTrendChart :data="chartData" />
       </div>
       <div class="bg-white rounded-xl p-6 border border-gray-100">
         <div class="flex items-center justify-between mb-4 flex-wrap gap-4">
           <h3 class="text-base font-medium text-[#374151]">API 调用日志</h3>
           <div class="flex items-center gap-3">
-            <select class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563] bg-white">
+            <select v-model="modelFilter" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563] bg-white">
               <option>所有模型</option>
-              <option>GPT-4</option>
-              <option>Claude 3</option>
+              <option>gpt-4-turbo</option>
+              <option>claude-3-opus</option>
+              <option>gemini-pro</option>
             </select>
-            <select class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563] bg-white">
+            <select v-model="statusFilter" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#4B5563] bg-white">
               <option>所有状态</option>
               <option>成功</option>
               <option>失败</option>
@@ -82,11 +85,12 @@
           </table>
         </div>
         <div class="mt-4 flex items-center justify-between">
-          <p class="text-sm text-[#6B7280]">显示 1-3 条，共 3 条</p>
+          <p class="text-sm text-[#6B7280]">
+            显示第 {{ (pagination.currentPage - 1) * pagination.limit + 1 }} - {{ Math.min(pagination.currentPage * pagination.limit, pagination.totalLogs) }} 条，共 {{ pagination.totalLogs }} 条
+          </p>
           <div class="flex items-center gap-2">
-            <button class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50" disabled>上一页</button>
-            <button class="px-3 py-1.5 bg-[#4B5563] text-white border border-[#4B5563] rounded-lg text-sm">1</button>
-            <button class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50" disabled>下一页</button>
+            <button @click="store.changePage(pagination.currentPage - 1)" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50" :disabled="pagination.currentPage <= 1">上一页</button>
+            <button @click="store.changePage(pagination.currentPage + 1)" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50" :disabled="pagination.currentPage >= pagination.totalPages">下一页</button>
           </div>
         </div>
       </div>
@@ -95,22 +99,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useUsageLogsStore } from '@/settings/stores/usageLogsStore';
+import UsageTrendChart from '@/settings/components/UsageTrendChart.vue';
 
-const activeTimeTab = ref('月');
-const timeTabs = ['日', '周', '月'];
+const store = useUsageLogsStore();
+const { stats, logs, filters, pagination, chartData } = storeToRefs(store);
 
-const stats = ref([
-  { label: '总请求数', value: '12,564', icon: `<svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>`, progressColor: 'bg-blue-500', progressWidth: '75%', trend: '+8.2%', trendColor: 'text-green-600' },
-  { label: 'Token 消耗', value: '856K', icon: `<svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>`, progressColor: 'bg-purple-500', progressWidth: '85.6%', trend: '85.6%', trendColor: 'text-[#6B7280]' },
-  { label: '平均响应时间', value: '1.2s', icon: `<svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`, progressColor: 'bg-green-500', progressWidth: '25%', trend: '优秀', trendColor: 'text-green-600' },
-  { label: '错误率', value: '0.8%', icon: `<svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`, progressColor: 'bg-red-500', progressWidth: '8%', trend: '-0.2%', trendColor: 'text-red-600' },
-]);
+const timeTabs: ('日' | '周' | '月')[] = ['日', '周', '月'];
 
-const logs = ref([
-  { id: 1, timestamp: '2024-06-18 10:32:05', endpoint: '/v1/chat/completions', model: 'gpt-4-turbo', tokens: '1,245', status: '200 OK', statusClass: 'bg-green-100 text-green-700', duration: '1.25s' },
-  { id: 2, timestamp: '2024-06-18 10:31:50', endpoint: '/v1/chat/completions', model: 'claude-3-opus', tokens: '2,105', status: '200 OK', statusClass: 'bg-green-100 text-green-700', duration: '2.01s' },
-  { id: 3, timestamp: '2024-06-18 10:30:12', endpoint: '/v1/chat/completions', model: 'gpt-4-turbo', tokens: '0', status: '400 Error', statusClass: 'bg-red-100 text-red-700', duration: '0.05s' },
-]);
+const modelFilter = ref(filters.value.model);
+const statusFilter = ref(filters.value.status);
+
+watch(modelFilter, (newValue) => {
+  store.changeFilter({ model: newValue });
+});
+
+watch(statusFilter, (newValue) => {
+  store.changeFilter({ status: newValue });
+});
+
+onMounted(() => {
+  store.fetchUsageData();
+});
 
 </script>

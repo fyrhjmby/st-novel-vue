@@ -1,0 +1,1180 @@
+// == 扫描摘要 ==
+//
+// == 文件内容 ==
+
+// =
+// 文件: ..\src\prompt\components\PromptSidebar.vue
+//
+
+<template>
+  <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
+    <div class="p-4 space-y-4 border-b border-gray-100">
+      <div class="flex items-center gap-3 px-2">
+        <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+        </div>
+        <div>
+          <h3 class="font-medium text-[#374151] text-sm">AI Prompt</h3>
+          <p class="text-xs text-[#9CA3AF]">提示词平台</p>
+        </div>
+      </div>
+    </div>
+    <nav class="flex-1 px-4 py-6">
+      <div class="mb-8">
+        <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">浏览</p>
+        <div class="space-y-1">
+          <router-link v-for="item in browseNav" :key="item.name" :to="item.path" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors" active-class="bg-[#4B5563] text-white font-medium">
+            <span v-html="item.icon"></span>
+            <span>{{ item.name }}</span>
+          </router-link>
+        </div>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">管理</p>
+        <div class="space-y-1">
+          <router-link v-for="item in manageNav" :key="item.name" :to="item.path" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors" active-class="bg-[#4B5563] text-white font-medium">
+            <span v-html="item.icon"></span>
+            <span>{{ item.name }}</span>
+          </router-link>
+        </div>
+      </div>
+    </nav>
+    <div class="p-4 border-t border-gray-100 mt-auto">
+      <router-link to="/settings" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1V6M12 18V23M4.22 4.22L7.76 7.76M16.24 16.24L19.78 19.78M1 12H6M18 12H23M4.22 19.78L7.76 16.24M16.24 7.76L19.78 4.22"/></svg>
+        <span>设置</span>
+      </router-link>
+    </div>
+  </aside>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const browseNav = ref([
+  { name: '提示词市场', path: '/prompt/market', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>` },
+  { name: '我的收藏', path: '/prompt/favorites', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>` }
+]);
+
+const manageNav = ref([
+  { name: '我的提示词', path: '/prompt/my', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L13.196 5.196z"/></svg>` },
+  { name: '使用统计', path: '/prompt/statistics', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 20L12 10M18 20L18 4M6 20L6 16"/></svg>` }
+]);
+</script>
+
+<style scoped>
+.router-link-active {
+  background-color: #4B5563;
+  color: white;
+  font-weight: 500;
+}
+</style>
+
+// =
+// 文件: ..\src\prompt\layouts\PromptRootLayout.vue
+//
+
+<template>
+  <div class="h-screen w-screen flex bg-white design-frame-container">
+    <div class="design-frame">
+      <div class="h-10 px-5 flex items-center border-b border-gray-100 bg-gray-50 flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-[#FF5F57]"></div>
+          <div class="w-3 h-3 rounded-full bg-[#FFBD2E]"></div>
+          <div class="w-3 h-3 rounded-full bg-[#28CA42]"></div>
+        </div>
+        <div class="ml-auto flex items-center gap-4 text-xs text-gray-400">
+          <span>AI Creator Platform</span>
+        </div>
+      </div>
+      <div class="h-[calc(100%-40px)] flex">
+        <PromptSidebar />
+        <router-view />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import PromptSidebar from '@/prompt/components/PromptSidebar.vue'
+</script>
+
+<style scoped>
+.design-frame-container {
+  padding: 2rem;
+  background-color: #f5f5f7;
+}
+.design-frame {
+  width: 100%;
+  height: 100%;
+  max-width: 1800px;
+  margin: auto;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+}
+</style>
+
+// =
+// 文件: ..\src\prompt\router.ts
+//
+
+import type { RouteRecordRaw } from 'vue-router'
+
+export const promptRoutes: Array<RouteRecordRaw> = [
+    {
+        path: '/prompt',
+        component: () => import('@/prompt/layouts/PromptRootLayout.vue'),
+        redirect: '/prompt/market',
+        children: [
+            {
+                path: 'market',
+                name: 'prompt-market',
+                component: () => import('@/prompt/views/PromptMarket.vue'),
+                meta: { title: '提示词市场' }
+            },
+            {
+                path: 'favorites',
+                name: 'prompt-favorites',
+                component: () => import('@/prompt/views/MyFavorites.vue'),
+                meta: { title: '我的收藏' }
+            },
+            {
+                path: 'my',
+                name: 'prompt-my',
+                component: () => import('@/prompt/views/MyPrompts.vue'),
+                meta: { title: '我的提示词' }
+            },
+            {
+                path: 'statistics',
+                name: 'prompt-statistics',
+                component: () => import('@/prompt/views/UsageStatistics.vue'),
+                meta: { title: '使用统计' }
+            },
+            {
+                path: 'editor',
+                name: 'prompt-editor-new',
+                component: () => import('@/prompt/views/PromptEditor.vue'),
+                meta: { title: '新建提示词' }
+            },
+            {
+                path: 'editor/:id',
+                name: 'prompt-editor-edit',
+                component: () => import('@/prompt/views/PromptEditor.vue'),
+                meta: { title: '编辑提示词' }
+            },
+            {
+                path: 'market/:id',
+                name: 'prompt-detail',
+                component: () => import('@/prompt/views/PromptDetail.vue'),
+                meta: { title: '提示词详情' }
+            },
+        ]
+    }
+];
+
+// =
+// 文件: ..\src\prompt\views\MyFavorites.vue
+//
+
+<template>
+  <main class="flex-1 bg-white flex flex-col">
+    <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100">
+      <h1 class="text-lg font-medium text-[#374151]">我的收藏</h1>
+      <div class="relative">
+        <svg class="w-5 h-5 text-[#9CA3AF] absolute top-1/2 left-3 -translate-y-1/2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21L16.65 16.65"/></svg>
+        <input type="text" placeholder="搜索我的收藏..." class="w-64 bg-gray-100 rounded-lg h-10 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B5563]/20 focus:bg-white focus:border-[#4B5563] transition">
+      </div>
+    </header>
+    <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-for="prompt in favoritePrompts" :key="prompt.title" class="bg-white rounded-xl p-6 border border-gray-100 hover:border-gray-200 transition-all hover:shadow-sm cursor-pointer group">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform" :class="prompt.iconBgClass" v-html="prompt.icon"></div>
+            <span class="text-xs font-medium px-2 py-1 rounded-md" :class="prompt.tagClass">{{ prompt.tag }}</span>
+          </div>
+          <h4 class="font-medium text-[#374151] mb-2">{{ prompt.title }}</h4>
+          <p class="text-sm text-[#9CA3AF] mb-4 line-clamp-2">{{ prompt.description }}</p>
+          <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-3 text-[#9CA3AF]">
+              <div class="flex items-center gap-1">
+                <svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                <span>{{ prompt.likes }}</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <span>{{ prompt.views }}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-full" :class="prompt.authorAvatarClass"></div>
+              <span class="text-[#6B7280]">{{ prompt.author }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const favoritePrompts = ref([
+  {
+    title: '爆款文案生成器',
+    description: '根据产品特点和目标用户，生成引人注目的营销文案。',
+    icon: `<svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L13.196 5.196z"/></svg>`,
+    iconBgClass: 'bg-purple-50',
+    tag: '写作',
+    tagClass: 'text-[#3B82F6] bg-blue-50',
+    likes: '2.3k',
+    views: '18.5k',
+    author: '王小美',
+    authorAvatarClass: 'bg-gradient-to-br from-pink-100 to-rose-100'
+  },
+  {
+    title: '代码优化助手',
+    description: '分析代码并提供性能优化、可读性改进的建议。',
+    icon: `<svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>`,
+    iconBgClass: 'bg-green-50',
+    tag: '编程',
+    tagClass: 'text-[#EF4444] bg-red-50',
+    likes: '956',
+    views: '7.2k',
+    author: '张程序',
+    authorAvatarClass: 'bg-gradient-to-br from-blue-100 to-cyan-100'
+  }
+]);
+</script>
+
+// =
+// 文件: ..\src\prompt\views\MyPrompts.vue
+//
+
+<template>
+  <main class="flex-1 bg-white flex flex-col">
+    <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100">
+      <h1 class="text-lg font-medium text-[#374151]">我的提示词</h1>
+      <button class="px-5 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
+        <span>创建新提示词</span>
+      </button>
+    </header>
+    <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
+      <!-- 统计概览 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div v-for="stat in stats" :key="stat.label" class="bg-white rounded-xl p-5 border border-gray-100">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center" :class="stat.iconBgClass" v-html="stat.icon"></div>
+            <span class="text-xs font-medium px-2 py-1 rounded-full" :class="stat.trendClass" >{{ stat.trend }}</span>
+          </div>
+          <p class="text-2xl font-light text-[#374151]">{{ stat.value }}</p>
+          <p class="text-sm text-[#9CA3AF] mt-1">{{ stat.label }}</p>
+        </div>
+      </div>
+
+      <!-- 筛选和视图切换 -->
+      <div class="bg-white rounded-xl p-6 border border-gray-100 mb-6">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="relative">
+              <svg class="w-5 h-5 text-[#9CA3AF] absolute top-1/2 left-3 -translate-y-1/2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21L16.65 16.65"/></svg>
+              <input type="text" placeholder="搜索我的提示词..." class="w-64 bg-gray-50 border border-gray-200 rounded-lg h-10 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B5563]/20 focus:bg-white focus:border-[#4B5563] transition">
+            </div>
+            <select class="bg-gray-50 border border-gray-200 rounded-lg h-10 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B5563]/20 focus:bg-white focus:border-[#4B5563] transition">
+              <option>全部分类</option>
+              <option>沟通交流</option>
+              <option>文案写作</option>
+              <option>编程开发</option>
+              <option>生活娱乐</option>
+            </select>
+            <select class="bg-gray-50 border border-gray-200 rounded-lg h-10 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B5563]/20 focus:bg-white focus:border-[#4B5563] transition">
+              <option>最近更新</option>
+              <option>最多收藏</option>
+              <option>最多使用</option>
+              <option>名称排序</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="p-2 bg-[#4B5563] text-white rounded-lg hover:bg-[#374151] transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            </button>
+            <button class="p-2 bg-gray-100 text-[#6B7280] rounded-lg hover:bg-gray-200 transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 提示词网格视图 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-for="prompt in myPrompts" :key="prompt.title" class="prompt-card bg-white rounded-xl p-6 border border-gray-100 hover:border-gray-200 cursor-pointer relative overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5">
+          <div v-if="prompt.isHot" class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 to-orange-400"></div>
+          <div class="absolute top-3 right-3">
+            <span class="inline-flex items-center gap-1.5 text-xs font-medium" :class="prompt.status === '公开' ? 'text-[#10B981]' : 'text-[#6B7280]'">
+              <div class="w-2 h-2 rounded-full" :class="prompt.status === '公开' ? 'bg-[#10B981]' : 'bg-[#6B7280]'"></div>
+              {{ prompt.status }}
+            </span>
+          </div>
+          <div class="flex items-start gap-4 mb-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" :class="prompt.iconBgClass" v-html="prompt.icon"></div>
+            <div class="flex-1">
+              <h4 class="font-medium text-[#374151] mb-1 flex items-center gap-2">
+                {{ prompt.title }}
+                <svg v-if="prompt.isHot" class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              </h4>
+              <span class="text-xs font-medium px-2 py-1 rounded-full" :class="prompt.tagClass">{{ prompt.tag }}</span>
+            </div>
+          </div>
+          <p class="text-sm text-[#9CA3AF] mb-4 line-clamp-2">{{ prompt.description }}</p>
+          <div class="flex items-center justify-between text-xs text-[#9CA3AF]">
+            <div class="flex items-center gap-3">
+              <div class="flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                <span>{{ prompt.likes }}</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span>{{ prompt.usage }}</span>
+              </div>
+            </div>
+            <span>{{ prompt.updated }}</span>
+          </div>
+          <div class="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2">
+            <button class="flex-1 px-3 py-2 bg-gray-50 text-[#6B7280] rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">编辑</button>
+            <button class="flex-1 px-3 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors">使用</button>
+            <button class="p-2 hover:bg-gray-50 rounded-lg transition-colors">
+              <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+          </div>
+        </div>
+        <!-- 创建新提示词卡片 -->
+        <div class="bg-white rounded-xl p-6 border-2 border-dashed border-gray-200 hover:border-[#4B5563] cursor-pointer flex flex-col items-center justify-center min-h-[280px] group transition-all">
+          <div class="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mb-4 group-hover:bg-[#4B5563]/10 transition-colors">
+            <svg class="w-8 h-8 text-[#6B7280] group-hover:text-[#4B5563] transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
+          </div>
+          <p class="text-sm font-medium text-[#6B7280] group-hover:text-[#4B5563] transition-colors">创建新提示词</p>
+          <p class="text-xs text-[#9CA3AF] mt-1">开始构建你的AI提示词</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const stats = ref([
+  { label: '提示词总数', value: '15', trend: '+12%', trendClass: 'text-green-600 bg-green-50', iconBgClass: 'bg-blue-50', icon: `<svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`},
+  { label: '公开分享', value: '8', trend: '公开', trendClass: 'text-[#10B981] font-medium', iconBgClass: 'bg-green-50', icon: `<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`},
+  { label: '收藏过千', value: '3', trend: '热门', trendClass: 'text-[#F59E0B] font-medium animate-pulse', iconBgClass: 'bg-yellow-50', icon: `<svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>`},
+  { label: '总使用次数', value: '42.8k', trend: '+28%', trendClass: 'text-purple-600 bg-purple-50', iconBgClass: 'bg-purple-50', icon: `<svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`},
+]);
+
+const myPrompts = ref([
+  {
+    title: '高情商沟通大师',
+    description: '将任何直白、生硬的表达，转化为礼貌、得体且不失分寸的沟通话术。',
+    icon: `<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>`,
+    iconBgClass: 'bg-blue-50',
+    tag: '沟通交流',
+    tagClass: 'text-[#059669] bg-green-100',
+    status: '公开',
+    likes: '1.8k',
+    usage: '12.3k',
+    updated: '更新于 3天前',
+    isHot: false,
+  },
+  {
+    title: '周报生成器',
+    description: '根据本周工作要点，自动生成结构清晰、重点突出的周报。',
+    icon: `<svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>`,
+    iconBgClass: 'bg-purple-50',
+    tag: '文案写作',
+    tagClass: 'text-[#2563EB] bg-blue-100',
+    status: '私有',
+    likes: '-',
+    usage: '856',
+    updated: '更新于 1周前',
+    isHot: false,
+  },
+  {
+    title: '旅游行程规划',
+    description: '根据目的地、预算和偏好，生成详细的旅游行程安排。',
+    icon: `<svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+    iconBgClass: 'bg-yellow-50',
+    tag: '生活娱乐',
+    tagClass: 'text-[#F59E0B] bg-yellow-100',
+    status: '公开',
+    likes: '3.2k',
+    usage: '28.7k',
+    updated: '更新于 2周前',
+    isHot: true,
+  }
+]);
+</script>
+
+// =
+// 文件: ..\src\prompt\views\PromptDetail.vue
+//
+
+<template>
+  <main class="flex-1 bg-white flex flex-col">
+    <!-- 详情头部 -->
+    <header class="px-8 pt-6 pb-0">
+      <div class="flex items-start justify-between mb-6">
+        <div class="flex items-start gap-4">
+          <button @click="router.back()" class="p-2 hover:bg-gray-50 rounded-lg transition-colors mt-1"><svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg></button>
+          <div>
+            <div class="flex items-center gap-3 mb-2">
+              <h1 class="text-2xl font-medium text-[#374151]">高情商沟通大师</h1>
+              <span class="px-3 py-1.5 text-xs font-medium text-[#059669] bg-green-100 rounded-full">沟通交流</span>
+              <span class="inline-flex items-center gap-1.5 text-xs font-medium text-[#10B981]">
+                <div class="w-2 h-2 rounded-full bg-[#10B981]"></div>公开
+              </span>
+            </div>
+            <div class="flex items-center gap-4 text-sm text-[#6B7280]">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full"></div>
+                <span>由 <span class="text-[#374151] font-medium">李欣然</span> 创建</span>
+              </div>
+              <span>•</span>
+              <span>更新于 2024年5月20日</span>
+              <span>•</span>
+              <div class="flex items-center gap-1">
+                <svg class="w-4 h-4 text-[#F59E0B]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <span class="font-medium">4.8</span>
+                <span class="text-[#9CA3AF]">(238)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="p-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors group">
+            <svg class="w-5 h-5 text-[#6B7280] group-hover:text-[#374151]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+          </button>
+          <button class="p-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors group">
+            <svg class="w-5 h-5 text-[#6B7280] group-hover:text-[#374151]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+          </button>
+          <button class="px-6 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span>立即使用</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab导航 -->
+      <div class="flex items-center gap-6 border-b border-gray-100">
+        <button v-for="tab in tabs" :key="tab.name" @click="activeTab = tab.name" class="px-1 py-3 text-sm font-medium" :class="activeTab === tab.name ? 'border-b-2 border-[#4B5563] text-[#374151]' : 'text-[#6B7280] hover:text-[#374151]'">
+          {{ tab.name }}
+          <span v-if="tab.count" class="ml-2 px-2 py-0.5 bg-gray-100 text-xs rounded-full">{{ tab.count }}</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
+      <div class="grid grid-cols-3 gap-6">
+        <!-- 左侧主要内容 -->
+        <div class="col-span-2 space-y-6">
+          <!-- 简介卡片 -->
+          <div class="bg-white rounded-xl p-6 border border-gray-100">
+            <h3 class="text-base font-medium text-[#374151] mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              简介
+            </h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed mb-4">
+              将任何直白、生硬的表达，转化为礼貌、得体且不失分寸的沟通话术。无论是向上级汇报坏消息，还是拒绝不合理的要求，或是提出批评性意见，这个提示词都能帮你找到最合适的表达方式。
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <span v-for="tag in ['#职场沟通', '#情商提升', '#人际关系', '#话术优化']" :key="tag" class="px-3 py-1.5 bg-gray-50 text-xs text-[#6B7280] rounded-lg">{{ tag }}</span>
+            </div>
+          </div>
+
+          <!-- 核心功能 -->
+          <div class="bg-white rounded-xl p-6 border border-gray-100">
+            <h3 class="text-base font-medium text-[#374151] mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+              核心功能
+            </h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div v-for="feature in features" :key="feature.title" class="p-4 rounded-lg" :class="feature.bgClass">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3" :class="feature.iconBgClass" v-html="feature.icon"></div>
+                <h4 class="text-sm font-medium text-[#374151] mb-1">{{ feature.title }}</h4>
+                <p class="text-xs text-[#6B7280]">{{ feature.description }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 使用示例 -->
+          <div class="bg-white rounded-xl border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h3 class="text-base font-medium text-[#374151] flex items-center gap-2">
+                <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                使用示例
+              </h3>
+              <button class="text-sm text-[#4B5563] hover:text-[#374151] font-medium">查看更多</button>
+            </div>
+            <div class="p-6 space-y-4">
+              <div v-for="example in examples" :key="example.title" class="example-card bg-gray-50 rounded-lg p-4 border-l-4 transition-transform hover:translate-x-1" :class="example.borderColorClass">
+                <div class="flex items-start justify-between mb-2">
+                  <span class="text-xs font-medium px-2 py-1 rounded" :class="example.tagBgClass">{{ example.tag }}</span>
+                  <button class="text-xs text-[#6B7280] hover:text-[#374151]">试试看</button>
+                </div>
+                <p class="text-sm text-[#374151] font-medium mb-2">原始表达：</p>
+                <p class="text-sm text-[#6B7280] mb-3">{{ example.original }}</p>
+                <p class="text-sm text-[#374151] font-medium mb-2">优化后：</p>
+                <p class="text-sm text-[#6B7280]">{{ example.optimized }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧信息栏 -->
+        <div class="space-y-6">
+          <!-- 统计数据 -->
+          <div class="bg-white rounded-xl p-6 border border-gray-100">
+            <h3 class="text-base font-medium text-[#374151] mb-4">使用统计</h3>
+            <div class="space-y-4">
+              <div v-for="stat in stats" :key="stat.label">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm text-[#6B7280]">{{ stat.label }}</span>
+                  <span class="text-sm font-medium text-[#374151]">{{ stat.value }}</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-2">
+                  <div class="h-2 rounded-full" :class="stat.barClass" :style="{width: stat.width}"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 相关推荐 -->
+          <div class="bg-white rounded-xl p-6 border border-gray-100">
+            <h3 class="text-base font-medium text-[#374151] mb-4">相关推荐</h3>
+            <div class="space-y-3">
+              <a href="#" v-for="rec in recommendations" :key="rec.title" class="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex items-start gap-3">
+                  <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" :class="rec.iconBgClass" v-html="rec.icon"></div>
+                  <div class="flex-1">
+                    <h4 class="text-sm font-medium text-[#374151] mb-1">{{ rec.title }}</h4>
+                    <p class="text-xs text-[#9CA3AF]">{{ rec.description }}</p>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <!-- 快速操作 -->
+          <div class="bg-gradient-to-br from-gray-900 to-gray-700 rounded-xl p-6 text-white">
+            <h3 class="text-base font-medium mb-4">快速开始</h3>
+            <p class="text-sm text-gray-300 mb-4">立即体验高情商沟通的魅力</p>
+            <button class="w-full py-3 bg-white text-gray-900 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              <span>开始使用</span>
+            </button>
+            <div class="mt-4 pt-4 border-t border-gray-600">
+              <p class="text-xs text-gray-400 text-center">已有 12,356 人使用</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+import router from "@/router";
+
+const activeTab = ref('概览');
+const tabs = ref([
+  { name: '概览' },
+  { name: '模板详情' },
+  { name: '评价', count: '238' },
+  { name: '使用指南' },
+  { name: '版本历史' },
+]);
+
+const features = ref([
+  { title: '话术转换', description: '将直白表达转为委婉得体的沟通方式', icon: `<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>`, bgClass: 'bg-blue-50', iconBgClass: 'bg-blue-100' },
+  { title: '场景适配', description: '根据不同场合提供最合适的表达建议', icon: `<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`, bgClass: 'bg-green-50', iconBgClass: 'bg-green-100' },
+  { title: '多种风格', description: '提供正式、友好、幽默等多种沟通风格', icon: `<svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>`, bgClass: 'bg-purple-50', iconBgClass: 'bg-purple-100' },
+  { title: '即时优化', description: '快速生成多个优化版本供选择', icon: `<svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`, bgClass: 'bg-yellow-50', iconBgClass: 'bg-yellow-100' }
+]);
+
+const examples = ref([
+  { tag: '职场汇报', original: '"项目搞砸了，预算超了50%，时间也延期了。"', optimized: '"关于XX项目，我需要向您汇报一些挑战。目前项目遇到了一些预料之外的困难，导致预算超出原计划50%，交付时间也需要相应调整。我已经准备了详细的问题分析和解决方案..."', borderColorClass: 'border-blue-500', tagBgClass: 'text-blue-600 bg-blue-100' },
+  { tag: '拒绝请求', original: '"不行，这个需求太离谱了，做不了。"', optimized: '"感谢您的信任。我仔细评估了这个需求，考虑到目前的资源限制和技术可行性，恐怕短期内难以实现。不过，我有一个替代方案可能会帮助您达到类似的效果..."', borderColorClass: 'border-green-500', tagBgClass: 'text-green-600 bg-green-100' }
+]);
+
+const stats = ref([
+  { label: '收藏数', value: '1,832', width: '85%', barClass: 'bg-gradient-to-r from-blue-500 to-purple-500' },
+  { label: '使用次数', value: '12,356', width: '92%', barClass: 'bg-gradient-to-r from-green-500 to-teal-500' },
+  { label: '满意度', value: '96%', width: '96%', barClass: 'bg-gradient-to-r from-yellow-500 to-orange-500' },
+]);
+
+const recommendations = ref([
+  { title: '商务谈判助手', description: '专业谈判话术指导', icon: `<svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>`, iconBgClass: 'bg-purple-100' },
+  { title: '客户服务话术', description: '提升客户满意度', icon: `<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/></svg>`, iconBgClass: 'bg-blue-100' },
+  { title: '团队管理沟通', description: '高效团队沟通技巧', icon: `<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>`, iconBgClass: 'bg-green-100' },
+]);
+</script>
+
+// =
+// 文件: ..\src\prompt\views\PromptEditor.vue
+//
+
+<template>
+  <main class="flex-1 bg-white flex flex-col">
+    <!-- 顶部栏 -->
+    <header class="h-20 px-6 flex items-center justify-between border-b border-gray-200/70 bg-white flex-shrink-0">
+      <div class="flex items-center gap-4">
+        <button @click="router.back()" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition">
+          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <div>
+          <h1 class="text-lg font-semibold text-gray-800">编辑提示词</h1>
+          <p class="text-xs text-gray-500 mt-0.5">自动保存于 2 分钟前</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="btn btn-ghost">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+          预览
+        </button>
+        <button class="btn btn-secondary">
+          存为草稿
+        </button>
+        <button class="btn btn-primary">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M5 13l4 4L19 7"/>
+          </svg>
+          发布提示词
+        </button>
+      </div>
+    </header>
+
+    <!-- 编辑区域 -->
+    <div class="flex-1 flex overflow-hidden">
+      <!-- 左侧编辑区 -->
+      <div class="flex-1 px-8 py-8 overflow-y-auto bg-gray-50/50">
+        <!-- 进度指示器 -->
+        <div class="mb-8">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-medium text-gray-600">完成度</p>
+            <p class="text-sm font-semibold text-green-600">75%</p>
+          </div>
+          <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all duration-500" style="width: 75%"></div>
+          </div>
+        </div>
+
+        <!-- 基本信息 -->
+        <div class="card p-6 mb-8">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <h3 class="text-base font-semibold text-gray-800">基本信息</h3>
+            </div>
+            <span class="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">已完成</span>
+          </div>
+          <div class="space-y-6">
+            <div>
+              <label class="form-label">标题 <span class="text-red-500">*</span></label>
+              <input type="text" value="高情商沟通大师" class="form-input w-full h-11 px-4 text-sm" placeholder="给你的提示词起个响亮的名字">
+              <p class="form-help-text">建议使用 2-8 个字的简洁标题</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-5">
+              <div>
+                <label class="form-label">分类 <span class="text-red-500">*</span></label>
+                <div class="relative">
+                  <select class="form-select w-full h-11 px-4 pr-10 text-sm appearance-none">
+                    <option>文案写作</option>
+                    <option selected>沟通交流</option>
+                  </select>
+                  <svg class="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+                </div>
+              </div>
+              <div>
+                <label class="form-label">使用场景</label>
+                <div class="relative">
+                  <select class="form-select w-full h-11 px-4 pr-10 text-sm appearance-none">
+                    <option>日常对话</option>
+                    <option selected>职场沟通</option>
+                  </select>
+                  <svg class="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="form-label">简介 <span class="text-red-500">*</span></label>
+              <textarea rows="3" class="form-textarea w-full p-4 text-sm resize-y" placeholder="用一句话描述你的提示词能做什么">将任何直白、生硬的表达，转化为礼貌、得体且不失分寸的沟通话术。</textarea>
+              <div class="flex items-center justify-between mt-2">
+                <p class="form-help-text">清晰的描述有助于其他用户理解和使用</p>
+                <p class="text-xs text-gray-500">42 / 100</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 提示词内容 -->
+        <div class="card p-6 mb-8">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+              </div>
+              <h3 class="text-base font-semibold text-gray-800">提示词内容</h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-ghost text-xs px-3 py-1.5">AI 优化</button>
+              <button class="btn btn-ghost text-xs px-3 py-1.5">导入模板</button>
+            </div>
+          </div>
+          <div class="bg-gray-50/80 rounded-lg border border-gray-200/80">
+            <div class="flex items-center gap-1 p-2 border-b border-gray-200/80">
+              <button class="px-3 py-1.5 bg-white text-sm font-medium text-gray-800 rounded-md shadow-sm">编辑</button>
+              <button class="px-3 py-1.5 text-sm text-gray-500 hover:bg-white/70 rounded-md">预览</button>
+            </div>
+            <textarea rows="14" class="w-full bg-transparent p-4 text-sm text-gray-800 font-mono leading-relaxed focus:outline-none resize-none" placeholder="在这里输入您的提示词模板..."># Role: 高情商沟通大师
+# Profile: 你是一位精通社会心理学和人际关系学的沟通专家，擅长将直白生硬的表达转化为得体礼貌的话术。
+
+## Skills:
+- 深谙职场沟通礼仪
+- 精通情绪管理技巧
+- 擅长换位思考
+- 掌握非暴力沟通原则
+
+## Workflow:
+1. 分析原始表达：{{原始表达}}
+2. 识别潜在问题和改进点
+3. 提供3种不同风格的优化建议：
+   - 正式场合版本
+   - 日常交流版本
+   - 亲和友好版本
+
+## Rules:
+- 保持原意不变
+- 避免过度客套
+- 确保表达真诚
+- 考虑文化背景
+
+请直接开始分析：
+{{原始表达}}</textarea>
+          </div>
+          <div class="mt-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <p class="text-xs text-gray-500">已使用 <span class="font-medium text-gray-700">2</span> 个变量</p>
+              <button class="text-xs font-medium text-blue-600 hover:underline">管理变量</button>
+            </div>
+            <p class="text-xs text-gray-500">字数：326</p>
+          </div>
+        </div>
+
+        <!-- 高级设置 -->
+        <div class="card p-6">
+          <h3 class="text-base font-semibold text-gray-800 mb-6">高级设置</h3>
+          <div class="space-y-6">
+            <div class="flex items-center justify-between p-4 bg-gray-50/80 rounded-lg">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-xs">
+                  <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-800">公开分享</p>
+                  <p class="text-xs text-gray-500 mt-0.5">允许其他用户在市场中发现并使用</p>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" checked class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧预览区 -->
+      <div class="w-80 border-l border-gray-200/70 bg-white p-6 flex-shrink-0 overflow-y-auto">
+        <h3 class="text-sm font-semibold text-gray-800 mb-4">实时预览</h3>
+        <div class="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200/80">
+          <div class="flex items-start gap-3 mb-4">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+            </div>
+            <div class="flex-1">
+              <h4 class="font-semibold text-gray-800 text-sm mb-1">高情商沟通大师</h4>
+              <span class="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">沟通交流</span>
+            </div>
+          </div>
+          <p class="text-xs text-gray-600 leading-relaxed">将任何直白、生硬的表达，转化为礼貌、得体且不失分寸的沟通话术。</p>
+        </div>
+
+        <div class="space-y-6">
+          <div>
+            <p class="text-xs font-semibold text-gray-500 mb-2">测试你的提示词</p>
+            <div class="bg-gray-50 rounded-lg p-3 space-y-2.5 border border-gray-200/80">
+              <input type="text" class="form-input w-full px-3 py-2 text-xs" placeholder="输入测试内容...">
+              <button class="w-full btn bg-gray-700 text-white text-xs font-medium hover:bg-gray-800">
+                运行测试
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</template>
+
+<script setup lang="ts">
+// This script block is intentionally left empty.
+// You can add logic for data binding and methods here.
+import router from "@/router";
+</script>
+
+<style scoped>
+.card {
+  background-color: white;
+  border-radius: 12px;
+  border: 1px solid #F3F4F6;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+.form-label {
+  @apply text-sm font-medium text-gray-700 block mb-2;
+}
+.form-input, .form-select, .form-textarea {
+  @apply bg-white border border-gray-300 rounded-lg text-gray-900 transition-all duration-200 ease-in-out;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  @apply outline-none border-blue-600 ring-2 ring-blue-600/20;
+}
+.form-help-text {
+  @apply text-xs text-gray-500 mt-2;
+}
+.btn {
+  @apply inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 ease-in-out px-4 py-2 text-sm;
+}
+.btn-primary {
+  @apply bg-gray-800 text-white shadow-sm hover:bg-gray-900 hover:-translate-y-px;
+}
+.btn-secondary {
+  @apply bg-white text-gray-700 border border-gray-300 shadow-sm hover:bg-gray-50;
+}
+.btn-ghost {
+  @apply bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-800;
+}
+</style>
+
+// =
+// 文件: ..\src\prompt\views\PromptMarket.vue
+//
+
+<template>
+  <main class="flex-1 bg-white flex flex-col">
+    <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100">
+      <h1 class="text-lg font-medium text-[#374151]">提示词市场</h1>
+      <div class="relative">
+        <svg class="w-5 h-5 text-[#9CA3AF] absolute top-1/2 left-3 -translate-y-1/2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21L16.65 16.65"/></svg>
+        <input type="text" placeholder="搜索提示词..." class="w-64 bg-gray-100 rounded-lg h-10 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B5563]/20 focus:bg-white focus:border-[#4B5563] transition">
+      </div>
+    </header>
+    <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
+      <div class="mb-6">
+        <div class="flex items-center gap-3">
+          <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium">最热门</button>
+          <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#6B7280] hover:bg-gray-50 transition-colors">最新</button>
+          <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#6B7280] hover:bg-gray-50 transition-colors">推荐</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-for="prompt in prompts" :key="prompt.title" class="bg-white rounded-xl p-6 border border-gray-100 hover:border-gray-200 transition-all hover:shadow-sm cursor-pointer group">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform" :class="prompt.iconBgClass" v-html="prompt.icon"></div>
+            <span class="text-xs font-medium px-2 py-1 rounded-md" :class="prompt.tagClass">{{ prompt.tag }}</span>
+          </div>
+          <h4 class="font-medium text-[#374151] mb-2">{{ prompt.title }}</h4>
+          <p class="text-sm text-[#9CA3AF] mb-4 line-clamp-2">{{ prompt.description }}</p>
+          <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-3 text-[#9CA3AF]">
+              <div class="flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                <span>{{ prompt.likes }}</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <span>{{ prompt.views }}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-full" :class="prompt.authorAvatarClass"></div>
+              <span class="text-[#6B7280]">{{ prompt.author }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const prompts = ref([
+  {
+    title: '高情商沟通大师',
+    description: '将任何直白、生硬的表达，转化为礼貌、得体且不失分寸的话术。',
+    icon: `<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>`,
+    iconBgClass: 'bg-blue-50',
+    tag: '沟通',
+    tagClass: 'text-[#10B981] bg-green-50',
+    likes: '1.8k',
+    views: '12.3k',
+    author: '李欣然',
+    authorAvatarClass: 'bg-gradient-to-br from-indigo-100 to-purple-100'
+  },
+  {
+    title: '爆款文案生成器',
+    description: '根据产品特点和目标用户，生成引人注目的营销文案。',
+    icon: `<svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L13.196 5.196z"/></svg>`,
+    iconBgClass: 'bg-purple-50',
+    tag: '写作',
+    tagClass: 'text-[#3B82F6] bg-blue-50',
+    likes: '2.3k',
+    views: '18.5k',
+    author: '王小美',
+    authorAvatarClass: 'bg-gradient-to-br from-pink-100 to-rose-100'
+  },
+  {
+    title: '代码优化助手',
+    description: '分析代码并提供性能优化、可读性改进的建议。',
+    icon: `<svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>`,
+    iconBgClass: 'bg-green-50',
+    tag: '编程',
+    tagClass: 'text-[#EF4444] bg-red-50',
+    likes: '956',
+    views: '7.2k',
+    author: '张程序',
+    authorAvatarClass: 'bg-gradient-to-br from-blue-100 to-cyan-100'
+  }
+]);
+</script>
+
+// =
+// 文件: ..\src\prompt\views\UsageStatistics.vue
+//
+
+<template>
+  <main class="flex-1 bg-white flex flex-col">
+    <header class="px-8 pt-6 pb-0">
+      <div class="flex items-start justify-between mb-6">
+        <div class="flex items-start gap-4">
+          <button @click="router.back()" class="p-2 hover:bg-gray-50 rounded-lg transition-colors mt-1"><svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg></button>
+          <div>
+            <div class="flex items-center gap-3 mb-2">
+              <h1 class="text-2xl font-medium text-[#374151]">高情商沟通大师</h1>
+              <span class="px-3 py-1.5 text-xs font-medium text-[#059669] bg-green-100 rounded-full">沟通交流</span>
+              <span class="inline-flex items-center gap-1.5 text-xs font-medium text-[#10B981]">
+                <div class="w-2 h-2 rounded-full bg-[#10B981]"></div>公开
+              </span>
+            </div>
+            <div class="flex items-center gap-4 text-sm text-[#6B7280]">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full"></div>
+                <span>由 <span class="text-[#374151] font-medium">李欣然</span> 创建</span>
+              </div>
+              <span>•</span>
+              <span>更新于 2024年5月20日</span>
+              <span>•</span>
+              <div class="flex items-center gap-1">
+                <svg class="w-4 h-4 text-[#F59E0B]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <span class="font-medium">4.8</span>
+                <span class="text-[#9CA3AF]">(238)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="p-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors group">
+            <svg class="w-5 h-5 text-[#6B7280] group-hover:text-[#374151]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+          </button>
+          <button class="p-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors group">
+            <svg class="w-5 h-5 text-[#6B7280] group-hover:text-[#374151]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+          </button>
+          <button class="px-6 py-2.5 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span>立即使用</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab导航 -->
+      <div class="flex items-center gap-6 border-b border-gray-100">
+        <button v-for="tab in tabs" :key="tab.name" @click="activeTab = tab.name" class="px-1 py-3 text-sm font-medium" :class="activeTab === tab.name ? 'border-b-2 border-[#4B5563] text-[#374151]' : 'text-[#6B7280] hover:text-[#374151]'">
+          {{ tab.name }}
+          <span v-if="tab.count" class="ml-2 px-2 py-0.5 bg-gray-100 text-xs rounded-full">{{ tab.count }}</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
+      <div class="grid grid-cols-3 gap-6">
+        <!-- 左侧主要内容 -->
+        <div class="col-span-2 space-y-6">
+          <!-- 简介卡片 -->
+          <div class="bg-white rounded-xl p-6 border border-gray-100">
+            <h3 class="text-base font-medium text-[#374151] mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              简介
+            </h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed mb-4">
+              将任何直白、生硬的表达，转化为礼貌、得体且不失分寸的沟通话术。无论是向上级汇报坏消息，还是拒绝不合理的要求，或是提出批评性意见，这个提示词都能帮你找到最合适的表达方式。
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <span v-for="tag in ['#职场沟通', '#情商提升', '#人际关系', '#话术优化']" :key="tag" class="px-3 py-1.5 bg-gray-50 text-xs text-[#6B7280] rounded-lg">{{ tag }}</span>
+            </div>
+          </div>
+
+          <!-- 核心功能 -->
+          <div class="bg-white rounded-xl p-6 border border-gray-100">
+            <h3 class="text-base font-medium text-[#374151] mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+              核心功能
+            </h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div v-for="feature in features" :key="feature.title" class="p-4 rounded-lg" :class="feature.bgClass">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3" :class="feature.iconBgClass" v-html="feature.icon"></div>
+                <h4 class="text-sm font-medium text-[#374151] mb-1">{{ feature.title }}</h4>
+                <p class="text-xs text-[#6B7280]">{{ feature.description }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 使用示例 -->
+          <div class="bg-white rounded-xl border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h3 class="text-base font-medium text-[#374151] flex items-center gap-2">
+                <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                使用示例
+              </h3>
+              <button class="text-sm text-[#4B5563] hover:text-[#374151] font-medium">查看更多</button>
+            </div>
+            <div class="p-6 space-y-4">
+              <div v-for="example in examples" :key="example.title" class="example-card bg-gray-50 rounded-lg p-4 border-l-4 transition-transform hover:translate-x-1" :class="example.borderColorClass">
+                <div class="flex items-start justify-between mb-2">
+                  <span class="text-xs font-medium px-2 py-1 rounded" :class="example.tagBgClass">{{ example.tag }}</span>
+                  <button class="text-xs text-[#6B7280] hover:text-[#374151]">试试看</button>
+                </div>
+                <p class="text-sm text-[#374151] font-medium mb-2">原始表达：</p>
+                <p class="text-sm text-[#6B7280] mb-3">{{ example.original }}</p>
+                <p class="text-sm text-[#374151] font-medium mb-2">优化后：</p>
+                <p class="text-sm text-[#6B7280]">{{ example.optimized }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧信息栏 -->
+        <div class="space-y-6">
+          <!-- 统计数据 -->
+          <div class="bg-white rounded-xl p-6 border border-gray-100">
+            <h3 class="text-base font-medium text-[#374151] mb-4">使用统计</h3>
+            <div class="space-y-4">
+              <div v-for="stat in stats" :key="stat.label">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm text-[#6B7280]">{{ stat.label }}</span>
+                  <span class="text-sm font-medium text-[#374151]">{{ stat.value }}</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-2">
+                  <div class="h-2 rounded-full" :class="stat.barClass" :style="{width: stat.width}"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 相关推荐 -->
+          <div class="bg-white rounded-xl p-6 border border-gray-100">
+            <h3 class="text-base font-medium text-[#374151] mb-4">相关推荐</h3>
+            <div class="space-y-3">
+              <a href="#" v-for="rec in recommendations" :key="rec.title" class="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex items-start gap-3">
+                  <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" :class="rec.iconBgClass" v-html="rec.icon"></div>
+                  <div class="flex-1">
+                    <h4 class="text-sm font-medium text-[#374151] mb-1">{{ rec.title }}</h4>
+                    <p class="text-xs text-[#9CA3AF]">{{ rec.description }}</p>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <!-- 快速操作 -->
+          <div class="bg-gradient-to-br from-gray-900 to-gray-700 rounded-xl p-6 text-white">
+            <h3 class="text-base font-medium mb-4">快速开始</h3>
+            <p class="text-sm text-gray-300 mb-4">立即体验高情商沟通的魅力</p>
+            <button class="w-full py-3 bg-white text-gray-900 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              <span>开始使用</span>
+            </button>
+            <div class="mt-4 pt-4 border-t border-gray-600">
+              <p class="text-xs text-gray-400 text-center">已有 12,356 人使用</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+import router from "@/router";
+
+const activeTab = ref('概览');
+const tabs = ref([
+  { name: '概览' },
+  { name: '模板详情' },
+  { name: '评价', count: '238' },
+  { name: '使用指南' },
+  { name: '版本历史' },
+]);
+
+const features = ref([
+  { title: '话术转换', description: '将直白表达转为委婉得体的沟通方式', icon: `<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>`, bgClass: 'bg-blue-50', iconBgClass: 'bg-blue-100' },
+  { title: '场景适配', description: '根据不同场合提供最合适的表达建议', icon: `<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`, bgClass: 'bg-green-50', iconBgClass: 'bg-green-100' },
+  { title: '多种风格', description: '提供正式、友好、幽默等多种沟通风格', icon: `<svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>`, bgClass: 'bg-purple-50', iconBgClass: 'bg-purple-100' },
+  { title: '即时优化', description: '快速生成多个优化版本供选择', icon: `<svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`, bgClass: 'bg-yellow-50', iconBgClass: 'bg-yellow-100' }
+]);
+
+const examples = ref([
+  { tag: '职场汇报', original: '"项目搞砸了，预算超了50%，时间也延期了。"', optimized: '"关于XX项目，我需要向您汇报一些挑战。目前项目遇到了一些预料之外的困难，导致预算超出原计划50%，交付时间也需要相应调整。我已经准备了详细的问题分析和解决方案..."', borderColorClass: 'border-blue-500', tagBgClass: 'text-blue-600 bg-blue-100' },
+  { tag: '拒绝请求', original: '"不行，这个需求太离谱了，做不了。"', optimized: '"感谢您的信任。我仔细评估了这个需求，考虑到目前的资源限制和技术可行性，恐怕短期内难以实现。不过，我有一个替代方案可能会帮助您达到类似的效果..."', borderColorClass: 'border-green-500', tagBgClass: 'text-green-600 bg-green-100' }
+]);
+
+const stats = ref([
+  { label: '收藏数', value: '1,832', width: '85%', barClass: 'bg-gradient-to-r from-blue-500 to-purple-500' },
+  { label: '使用次数', value: '12,356', width: '92%', barClass: 'bg-gradient-to-r from-green-500 to-teal-500' },
+  { label: '满意度', value: '96%', width: '96%', barClass: 'bg-gradient-to-r from-yellow-500 to-orange-500' },
+]);
+
+const recommendations = ref([
+  { title: '商务谈判助手', description: '专业谈判话术指导', icon: `<svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>`, iconBgClass: 'bg-purple-100' },
+  { title: '客户服务话术', description: '提升客户满意度', icon: `<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/></svg>`, iconBgClass: 'bg-blue-100' },
+  { title: '团队管理沟通', description: '高效团队沟通技巧', icon: `<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>`, iconBgClass: 'bg-green-100' },
+]);
+</script>
+
