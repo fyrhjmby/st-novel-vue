@@ -1,16 +1,13 @@
-// src/auth/services/auth.service.ts
-// 封装认证相关的业务逻辑
-
 import { useRouter } from 'vue-router';
 import * as api from '@/auth/api';
 import { useAuthStore } from '@/auth/store/auth.store';
-import type { UserCredentials, RegistrationData } from '@/auth/types';
+import type { LoginCredentials, RegistrationData } from '@/types/auth';
 
 export function useAuthService() {
     const store = useAuthStore();
     const router = useRouter();
 
-    const handleLogin = async (credentials: UserCredentials) => {
+    const handleLogin = async (credentials: LoginCredentials) => {
         store.setLoading(true);
         store.setError(null);
         try {

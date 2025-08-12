@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useDashboardStore } from '@/home/stores/dashboardStore';
+import { useDashboardStore } from '@/home/stores/homeStore.ts';
 import StatsCards from '@/home/components/StatsCards.vue';
 
 const dashboardStore = useDashboardStore();

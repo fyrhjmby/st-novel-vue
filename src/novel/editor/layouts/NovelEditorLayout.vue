@@ -1,10 +1,9 @@
 <template>
   <div class="h-screen w-screen flex bg-white design-frame-container">
+
     <div class="design-frame" :class="themeClass">
-      <!-- 顶部导航栏: 严格遵循UI设计稿 -->
       <header class="h-[56px] bg-white border-b border-gray-100 flex items-center px-6 flex-shrink-0">
         <div class="flex items-center gap-2 flex-1">
-          <!-- 返回链接指向小说管理台 -->
           <router-link to="/novel/dashboard" class="flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors p-2 -ml-2 rounded-lg">
             <i class="fa-solid fa-chevron-left w-4 h-4"></i>
             <span>返回</span>
@@ -13,30 +12,51 @@
           <!-- 动态小说标题 -->
           <span class="font-medium text-gray-800 text-sm">{{ editorStore.novelMetadata?.title }}</span>
         </div>
-        <div class="flex items-center gap-4">
-          <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
-            <i class="fa-solid fa-search w-5 h-5"></i>
-          </button>
-          <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors relative">
-            <i class="fa-solid fa-bell w-5 h-5"></i>
-            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-          </button>
-          <div class="ml-2 flex items-center gap-3">
-            <img src="https://i.pravatar.cc/150?u=creator" alt="Creator Avatar" class="w-9 h-9 rounded-full">
-            <div>
-              <p class="text-sm font-medium text-[#374151]">创作者</p>
-              <p class="text-xs text-[#9CA3AF]">在线</p>
-            </div>
+        <button class="p-2 hover:bg-gray-50 rounded-lg transition-colors">
+          <svg
+              class="w-5 h-5 text-[#6B7280]"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21L16.65 16.65" />
+          </svg>
+        </button>
+        <button class="p-2 hover:bg-gray-50 rounded-lg transition-colors relative">
+          <svg
+              class="w-5 h-5 text-[#6B7280]"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+          >
+            <path d="M18 8A6 6 0 0 0 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" />
+            <path d="M13.73 21C13.5 21.6 12.8 22 12 22C11.2 22 10.5 21.6 10.27 21" />
+          </svg>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+        </button>
+        <router-link
+            v-if="authStore.user"
+            to="/settings/user"
+            class="ml-4 flex items-center gap-3 p-1 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <div class="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+            <img v-if="authStore.user.avatar" :src="authStore.user.avatar" class="w-full h-full rounded-full object-cover" alt="User Avatar" />
+            <span v-else class="text-sm font-medium text-gray-600">{{ authStore.user.name.charAt(0) }}</span>
           </div>
-        </div>
+          <div>
+            <p class="text-sm font-medium text-[#374151]">{{ authStore.user.name }}</p>
+            <p class="text-xs text-[#9CA3AF]">{{ authStore.user.plan }}</p>
+          </div>
+        </router-link>
       </header>
 
-      <!-- 使用 <router-view /> 来渲染子路由对应的组件 (EditorWorkspaceView) -->
       <div class="h-[calc(100%-56px)]">
         <router-view />
       </div>
     </div>
-    <!-- 全局覆盖层与模态框 -->
     <ContextPreviewModal />
     <ReaderModeOverlay />
   </div>
@@ -49,7 +69,8 @@ import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
 import ContextPreviewModal from '@/novel/editor/components/modals/ContextPreviewModal.vue';
 import ReaderModeOverlay from '@novel/editor/views/ReaderModeOverlay.vue';
-
+import {useAuthStore} from "@auth/store/auth.store.ts";
+const authStore = useAuthStore();
 const editorStore = useEditorStore();
 const uiStore = useUIStore();
 const themeClass = computed(() => {

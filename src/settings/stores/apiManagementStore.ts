@@ -1,8 +1,6 @@
-// src/settings/stores/apiManagementStore.ts
-
 import { defineStore } from 'pinia';
 import * as service from '@/settings/services/apiManagementService';
-import type { ApiProvider, ApiKey, ModalProvider } from '@/settings/api/apiManagementApi';
+import type { ApiProvider, ApiKey, ModalProvider } from '@/types/apiManagement';
 
 interface ApiManagementState {
     apiProviders: ApiProvider[];
@@ -46,13 +44,12 @@ export const useApiManagementStore = defineStore('api-management', {
                 const provider = this.apiProviders.find(p => p.name === addedKey.provider);
                 if(provider) {
                     provider.activeKeys += 1;
-                    if(provider.statusText === '未配置') {
-                        provider.statusClass = 'status-active';
-                    }
                     provider.statusText = `${provider.activeKeys}个密钥`;
                 }
             } catch (error) {
                 console.error("Failed to add new API key:", error);
+                // Optionally re-throw or handle the error in the UI
+                throw error;
             } finally {
                 this.isSaving = false;
             }
@@ -61,19 +58,15 @@ export const useApiManagementStore = defineStore('api-management', {
         async updateKey(keyData: Partial<ApiKey> & { id: number, key?: string }) {
             this.isSaving = true;
             try {
-                // If a new key string is provided, create the fragment
-                if (keyData.key && keyData.key.length > 0) {
-                    keyData.keyFragment = `${keyData.key.substring(0, 5)}••••${keyData.key.substring(keyData.key.length - 4)}`;
-                    delete keyData.key; // Don't send the full key to the backend mock
-                }
-
-                const updatedKey = await service.updateApiKey(keyData as Partial<ApiKey> & { id: number });
+                const updatedKey = await service.updateApiKey(keyData);
                 const index = this.apiKeys.findIndex(k => k.id === updatedKey.id);
                 if (index !== -1) {
-                    this.apiKeys[index] = updatedKey;
+                    // Replace the old key with the updated one from the server
+                    this.apiKeys[index] = { ...this.apiKeys[index], ...updatedKey };
                 }
             } catch (error) {
                 console.error("Failed to update API key:", error);
+                throw error;
             } finally {
                 this.isSaving = false;
             }
@@ -92,11 +85,11 @@ export const useApiManagementStore = defineStore('api-management', {
                         provider.statusText = `${provider.activeKeys}个密钥`;
                     } else {
                         provider.statusText = '未配置';
-                        provider.statusClass = 'status-unconfigured';
                     }
                 }
             } catch (error) {
                 console.error("Failed to delete API key:", error);
+                throw error;
             } finally {
                 this.isSaving = false;
             }

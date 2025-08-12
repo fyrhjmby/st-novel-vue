@@ -1,6 +1,7 @@
+// src/home/stores/homeStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { Stat, QuickStartAction, RecentProject } from '@/types/home';
+import type { Stat, QuickStartAction, RecentProject } from '@/home/types';
 import { dashboardService } from '@/home/services/dashboardService';
 
 export const useDashboardStore = defineStore('dashboard', () => {

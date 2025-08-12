@@ -24,14 +24,13 @@
         <div v-for="stat in stats" :key="stat.label" class="bg-white rounded-xl p-4 border border-gray-100">
           <div class="flex items-center justify-between mb-3">
             <p class="text-xs text-[#9CA3AF]">{{ stat.label }}</p>
-            <span v-html="stat.icon"></span>
+            <span v-html="statUIMap[stat.label]?.icon" class="w-5 h-5 text-gray-500"></span>
           </div>
           <p class="text-2xl font-semibold text-[#374151]">{{ stat.value }}</p>
-          <div class="mt-2 flex items-center gap-2">
-            <div class="flex-1 h-1 bg-gray-200 rounded">
-              <div class="h-full rounded" :class="stat.progressColor" :style="{width: stat.progressWidth}"></div>
-            </div>
-            <span class="text-xs" :class="stat.trendColor">{{ stat.trend }}</span>
+          <div class="mt-2 flex items-center text-xs" :class="stat.trend.startsWith('+') ? 'text-green-600' : 'text-red-500'">
+            <svg v-if="stat.trend.startsWith('+')" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+            <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+            <span>{{ stat.trend }}</span>
           </div>
         </div>
       </div>
@@ -77,7 +76,11 @@
               <td class="py-3 px-4 font-mono text-xs">{{ log.endpoint }}</td>
               <td class="py-3 px-4">{{ log.model }}</td>
               <td class="py-3 px-4">{{ log.tokens }}</td>
-              <td class="py-3 px-4"><span class="text-xs font-medium px-2 py-1 rounded-full" :class="log.statusClass">{{ log.status }}</span></td>
+              <td class="py-3 px-4">
+                <span class="text-xs font-medium px-2 py-1 rounded-full" :class="log.status === '成功' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                  {{ log.status }}
+                </span>
+              </td>
               <td class="py-3 px-4">{{ log.duration }}</td>
               <td class="py-3 px-4"><a href="#" class="text-[#3B82F6] hover:underline">查看</a></td>
             </tr>
@@ -111,6 +114,13 @@ const timeTabs: ('日' | '周' | '月')[] = ['日', '周', '月'];
 
 const modelFilter = ref(filters.value.model);
 const statusFilter = ref(filters.value.status);
+
+const statUIMap: Record<string, { icon: string }> = {
+  '本月请求数': { icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>` },
+  '本月Token消耗': { icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 7v10m0 0h16M4 7l8 8 8-8M4 7h16"></path></svg>` },
+  '平均响应时间': { icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>` },
+  '请求成功率': { icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>` },
+};
 
 watch(modelFilter, (newValue) => {
   store.changeFilter({ model: newValue });

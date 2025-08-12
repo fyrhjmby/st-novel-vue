@@ -1,17 +1,16 @@
 <template>
   <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
-    <!-- 侧边栏头部区域 -->
-    <div class="p-4 space-y-4 border-b border-gray-100 h-20 flex items-center">
-      <div class="flex items-center gap-3 px-2">
-        <!-- 使用与主侧边栏一致的返回工作台的链接 -->
-        <router-link to="/home" class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-        </router-link>
-        <div>
-          <h3 class="font-medium text-[#374151] text-sm">创作中心</h3>
-          <p class="text-xs text-[#9CA3AF]">小说与故事</p>
+    <!-- 侧边栏头部区域 (已与主侧边栏统一) -->
+    <div class="p-4 space-y-4 border-b border-gray-100">
+      <router-link to="/home" class="flex items-center gap-3 px-2 group">
+        <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
         </div>
-      </div>
+        <div>
+          <h3 class="font-medium text-[#374151] text-sm">AI Creator</h3>
+          <p class="text-xs text-[#9CA3AF]">创作平台</p>
+        </div>
+      </router-link>
     </div>
 
     <!-- 主导航 -->

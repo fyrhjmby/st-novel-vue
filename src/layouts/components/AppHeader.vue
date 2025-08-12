@@ -1,7 +1,7 @@
 <template>
   <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0 bg-white">
     <div class="flex items-center gap-8">
-      <h1 class="text-lg font-medium text-[#374151]">{{ route.meta.title || 'AI Creator Platform' }}</h1>
+      <h1 class="text-lg font-medium text-[#374151]">{{ appStore.pageTitle }}</h1>
     </div>
     <div class="flex items-center gap-2">
       <button class="p-2 hover:bg-gray-50 rounded-lg transition-colors">
@@ -29,18 +29,28 @@
         </svg>
         <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
       </button>
-      <div class="ml-4 flex items-center gap-3">
-        <div class="w-9 h-9 bg-gray-200 rounded-full"></div>
-        <div>
-          <p class="text-sm font-medium text-[#374151]">张小明</p>
-          <p class="text-xs text-[#9CA3AF]">免费版</p>
+      <router-link
+          v-if="authStore.user"
+          to="/settings/user"
+          class="ml-4 flex items-center gap-3 p-1 rounded-lg hover:bg-gray-50 transition-colors"
+      >
+        <div class="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+          <img v-if="authStore.user.avatar" :src="authStore.user.avatar" class="w-full h-full rounded-full object-cover" alt="User Avatar" />
+          <span v-else class="text-sm font-medium text-gray-600">{{ authStore.user.name.charAt(0) }}</span>
         </div>
-      </div>
+        <div>
+          <p class="text-sm font-medium text-[#374151]">{{ authStore.user.name }}</p>
+          <p class="text-xs text-[#9CA3AF]">{{ authStore.user.plan }}</p>
+        </div>
+      </router-link>
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
-const route = useRoute()
+import { useAuthStore } from '@/auth/store/auth.store';
+import { useAppStore } from '@/stores/app.store';
+
+const authStore = useAuthStore();
+const appStore = useAppStore();
 </script>

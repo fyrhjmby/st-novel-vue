@@ -1,16 +1,19 @@
+// 文件: ..\src\router\index.ts
+
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
-import { settingsRoutes } from '@/settings/router'
+import { protectedSettingsRoutes } from '@/settings/router' // Updated import
 import { novelRoutes } from "@novel/router.ts";
 import { promptRoutes } from "@/prompt/router";
 import { workflowRoutes } from "@workflow/router.ts";
 import { authRoutes } from "@/auth/router";
 import { useAuthStore } from "@/auth/store/auth.store";
+import { useAppStore } from '@/stores/app.store';
 
 const routes: Array<RouteRecordRaw> = [
     {
         path: '/',
-        redirect: '/home',
+        redirect: '/auth/welcome',
     },
     ...authRoutes,
     {
@@ -28,13 +31,8 @@ const routes: Array<RouteRecordRaw> = [
     ...novelRoutes,
     ...promptRoutes,
     ...workflowRoutes,
-    {
-        path: '/settings',
-        component: () => import('@/settings/layouts/SettingsLayout.vue'),
-        redirect: '/settings/user',
-        children: settingsRoutes,
-        meta: { requiresAuth: true }, // 保护整个 settings 模块
-    },
+    // Use the new protected route object here
+    protectedSettingsRoutes,
     {
         path: '/vip',
         name: 'VipPlan',
@@ -57,6 +55,11 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
     const authStore = useAuthStore();
+    const appStore = useAppStore();
+
+    // 更新页面标题
+    const title = to.meta.title as string;
+    appStore.setPageTitle(title);
 
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
     const isAuthRoute = to.path.startsWith('/auth');

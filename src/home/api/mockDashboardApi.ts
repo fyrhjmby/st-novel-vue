@@ -1,4 +1,4 @@
-import type { Stat, QuickStartAction, RecentProject } from '@/types/home';
+import type { Stat, QuickStartAction, RecentProject } from '@/home/types';
 
 const statsData: Stat[] = [
     { label: '作品总数', value: '24', trend: '+12%', trendClass: 'text-[#10B981] bg-green-50', icon: `<svg class="w-5 h-5 text-[#4B5563]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7H15M9 11H15M9 15H13"/></svg>` },

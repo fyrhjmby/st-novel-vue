@@ -1,3 +1,5 @@
+/* 文件: ..\src/settings/style.css */
+
 /* src/settings/style.css */
 
 .toggle-switch {
@@ -59,13 +61,11 @@
     padding: 0;
     margin: 0;
     line-height: inherit;
+    border-radius: 4px;
 }
 .settings-input:focus {
-    outline: none;
-    background-color: rgba(75, 85, 99, 0.05);
-    padding: 4px 8px; /* Add some padding on focus */
-    margin: -4px -8px; /* Counteract padding to prevent layout shift */
-    border-radius: 4px;
+    outline: 2px solid #4B5563;
+    outline-offset: 2px;
 }
 
 .plan-card-settings {

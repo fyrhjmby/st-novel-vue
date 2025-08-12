@@ -8,38 +8,34 @@ import type { NovelMetadata } from '@/novel/editor/types';
 export const useNovelSettingsStore = defineStore('novel-settings', () => {
     const metadataStore = useMetadataStore();
 
-    // State: No longer computed, but refs updated by an action.
     const novelMetadata = ref<NovelMetadata | null>(null);
     const referencedNovels = ref<NovelProject[]>([]);
     const availableReferenceNovels = ref<NovelProject[]>([]);
 
     /**
-     * Loads and populates all data needed for the settings view.
-     * This is the central point for refreshing the store's state.
+     * Asynchronously loads and populates all data needed for the settings view.
      */
-    function loadSettingsData() {
+    async function loadSettingsData() {
         const meta = metadataStore.novelMetadata;
         novelMetadata.value = meta;
         if (meta) {
-            referencedNovels.value = novelSettingsService.getReferencedNovels(meta.referenceNovelIds);
-            availableReferenceNovels.value = novelSettingsService.getAvailableReferenceNovels(meta);
+            referencedNovels.value = await novelSettingsService.getReferencedNovels(meta.referenceNovelIds);
+            availableReferenceNovels.value = await novelSettingsService.getAvailableReferenceNovels(meta);
         } else {
             referencedNovels.value = [];
-            availableReferenceNovels.value = novelSettingsService.getAvailableReferenceNovels(null);
+            availableReferenceNovels.value = await novelSettingsService.getAvailableReferenceNovels(null);
         }
     }
 
-    const addReferenceNovel = (novelId: string) => {
+    const addReferenceNovel = async (novelId: string) => {
         if (!novelId) return;
         metadataStore.addReferenceNovel(novelId);
-        // After core data is changed, reload our UI-specific data.
-        loadSettingsData();
+        await loadSettingsData();
     };
 
-    const removeReferenceNovel = (novelId: string) => {
+    const removeReferenceNovel = async (novelId: string) => {
         metadataStore.removeReferenceNovel(novelId);
-        // After core data is changed, reload our UI-specific data.
-        loadSettingsData();
+        await loadSettingsData();
     };
 
     const addTag = () => {
@@ -54,9 +50,9 @@ export const useNovelSettingsStore = defineStore('novel-settings', () => {
         metadataStore.saveMetadata();
     };
 
-    const resetMetadata = () => {
+    const resetMetadata = async () => {
         if (metadataStore.currentNovelId) {
-            metadataStore.fetchNovelData(metadataStore.currentNovelId);
+            await metadataStore.fetchNovelData(metadataStore.currentNovelId);
         }
     };
 

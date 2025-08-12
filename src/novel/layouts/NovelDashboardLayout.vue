@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import AppHeader from '@/layouts/components/AppHeader.vue'
-import NovelDashboardSidebar from '@/novel/dashboard/components/NovelDashboardSidebar.vue'
+import NovelDashboardSidebar from '@novel/layouts/NovelDashboardSidebar.vue'
 import '@/novel/assets/styles/main.css'
 </script>
 

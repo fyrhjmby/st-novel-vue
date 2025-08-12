@@ -1,16 +1,15 @@
 <template>
   <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
     <div class="p-4 space-y-4 border-b border-gray-100">
-      <div class="flex items-center gap-3 px-2">
-        <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+      <router-link to="/home" class="flex items-center gap-3 px-2 group">
+        <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
         </div>
-        <router-link to="/home" class="flex items-center gap-3 group">
-          <div><h3 class="font-medium text-[#374151] text-sm">设置中心</h3>
-            <p class="text-xs text-[#9CA3AF]">Settings</p>
-          </div>
-        </router-link>
-      </div>
+        <div>
+          <h3 class="font-medium text-[#374151] text-sm">AI Creator</h3>
+          <p class="text-xs text-[#9CA3AF]">创作平台</p>
+        </div>
+      </router-link>
     </div>
     <nav class="flex-1 px-4 py-6">
       <div>
@@ -22,7 +21,6 @@
               :to="item.path"
               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-[#6B7280] hover:bg-gray-100"
               active-class="bg-[#4B5563] text-white font-medium"
-              exact-active-class="bg-[#4B5563] text-white font-medium"
           >
             <span v-html="item.icon"></span>
             <span>{{ item.label }}</span>
@@ -35,7 +33,6 @@
           to="/settings/help"
           class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors"
           active-class="bg-[#4B5563] text-white font-medium"
-          exact-active-class="bg-[#4B5563] text-white font-medium"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9C9.3 8.33 9.75 7.76 10.35 7.41C10.95 7.05 11.65 6.93 12.33 7.07C13.01 7.21 13.61 7.59 14.02 8.14C14.43 8.69 14.61 9.37 14.53 10.04C14.45 10.71 14.11 11.32 13.58 11.73C13.3 11.95 13.02 12.14 12.74 12.31C12.46 12.48 12.2 12.65 11.98 12.85C11.76 13.04 11.59 13.27 11.48 13.53C11.36 13.79 11.31 14.08 11.31 14.39"/><circle cx="12" cy="17" r="0.5"/></svg>
         <span>帮助中心</span>
@@ -55,3 +52,9 @@ const navItems = ref([
   { path: '/settings/data-privacy', name: 'DataPrivacy', label: '数据与隐私', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 1v6m0 0l-3-3m3 3l3-3m3 5.5A6.5 6.5 0 115.5 9.5a6.5 6.5 0 0113 0z"/></svg>` },
 ]);
 </script>
+
+<style scoped>
+.router-link-exact-active {
+  color: white !important;
+}
+</style>

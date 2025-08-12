@@ -1,4 +1,3 @@
-// src/novel/editor/stores/ai/aiTaskStore.ts
 import { defineStore } from 'pinia';
 import { ref, computed, nextTick } from 'vue';
 import { useEditorStore } from '../editorStore';
@@ -51,7 +50,6 @@ export const useAITaskStore = defineStore('aiTask', () => {
         const newTask = await AITaskFactory.createTask(taskType, sourceItemId, finalPrompt);
         if (!newTask) return;
 
-        // Open tab for derived content immediately
         if (newTask.type === '分析' || newTask.type === '剧情生成') {
             await nextTick();
             editorStore.openTab(newTask.targetItemId);
@@ -77,42 +75,48 @@ export const useAITaskStore = defineStore('aiTask', () => {
         if (task && task.status === 'processing') {
             task.status = 'completed';
 
-            // Handle auto-application logic
-            if (task.type === '润色' || task.type === '续写') {
-                const strategy = uiStore.uiState.taskApplicationStrategy;
-                switch (strategy.mode) {
-                    case 'auto':
+            const strategy = uiStore.uiState.taskApplicationStrategy;
+            if (strategy.mode === 'auto') {
+                applyChanges(taskId, true);
+            } else if (strategy.mode === 'delayed') {
+                task.applyAt = Date.now() + strategy.delaySeconds * 1000;
+                setTimeout(() => {
+                    const taskAfterDelay = tasks.value.find(t => t.id === taskId);
+                    if (taskAfterDelay?.status === 'completed') {
                         applyChanges(taskId, true);
-                        break;
-                    case 'delayed':
-                        setTimeout(() => {
-                            const taskAfterDelay = tasks.value.find(t => t.id === taskId);
-                            if (taskAfterDelay && taskAfterDelay.status === 'completed') {
-                                applyChanges(taskId, true);
-                            }
-                        }, strategy.delaySeconds * 1000);
-                        break;
-                    case 'manual':
-                        // Do nothing
-                        break;
-                }
+                    }
+                }, strategy.delaySeconds * 1000);
             }
         }
     };
 
     const applyChanges = (taskId: string, isAutoApplied: boolean = false) => {
         const task = tasks.value.find(t => t.id === taskId);
-        if (!task || task.status !== 'completed') return;
+        if (!task || (task.status !== 'completed' && task.status !== 'completed_with_conflict')) return;
+
+        const { node: targetItem } = editorStore.findItemById(task.targetItemId);
+        if (!targetItem) {
+            task.status = 'failed';
+            task.error = '目标文档不存在。';
+            return;
+        }
+
+        // --- 核心Bug修复：版本冲突检查 ---
+        const currentVersion = (targetItem as any)._lastModified || 0;
+        if (task.sourceItemVersion < currentVersion) {
+            task.status = 'completed_with_conflict';
+            task.error = `内容已被修改，AI结果无法自动应用。请手动处理。`;
+            console.warn(`AI Task Conflict: Task for "${task.sourceItemTitle}" cannot be applied automatically. Task version: ${task.sourceItemVersion}, Current version: ${currentVersion}`);
+            return;
+        }
+        // --- 核心Bug修复结束 ---
 
         if (task.type === '分析' || task.type === '剧情生成') {
-            const { node: targetNode } = editorStore.findItemById(task.targetItemId);
-            if (targetNode) {
-                const finalTitle = task.title.split(' - ')[0];
-                const newContent = formatContentForEditor(finalTitle, task.generatedContent);
-                editorStore.updateItemContentById(task.targetItemId, newContent);
-                const result = derivedContentStore.findItemById(task.targetItemId);
-                if (result) result.title = finalTitle;
-            }
+            const finalTitle = task.title.split(' - ')[0];
+            const newContent = formatContentForEditor(finalTitle, task.generatedContent);
+            editorStore.updateItemContentById(task.targetItemId, newContent, true); // Pass true to update version
+            const result = derivedContentStore.findItemById(task.targetItemId);
+            if (result) result.title = finalTitle;
         } else {
             editorStore.appendContentToItem(task.targetItemId, task.generatedContent, isAutoApplied);
         }
@@ -122,21 +126,19 @@ export const useAITaskStore = defineStore('aiTask', () => {
 
     const retryTask = (taskId: string) => {
         const task = tasks.value.find(t => t.id === taskId);
-        if (task && task.status === 'failed') {
-            task.status = 'pending';
-            task.error = undefined;
-            task.generatedContent = '';
-            task.finalPrompt = undefined; // Force prompt rebuild
-            nextTick(processQueue);
+        if (task && (task.status === 'failed' || task.status === 'completed_with_conflict')) {
+            // Re-create the task to get fresh content and a new version stamp
+            startTask(task.type, task.sourceItemId, task.finalPrompt);
+            // Remove the old, failed task
+            tasks.value = tasks.value.filter(t => t.id !== taskId);
         }
     };
 
     const clearCompletedTasks = () => {
-        tasks.value = tasks.value.filter(t => t.status !== 'applied' && t.status !== 'failed');
+        tasks.value = tasks.value.filter(t => !['applied', 'failed', 'completed_with_conflict'].includes(t.status));
     };
 
     const clearAllTasks = () => {
-        // Here we might need a way to signal cancellation to the execution service in a real scenario
         tasks.value = [];
     };
 
@@ -149,7 +151,6 @@ export const useAITaskStore = defineStore('aiTask', () => {
         retryTask,
         clearCompletedTasks,
         clearAllTasks,
-        // Methods for execution service
         updateTaskStatus,
         updateTaskError,
         appendGeneratedContent,

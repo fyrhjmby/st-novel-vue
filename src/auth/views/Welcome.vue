@@ -1,5 +1,7 @@
+
+
 <template>
-  <div class="w-full max-w-6xl mx-auto pt-20 px-4 sm:px-8 pb-8">
+  <div class="w-full max-w-6xl mx-auto py-8">
     <div class="welcome-hero">
       <div class="relative z-10">
         <h1 class="text-4xl font-light mb-4">欢迎来到 AI Creator Platform</h1>
@@ -45,3 +47,46 @@
 <script setup lang="ts">
 // This component is primarily for presentation, logic is handled by navigation.
 </script>
+
+<style scoped>
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 48px;
+}
+
+.feature-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #E5E7EB;
+  transition: all 0.2s;
+}
+
+.feature-card:hover {
+  border-color: #D1D5DB;
+  box-shadow: var(--shadow-md);
+}
+
+.welcome-hero {
+  background: linear-gradient(135deg, #4B5563 0%, #374151 100%);
+  color: white;
+  padding: 48px;
+  text-align: center;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  transform: rotate(45deg);
+}
+</style>

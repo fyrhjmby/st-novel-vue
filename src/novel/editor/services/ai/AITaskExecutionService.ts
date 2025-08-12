@@ -1,9 +1,8 @@
-// ..\src\novel\editor\services\ai\AITaskExecutionService.ts
-// src/novel/editor/services/ai/AITaskExecutionService.ts
+
 import { useAITaskStore } from '@novel/editor/stores/ai/aiTaskStore';
 import { useUIStore } from '@novel/editor/stores/uiStore';
 import { useContextBuilder } from '@novel/editor/composables/useContextBuilder';
-import { streamAITask } from '@novel/editor/api/aiService';
+import { streamAITask } from '@novel/editor/services/ai/aiService.ts';
 import type { AITask } from '@/novel/editor/types';
 
 const { buildContextForTask } = useContextBuilder();
@@ -26,7 +25,7 @@ function executeTaskAndStream(task: AITask) {
 
     const promptToUse = task.finalPrompt;
 
-    streamAITask(promptToUse, task.aiConfig, {
+    streamAITask(promptToUse, task.aiConfig, task.type, task.sourceItemTitle, {
         onChunk: (chunk) => {
             aiTaskStore.appendGeneratedContent(task.id, chunk);
         },

@@ -2,7 +2,7 @@
 
 import { defineStore } from 'pinia';
 import * as service from '@/settings/services/usageLogsService';
-import type { UsageStat, ApiLog, ChartDataPoint } from '@/settings/api/usageLogsApi';
+import type { UsageStat, ApiLog, ChartDataPoint } from '@/types/usageLogs';
 
 interface UsageLogsState {
     stats: UsageStat[];
@@ -70,8 +70,8 @@ export const useUsageLogsStore = defineStore('usage-logs', {
         },
 
         async changeFilter(filter: { model?: string; status?: string }) {
-            if (filter.model) this.filters.model = filter.model;
-            if (filter.status) this.filters.status = filter.status;
+            if (filter.model !== undefined) this.filters.model = filter.model;
+            if (filter.status !== undefined) this.filters.status = filter.status;
             this.pagination.currentPage = 1;
             await this.fetchUsageData();
         },

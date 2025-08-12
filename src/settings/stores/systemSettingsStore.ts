@@ -1,17 +1,12 @@
-// src/settings/stores/systemSettingsStore.ts
+// 文件: ..\src/settings/stores/systemSettingsStore.ts
 
 import { defineStore } from 'pinia';
 import * as service from '@/settings/services/systemSettingsService';
-import type { Theme, SettingItem } from '@/settings/api/systemSettingsApi';
+import type { Theme, SettingItem, SystemSettings } from '@/types/systemSettings';
 
-interface SystemSettingsState {
+// The state should directly mirror the SystemSettings type for consistency
+interface SystemSettingsState extends SystemSettings {
     themes: Theme[];
-    activeTheme: string;
-    zoomLevel: number;
-    language: string;
-    dateFormat: string;
-    notificationSettings: SettingItem[];
-    appSettings: SettingItem[];
     isLoading: boolean;
 }
 
@@ -32,9 +27,8 @@ export const useSystemSettingsStore = defineStore('system-settings', {
             if (this.themes.length > 0) return;
             this.isLoading = true;
             try {
-                const data = await service.loadInitialData();
-                this.themes = data.themes;
-                const { settings } = data;
+                const { themes, settings } = await service.loadInitialData();
+                this.themes = themes;
                 this.activeTheme = settings.activeTheme;
                 this.zoomLevel = settings.zoomLevel;
                 this.language = settings.language;
@@ -48,29 +42,39 @@ export const useSystemSettingsStore = defineStore('system-settings', {
             }
         },
 
-        async updateTheme(themeName: string) {
-            this.activeTheme = themeName;
-            await service.saveSetting('activeTheme', themeName);
+        async saveSetting<T extends keyof SystemSettings>(key: T, value: SystemSettings[T]) {
+            // Optimistically update the state
+            (this as any)[key] = value;
+            try {
+                await service.saveSetting(key, value);
+            } catch (error) {
+                console.error(`Failed to save setting ${key}:`, error);
+                // Optionally revert the change here if the API call fails
+                // await this.initializeSettings(); // or some other rollback logic
+            }
         },
 
-        // For slider, we might not want to save on every single change event
+        async updateTheme(themeName: string) {
+            await this.saveSetting('activeTheme', themeName);
+        },
+
         updateZoomLevel(level: number) {
             this.zoomLevel = level;
-            // In a real app, you might debounce this save call
-            // service.saveSetting('zoomLevel', level);
         },
 
-        async updateSetting(type: 'notification' | 'app', title: string, enabled: boolean) {
-            const list = type === 'notification' ? this.notificationSettings : this.appSettings;
+        async saveZoomLevel() {
+            await this.saveSetting('zoomLevel', this.zoomLevel);
+        },
+
+        async updateToggleSetting(type: 'notification' | 'app', title: string, enabled: boolean) {
+            const listKey = type === 'notification' ? 'notificationSettings' : 'appSettings';
+            const list = this[listKey];
             const setting = list.find(s => s.title === title);
+
             if (setting) {
                 setting.enabled = enabled;
-                // Fire-and-forget the save
-                if (type === 'notification') {
-                    await service.saveSetting('notificationSettings', this.notificationSettings);
-                } else {
-                    await service.saveSetting('appSettings', this.appSettings);
-                }
+                // Save the entire updated array
+                await this.saveSetting(listKey, [...list]);
             }
         },
     },

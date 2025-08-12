@@ -1,4 +1,4 @@
-// src/novel/editor/services/related/overviewService.ts
+
 import type { TreeNode, GroupNode, ItemNode, OverviewNode } from '@novel/editor/types';
 
 /**

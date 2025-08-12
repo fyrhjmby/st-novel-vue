@@ -1,82 +1,44 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { getNovelProject } from '@/novel/services/novelProjectService';
+import { projectLoaderService } from '@novel/editor/services/novelLoaderService.ts';
 import type { NovelMetadata } from '@/novel/editor/types/project';
-import { useDirectoryStore } from '../directoryStore';
-import { useRelatedContentStore } from '../relatedContentStore';
-import { useNotesStore } from '../notesStore';
 import { useReferenceStore } from '../referenceStore';
-import { useUIStore } from '../uiStore';
-import { usePaneStore } from './paneStore';
-import { useTabStore } from './tabStore';
-import { useDerivedContentStore } from '../derivedContentStore';
-import { useNovelSettingsStore } from '../novelSettingsStore';
+import { updateNovelMetadata } from '../../api/metadataApi';
 
 export const useMetadataStore = defineStore('editor-metadata', () => {
     const novelMetadata = ref<NovelMetadata | null>(null);
     const currentNovelId = ref<string | null>(null);
 
-    function fetchNovelData(novelId: string) {
-        console.log(`Fetching data for novel: ${novelId}`);
-        const projectData = getNovelProject(novelId);
+    // --- Actions (Public API for components) ---
 
-        if (!projectData) {
-            console.error(`Novel project with ID "${novelId}" not found.`);
+    async function fetchNovelData(novelId: string) {
+        await projectLoaderService.loadProjectIntoEditor(novelId);
+    }
+
+    async function saveMetadata() {
+        if (!currentNovelId.value || !novelMetadata.value) {
+            console.error("保存失败：未加载小说。");
+            alert('保存失败，请查看控制台获取更多信息。');
             return;
         }
 
-        currentNovelId.value = novelId;
-
-        const directoryStore = useDirectoryStore();
-        const relatedContentStore = useRelatedContentStore();
-        const notesStore = useNotesStore();
-        const referenceStore = useReferenceStore();
-        const derivedContentStore = useDerivedContentStore();
-        const uiStore = useUIStore();
-        const paneStore = usePaneStore();
-        const tabStore = useTabStore();
-        const novelSettingsStore = useNovelSettingsStore();
-
-        directoryStore.fetchDirectoryData(projectData.directoryData);
-        relatedContentStore.fetchRelatedData(
-            projectData.settingsData,
-            projectData.plotCustomData,
-            projectData.analysisCustomData,
-            projectData.othersCustomData
-        );
-        derivedContentStore.fetchDerivedData(
-            projectData.derivedPlotData || [],
-            projectData.derivedAnalysisData || []
-        );
-        notesStore.fetchNotes(projectData.noteData);
-        novelMetadata.value = JSON.parse(JSON.stringify(projectData.metadata));
-        referenceStore.loadReferences(projectData.metadata.referenceNovelIds);
-
-        // Notify NovelSettingsStore to update its state
-        novelSettingsStore.loadSettingsData();
-
-        paneStore.initializePanes();
-        const firstChapterId = projectData.directoryData[0]?.chapters[0]?.id;
-        if (firstChapterId) {
-            tabStore.openTab(firstChapterId);
+        try {
+            await updateNovelMetadata(currentNovelId.value, novelMetadata.value);
+            alert('小说设置已保存！');
+        } catch (error) {
+            console.error("保存元数据失败:", error);
+            alert('保存失败，请稍后重试。');
         }
+    }
 
-        uiStore.uiState.expandedNodeIds.clear();
-        uiStore.uiState.expandedRelatedNodeIds.clear();
-        uiStore.uiState.expandedReferenceNodeIds.clear();
+    // --- State Modifiers (Internal, called by services or other actions) ---
 
-        if (projectData.directoryData.length > 0) {
-            uiStore.uiState.expandedNodeIds.add(projectData.directoryData[0].id);
-        }
-        uiStore.uiState.expandedRelatedNodeIds.add('setting');
-        uiStore.uiState.expandedRelatedNodeIds.add('characters');
-        uiStore.uiState.expandedRelatedNodeIds.add('plot');
-        uiStore.uiState.expandedRelatedNodeIds.add('analysis');
-        uiStore.uiState.expandedRelatedNodeIds.add('others');
-        if (projectData.metadata.referenceNovelIds.length > 0) {
-            const firstRefBookId = `ref-book-${projectData.metadata.referenceNovelIds[0]}`;
-            uiStore.uiState.expandedReferenceNodeIds.add(firstRefBookId);
-        }
+    function _setNovelMetadata(data: NovelMetadata) {
+        novelMetadata.value = JSON.parse(JSON.stringify(data));
+    }
+
+    function _setCurrentNovelId(id: string) {
+        currentNovelId.value = id;
     }
 
     function addReferenceNovel(novelIdToAdd: string) {
@@ -86,7 +48,6 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
         novelMetadata.value.referenceNovelIds.push(novelIdToAdd);
         const referenceStore = useReferenceStore();
         referenceStore.loadReferences(novelMetadata.value.referenceNovelIds);
-        // No need to call settings store here, as the caller (settingsStore) will do it.
     }
 
     function removeReferenceNovel(novelIdToRemove: string) {
@@ -98,7 +59,6 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
             novelMetadata.value.referenceNovelIds.splice(index, 1);
             const referenceStore = useReferenceStore();
             referenceStore.loadReferences(novelMetadata.value.referenceNovelIds);
-            // No need to call settings store here, as the caller (settingsStore) will do it.
         }
     }
 
@@ -116,20 +76,19 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
         }
     }
 
-    function saveMetadata() {
-        if (!novelMetadata.value) return;
-        console.log('Saving metadata:', JSON.parse(JSON.stringify(novelMetadata.value)));
-        alert('小说设置已保存！');
-    }
-
     return {
+        // State
         novelMetadata,
         currentNovelId,
+        // Actions
         fetchNovelData,
         addReferenceNovel,
         removeReferenceNovel,
         removeTag,
         addTag,
         saveMetadata,
+        // Internal Setters
+        _setNovelMetadata,
+        _setCurrentNovelId,
     };
 });

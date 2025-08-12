@@ -1,6 +1,6 @@
 import type { TreeNode, ItemNode, PlotAnalysisItem, Volume, Chapter } from '@/novel/editor/types';
 import type { NovelProject } from '@/novel/editor/types/project';
-import { getNovelProject } from '@/novel/services/novelProjectService';
+import { getNovelProject } from '../api/projectApi';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
 
 class ReferenceService {
@@ -150,19 +150,18 @@ class ReferenceService {
         return rootNode;
     }
 
-    public buildReferenceTree(referenceNovelIds: string[]): TreeNode[] {
+    public async buildReferenceTree(referenceNovelIds: string[]): Promise<TreeNode[]> {
         if (!referenceNovelIds || referenceNovelIds.length === 0) {
             return [];
         }
 
-        const newReferenceData = referenceNovelIds
-            .map(novelId => {
-                const project = getNovelProject(novelId);
-                return project ? this.projectToTreeNode(project) : null;
-            })
-            .filter((node): node is TreeNode => node !== null);
+        const projects = await Promise.all(
+            referenceNovelIds.map(id => getNovelProject(id))
+        );
 
-        return newReferenceData;
+        const validProjects = projects.filter((p): p is NovelProject => p !== undefined);
+
+        return validProjects.map(project => this.projectToTreeNode(project));
     }
 }
 

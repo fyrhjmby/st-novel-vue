@@ -1,11 +1,7 @@
-// src/auth/store/auth.store.ts
-// 使用 Pinia 管理认证状态
-
 import { defineStore } from 'pinia';
-import type { UserInfo } from '@/auth/types';
-
+import type { User } from '@/types/auth';
 interface AuthState {
-    user: UserInfo | null;
+    user: User | null;
     token: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
@@ -26,15 +22,17 @@ export const useAuthStore = defineStore('auth', {
     },
 
     actions: {
-        setAuth(user: UserInfo, token: string) {
+        setAuth(user: User, token: string) {
             this.user = user;
             this.token = token;
             this.isAuthenticated = true;
             this.error = null;
             localStorage.setItem('authToken', token);
+            // 将 token 设置到 apiClient 的默认头部，以便后续请求使用
+            // 注意：拦截器已经处理了此逻辑，这里是双重保障或用于非拦截器场景
         },
 
-        setUser(user: UserInfo) {
+        setUser(user: User) {
             this.user = user;
         },
 

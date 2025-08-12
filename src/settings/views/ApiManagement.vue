@@ -24,7 +24,7 @@
                   <p class="text-xs text-[#9CA3AF]">{{ provider.description }}</p>
                 </div>
               </div>
-              <span class="status-badge" :class="provider.statusClass">{{ provider.statusText }}</span>
+              <span class="status-badge" :class="getProviderStatusClass(provider)">{{ provider.statusText }}</span>
             </div>
             <div class="space-y-2">
               <div class="flex items-center justify-between text-sm">
@@ -101,7 +101,7 @@ import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useApiManagementStore } from '@/settings/stores/apiManagementStore';
 import ApiConfigModal from '@/settings/components/ApiConfigModal.vue';
-import type { ApiKey } from '@/settings/api/apiManagementApi';
+import type { ApiKey, ApiProvider } from '@/types/apiManagement';
 
 const store = useApiManagementStore();
 const { apiProviders, apiKeys } = storeToRefs(store);
@@ -112,6 +112,13 @@ const keyToEdit = ref<ApiKey | null>(null);
 onMounted(() => {
   store.initializeData();
 });
+
+const getProviderStatusClass = (provider: ApiProvider) => {
+  if (provider.activeKeys > 0) {
+    return 'status-active';
+  }
+  return 'status-unconfigured';
+};
 
 const openAddModal = () => {
   keyToEdit.value = null;

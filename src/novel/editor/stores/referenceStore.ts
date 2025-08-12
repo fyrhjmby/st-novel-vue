@@ -24,8 +24,8 @@ const _findNodeRecursive = (nodes: TreeNode[], nodeId: string): { node: TreeNode
 export const useReferenceStore = defineStore('reference', () => {
     const referenceData = ref<TreeNode[]>([]);
 
-    const loadReferences = (referenceNovelIds: string[]) => {
-        referenceData.value = referenceService.buildReferenceTree(referenceNovelIds);
+    const loadReferences = async (referenceNovelIds: string[]) => {
+        referenceData.value = await referenceService.buildReferenceTree(referenceNovelIds);
     };
 
     const findNodeById = (nodeId: string): { node: TreeNode; parent: TreeNode | null; } | null => {

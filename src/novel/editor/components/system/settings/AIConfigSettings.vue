@@ -30,18 +30,25 @@
 
         <!-- AI Model Selection -->
         <div>
-          <label class="flex items-center justify-between mb-3">
+          <label for="ai-provider" class="flex items-center justify-between mb-3">
             <span class="text-sm font-medium text-[#374151]">AI模型选择</span>
             <a href="#" class="text-xs text-[#3B82F6] cursor-pointer flex items-center gap-1.5 hover:underline">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
               了解模型差异
             </a>
           </label>
-          <select class="w-full text-sm px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-            <option selected>GPT-4o (推荐 - 均衡性能)</option>
-            <option>Claude 3 Opus (文学创作专长)</option>
-            <option>混合模型 (多模型协作)</option>
-            <option>自定义微调模型</option>
+          <select
+              id="ai-provider"
+              :value="activeTaskConfig.selectedAIProviderId"
+              @change="handleProviderChange"
+              class="w-full text-sm px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          >
+            <option v-for="provider in aiConfigStore.availableAIProviders" :key="provider.id" :value="provider.id">
+              {{ provider.name }} ({{ provider.model }})
+            </option>
+            <option v-if="!aiConfigStore.availableAIProviders.length" disabled>
+              没有可用的AI模型，请先在设置中配置API密钥
+            </option>
           </select>
         </div>
 
@@ -67,8 +74,15 @@
             <div class="flex items-center justify-between">
               <span class="text-sm text-[#6B7280]">创作温度</span>
               <div class="flex items-center gap-3">
-                <input type="range" min="0" max="100" value="70" class="w-32 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer range-slider">
-                <span class="text-sm font-mono text-[#374151] w-8 text-right">0.7</span>
+                <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    :value="activeTaskConfig.temperature * 100"
+                    @input="handleTemperatureChange"
+                    class="w-32 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer range-slider"
+                >
+                <span class="text-sm font-mono text-[#374151] w-8 text-right">{{ activeTaskConfig.temperature.toFixed(1) }}</span>
               </div>
             </div>
             <div class="flex items-center justify-between">
@@ -89,14 +103,12 @@
 import { ref, computed } from 'vue';
 import { useAIConfigStore } from '@novel/editor/stores/ai/aiConfigStore.ts';
 import { usePromptTemplateStore } from '@novel/editor/stores/promptTemplateStore.ts';
-import type { AITask } from '@/novel/editor/types';
-
-type TaskType = AITask['type'];
+import type { AITaskType } from '@/novel/editor/types';
 
 const aiConfigStore = useAIConfigStore();
 const promptTemplateStore = usePromptTemplateStore();
 
-const taskInfoMap: Record<TaskType, { name: string; icon: string }> = {
+const taskInfoMap: Record<AITaskType, { name: string; icon: string }> = {
   '润色': { name: '润色', icon: 'fa-solid fa-palette' },
   '续写': { name: '续写', icon: 'fa-solid fa-wand-magic-sparkles' },
   '分析': { name: '分析', icon: 'fa-solid fa-magnifying-glass-chart' },
@@ -105,22 +117,33 @@ const taskInfoMap: Record<TaskType, { name: string; icon: string }> = {
 };
 
 const availableTasks = computed(() => {
-  return (Object.keys(aiConfigStore.taskConfigs) as TaskType[]).map(id => ({
+  return (Object.keys(aiConfigStore.taskConfigs) as AITaskType[]).map(id => ({
     id,
     name: taskInfoMap[id].name,
     icon: taskInfoMap[id].icon
   }));
 });
 
-const activeTaskId = ref<TaskType>('润色');
+const activeTaskId = ref<AITaskType>('润色');
 
 const activeTaskInfo = computed(() => availableTasks.value.find(t => t.id === activeTaskId.value));
 const activeTaskConfig = computed(() => aiConfigStore.taskConfigs[activeTaskId.value]);
 const availablePrompts = computed(() => promptTemplateStore.getPromptsForTask(activeTaskId.value));
 
+const handleProviderChange = (event: Event) => {
+  const selectedId = (event.target as HTMLSelectElement).value;
+  aiConfigStore.setSelectedAIProviderId(activeTaskId.value, selectedId);
+};
+
 const handlePromptChange = (event: Event) => {
   const selectedId = (event.target as HTMLSelectElement).value;
   aiConfigStore.setSelectedPromptId(activeTaskId.value, selectedId);
+};
+
+const handleTemperatureChange = (event: Event) => {
+  const sliderValue = parseInt((event.target as HTMLInputElement).value, 10);
+  const temperature = sliderValue / 100;
+  aiConfigStore.setTaskTemperature(activeTaskId.value, temperature);
 };
 </script>
 

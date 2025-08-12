@@ -1,8 +1,7 @@
-// src/novel/editor/stores/ai/chatStore.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Conversation, AIModel } from '@novel/editor/types/chatTypes';
-import * as chatService from '@/novel/editor/services/chatService';
+import * as chatService from '@/novel/editor/services/ai/chatService';
 
 export const useChatStore = defineStore('editorChat', () => {
     // --- State ---
@@ -11,6 +10,7 @@ export const useChatStore = defineStore('editorChat', () => {
     const currentModel = ref<AIModel>({ id: 'gpt-4o', name: 'GPT-4o', status: 'online' });
     const messageInput = ref<string>('');
     const isReceiving = ref<boolean>(false);
+    const isLoading = ref<boolean>(false);
 
     // --- Getters (Computed) ---
     const activeConversation = computed(() => {
@@ -24,17 +24,29 @@ export const useChatStore = defineStore('editorChat', () => {
     });
 
     // --- Actions ---
-    const fetchConversations = () => {
-        conversations.value = chatService.getConversations();
-        if (conversations.value.length > 0 && !activeConversationId.value) {
-            activeConversationId.value = conversations.value[0].id;
+    const fetchConversations = async () => {
+        isLoading.value = true;
+        try {
+            conversations.value = await chatService.getConversations();
+            if (conversations.value.length > 0 && !activeConversationId.value) {
+                activeConversationId.value = conversations.value[0].id;
+            }
+        } catch (error) {
+            console.error("Failed to fetch conversations:", error);
+            conversations.value = [];
+        } finally {
+            isLoading.value = false;
         }
     };
 
-    const createNewConversation = () => {
-        const newConv = chatService.createConversation();
-        conversations.value.unshift(newConv);
-        activeConversationId.value = newConv.id;
+    const createNewConversation = async () => {
+        try {
+            const newConv = await chatService.createConversation();
+            conversations.value.unshift(newConv);
+            activeConversationId.value = newConv.id;
+        } catch (error) {
+            console.error("Failed to create new conversation:", error);
+        }
     };
 
     const selectConversation = (conversationId: string) => {
@@ -48,19 +60,18 @@ export const useChatStore = defineStore('editorChat', () => {
         }
 
         const currentActiveConv = activeConversation.value;
-        messageInput.value = ''; // Clear input immediately
+        const conversationId = currentActiveConv.id;
+        messageInput.value = '';
         isReceiving.value = true;
 
         try {
-            const { userMessage, aiResponse } = await chatService.sendMessage(userInput);
-            // Ensure the conversation is still active before pushing messages
-            if (activeConversation.value === currentActiveConv) {
+            const { userMessage, aiResponse } = await chatService.sendMessage(conversationId, userInput);
+            if (activeConversation.value?.id === conversationId) {
                 currentActiveConv.messages.push(userMessage);
                 currentActiveConv.messages.push(aiResponse);
             }
         } catch (error) {
             console.error("Failed to send message:", error);
-            // Optionally, push an error message to the chat
         } finally {
             isReceiving.value = false;
         }
@@ -72,6 +83,7 @@ export const useChatStore = defineStore('editorChat', () => {
         currentModel,
         messageInput,
         isReceiving,
+        isLoading,
         activeConversation,
         currentTokenCount,
         fetchConversations,

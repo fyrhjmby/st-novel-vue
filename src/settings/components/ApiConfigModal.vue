@@ -66,7 +66,7 @@
 import { reactive, computed, watchEffect, PropType } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useApiManagementStore } from '@/settings/stores/apiManagementStore';
-import type { ModalProvider, ApiKey } from '@/settings/api/apiManagementApi';
+import type { ModalProvider, ApiKey } from '@/types/apiManagement';
 
 const props = defineProps({
   keyToEdit: {
@@ -95,7 +95,7 @@ watchEffect(() => {
     form.provider = modalProviders.value.find(p => p.name === props.keyToEdit!.provider) || null;
     form.name = props.keyToEdit.name;
     form.baseUrl = props.keyToEdit.baseUrl || '';
-    form.model = props.keyToEdit.model; // <<< FIX: Corrected typo from 'keyToTedit' to 'keyToEdit'
+    form.model = props.keyToEdit.model;
     form.key = ''; // Clear key field for editing
   } else {
     // Reset form for add mode
@@ -134,6 +134,7 @@ const save = async () => {
       baseUrl: form.baseUrl,
     };
     if (form.key) {
+      // In a real app, you'd send the full key. For this mock, we don't need to do much.
       payload.key = form.key;
     }
     await store.updateKey(payload);

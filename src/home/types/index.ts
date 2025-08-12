@@ -1,3 +1,6 @@
+// src/home/types/index.ts
+// 定义 Home 模块（工作台仪表盘）相关的数据类型
+
 export interface Stat {
     label: string;
     value: string;

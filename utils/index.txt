@@ -1,49 +1,106 @@
 // == 扫描摘要 ==
 //
+// 跳过的目录 (共 1 个):
+//   - ..\src\novel\editor\components\system\settings
+//
 // == 文件内容 ==
 
 // =
-// 文件: ..\src\novel\editor\api\aiService.ts
+// 文件: ..\src\novel\editor\api\apiManagementApi.ts
 //
 
+import { fetchApiKeys as globalFetchApiKeys } from '@/api/apiManagementApi';
+import type { ApiKey } from '@/types/apiManagement';
 
-interface StreamCallbacks {
-    onChunk: (chunk: string) => void;
-    onComplete: () => void;
-    onError: (error: string) => void;
-}
+export const fetchApiKeys = (): Promise<ApiKey[]> => {
+    return globalFetchApiKeys();
+};
+
+// =
+// 文件: ..\src\novel\editor\api\chatApi.ts
+//
+
+import * as editorApi from '@/api/novel/editorApi';
+import type { Conversation, ChatMessage } from '@novel/editor/types/chatTypes.ts';
+import type { AIProviderConfig, AITaskType } from '@novel/editor/types';
+
+export const fetchConversations = (): Promise<Conversation[]> => {
+    return editorApi.fetchConversations();
+};
+
+export const createConversation = (): Promise<Conversation> => {
+    return editorApi.createConversation();
+};
+
+export const sendMessage = (conversationId: string, userInput: string): Promise<{ userMessage: ChatMessage; aiResponse: ChatMessage }> => {
+    return editorApi.sendMessage(conversationId, userInput);
+};
+
+export const streamAITask = (
+    prompt: string,
+    config: AIProviderConfig,
+    taskType: AITaskType,
+    sourceItemTitle: string,
+    callbacks: {
+        onChunk: (chunk: string) => void;
+        onComplete: () => void;
+        onError: (error: string) => void;
+    }
+): Promise<void> => {
+    return editorApi.streamAITask(prompt, config, taskType, sourceItemTitle, callbacks);
+};
+
+// =
+// 文件: ..\src\novel\editor\api\metadataApi.ts
+//
+
+import {
+    getNovelMetadata as globalGetNovelMetadata,
+    updateNovelMetadata as globalUpdateNovelMetadata,
+} from '@/api/novel/metadataApi';
+import type { NovelMetadata } from '@/novel/editor/types/project';
 
 /**
- * 模拟一个流式AI任务API。
- * 这个函数接收一个提示词，然后通过回调函数逐字地将这个提示词返回，
- * 以模拟一个接收到什么就返回什么的 "echo" 服务器。
- * @param prompt - 发送给AI的最终提示词。
- * @param callbacks - 用于处理数据流、完成和错误事件的回调对象。
+ * [Proxy] 根据小说ID获取元数据
  */
-export function streamAITask(prompt: string, callbacks: StreamCallbacks): void {
-    const { onChunk, onComplete, onError } = callbacks;
-    const words = prompt.split('');
-    let wordIndex = 0;
-    const willFail = Math.random() < 0.1; // 10%的几率模拟失败
+export const getNovelMetadata = (novelId: string): Promise<NovelMetadata> => {
+    return globalGetNovelMetadata(novelId);
+};
 
-    const intervalId = setInterval(() => {
-        // 模拟流式输出
-        if (wordIndex < words.length) {
-            onChunk(words[wordIndex]);
-            wordIndex++;
-            // 模拟中途失败
-            if (willFail && wordIndex > words.length / 2) {
-                clearInterval(intervalId);
-                onError('模拟网络错误，请重试。');
-                return;
-            }
-        } else {
-            // 流式结束
-            clearInterval(intervalId);
-            onComplete();
-        }
-    }, 20); // 调整流式速度
-}
+/**
+ * [Proxy] 更新小说元数据
+ */
+export const updateNovelMetadata = (novelId: string, metadata: Partial<NovelMetadata>): Promise<NovelMetadata> => {
+    return globalUpdateNovelMetadata(novelId, metadata);
+};
+
+// =
+// 文件: ..\src\novel\editor\api\projectApi.ts
+//
+
+import * as projectApi from '@/api/novel/projectApi';
+import type { NovelProject } from '@/novel/editor/types/project';
+
+/**
+ * [Proxy] 根据ID获取完整的小说项目数据
+ */
+export const getNovelProject = (novelId: string): Promise<NovelProject> => {
+    return projectApi.getNovelProject(novelId);
+};
+
+/**
+ * [Proxy] 获取所有小说项目，用于参考书选择等场景
+ */
+export const fetchAllNovelProjects = (): Promise<NovelProject[]> => {
+    return projectApi.fetchAllNovelProjects();
+};
+
+/**
+ * [Proxy] 更新一个小说项目的内容结构
+ */
+export const updateNovelProjectContent = (novelId: string, projectData: Omit<NovelProject, 'metadata'>): Promise<NovelProject> => {
+    return projectApi.updateNovelProjectContent(novelId, projectData);
+};
 
 // =
 // 文件: ..\src\novel\editor\components\ai\AIDiffPreview.vue
@@ -1804,178 +1861,6 @@ const headerTitle = computed(() => {
 });
 
 // =
-// 文件: ..\src\novel\editor\components\system\settings\AIConfigSettings.vue
-//
-
-import { ref, computed } from 'vue';
-import { useAIConfigStore } from '@novel/editor/stores/ai/aiConfigStore.ts';
-import { usePromptTemplateStore } from '@novel/editor/stores/promptTemplateStore.ts';
-import type { AITask } from '@/novel/editor/types';
-
-type TaskType = AITask['type'];
-
-const aiConfigStore = useAIConfigStore();
-const promptTemplateStore = usePromptTemplateStore();
-
-const taskInfoMap: Record<TaskType, { name: string; icon: string }> = {
-  '润色': { name: '润色', icon: 'fa-solid fa-palette' },
-  '续写': { name: '续写', icon: 'fa-solid fa-wand-magic-sparkles' },
-  '分析': { name: '分析', icon: 'fa-solid fa-magnifying-glass-chart' },
-  '剧情生成': { name: '剧情生成', icon: 'fa-solid fa-feather' },
-  '创作': { name: '创作', icon: 'fa-solid fa-pen-nib' },
-};
-
-const availableTasks = computed(() => {
-  return (Object.keys(aiConfigStore.taskConfigs) as TaskType[]).map(id => ({
-    id,
-    name: taskInfoMap[id].name,
-    icon: taskInfoMap[id].icon
-  }));
-});
-
-const activeTaskId = ref<TaskType>('润色');
-
-const activeTaskInfo = computed(() => availableTasks.value.find(t => t.id === activeTaskId.value));
-const activeTaskConfig = computed(() => aiConfigStore.taskConfigs[activeTaskId.value]);
-const availablePrompts = computed(() => promptTemplateStore.getPromptsForTask(activeTaskId.value));
-
-const handlePromptChange = (event: Event) => {
-  const selectedId = (event.target as HTMLSelectElement).value;
-  aiConfigStore.setSelectedPromptId(activeTaskId.value, selectedId);
-};
-
-// =
-// 文件: ..\src\novel\editor\components\system\settings\ContextSettings.vue
-//
-
-import { useContextSettingsStore } from '@/novel/editor/stores/contextSettingsStore';
-
-const settingsStore = useContextSettingsStore();
-
-const addSelectedItem = (event: Event) => {
-  const select = event.target as HTMLSelectElement;
-  const selectedId = select.value;
-  if (!selectedId) return;
-
-  const preset = settingsStore.fixedContextPresets.find(p => p.id === selectedId);
-  if (preset) {
-    settingsStore.addFixedContextItem(preset);
-  }
-  select.value = ""; // Reset select
-};
-
-const addSelectedOthersItem = (event: Event) => {
-  const select = event.target as HTMLSelectElement;
-  const selectedId = select.value;
-  if (!selectedId) return;
-
-  const preset = settingsStore.othersContextPresets.find(p => p.id === selectedId);
-  if (preset) {
-    settingsStore.addOthersContextItem(preset);
-  }
-  select.value = ""; // Reset select
-};
-
-// =
-// 文件: ..\src\novel\editor\components\system\settings\EditorSettings.vue
-//
-
-
-
-// =
-// 文件: ..\src\novel\editor\components\system\settings\NovelSettings.vue
-//
-
-import { useNovelSettingsStore } from '@/novel/editor/stores/novelSettingsStore';
-
-const settingsStore = useNovelSettingsStore();
-
-const handleReferenceSelect = (event: Event) => {
-  const selectElement = event.target as HTMLSelectElement;
-  const selectedId = selectElement.value;
-  if (selectedId) {
-    settingsStore.addReferenceNovel(selectedId);
-    selectElement.value = '';
-  }
-};
-
-// =
-// 文件: ..\src\novel\editor\components\system\settings\TaskSettings.vue
-//
-
-import { computed } from 'vue';
-import { useAITaskStore } from '@novel/editor/stores/ai/aiTaskStore.ts';
-import { useUIStore } from '@/novel/editor/stores/uiStore';
-
-const aiTaskStore = useAITaskStore();
-const uiStore = useUIStore();
-
-const autoOpenAIPanel = computed({
-  get: () => uiStore.uiState.autoOpenAIPanel,
-  set: (value) => uiStore.setAutoOpenAIPanel(value)
-});
-
-const applicationStrategy = computed({
-  get: () => uiStore.uiState.taskApplicationStrategy,
-  set: (value) => uiStore.setTaskApplicationStrategy(value)
-});
-
-const concurrentTaskLimit = computed({
-  get: () => uiStore.uiState.concurrentTaskLimit,
-  set: (value) => uiStore.setConcurrentTaskLimit(value)
-});
-
-const handleClearCompleted = () => {
-  if (window.confirm('您确定要清除所有已应用和已失败的任务吗？')) {
-    aiTaskStore.clearCompletedTasks();
-  }
-};
-
-const handleClearAll = () => {
-  if (window.confirm('您确定要清除所有AI任务吗？此操作不可撤销，进行中的任务也将被终止。')) {
-    aiTaskStore.clearAllTasks();
-  }
-};
-
-// =
-// 文件: ..\src\novel\editor\components\system\settings\ThemeSettings.vue
-//
-
-import { ref, computed } from 'vue';
-import { useUIStore } from '@/novel/editor/stores/uiStore';
-
-type ThemeId = 'default' | 'eye-care' | 'dark';
-
-const uiStore = useUIStore();
-
-const themes = ref([
-  {
-    id: 'default',
-    name: '默认亮色',
-    description: '清晰、简洁的默认主题。',
-    preview: { bg: '#FFFFFF', panel: '#F3F4F6', text: '#D1D5DB', accent: '#60A5FA' }
-  },
-  {
-    id: 'eye-care',
-    name: '护眼模式',
-    description: '柔和的米色背景，适合长时间阅读。',
-    preview: { bg: '#FDFCF9', panel: '#F8F6F2', text: '#DCD9D3', accent: '#F59E0B' }
-  },
-  {
-    id: 'dark',
-    name: '暗黑模式',
-    description: '专为夜间工作设计，减少眩光。',
-    preview: { bg: '#1F2937', panel: '#374151', text: '#4B5563', accent: '#F472B6' }
-  }
-]);
-
-const activeTheme = computed(() => uiStore.uiState.activeTheme);
-
-const setActiveTheme = (themeId: ThemeId) => {
-  uiStore.setTheme(themeId);
-};
-
-// =
 // 文件: ..\src\novel\editor\composables\useAITaskExecutor.ts
 //
 
@@ -2030,8 +1915,6 @@ export function useAITaskExecutor() {
 // 文件: ..\src\novel\editor\composables\useContextBuilder.ts
 //
 
-// 文件: src/novel/editor/composables/useContextBuilder.ts
-
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useContextSettingsStore } from '@/novel/editor/stores/contextSettingsStore';
 import { useDerivedContentStore } from '@/novel/editor/stores/derivedContentStore';
@@ -2040,11 +1923,10 @@ import { useAIConfigStore } from '@novel/editor/stores/ai/aiConfigStore.ts';
 import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
 import type { AITask, ContextBuildResult, Volume, Chapter, DynamicContextSettings, ReferenceContextSettings, TreeNode } from '@/novel/editor/types';
 
-const stripHtml = (html: string) => {
-    if (typeof document === 'undefined') return html;
-    const tmp = document.createElement("DIV");
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || "";
+const stripHtml = (html: string): string => {
+    // 使用正则表达式替换，避免依赖DOM环境
+    if (!html) return '';
+    return html.replace(/<[^>]*>?/gm, '');
 };
 
 const _findDerivedItemsRecursive = (nodes: TreeNode[], sourceId: string): TreeNode[] => {
@@ -2105,7 +1987,7 @@ export function useContextBuilder() {
         }
         if (settings.includeVolumeAnalysis) {
             const analysis = derivedContentStore.analysisItems.find(a => a.sourceId === sourceVolume.id);
-            if (analysis) dynamicContextHtml += `<h4>卷分析: ${analysis.title}</h4>${analysis.content}`;
+            if (analysis) html += `<h4>卷分析: ${analysis.title}</h4>${analysis.content}`;
         }
 
         if (currentChapterIndex > -1) {
@@ -2186,6 +2068,15 @@ export function useContextBuilder() {
     };
 
     const _buildReferenceContextHtmlByIndex = (sourceNode: Chapter | Volume, vIndex: number, cIndex: number | null, settings: ReferenceContextSettings): string => {
+        // BUG: This index-based matching is fragile and likely to produce incorrect context.
+        // It assumes the reference book has the exact same structure.
+        // This should be replaced with a more robust matching logic (e.g., title similarity)
+        // or a user-driven manual mapping feature.
+        // For now, returning an empty string to prevent context pollution.
+        if (true) { // Temporarily disabling this feature
+            return '<!-- Reference context matching is disabled due to known bugs. -->';
+        }
+
         if (!referenceStore.referenceData.length || vIndex < 0) return '';
 
         let referenceContextHtml = '';
@@ -2283,9 +2174,10 @@ export function useContextBuilder() {
         const promptNode = promptTemplateStore.findPromptById(taskConfig.selectedPromptId);
         let selectedPromptTemplate = `请为《${sourceItemTitle}》执行“${taskType}”任务。`;
         if (promptNode?.content) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = promptNode.content;
-            selectedPromptTemplate = (tempDiv.querySelector('pre')?.textContent || selectedPromptTemplate).replace(/{{sourceItemTitle}}/g, sourceItemTitle);
+            // 使用正则表达式从<pre>标签中提取模板，更安全
+            const match = promptNode.content.match(/<pre[^>]*>([\s\S]*)<\/pre>/);
+            const template = match ? match[1] : selectedPromptTemplate;
+            selectedPromptTemplate = template.replace(/{{sourceItemTitle}}/g, sourceItemTitle);
         }
 
         const prompt = `[任务提示词]
@@ -2341,7 +2233,8 @@ import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
 import ContextPreviewModal from '@/novel/editor/components/modals/ContextPreviewModal.vue';
 import ReaderModeOverlay from '@novel/editor/views/ReaderModeOverlay.vue';
-
+import {useAuthStore} from "@auth/store/auth.store.ts";
+const authStore = useAuthStore();
 const editorStore = useEditorStore();
 const uiStore = useUIStore();
 const themeClass = computed(() => {
@@ -2374,11 +2267,11 @@ export const editorRoutes: Array<RouteRecordRaw> = [
 // 文件: ..\src\novel\editor\services\ai\AITaskExecutionService.ts
 //
 
-// src/novel/editor/services/ai/AITaskExecutionService.ts
+
 import { useAITaskStore } from '@novel/editor/stores/ai/aiTaskStore';
 import { useUIStore } from '@novel/editor/stores/uiStore';
 import { useContextBuilder } from '@novel/editor/composables/useContextBuilder';
-import { streamAITask } from '@novel/editor/api/aiService';
+import { streamAITask } from '@novel/editor/services/ai/aiService.ts';
 import type { AITask } from '@/novel/editor/types';
 
 const { buildContextForTask } = useContextBuilder();
@@ -2401,7 +2294,7 @@ function executeTaskAndStream(task: AITask) {
 
     const promptToUse = task.finalPrompt;
 
-    streamAITask(promptToUse, {
+    streamAITask(promptToUse, task.aiConfig, task.type, task.sourceItemTitle, {
         onChunk: (chunk) => {
             aiTaskStore.appendGeneratedContent(task.id, chunk);
         },
@@ -2445,9 +2338,9 @@ export function processQueue() {
 // 文件: ..\src\novel\editor\services\ai\AITaskFactory.ts
 //
 
-// src/novel/editor/services/ai/AITaskFactory.ts
 import { useEditorStore } from '@novel/editor/stores/editorStore';
 import { useDerivedContentStore } from '@novel/editor/stores/derivedContentStore';
+import { useAIConfigStore } from '@novel/editor/stores/ai/aiConfigStore';
 import type { AITask, AITaskType } from '@/novel/editor/types';
 
 /**
@@ -2460,12 +2353,34 @@ import type { AITask, AITaskType } from '@/novel/editor/types';
 export async function createTask(taskType: AITaskType, sourceItemId: string, finalPrompt?: string): Promise<AITask | null> {
     const editorStore = useEditorStore();
     const derivedContentStore = useDerivedContentStore();
+    const aiConfigStore = useAIConfigStore();
 
     const { node: sourceItem } = editorStore.findItemById(sourceItemId);
     if (!sourceItem || !('content' in sourceItem) || typeof sourceItem.content !== 'string') {
         console.error("AI Task Factory Error: Source item not found or has no content.", sourceItemId);
         return null;
     }
+
+    // --- 核心Bug修复：版本控制 ---
+    // 为源对象打上一个时间戳作为版本号
+    // 如果已有，则更新它
+    (sourceItem as any)._lastModified = Date.now();
+    const sourceItemVersion = (sourceItem as any)._lastModified;
+    // --- 核心Bug修复结束 ---
+
+    const taskConfigSettings = aiConfigStore.taskConfigs[taskType];
+    const baseAIProviderConfig = aiConfigStore.availableAIProviders.find(p => p.id === taskConfigSettings.selectedAIProviderId);
+
+    if (!baseAIProviderConfig) {
+        console.error("AI Task Factory Error: Selected AI Provider Config not found.", taskConfigSettings.selectedAIProviderId);
+        alert(`未找到ID为 "${taskConfigSettings.selectedAIProviderId}" 的AI配置，请在设置中检查。`);
+        return null;
+    }
+
+    const finalAIConfig = {
+        ...baseAIProviderConfig,
+        temperature: taskConfigSettings.temperature,
+    };
 
     let targetItemId: string;
     let taskTitle: string;
@@ -2491,69 +2406,104 @@ export async function createTask(taskType: AITaskType, sourceItemId: string, fin
         targetItemId: targetItemId,
         sourceItemTitle: sourceItem.title,
         sourceItemContent: sourceItem.content,
+        sourceItemVersion: sourceItemVersion, // 存储版本快照
         status: 'pending',
         generatedContent: '',
         finalPrompt: finalPrompt,
         createdAt: new Date(),
+        aiConfig: finalAIConfig,
     };
 
     return newTask;
 }
 
 // =
-// 文件: ..\src\novel\editor\services\chatService.ts
+// 文件: ..\src\novel\editor\services\ai\aiService.ts
 //
 
-// src/novel/editor/services/chatService.ts
-import type { Conversation, ChatMessage } from '@novel/editor/types/chatTypes';
-import { mockChatConversations } from '@/novel/editor/components/ai/chat/chatData';
+import { fetchApiKeys } from '../../api/apiManagementApi.ts';
+import type { AIProviderConfig, AITaskType } from '@novel/editor/types';
+import { streamAITask as streamAITaskFromApi } from '@novel/editor/api/chatApi';
+
+interface StreamCallbacks {
+    onChunk: (chunk: string) => void;
+    onComplete: () => void;
+    onError: (error: string) => void;
+}
 
 /**
- * 获取所有聊天对话。
+ * 从系统设置中获取所有已启用的、可供编辑器使用的AI配置。
+ * @returns 返回一个符合编辑器AIProviderConfig格式的数组。
+ */
+export async function fetchAvailableAIProviders(): Promise<AIProviderConfig[]> {
+    try {
+        const allKeys = await fetchApiKeys();
+        const enabledKeys = allKeys.filter(key => key.status === '启用');
+
+        return enabledKeys.map(key => ({
+            id: key.id.toString(), // 将数字ID转换为字符串以匹配接口
+            name: key.name,
+            model: key.model,
+            temperature: key.temperature,
+            maxTokens: key.maxTokens,
+            description: key.description,
+        }));
+    } catch (error) {
+        console.error("Failed to fetch available AI providers from API layer:", error);
+        return [];
+    }
+}
+
+/**
+ * 通过API层执行一个流式AI任务。
+ * @param prompt - 发送给AI的最终提示词。
+ * @param config - AI配置，如模型、温度等。
+ * @param taskType - 任务的类型 ('润色', '续写' 等).
+ * @param sourceItemTitle - 任务源文档的标题.
+ * @param callbacks - 用于处理数据流、完成和错误事件的回调对象。
+ */
+export function streamAITask(
+    prompt: string,
+    config: AIProviderConfig,
+    taskType: AITaskType,
+    sourceItemTitle: string,
+    callbacks: StreamCallbacks
+): void {
+    console.log(`[AI Service] Delegating task to API layer. Type: ${taskType}, Title: ${sourceItemTitle}`);
+    streamAITaskFromApi(prompt, config, taskType, sourceItemTitle, callbacks);
+}
+
+// =
+// 文件: ..\src\novel\editor\services\ai\chatService.ts
+//
+
+import type { Conversation, ChatMessage } from '@novel/editor/types/chatTypes.ts';
+import * as chatApi from '@/novel/editor/api/chatApi';
+
+/**
+ * 从API获取所有聊天对话。
  * @returns 对话列表。
  */
-export function getConversations(): Conversation[] {
-    return mockChatConversations;
+export async function getConversations(): Promise<Conversation[]> {
+    return await chatApi.fetchConversations();
 }
 
 /**
- * 创建一个新的、空的对话对象。
+ * 通过API创建一个新的、空的对话对象。
  * @returns 一个新的 Conversation 对象。
  */
-export function createConversation(): Conversation {
-    return {
-        id: `conv-${Date.now()}`,
-        title: '新建对话',
-        summary: '暂无摘要',
-        createdAt: '刚刚',
-        messages: [],
-    };
+export async function createConversation(): Promise<Conversation> {
+    return await chatApi.createConversation();
 }
 
 /**
- * 发送一条消息并模拟接收AI的回复。
+ * 发送一条消息到API并接收AI的回复。
+ * @param conversationId - 当前对话的ID
  * @param userInput - 用户输入的文本。
  * @returns 一个包含用户消息和AI回复消息的对象。
  */
-export async function sendMessage(userInput: string): Promise<{ userMessage: ChatMessage; aiResponse: ChatMessage }> {
-    const userMessage: ChatMessage = {
-        id: `msg-${Date.now()}`,
-        role: 'user',
-        content: userInput,
-        timestamp: new Date().toISOString(),
-    };
-
-    // 模拟网络延迟和AI思考时间
-    await new Promise(res => setTimeout(res, 1500));
-
-    const aiResponse: ChatMessage = {
-        id: `msg-${Date.now() + 1}`,
-        role: 'ai',
-        content: `这是对您关于 "${userInput.substring(0, 10)}..." 的回复。AI正在思考中...`,
-        timestamp: new Date().toISOString(),
-    };
-
-    return { userMessage, aiResponse };
+export async function sendMessage(conversationId: string, userInput: string): Promise<{ userMessage: ChatMessage; aiResponse: ChatMessage }> {
+    return await chatApi.sendMessage(conversationId, userInput);
 }
 
 // =
@@ -2747,34 +2697,194 @@ class NoteService {
 export const noteService = new NoteService();
 
 // =
+// 文件: ..\src\novel\editor\services\novelLoaderService.ts
+//
+
+import { getNovelProject, updateNovelProjectContent } from '../api/projectApi';
+import { useMetadataStore } from '@/novel/editor/stores/editor-state/metadataStore';
+import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
+import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
+import { useNotesStore } from '@/novel/editor/stores/notesStore';
+import { useReferenceStore } from '@/novel/editor/stores/referenceStore';
+import { useDerivedContentStore } from '@/novel/editor/stores/derivedContentStore';
+import { useNovelSettingsStore } from '@/novel/editor/stores/novelSettingsStore';
+import { useAIConfigStore } from '@/novel/editor/stores/ai/aiConfigStore';
+import { useUIStore } from '@/novel/editor/stores/uiStore';
+import { usePaneStore } from '@/novel/editor/stores/editor-state/paneStore';
+import { useTabStore } from '@/novel/editor/stores/editor-state/tabStore';
+import type { NovelProject } from '../types/project';
+
+class NovelLoaderService {
+    private resetAllStores() {
+        useMetadataStore().$reset();
+        useDirectoryStore().$reset();
+        useRelatedContentStore().$reset();
+        useNotesStore().$reset();
+        useReferenceStore().$reset();
+        useDerivedContentStore().$reset();
+        useNovelSettingsStore().$reset();
+        useAIConfigStore().$reset();
+        usePaneStore().$reset();
+        useTabStore().$reset(); // Assuming tabs are managed inside panes or have their own reset
+    }
+
+    public async loadProjectIntoEditor(novelId: string): Promise<boolean> {
+        // Temporary holders for fetched data
+        let projectData: NovelProject | undefined;
+        let referenceTree: any[] | undefined; // Adjust type as needed
+
+        try {
+            console.log(`[Service] Fetching data for novel: ${novelId}`);
+
+            // 1. Fetch all data into temporary variables
+            projectData = await getNovelProject(novelId);
+            if (!projectData) {
+                throw new Error(`Novel project with ID "${novelId}" not found.`);
+            }
+
+            // Assuming referenceStore.loadReferences internally fetches data
+            // To make this transactional, the fetch needs to be extracted.
+            // For now, we'll proceed assuming it can fail.
+            const referenceStore = useReferenceStore();
+            await referenceStore.loadReferences(projectData.metadata.referenceNovelIds);
+
+            // 2. If all fetches are successful, commit to stores
+            const metadataStore = useMetadataStore();
+            const directoryStore = useDirectoryStore();
+            const relatedContentStore = useRelatedContentStore();
+            const notesStore = useNotesStore();
+            const derivedContentStore = useDerivedContentStore();
+            const novelSettingsStore = useNovelSettingsStore();
+            const aiConfigStore = useAIConfigStore();
+            const uiStore = useUIStore();
+            const paneStore = usePaneStore();
+            const tabStore = useTabStore();
+
+            metadataStore._setCurrentNovelId(novelId);
+            metadataStore._setNovelMetadata(projectData.metadata);
+
+            await aiConfigStore.initializeProviders();
+            directoryStore.fetchDirectoryData(projectData.directoryData);
+            relatedContentStore.fetchRelatedData(
+                projectData.settingsData,
+                projectData.plotCustomData,
+                projectData.analysisCustomData,
+                projectData.othersCustomData
+            );
+            derivedContentStore.fetchDerivedData(
+                projectData.derivedPlotData || [],
+                projectData.derivedAnalysisData || []
+            );
+            notesStore.fetchNotes(projectData.noteData);
+
+            await novelSettingsStore.loadSettingsData();
+
+            paneStore.initializePanes();
+            uiStore.uiState.expandedNodeIds.clear();
+            uiStore.uiState.expandedRelatedNodeIds.clear();
+            uiStore.uiState.expandedReferenceNodeIds.clear();
+
+            if (projectData.directoryData.length > 0) {
+                uiStore.ensureNodeIsExpanded(projectData.directoryData[0].id);
+            }
+            uiStore.ensureRelatedNodeIsExpanded('setting');
+            uiStore.ensureRelatedNodeIsExpanded('characters');
+            uiStore.ensureRelatedNodeIsExpanded('plot');
+            uiStore.ensureRelatedNodeIsExpanded('analysis');
+            uiStore.ensureRelatedNodeIsExpanded('others');
+            if (projectData.metadata.referenceNovelIds.length > 0) {
+                const firstRefBookId = `ref-book-${projectData.metadata.referenceNovelIds[0]}`;
+                uiStore.ensureReferenceNodeIsExpanded(firstRefBookId);
+            }
+
+            const firstChapterId = projectData.directoryData[0]?.chapters[0]?.id;
+            if (firstChapterId) {
+                tabStore.openTab(firstChapterId);
+            }
+
+            return true;
+        } catch (error) {
+            console.error(`[Service] Failed to load project ${novelId}:`, error);
+            // 3. On failure, reset all stores to ensure clean state
+            this.resetAllStores();
+            return false;
+        }
+    }
+
+    public async saveCurrentProject(): Promise<boolean> {
+        const metadataStore = useMetadataStore();
+        const novelId = metadataStore.currentNovelId;
+
+        if (!novelId) {
+            console.error("[Service] Cannot save: No current novel loaded.");
+            return false;
+        }
+
+        try {
+            console.log(`[Service] Saving project content for: ${novelId}`);
+
+            const directoryStore = useDirectoryStore();
+            const relatedContentStore = useRelatedContentStore();
+            const derivedContentStore = useDerivedContentStore();
+            const notesStore = useNotesStore();
+
+            const projectContentToSave: Omit<NovelProject, 'metadata'> = {
+                directoryData: directoryStore.directoryData,
+                settingsData: relatedContentStore.settingsData,
+                plotCustomData: relatedContentStore.plotCustomData,
+                analysisCustomData: relatedContentStore.analysisCustomData,
+                othersCustomData: relatedContentStore.othersCustomData,
+                derivedPlotData: derivedContentStore.plotItems,
+                derivedAnalysisData: derivedContentStore.analysisItems,
+                noteData: notesStore.notes,
+            };
+            await updateNovelProjectContent(novelId, projectContentToSave);
+
+            await metadataStore.saveMetadata();
+
+            console.log(`[Service] Project ${novelId} saved successfully.`);
+            return true;
+        } catch (error) {
+            console.error(`[Service] Failed to save project ${novelId}:`, error);
+            return false;
+        }
+    }
+}
+
+export const projectLoaderService = new NovelLoaderService();
+
+// =
 // 文件: ..\src\novel\editor\services\novelSettingsService.ts
 //
 
-import { getAllNovelProjects, getNovelProject } from '@/novel/services/novelProjectService';
+import { fetchAllNovelProjects, getNovelProject } from '../api/projectApi';
 import type { NovelProject } from '@/novel/editor/types/project';
 import type { NovelMetadata } from '@/novel/editor/types';
 
 class NovelSettingsService {
 
     /**
-     * 根据ID数组获取完整的小说项目对象列表。
+     * 根据ID数组异步获取完整的小说项目对象列表。
      * @param novelIds - 要获取的小说ID数组。
      * @returns 完整的小说项目对象数组。
      */
-    public getReferencedNovels(novelIds: string[]): NovelProject[] {
-        if (!novelIds) return [];
-        return novelIds
-            .map(id => getNovelProject(id))
-            .filter((p): p is NovelProject => p !== undefined);
+    public async getReferencedNovels(novelIds: string[]): Promise<NovelProject[]> {
+        if (!novelIds || novelIds.length === 0) return [];
+
+        const projects = await Promise.all(
+            novelIds.map(id => getNovelProject(id))
+        );
+
+        return projects.filter((p): p is NovelProject => p !== undefined);
     }
 
     /**
-     * 获取可供添加为参考书的所有其他小说项目。
+     * 异步获取可供添加为参考书的所有其他小说项目。
      * @param novelMetadata - 当前正在编辑的小说的元数据。
      * @returns 可用的参考小说项目数组。
      */
-    public getAvailableReferenceNovels(novelMetadata: NovelMetadata | null): NovelProject[] {
-        const allNovels = getAllNovelProjects();
+    public async getAvailableReferenceNovels(novelMetadata: NovelMetadata | null): Promise<NovelProject[]> {
+        const allNovels = await fetchAllNovelProjects();
         if (!novelMetadata) return allNovels;
 
         const currentAndReferencedIds = new Set([
@@ -2857,7 +2967,7 @@ export const promptService = new PromptService();
 
 import type { TreeNode, ItemNode, PlotAnalysisItem, Volume, Chapter } from '@/novel/editor/types';
 import type { NovelProject } from '@/novel/editor/types/project';
-import { getNovelProject } from '@/novel/services/novelProjectService';
+import { getNovelProject } from '../api/projectApi';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
 
 class ReferenceService {
@@ -3007,19 +3117,18 @@ class ReferenceService {
         return rootNode;
     }
 
-    public buildReferenceTree(referenceNovelIds: string[]): TreeNode[] {
+    public async buildReferenceTree(referenceNovelIds: string[]): Promise<TreeNode[]> {
         if (!referenceNovelIds || referenceNovelIds.length === 0) {
             return [];
         }
 
-        const newReferenceData = referenceNovelIds
-            .map(novelId => {
-                const project = getNovelProject(novelId);
-                return project ? this.projectToTreeNode(project) : null;
-            })
-            .filter((node): node is TreeNode => node !== null);
+        const projects = await Promise.all(
+            referenceNovelIds.map(id => getNovelProject(id))
+        );
 
-        return newReferenceData;
+        const validProjects = projects.filter((p): p is NovelProject => p !== undefined);
+
+        return validProjects.map(project => this.projectToTreeNode(project));
     }
 }
 
@@ -3159,7 +3268,7 @@ export function appendNodeContent(node: ItemNode, contentToAppend: string, isAut
 // 文件: ..\src\novel\editor\services\related\overviewService.ts
 //
 
-// src/novel/editor/services/related/overviewService.ts
+
 import type { TreeNode, GroupNode, ItemNode, OverviewNode } from '@novel/editor/types';
 
 /**
@@ -3439,7 +3548,8 @@ export const searchService = new SearchService();
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { AITaskType } from '@novel/editor/types';
+import type { AITaskType, AIProviderConfig } from '@novel/editor/types';
+import { fetchAvailableAIProviders } from '@novel/editor/services/ai/aiService.ts';
 
 // 定义每种任务类型默认选中的提示词ID
 const defaultSelectedPromptIds: Record<AITaskType, string> = {
@@ -3450,20 +3560,46 @@ const defaultSelectedPromptIds: Record<AITaskType, string> = {
     '创作': 'prompt-create-default',
 };
 
+// 定义任务配置的接口
+interface TaskConfig {
+    selectedPromptId: string;
+    selectedAIProviderId: string;
+    temperature: number;
+}
+
 export const useAIConfigStore = defineStore('aiConfig', () => {
-    // 状态结构简化，只存储选中ID和其他配置
-    const taskConfigs = ref<Record<AITaskType, { selectedPromptId: string }>>({
-        '润色': { selectedPromptId: defaultSelectedPromptIds['润色'] },
-        '续写': { selectedPromptId: defaultSelectedPromptIds['续写'] },
-        '分析': { selectedPromptId: defaultSelectedPromptIds['分析'] },
-        '剧情生成': { selectedPromptId: defaultSelectedPromptIds['剧情生成'] },
-        '创作': { selectedPromptId: defaultSelectedPromptIds['创作'] },
+    // State: 外部AI配置列表
+    const availableAIProviders = ref<AIProviderConfig[]>([]);
+
+    // State: 每种任务类型的具体配置，现在包含温度
+    const taskConfigs = ref<Record<AITaskType, TaskConfig>>({
+        '润色': { selectedPromptId: defaultSelectedPromptIds['润色'], selectedAIProviderId: '', temperature: 0.7 },
+        '续写': { selectedPromptId: defaultSelectedPromptIds['续写'], selectedAIProviderId: '', temperature: 0.8 },
+        '分析': { selectedPromptId: defaultSelectedPromptIds['分析'], selectedAIProviderId: '', temperature: 0.5 },
+        '剧情生成': { selectedPromptId: defaultSelectedPromptIds['剧情生成'], selectedAIProviderId: '', temperature: 0.9 },
+        '创作': { selectedPromptId: defaultSelectedPromptIds['创作'], selectedAIProviderId: '', temperature: 0.7 },
     });
 
     /**
+     * 从系统设置中加载用户配置的 AI 提供商
+     */
+    async function initializeProviders() {
+        if(availableAIProviders.value.length > 0) return;
+
+        availableAIProviders.value = await fetchAvailableAIProviders();
+
+        const firstAvailableProviderId = availableAIProviders.value[0]?.id || '';
+        for (const taskType in taskConfigs.value) {
+            const config = taskConfigs.value[taskType as AITaskType];
+            const isCurrentProviderAvailable = availableAIProviders.value.some(p => p.id === config.selectedAIProviderId);
+            if (!isCurrentProviderAvailable) {
+                config.selectedAIProviderId = firstAvailableProviderId;
+            }
+        }
+    }
+
+    /**
      * 更新指定任务类型选择的提示词ID
-     * @param taskType 要更新的任务类型
-     * @param promptId 选择的提示词ID
      */
     const setSelectedPromptId = (taskType: AITaskType, promptId: string) => {
         if (taskConfigs.value[taskType]) {
@@ -3471,9 +3607,31 @@ export const useAIConfigStore = defineStore('aiConfig', () => {
         }
     };
 
+    /**
+     * 更新指定任务类型选择的AI Provider ID
+     */
+    const setSelectedAIProviderId = (taskType: AITaskType, providerId: string) => {
+        if (taskConfigs.value[taskType] && availableAIProviders.value.some(p => p.id === providerId)) {
+            taskConfigs.value[taskType].selectedAIProviderId = providerId;
+        }
+    };
+
+    /**
+     * 更新指定任务类型的创作温度
+     */
+    const setTaskTemperature = (taskType: AITaskType, temperature: number) => {
+        if (taskConfigs.value[taskType]) {
+            taskConfigs.value[taskType].temperature = Number(temperature.toFixed(2));
+        }
+    }
+
     return {
         taskConfigs,
+        availableAIProviders,
+        initializeProviders,
         setSelectedPromptId,
+        setSelectedAIProviderId,
+        setTaskTemperature,
     };
 });
 
@@ -3481,7 +3639,6 @@ export const useAIConfigStore = defineStore('aiConfig', () => {
 // 文件: ..\src\novel\editor\stores\ai\aiTaskStore.ts
 //
 
-// src/novel/editor/stores/ai/aiTaskStore.ts
 import { defineStore } from 'pinia';
 import { ref, computed, nextTick } from 'vue';
 import { useEditorStore } from '../editorStore';
@@ -3534,7 +3691,6 @@ export const useAITaskStore = defineStore('aiTask', () => {
         const newTask = await AITaskFactory.createTask(taskType, sourceItemId, finalPrompt);
         if (!newTask) return;
 
-        // Open tab for derived content immediately
         if (newTask.type === '分析' || newTask.type === '剧情生成') {
             await nextTick();
             editorStore.openTab(newTask.targetItemId);
@@ -3560,42 +3716,48 @@ export const useAITaskStore = defineStore('aiTask', () => {
         if (task && task.status === 'processing') {
             task.status = 'completed';
 
-            // Handle auto-application logic
-            if (task.type === '润色' || task.type === '续写') {
-                const strategy = uiStore.uiState.taskApplicationStrategy;
-                switch (strategy.mode) {
-                    case 'auto':
+            const strategy = uiStore.uiState.taskApplicationStrategy;
+            if (strategy.mode === 'auto') {
+                applyChanges(taskId, true);
+            } else if (strategy.mode === 'delayed') {
+                task.applyAt = Date.now() + strategy.delaySeconds * 1000;
+                setTimeout(() => {
+                    const taskAfterDelay = tasks.value.find(t => t.id === taskId);
+                    if (taskAfterDelay?.status === 'completed') {
                         applyChanges(taskId, true);
-                        break;
-                    case 'delayed':
-                        setTimeout(() => {
-                            const taskAfterDelay = tasks.value.find(t => t.id === taskId);
-                            if (taskAfterDelay && taskAfterDelay.status === 'completed') {
-                                applyChanges(taskId, true);
-                            }
-                        }, strategy.delaySeconds * 1000);
-                        break;
-                    case 'manual':
-                        // Do nothing
-                        break;
-                }
+                    }
+                }, strategy.delaySeconds * 1000);
             }
         }
     };
 
     const applyChanges = (taskId: string, isAutoApplied: boolean = false) => {
         const task = tasks.value.find(t => t.id === taskId);
-        if (!task || task.status !== 'completed') return;
+        if (!task || (task.status !== 'completed' && task.status !== 'completed_with_conflict')) return;
+
+        const { node: targetItem } = editorStore.findItemById(task.targetItemId);
+        if (!targetItem) {
+            task.status = 'failed';
+            task.error = '目标文档不存在。';
+            return;
+        }
+
+        // --- 核心Bug修复：版本冲突检查 ---
+        const currentVersion = (targetItem as any)._lastModified || 0;
+        if (task.sourceItemVersion < currentVersion) {
+            task.status = 'completed_with_conflict';
+            task.error = `内容已被修改，AI结果无法自动应用。请手动处理。`;
+            console.warn(`AI Task Conflict: Task for "${task.sourceItemTitle}" cannot be applied automatically. Task version: ${task.sourceItemVersion}, Current version: ${currentVersion}`);
+            return;
+        }
+        // --- 核心Bug修复结束 ---
 
         if (task.type === '分析' || task.type === '剧情生成') {
-            const { node: targetNode } = editorStore.findItemById(task.targetItemId);
-            if (targetNode) {
-                const finalTitle = task.title.split(' - ')[0];
-                const newContent = formatContentForEditor(finalTitle, task.generatedContent);
-                editorStore.updateItemContentById(task.targetItemId, newContent);
-                const result = derivedContentStore.findItemById(task.targetItemId);
-                if (result) result.title = finalTitle;
-            }
+            const finalTitle = task.title.split(' - ')[0];
+            const newContent = formatContentForEditor(finalTitle, task.generatedContent);
+            editorStore.updateItemContentById(task.targetItemId, newContent, true); // Pass true to update version
+            const result = derivedContentStore.findItemById(task.targetItemId);
+            if (result) result.title = finalTitle;
         } else {
             editorStore.appendContentToItem(task.targetItemId, task.generatedContent, isAutoApplied);
         }
@@ -3605,21 +3767,19 @@ export const useAITaskStore = defineStore('aiTask', () => {
 
     const retryTask = (taskId: string) => {
         const task = tasks.value.find(t => t.id === taskId);
-        if (task && task.status === 'failed') {
-            task.status = 'pending';
-            task.error = undefined;
-            task.generatedContent = '';
-            task.finalPrompt = undefined; // Force prompt rebuild
-            nextTick(processQueue);
+        if (task && (task.status === 'failed' || task.status === 'completed_with_conflict')) {
+            // Re-create the task to get fresh content and a new version stamp
+            startTask(task.type, task.sourceItemId, task.finalPrompt);
+            // Remove the old, failed task
+            tasks.value = tasks.value.filter(t => t.id !== taskId);
         }
     };
 
     const clearCompletedTasks = () => {
-        tasks.value = tasks.value.filter(t => t.status !== 'applied' && t.status !== 'failed');
+        tasks.value = tasks.value.filter(t => !['applied', 'failed', 'completed_with_conflict'].includes(t.status));
     };
 
     const clearAllTasks = () => {
-        // Here we might need a way to signal cancellation to the execution service in a real scenario
         tasks.value = [];
     };
 
@@ -3632,7 +3792,6 @@ export const useAITaskStore = defineStore('aiTask', () => {
         retryTask,
         clearCompletedTasks,
         clearAllTasks,
-        // Methods for execution service
         updateTaskStatus,
         updateTaskError,
         appendGeneratedContent,
@@ -3644,11 +3803,10 @@ export const useAITaskStore = defineStore('aiTask', () => {
 // 文件: ..\src\novel\editor\stores\ai\chatStore.ts
 //
 
-// src/novel/editor/stores/ai/chatStore.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Conversation, AIModel } from '@novel/editor/types/chatTypes';
-import * as chatService from '@/novel/editor/services/chatService';
+import * as chatService from '@/novel/editor/services/ai/chatService';
 
 export const useChatStore = defineStore('editorChat', () => {
     // --- State ---
@@ -3657,6 +3815,7 @@ export const useChatStore = defineStore('editorChat', () => {
     const currentModel = ref<AIModel>({ id: 'gpt-4o', name: 'GPT-4o', status: 'online' });
     const messageInput = ref<string>('');
     const isReceiving = ref<boolean>(false);
+    const isLoading = ref<boolean>(false);
 
     // --- Getters (Computed) ---
     const activeConversation = computed(() => {
@@ -3670,17 +3829,29 @@ export const useChatStore = defineStore('editorChat', () => {
     });
 
     // --- Actions ---
-    const fetchConversations = () => {
-        conversations.value = chatService.getConversations();
-        if (conversations.value.length > 0 && !activeConversationId.value) {
-            activeConversationId.value = conversations.value[0].id;
+    const fetchConversations = async () => {
+        isLoading.value = true;
+        try {
+            conversations.value = await chatService.getConversations();
+            if (conversations.value.length > 0 && !activeConversationId.value) {
+                activeConversationId.value = conversations.value[0].id;
+            }
+        } catch (error) {
+            console.error("Failed to fetch conversations:", error);
+            conversations.value = [];
+        } finally {
+            isLoading.value = false;
         }
     };
 
-    const createNewConversation = () => {
-        const newConv = chatService.createConversation();
-        conversations.value.unshift(newConv);
-        activeConversationId.value = newConv.id;
+    const createNewConversation = async () => {
+        try {
+            const newConv = await chatService.createConversation();
+            conversations.value.unshift(newConv);
+            activeConversationId.value = newConv.id;
+        } catch (error) {
+            console.error("Failed to create new conversation:", error);
+        }
     };
 
     const selectConversation = (conversationId: string) => {
@@ -3694,19 +3865,18 @@ export const useChatStore = defineStore('editorChat', () => {
         }
 
         const currentActiveConv = activeConversation.value;
-        messageInput.value = ''; // Clear input immediately
+        const conversationId = currentActiveConv.id;
+        messageInput.value = '';
         isReceiving.value = true;
 
         try {
-            const { userMessage, aiResponse } = await chatService.sendMessage(userInput);
-            // Ensure the conversation is still active before pushing messages
-            if (activeConversation.value === currentActiveConv) {
+            const { userMessage, aiResponse } = await chatService.sendMessage(conversationId, userInput);
+            if (activeConversation.value?.id === conversationId) {
                 currentActiveConv.messages.push(userMessage);
                 currentActiveConv.messages.push(aiResponse);
             }
         } catch (error) {
             console.error("Failed to send message:", error);
-            // Optionally, push an error message to the chat
         } finally {
             isReceiving.value = false;
         }
@@ -3718,6 +3888,7 @@ export const useChatStore = defineStore('editorChat', () => {
         currentModel,
         messageInput,
         isReceiving,
+        isLoading,
         activeConversation,
         currentTokenCount,
         fetchConversations,
@@ -4291,83 +4462,45 @@ export const useItemStore = defineStore('editor-item', () => {
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { getNovelProject } from '@/novel/services/novelProjectService';
+import { projectLoaderService } from '@novel/editor/services/novelLoaderService.ts';
 import type { NovelMetadata } from '@/novel/editor/types/project';
-import { useDirectoryStore } from '../directoryStore';
-import { useRelatedContentStore } from '../relatedContentStore';
-import { useNotesStore } from '../notesStore';
 import { useReferenceStore } from '../referenceStore';
-import { useUIStore } from '../uiStore';
-import { usePaneStore } from './paneStore';
-import { useTabStore } from './tabStore';
-import { useDerivedContentStore } from '../derivedContentStore';
-import { useNovelSettingsStore } from '../novelSettingsStore';
+import { updateNovelMetadata } from '../../api/metadataApi';
 
 export const useMetadataStore = defineStore('editor-metadata', () => {
     const novelMetadata = ref<NovelMetadata | null>(null);
     const currentNovelId = ref<string | null>(null);
 
-    function fetchNovelData(novelId: string) {
-        console.log(`Fetching data for novel: ${novelId}`);
-        const projectData = getNovelProject(novelId);
+    // --- Actions (Public API for components) ---
 
-        if (!projectData) {
-            console.error(`Novel project with ID "${novelId}" not found.`);
+    async function fetchNovelData(novelId: string) {
+        await projectLoaderService.loadProjectIntoEditor(novelId);
+    }
+
+    async function saveMetadata() {
+        if (!currentNovelId.value || !novelMetadata.value) {
+            console.error("保存失败：未加载小说。");
+            alert('保存失败，请查看控制台获取更多信息。');
             return;
         }
 
-        currentNovelId.value = novelId;
-
-        const directoryStore = useDirectoryStore();
-        const relatedContentStore = useRelatedContentStore();
-        const notesStore = useNotesStore();
-        const referenceStore = useReferenceStore();
-        const derivedContentStore = useDerivedContentStore();
-        const uiStore = useUIStore();
-        const paneStore = usePaneStore();
-        const tabStore = useTabStore();
-        const novelSettingsStore = useNovelSettingsStore();
-
-        directoryStore.fetchDirectoryData(projectData.directoryData);
-        relatedContentStore.fetchRelatedData(
-            projectData.settingsData,
-            projectData.plotCustomData,
-            projectData.analysisCustomData,
-            projectData.othersCustomData
-        );
-        derivedContentStore.fetchDerivedData(
-            projectData.derivedPlotData || [],
-            projectData.derivedAnalysisData || []
-        );
-        notesStore.fetchNotes(projectData.noteData);
-        novelMetadata.value = JSON.parse(JSON.stringify(projectData.metadata));
-        referenceStore.loadReferences(projectData.metadata.referenceNovelIds);
-
-        // Notify NovelSettingsStore to update its state
-        novelSettingsStore.loadSettingsData();
-
-        paneStore.initializePanes();
-        const firstChapterId = projectData.directoryData[0]?.chapters[0]?.id;
-        if (firstChapterId) {
-            tabStore.openTab(firstChapterId);
+        try {
+            await updateNovelMetadata(currentNovelId.value, novelMetadata.value);
+            alert('小说设置已保存！');
+        } catch (error) {
+            console.error("保存元数据失败:", error);
+            alert('保存失败，请稍后重试。');
         }
+    }
 
-        uiStore.uiState.expandedNodeIds.clear();
-        uiStore.uiState.expandedRelatedNodeIds.clear();
-        uiStore.uiState.expandedReferenceNodeIds.clear();
+    // --- State Modifiers (Internal, called by services or other actions) ---
 
-        if (projectData.directoryData.length > 0) {
-            uiStore.uiState.expandedNodeIds.add(projectData.directoryData[0].id);
-        }
-        uiStore.uiState.expandedRelatedNodeIds.add('setting');
-        uiStore.uiState.expandedRelatedNodeIds.add('characters');
-        uiStore.uiState.expandedRelatedNodeIds.add('plot');
-        uiStore.uiState.expandedRelatedNodeIds.add('analysis');
-        uiStore.uiState.expandedRelatedNodeIds.add('others');
-        if (projectData.metadata.referenceNovelIds.length > 0) {
-            const firstRefBookId = `ref-book-${projectData.metadata.referenceNovelIds[0]}`;
-            uiStore.uiState.expandedReferenceNodeIds.add(firstRefBookId);
-        }
+    function _setNovelMetadata(data: NovelMetadata) {
+        novelMetadata.value = JSON.parse(JSON.stringify(data));
+    }
+
+    function _setCurrentNovelId(id: string) {
+        currentNovelId.value = id;
     }
 
     function addReferenceNovel(novelIdToAdd: string) {
@@ -4377,7 +4510,6 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
         novelMetadata.value.referenceNovelIds.push(novelIdToAdd);
         const referenceStore = useReferenceStore();
         referenceStore.loadReferences(novelMetadata.value.referenceNovelIds);
-        // No need to call settings store here, as the caller (settingsStore) will do it.
     }
 
     function removeReferenceNovel(novelIdToRemove: string) {
@@ -4389,7 +4521,6 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
             novelMetadata.value.referenceNovelIds.splice(index, 1);
             const referenceStore = useReferenceStore();
             referenceStore.loadReferences(novelMetadata.value.referenceNovelIds);
-            // No need to call settings store here, as the caller (settingsStore) will do it.
         }
     }
 
@@ -4407,21 +4538,20 @@ export const useMetadataStore = defineStore('editor-metadata', () => {
         }
     }
 
-    function saveMetadata() {
-        if (!novelMetadata.value) return;
-        console.log('Saving metadata:', JSON.parse(JSON.stringify(novelMetadata.value)));
-        alert('小说设置已保存！');
-    }
-
     return {
+        // State
         novelMetadata,
         currentNovelId,
+        // Actions
         fetchNovelData,
         addReferenceNovel,
         removeReferenceNovel,
         removeTag,
         addTag,
         saveMetadata,
+        // Internal Setters
+        _setNovelMetadata,
+        _setCurrentNovelId,
     };
 });
 
@@ -4822,38 +4952,34 @@ import type { NovelMetadata } from '@/novel/editor/types';
 export const useNovelSettingsStore = defineStore('novel-settings', () => {
     const metadataStore = useMetadataStore();
 
-    // State: No longer computed, but refs updated by an action.
     const novelMetadata = ref<NovelMetadata | null>(null);
     const referencedNovels = ref<NovelProject[]>([]);
     const availableReferenceNovels = ref<NovelProject[]>([]);
 
     /**
-     * Loads and populates all data needed for the settings view.
-     * This is the central point for refreshing the store's state.
+     * Asynchronously loads and populates all data needed for the settings view.
      */
-    function loadSettingsData() {
+    async function loadSettingsData() {
         const meta = metadataStore.novelMetadata;
         novelMetadata.value = meta;
         if (meta) {
-            referencedNovels.value = novelSettingsService.getReferencedNovels(meta.referenceNovelIds);
-            availableReferenceNovels.value = novelSettingsService.getAvailableReferenceNovels(meta);
+            referencedNovels.value = await novelSettingsService.getReferencedNovels(meta.referenceNovelIds);
+            availableReferenceNovels.value = await novelSettingsService.getAvailableReferenceNovels(meta);
         } else {
             referencedNovels.value = [];
-            availableReferenceNovels.value = novelSettingsService.getAvailableReferenceNovels(null);
+            availableReferenceNovels.value = await novelSettingsService.getAvailableReferenceNovels(null);
         }
     }
 
-    const addReferenceNovel = (novelId: string) => {
+    const addReferenceNovel = async (novelId: string) => {
         if (!novelId) return;
         metadataStore.addReferenceNovel(novelId);
-        // After core data is changed, reload our UI-specific data.
-        loadSettingsData();
+        await loadSettingsData();
     };
 
-    const removeReferenceNovel = (novelId: string) => {
+    const removeReferenceNovel = async (novelId: string) => {
         metadataStore.removeReferenceNovel(novelId);
-        // After core data is changed, reload our UI-specific data.
-        loadSettingsData();
+        await loadSettingsData();
     };
 
     const addTag = () => {
@@ -4868,9 +4994,9 @@ export const useNovelSettingsStore = defineStore('novel-settings', () => {
         metadataStore.saveMetadata();
     };
 
-    const resetMetadata = () => {
+    const resetMetadata = async () => {
         if (metadataStore.currentNovelId) {
-            metadataStore.fetchNovelData(metadataStore.currentNovelId);
+            await metadataStore.fetchNovelData(metadataStore.currentNovelId);
         }
     };
 
@@ -5030,8 +5156,8 @@ const _findNodeRecursive = (nodes: TreeNode[], nodeId: string): { node: TreeNode
 export const useReferenceStore = defineStore('reference', () => {
     const referenceData = ref<TreeNode[]>([]);
 
-    const loadReferences = (referenceNovelIds: string[]) => {
-        referenceData.value = referenceService.buildReferenceTree(referenceNovelIds);
+    const loadReferences = async (referenceNovelIds: string[]) => {
+        referenceData.value = await referenceService.buildReferenceTree(referenceNovelIds);
     };
 
     const findNodeById = (nodeId: string): { node: TreeNode; parent: TreeNode | null; } | null => {
@@ -5375,22 +5501,37 @@ export const useUIStore = defineStore('ui', () => {
 });
 
 // =
-// 文件: ..\src\novel\editor\types\app.ts
+// 文件: ..\src\novel\editor\types\ai.ts
 //
 
-// 文件: src/novel/editor/types/app.ts
-
-import type { TreeNode, Volume, Chapter, NoteItem, PlotAnalysisItem } from './models';
 
 /**
  * AI 任务状态
+ * - pending: 等待执行
+ * - processing: 正在执行
+ * - completed: 已完成，等待应用
+ * - completed_with_conflict: 已完成，但源文档已被修改，等待用户处理
+ * - applied: 已应用
+ * - failed: 执行失败
  */
-export type AITaskStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'applied';
+export type AITaskStatus = 'pending' | 'processing' | 'completed' | 'completed_with_conflict' | 'applied' | 'failed';
 
 /**
  * AI 任务类型 (用户界面显示名称)
  */
 export type AITaskType = '润色' | '续写' | '分析' | '剧情生成' | '创作';
+
+/**
+ * AI 提供商（模型）配置
+ */
+export interface AIProviderConfig {
+    id: string;
+    name: string;
+    model: string;
+    temperature: number;
+    maxTokens: number;
+    description: string;
+}
 
 /**
  * AI 任务对象
@@ -5401,13 +5542,16 @@ export interface AITask {
     type: AITaskType;
     sourceItemId: string;
     targetItemId: string;
-    sourceItemTitle: string; // 新增：源文档标题快照
-    sourceItemContent: string; // 新增：源文档内容快照
+    sourceItemTitle: string;
+    sourceItemContent: string;
+    sourceItemVersion: number; // 新增：源文档版本快照（使用Date.now()时间戳）
     status: AITaskStatus;
     generatedContent: string;
     finalPrompt?: string;
     error?: string;
     createdAt: Date;
+    applyAt?: number; // 新增：用于延迟应用的时间戳
+    aiConfig: AIProviderConfig;
 }
 
 /**
@@ -5417,127 +5561,6 @@ export interface AITaskPreview {
     type: AITaskType;
     targetItemId: string; // 此处targetItemId即为sourceItemId
     title: string;
-}
-
-/**
- * 上下文预设或已选择的条目
- */
-export interface ContextItem {
-    id:string;
-    category: '设定' | '其他';
-    group: string;
-    title:string;
-    description: string;
-    content: string;
-}
-
-/**
- * buildContextForTask 方法的返回结果
- */
-export interface ContextBuildResult {
-    fixed: string;
-    dynamic: string;
-    reference: string;
-    rag: string;
-    prompt: string;
-    stats: {
-        fixedCharCount: number;
-        dynamicCharCount: number;
-        referenceCharCount: number;
-        promptCharCount: number;
-        ragCharCount: number;
-    };
-}
-
-/**
- * 动态上下文的配置项
- */
-export interface DynamicContextSettings {
-    prevVolumes: number;
-    nextVolumes: number;
-    prevChapters: number;
-    nextChapters: number;
-    includeVolumePlot: boolean;
-    includeVolumeAnalysis: boolean;
-    includeRelatedPlot: boolean;
-    includeRelatedAnalysis: boolean;
-}
-
-/**
- * 参考书上下文的配置项
- */
-export interface ReferenceContextSettings {
-    includeContent: boolean;
-    includeAnalysis: boolean;
-    includePlot: boolean;
-    includeVolumeInfo: boolean;
-}
-
-
-/**
- * 编辑器UI状态
- * 用于定义 uiStore 中的 uiState
- */
-export interface EditorUIState {
-    expandedNodeIds: Set<string>;
-    expandedRelatedNodeIds: Set<string>;
-    expandedReferenceNodeIds: Set<string>;
-    autoOpenAIPanel: boolean;
-    activeTheme: 'default' | 'eye-care' | 'dark';
-    concurrentTaskLimit: number;
-    taskApplicationStrategy: {
-        mode: 'manual' | 'auto' | 'delayed';
-        delaySeconds: number;
-    };
-}
-
-/**
- * 编辑器窗格定义
- */
-export interface EditorPane {
-    id: string;
-    openTabIds: string[];
-    activeTabId: string | null;
-}
-
-/**
- * 系统视图信息，用于在内容区打开非文件类标签页
- */
-export interface SystemViewInfo {
-    id: string; // e.g., 'system:search'
-    type: 'system';
-    component: 'SearchView' | 'AIChatView' | 'AITaskPanel' | 'EditorSettings' | 'ContextSettings' | 'TaskSettings' | 'AIConfigSettings' | 'NovelSettings' | 'HistoryPanel' | 'ReaderPanel' | 'ThemeSettings';
-    title: string;
-    icon: string;
-    content?: null; // 系统视图没有 content 属性
-    targetItemId?: string; // For dynamic views like history
-}
-
-/**
- * 任意可被编辑器打开的条目
- * 这是一个辨识联合类型，涵盖了所有可能在标签页中打开的内容。
- */
-export type EditorItem = Volume | Chapter | TreeNode | NoteItem | SystemViewInfo | PlotAnalysisItem;
-
-/**
- * 搜索结果条目
- */
-export interface SearchResult {
-    id: string;
-    title: string;
-    icon: string;
-    item: EditorItem;
-    matches: { context: string }[];
-}
-
-/**
- * 标签页信息
- */
-export interface TabInfo {
-    id: string;
-    title: string;
-    icon: string;
-    item: EditorItem;
 }
 
 // =
@@ -5578,11 +5601,10 @@ export interface Conversation {
 // 文件: ..\src\novel\editor\types\index.ts
 //
 
-
 export * from './models';
-export * from './app';
 export * from './chatTypes';
 export * from './ui';
+export * from './ai';
 
 // =
 // 文件: ..\src\novel\editor\types\models.ts

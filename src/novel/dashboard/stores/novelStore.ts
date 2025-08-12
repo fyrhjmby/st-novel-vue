@@ -1,14 +1,15 @@
+// src/novel/dashboard/stores/novelStore.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { Novel, NovelCategory } from '@/novel/types';
-import { mockNovels } from '@/novel/dashboard/data';
-import { createNewNovelProject } from '@/novel/services/novelProjectService';
-import { useTrashStore } from './trashStore';
+import type { NovelDashboardItem, NovelCategory } from '@/novel/types';
+import * as dashboardService from '@/novel/dashboard/services/dashboardService';
 
 export const useNovelStore = defineStore('novel-dashboard-novels', () => {
-    const novels = ref<Novel[]>([]);
+    const novels = ref<NovelDashboardItem[]>([]);
+    const availableCategories = ref<NovelCategory[]>([]);
     const searchQuery = ref('');
     const selectedCategory = ref<NovelCategory | '全部类型'>('全部类型');
+    const isLoading = ref(false);
 
     const filteredNovels = computed(() => {
         return novels.value.filter(novel => {
@@ -18,53 +19,54 @@ export const useNovelStore = defineStore('novel-dashboard-novels', () => {
         });
     });
 
-    const availableCategories = computed((): NovelCategory[] => {
-        const categories = new Set(novels.value.map(novel => novel.category));
-        return Array.from(categories);
-    });
-
-    const fetchNovels = () => {
-        if (novels.value.length > 0) {
-            return;
+    const fetchNovels = async () => {
+        isLoading.value = true;
+        try {
+            novels.value = await dashboardService.fetchNovels();
+        } catch (error) {
+            console.error('Failed to fetch novels:', error);
+        } finally {
+            isLoading.value = false;
         }
-        novels.value = mockNovels;
     };
 
-    const addNovel = (newNovel: Novel) => {
+    const fetchCategories = async () => {
+        try {
+            availableCategories.value = await dashboardService.fetchAvailableCategories();
+        } catch (error) {
+            console.error('Failed to fetch categories:', error);
+        }
+    };
+
+    const initializeDashboard = () => {
+        fetchNovels();
+        fetchCategories();
+    };
+
+    const addNovel = (newNovel: NovelDashboardItem) => {
         novels.value.unshift(newNovel);
     };
 
-    const createNovel = (data: { title: string; synopsis: string; category: NovelCategory }) => {
-        const newNovelId = `novel-${Date.now()}`;
-        const newProject = createNewNovelProject(newNovelId, data.title, data.synopsis, data.category);
-
-        const newNovelForDashboard: Novel = {
-            id: newProject.metadata.id,
-            title: newProject.metadata.title,
-            description: newProject.metadata.description,
-            category: data.category,
-            cover: newProject.metadata.cover,
-            status: { text: '编辑中', class: 'bg-green-500/90' },
-            tags: newProject.metadata.tags,
-            chapters: 0,
-            lastUpdated: '刚刚'
-        };
-        addNovel(newNovelForDashboard);
+    const createNovel = async (data: { title: string; synopsis: string; category: NovelCategory }) => {
+        try {
+            const newNovel = await dashboardService.createNovel(data);
+            addNovel(newNovel);
+        } catch (error) {
+            console.error('Failed to create novel:', error);
+            // 这里可以添加用户反馈，例如弹窗提示
+        }
     };
 
-    const deleteNovel = (novelId: string) => {
-        const index = novels.value.findIndex(n => n.id === novelId);
-        if (index === -1) return;
-
-        const novelToDelete = novels.value[index];
-        const trashStore = useTrashStore();
-        trashStore.addItemToTrash(novelToDelete);
-
-        novels.value.splice(index, 1);
-    };
-
-    const restoreNovel = (novel: Novel) => {
-        addNovel(novel);
+    const deleteNovel = async (novelId: string) => {
+        try {
+            await dashboardService.moveToTrash(novelId);
+            const index = novels.value.findIndex(n => n.id === novelId);
+            if (index !== -1) {
+                novels.value.splice(index, 1);
+            }
+        } catch (error) {
+            console.error('Failed to delete novel:', error);
+        }
     };
 
     return {
@@ -73,10 +75,11 @@ export const useNovelStore = defineStore('novel-dashboard-novels', () => {
         selectedCategory,
         filteredNovels,
         availableCategories,
+        isLoading,
+        initializeDashboard,
         fetchNovels,
         addNovel,
         createNovel,
         deleteNovel,
-        restoreNovel
     };
 });

@@ -1,5 +1,3 @@
-// 文件: src/novel/editor/composables/useContextBuilder.ts
-
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useContextSettingsStore } from '@/novel/editor/stores/contextSettingsStore';
 import { useDerivedContentStore } from '@/novel/editor/stores/derivedContentStore';
@@ -8,11 +6,10 @@ import { useAIConfigStore } from '@novel/editor/stores/ai/aiConfigStore.ts';
 import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
 import type { AITask, ContextBuildResult, Volume, Chapter, DynamicContextSettings, ReferenceContextSettings, TreeNode } from '@/novel/editor/types';
 
-const stripHtml = (html: string) => {
-    if (typeof document === 'undefined') return html;
-    const tmp = document.createElement("DIV");
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || "";
+const stripHtml = (html: string): string => {
+    // 使用正则表达式替换，避免依赖DOM环境
+    if (!html) return '';
+    return html.replace(/<[^>]*>?/gm, '');
 };
 
 const _findDerivedItemsRecursive = (nodes: TreeNode[], sourceId: string): TreeNode[] => {
@@ -73,7 +70,7 @@ export function useContextBuilder() {
         }
         if (settings.includeVolumeAnalysis) {
             const analysis = derivedContentStore.analysisItems.find(a => a.sourceId === sourceVolume.id);
-            if (analysis) dynamicContextHtml += `<h4>卷分析: ${analysis.title}</h4>${analysis.content}`;
+            if (analysis) html += `<h4>卷分析: ${analysis.title}</h4>${analysis.content}`;
         }
 
         if (currentChapterIndex > -1) {
@@ -154,6 +151,15 @@ export function useContextBuilder() {
     };
 
     const _buildReferenceContextHtmlByIndex = (sourceNode: Chapter | Volume, vIndex: number, cIndex: number | null, settings: ReferenceContextSettings): string => {
+        // BUG: This index-based matching is fragile and likely to produce incorrect context.
+        // It assumes the reference book has the exact same structure.
+        // This should be replaced with a more robust matching logic (e.g., title similarity)
+        // or a user-driven manual mapping feature.
+        // For now, returning an empty string to prevent context pollution.
+        if (true) { // Temporarily disabling this feature
+            return '<!-- Reference context matching is disabled due to known bugs. -->';
+        }
+
         if (!referenceStore.referenceData.length || vIndex < 0) return '';
 
         let referenceContextHtml = '';
@@ -251,9 +257,10 @@ export function useContextBuilder() {
         const promptNode = promptTemplateStore.findPromptById(taskConfig.selectedPromptId);
         let selectedPromptTemplate = `请为《${sourceItemTitle}》执行“${taskType}”任务。`;
         if (promptNode?.content) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = promptNode.content;
-            selectedPromptTemplate = (tempDiv.querySelector('pre')?.textContent || selectedPromptTemplate).replace(/{{sourceItemTitle}}/g, sourceItemTitle);
+            // 使用正则表达式从<pre>标签中提取模板，更安全
+            const match = promptNode.content.match(/<pre[^>]*>([\s\S]*)<\/pre>/);
+            const template = match ? match[1] : selectedPromptTemplate;
+            selectedPromptTemplate = template.replace(/{{sourceItemTitle}}/g, sourceItemTitle);
         }
 
         const prompt = `[任务提示词]

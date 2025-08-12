@@ -1,4 +1,3 @@
-// 文件: ..\src\novel\data\mockNovelProjects.ts
 import type { NovelProject } from '@/novel/editor/types/project';
 import type {
     Volume,
