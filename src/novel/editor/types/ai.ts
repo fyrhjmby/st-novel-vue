@@ -1,4 +1,3 @@
-
 /**
  * AI 任务状态
  * - pending: 等待执行
@@ -38,13 +37,13 @@ export interface AITask {
     targetItemId: string;
     sourceItemTitle: string;
     sourceItemContent: string;
-    sourceItemVersion: number; // 新增：源文档版本快照（使用Date.now()时间戳）
+    sourceItemVersion: number;
     status: AITaskStatus;
     generatedContent: string;
     finalPrompt?: string;
     error?: string;
     createdAt: Date;
-    applyAt?: number; // 新增：用于延迟应用的时间戳
+    applyAt?: number;
     aiConfig: AIProviderConfig;
 }
 
@@ -53,6 +52,6 @@ export interface AITask {
  */
 export interface AITaskPreview {
     type: AITaskType;
-    targetItemId: string; // 此处targetItemId即为sourceItemId
+    targetItemId: string;
     title: string;
 }

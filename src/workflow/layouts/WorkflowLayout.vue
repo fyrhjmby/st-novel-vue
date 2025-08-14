@@ -88,8 +88,6 @@ const managementNav = ref([
 ]);
 
 const configNav = ref([
-  { name: '连接器', path: '/workflow/connectors', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>` },
-  { name: '变量库', path: '/workflow/variables', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>` },
   { name: '调度任务', path: '/workflow/schedules', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>` },
   { name: '回收站', path: '/workflow/trash', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 7h18M9 7V3h6v4M5 7h14l-1 10H6L5 7zm4 5h6m-4 0v4"/></svg>` },
 ]);

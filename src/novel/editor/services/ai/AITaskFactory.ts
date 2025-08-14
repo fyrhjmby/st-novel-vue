@@ -1,5 +1,4 @@
 import { useEditorStore } from '@novel/editor/stores/editorStore';
-import { useDerivedContentStore } from '@novel/editor/stores/derivedContentStore';
 import { useAIConfigStore } from '@novel/editor/stores/ai/aiConfigStore';
 import type { AITask, AITaskType } from '@/novel/editor/types';
 
@@ -12,7 +11,6 @@ import type { AITask, AITaskType } from '@/novel/editor/types';
  */
 export async function createTask(taskType: AITaskType, sourceItemId: string, finalPrompt?: string): Promise<AITask | null> {
     const editorStore = useEditorStore();
-    const derivedContentStore = useDerivedContentStore();
     const aiConfigStore = useAIConfigStore();
 
     const { node: sourceItem } = editorStore.findItemById(sourceItemId);
@@ -42,21 +40,10 @@ export async function createTask(taskType: AITaskType, sourceItemId: string, fin
         temperature: taskConfigSettings.temperature,
     };
 
-    let targetItemId: string;
-    let taskTitle: string;
-
-    if (taskType === '分析' || taskType === '剧情生成') {
-        const newDerivedItem = derivedContentStore.createDerivedItem(sourceItem, taskType);
-        if (!newDerivedItem) {
-            console.error("AI Task Factory Error: Failed to create derived item shell.");
-            return null;
-        }
-        targetItemId = newDerivedItem.id;
-        taskTitle = newDerivedItem.title;
-    } else {
-        targetItemId = sourceItemId;
-        taskTitle = `${taskType}《${sourceItem.title}》`;
-    }
+    // 对于所有任务，目标ID最初都指向源ID。
+    // 应用时，将根据任务类型决定是修改此ID的项，还是基于此ID创建新项。
+    const targetItemId = sourceItemId;
+    const taskTitle = `${taskType}《${sourceItem.title}》`;
 
     const newTask: AITask = {
         id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

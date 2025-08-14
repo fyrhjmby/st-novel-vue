@@ -45,6 +45,7 @@ export function createChapter(): Chapter {
 
 export function updateNodeContent(node: Volume | Chapter, content: string) {
     node.content = content;
+    (node as any)._lastModified = Date.now(); // Update version timestamp
 
     if (node.type === 'chapter') {
         const tempDiv = document.createElement('div');
@@ -69,6 +70,7 @@ export function appendChapterContent(chapter: Chapter, contentToAppend: string, 
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = chapter.content;
     chapter.wordCount = tempDiv.textContent?.trim().length || 0;
+    (chapter as any)._lastModified = Date.now(); // Update version timestamp
 }
 
 export function renameNode(node: DirectoryNode, newTitle: string) {
@@ -84,6 +86,7 @@ export function renameNode(node: DirectoryNode, newTitle: string) {
             node.content = `<h1>${trimmedTitle}</h1>` + node.content;
         }
     }
+    (node as any)._lastModified = Date.now(); // Update version timestamp on rename
 }
 
 export function deleteNode(nodes: Volume[], nodeId: string): boolean {

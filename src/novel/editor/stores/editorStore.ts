@@ -6,7 +6,7 @@ import { useItemStore } from '@novel/editor/stores/editor-state/itemStore';
 import { useSystemViewStore } from '@novel/editor/stores/editor-state/systemViewStore';
 import { useMetadataStore } from '@novel/editor/stores/editor-state/metadataStore';
 import { useUIStore } from './uiStore';
-import type { TabInfo } from '@/novel/editor/types';
+import type { TabInfo, EditorItem } from '@/novel/editor/types';
 
 export { EditorPane };
 
@@ -64,6 +64,33 @@ export const useEditorStore = defineStore('editor-facade', () => {
         }
     };
 
+    /**
+     * 更新指定ID项目的内容，并自动更新其版本时间戳。
+     * @param id - 项目的ID
+     * @param content - 新的HTML内容
+     */
+    const updateItemContentById = (id: string, content: string) => {
+        itemStore.updateItemContentById(id, content);
+        const { node } = itemStore.findItemById(id);
+        if (node) {
+            (node as any)._lastModified = Date.now();
+        }
+    };
+
+    /**
+     * 向指定ID项目追加内容，并自动更新其版本时间戳。
+     * @param itemId - 项目的ID
+     * @param content - 要追加的HTML内容
+     * @param auto - 是否为AI自动应用
+     */
+    const appendContentToItem = (itemId: string, content: string, auto: boolean) => {
+        itemStore.appendContentToItem(itemId, content, auto);
+        const { node } = itemStore.findItemById(itemId);
+        if (node) {
+            (node as any)._lastModified = Date.now();
+        }
+    };
+
     return {
         panes,
         activePaneId,
@@ -79,8 +106,8 @@ export const useEditorStore = defineStore('editor-facade', () => {
         openTab: tabStore.openTab,
         closeTab: tabStore.closeTab,
         findItemById: itemStore.findItemById,
-        updateItemContentById: itemStore.updateItemContentById,
-        appendContentToItem: itemStore.appendContentToItem,
+        updateItemContentById,
+        appendContentToItem,
         toggleAIPanel: systemViewStore.toggleAIPanel,
         ensureAIPanelIsOpen: systemViewStore.ensureAIPanelIsOpen,
         toggleHistoryPanel: systemViewStore.toggleHistoryPanel,

@@ -2,7 +2,7 @@
 
 import { defineStore } from 'pinia';
 import * as service from '@/settings/services/usageLogsService';
-import type { UsageStat, ApiLog, ChartDataPoint } from '@/types/usageLogs';
+import type { UsageStat, ApiLog, ChartDataPoint, FetchParams } from '@/types/usageLogs';
 
 interface UsageLogsState {
     stats: UsageStat[];
@@ -45,12 +45,21 @@ export const useUsageLogsStore = defineStore('usage-logs', {
         async fetchUsageData() {
             this.isLoading = true;
             try {
-                const params = {
-                    ...this.filters,
+                // Build API parameters correctly
+                const apiParams: Partial<FetchParams> = {
+                    period: this.filters.period,
                     page: this.pagination.currentPage,
                     limit: this.pagination.limit,
                 };
-                const data = await service.loadUsageData(params);
+
+                if (this.filters.model !== '所有模型') {
+                    apiParams.model = this.filters.model;
+                }
+                if (this.filters.status !== '所有状态') {
+                    apiParams.status = this.filters.status;
+                }
+
+                const data = await service.loadUsageData(apiParams as FetchParams);
                 this.stats = data.stats;
                 this.logs = data.logs;
                 this.chartData = data.chartData;

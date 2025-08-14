@@ -1,58 +1,44 @@
-/* 设计系统颜色 */
+/* 设计系统颜色 - 现在由 main.css 中的 CSS 变量驱动 */
 :root {
-    --primary-900: #111827;
-    --primary-800: #1F2937;
-    --primary-700: #374151;
-    --primary-600: #4B5563;
-    --primary-500: #6B7280;
-    --primary-400: #9CA3AF;
-    --primary-300: #D1D5DB;
-    --primary-200: #E5E7EB;
-    --primary-100: #F3F4F6;
-    --primary-50: #F9FAFB;
-
-    --accent-green: #10B981;
-    --accent-blue: #3B82F6;
-    --accent-red: #EF4444;
-    --accent-yellow: #F59E0B;
-
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
     --shadow-md: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.04);
     --shadow-lg: 0 0 0 1px rgba(0, 0, 0, 0.03), 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .auth-card {
-    background: white;
+    background: var(--color-bg-primary);
     border-radius: 1rem;
     overflow: hidden;
     box-shadow: var(--shadow-lg);
     width: 100%;
-    max-width: 480px; /* 恢复宽度为 480px */
+    max-width: 480px;
     transition: all 0.3s ease;
+    border: 1px solid var(--color-border-primary);
 }
 
 .input-field-auth {
     width: 100%;
     padding: 12px 16px;
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--color-border-primary);
     border-radius: 8px;
     font-size: 14px;
     transition: all 0.2s;
-    background: #F9FAFB;
+    background: var(--color-bg-muted);
+    color: var(--color-text-primary);
 }
 
 .input-field-auth:focus {
     outline: none;
-    border-color: #4B5563;
-    box-shadow: 0 0 0 3px rgba(75, 85, 99, 0.1);
-    background: white;
+    border-color: var(--color-border-focus);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-border-focus) 20%, transparent);
+    background: var(--color-bg-primary);
 }
 
 .btn-primary-auth {
     width: 100%;
     padding: 12px 24px;
-    background: #374151;
-    color: white;
+    background: var(--color-bg-accent);
+    color: var(--color-text-on-accent);
     border-radius: 8px;
     font-size: 14px;
     font-weight: 500;
@@ -62,20 +48,21 @@
 }
 
 .btn-primary-auth:hover:not(:disabled) {
-    background: #1F2937;
+    background: var(--color-bg-accent-hover);
 }
 
 .btn-primary-auth:disabled {
-    background: #9CA3AF;
+    background: var(--color-text-muted);
     cursor: not-allowed;
+    opacity: 0.7;
 }
 
 .btn-secondary-auth {
     width: 100%;
     padding: 12px 24px;
-    background: white;
-    color: #374151;
-    border: 1px solid #E5E7EB;
+    background: var(--color-bg-primary);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border-primary);
     border-radius: 8px;
     font-size: 14px;
     font-weight: 500;
@@ -84,8 +71,8 @@
 }
 
 .btn-secondary-auth:hover {
-    background: #F9FAFB;
-    border-color: #D1D5DB;
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-border-primary);
 }
 
 .divider {
@@ -100,12 +87,12 @@
     content: '';
     flex: 1;
     height: 1px;
-    background: #E5E7EB;
+    background: var(--color-border-primary);
 }
 
 .divider span {
     padding: 0 16px;
-    color: #9CA3AF;
+    color: var(--color-text-muted);
     font-size: 12px;
 }
 
@@ -118,7 +105,7 @@
 .checkbox {
     width: 16px;
     height: 16px;
-    border: 1px solid #D1D5DB;
+    border: 1px solid var(--color-border-primary);
     border-radius: 4px;
     cursor: pointer;
     appearance: none;
@@ -129,7 +116,11 @@
 }
 
 .checkbox:checked {
-    background-color: #4B5563;
-    border-color: #4B5563;
+    background-color: var(--color-text-secondary);
+    border-color: var(--color-text-secondary);
     background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 3L4.5 8.5L2 6' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+html.dark .btn-secondary-auth > svg path[fill^="#"] {
+    fill: var(--color-text-primary);
 }

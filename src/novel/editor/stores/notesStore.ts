@@ -23,12 +23,14 @@ export const useNotesStore = defineStore('notes', () => {
         const originalNote = notes.value[noteIndex];
         const updatedNote = noteService.updateNoteWithNewContent(originalNote, content);
         notes.value.splice(noteIndex, 1, updatedNote);
+        (notes.value[noteIndex] as any)._lastModified = Date.now(); // Update version timestamp
     };
 
     const appendNoteContent = (noteId: string, contentToAppend: string, isAutoApplied: boolean) => {
         const note = findNoteById(noteId);
         if (note) {
             note.content = noteService.appendContentToNote(note.content, contentToAppend, isAutoApplied);
+            (note as any)._lastModified = Date.now(); // Update version timestamp
         }
     };
 
@@ -41,6 +43,7 @@ export const useNotesStore = defineStore('notes', () => {
             const trimmedTitle = newTitle.trim();
             const updatedNote = noteService.renameNote(originalNote, trimmedTitle);
             notes.value.splice(noteIndex, 1, updatedNote);
+            (notes.value[noteIndex] as any)._lastModified = Date.now(); // Update version timestamp
         }
         uiStore.setEditingNodeId(null);
     };

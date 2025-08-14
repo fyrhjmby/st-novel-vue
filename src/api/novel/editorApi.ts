@@ -1,8 +1,11 @@
+// 文件: src/api/novel/editorApi.ts
+
 import apiClient from '@/api/client';
 import type { Conversation, ChatMessage } from '@novel/editor/types/chatTypes.ts';
 import type { AIProviderConfig, AITaskType } from '@novel/editor/types';
 import { useAuthStore } from '@/auth/store/auth.store';
 
+// fetchConversations, createConversation, sendMessage remain the same...
 /**
  * 获取所有聊天对话。
  */
@@ -33,7 +36,7 @@ export const sendMessage = async (conversationId: string, userInput: string): Pr
 
 
 /**
- * 调用后端API执行一个流式AI任务。
+ * 调用后端API执行一个流式AI任务 - BEST PRACTICE IMPLEMENTATION
  * @param prompt - 发送给AI的最终提示词。
  * @param config - AI配置，如模型、温度等。
  * @param taskType - 任务的类型 ('润色', '续写' 等).
@@ -52,12 +55,14 @@ export const streamAITask = async (
     }
 ): Promise<void> => {
     const { onChunk, onComplete, onError } = callbacks;
+    let reader: ReadableStreamDefaultReader<string> | undefined;
 
     try {
         const authStore = useAuthStore();
         const token = authStore.token;
         const headers: HeadersInit = {
             'Content-Type': 'application/json',
+            'Accept': 'text/event-stream',
         };
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
@@ -81,21 +86,78 @@ export const streamAITask = async (
             throw new Error('Response body is null.');
         }
 
-        const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
-        const sseRegex = /data: (.*)\n\n/g;
+        reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+        let buffer = '';
+        let streamClosed = false;
+
+        const closeStream = () => {
+            if (!streamClosed) {
+                reader?.cancel();
+                streamClosed = true;
+            }
+        };
 
         while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+                break;
+            }
 
-            let match;
-            while((match = sseRegex.exec(value)) !== null) {
-                const data = match[1];
-                if (data) onChunk(data);
+            buffer += value;
+            let boundaryIndex;
+
+            while ((boundaryIndex = buffer.indexOf('\n\n')) >= 0) {
+                const messageBlock = buffer.substring(0, boundaryIndex);
+                buffer = buffer.substring(boundaryIndex + 2);
+
+                if (messageBlock) {
+                    let eventName = 'message';
+                    let eventData = '';
+                    const lines = messageBlock.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('event:')) {
+                            eventName = line.substring(6).trim();
+                        } else if (line.startsWith('data:')) {
+                            eventData = line.substring(5).trim();
+                        }
+                    }
+
+                    if (eventData) {
+                        try {
+                            const parsedData = JSON.parse(eventData);
+                            switch (eventName) {
+                                case 'start':
+                                    console.log('AI stream started:', parsedData.message);
+                                    break;
+                                case 'chunk':
+                                    if (parsedData.content) {
+                                        onChunk(parsedData.content);
+                                    }
+                                    break;
+                                case 'done':
+                                    onComplete();
+                                    closeStream();
+                                    return; // Exit the function entirely
+                                case 'error':
+                                    onError(parsedData.error || 'Unknown stream error');
+                                    closeStream();
+                                    return; // Exit the function entirely
+                            }
+                        } catch(e) {
+                            console.error("Failed to parse SSE data JSON:", eventData, e);
+                        }
+                    }
+                }
             }
         }
         onComplete();
+
     } catch (error) {
         onError(error instanceof Error ? error.message : 'An unknown streaming error occurred.');
+    } finally {
+        if(reader && !reader.closed) {
+            reader.cancel();
+        }
     }
 };

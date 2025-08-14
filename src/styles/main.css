@@ -2,10 +2,103 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Semantic Color Variables */
+  --color-bg-app: #f5f5f7;                   /* App background */
+  --color-bg-primary: #ffffff;               /* Main content background (cards, etc.) */
+  --color-bg-secondary: #fafafa;             /* Sidebar, secondary panels */
+  --color-bg-tertiary: #fcfcfc;              /* Hover states, subtle backgrounds */
+  --color-bg-muted: #f3f4f6;                 /* Muted backgrounds, inputs */
+  --color-bg-accent: #4b5563;                /* Primary buttons */
+  --color-bg-accent-hover: #374151;          /* Primary button hover */
+
+  --color-text-primary: #1f2937;             /* Primary text */
+  --color-text-secondary: #4b5563;           /* Secondary text */
+  --color-text-muted: #9ca3af;               /* Muted text, placeholders */
+  --color-text-accent: #3b82f6;              /* Links, accent text */
+  --color-text-on-accent: #ffffff;           /* Text on primary buttons */
+
+  --color-border-primary: #e5e7eb;           /* Primary borders */
+  --color-border-secondary: #f3f4f6;         /* Secondary, lighter borders */
+  --color-border-focus: #3b82f6;             /* Focus ring color */
+
+  --color-accent-purple: #8B5CF6;            /* Accent color for charts */
+  --color-accent-green: #22c55e;             /* Accent color for success states */
+
+  --color-status-success-bg: #dcfce7;
+  --color-status-success-text: #166534;
+  --color-status-error-bg: #fee2e2;
+  --color-status-error-text: #991b1b;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+html.dark {
+  --color-bg-app: #1e293b;
+  --color-bg-primary: #334155;
+  --color-bg-secondary: #334155;
+  --color-bg-tertiary: #475569;
+  --color-bg-muted: #475569;
+  --color-bg-accent: #38bdf8;
+  --color-bg-accent-hover: #0ea5e9;
+
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-text-accent: #60a5fa;
+  --color-text-on-accent: #0f172a;
+
+  --color-border-primary: #475569;
+  --color-border-secondary: #64748b;
+  --color-border-focus: #60a5fa;
+
+  --color-accent-purple: #a78bfa;
+  --color-accent-green: #4ade80;
+
+  --color-status-success-bg: #166534;
+  --color-status-success-text: #dcfce7;
+  --color-status-error-bg: #991b1b;
+  --color-status-error-text: #fee2e2;
+
+  --shadow-md: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 1px 3px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+html.eyecare-green {
+  --color-bg-app: #f0fdf4;
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #fafffa;
+  --color-bg-tertiary: #f0fdf4;
+  --color-bg-muted: #dcfce7;
+  --color-bg-accent: #22c55e;
+  --color-bg-accent-hover: #16a34a;
+
+  --color-text-primary: #14532d;
+  --color-text-secondary: #166534;
+  --color-text-muted: #15803d;
+  --color-text-accent: #16a34a;
+  --color-text-on-accent: #ffffff;
+
+  --color-border-primary: #bbf7d0;
+  --color-border-secondary: #dcfce7;
+  --color-border-focus: #4ade80;
+
+  --color-accent-purple: #9333ea;
+  --color-accent-green: #22c55e;
+
+  --color-status-success-bg: #dcfce7;
+  --color-status-success-text: #166534;
+  --color-status-error-bg: #fee2e2;
+  --color-status-error-text: #b91c1c;
+}
+
+
 body {
-  background-color: #F5F5F7;
+  background-color: var(--color-bg-app);
+  color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 ::-webkit-scrollbar {
@@ -13,14 +106,14 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: var(--color-border-primary);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: var(--color-text-muted);
 }
 
 .hide-scrollbar::-webkit-scrollbar {
@@ -30,4 +123,18 @@ body {
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+@layer components {
+  .status-pill {
+    @apply text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap;
+  }
+  .status-pill-success {
+    background-color: var(--color-status-success-bg);
+    color: var(--color-status-success-text);
+  }
+  .status-pill-error {
+    background-color: var(--color-status-error-bg);
+    color: var(--color-status-error-text);
+  }
 }

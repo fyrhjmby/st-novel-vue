@@ -23,12 +23,20 @@
         </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
-        <tr v-for="schedule in schedules" :key="schedule.id" class="hover:bg-gray-50/50 transition-colors">
+        <tr v-if="store.isLoading">
+          <td colspan="5" class="text-center py-10 text-gray-500">正在加载调度任务...</td>
+        </tr>
+        <tr v-else-if="store.schedules.length === 0">
+          <td colspan="5" class="text-center py-10 text-gray-500">没有调度任务</td>
+        </tr>
+        <tr v-else v-for="schedule in store.schedules" :key="schedule.id" class="hover:bg-gray-50/50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap">
             <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" :checked="schedule.status === '启用中'" class="sr-only peer">
+              <input type="checkbox" :checked="schedule.status === 'enabled'" class="sr-only peer">
               <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              <span class="ms-3 text-sm font-medium" :class="schedule.status === '启用中' ? 'text-green-600' : 'text-gray-500'">{{ schedule.status }}</span>
+              <span class="ms-3 text-sm font-medium" :class="schedule.status === 'enabled' ? 'text-green-600' : 'text-gray-500'">
+                {{ schedule.status === 'enabled' ? '启用中' : '已禁用' }}
+              </span>
             </label>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
@@ -55,52 +63,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted } from 'vue';
+import { useSchedulesStore } from '@/workflow/stores/schedulesStore';
 
-const schedules = ref([
-  {
-    id: 'sched-01',
-    status: '启用中',
-    workflowName: '公司周报摘要',
-    workflowId: 'wf-002',
-    schedule: {
-      cron: '0 9 * * 1',
-      description: '每周一上午9点',
-    },
-    nextRun: '2024-05-27 09:00:00',
-  },
-  {
-    id: 'sched-02',
-    status: '启用中',
-    workflowName: '市场情绪分析流程',
-    workflowId: 'wf-003',
-    schedule: {
-      cron: '0 */4 * * *',
-      description: '每4小时一次',
-    },
-    nextRun: '2024-05-21 16:00:00',
-  },
-  {
-    id: 'sched-03',
-    status: '已禁用',
-    workflowName: '社交媒体帖子生成器',
-    workflowId: 'wf-001',
-    schedule: {
-      cron: '0 18 * * *',
-      description: '每天下午6点',
-    },
-    nextRun: 'N/A',
-  },
-  {
-    id: 'sched-04',
-    status: '启用中',
-    workflowName: '数据备份',
-    workflowId: 'wf-005',
-    schedule: {
-      cron: '0 2 1 * *',
-      description: '每月1号凌晨2点',
-    },
-    nextRun: '2024-06-01 02:00:00',
-  },
-]);
+const store = useSchedulesStore();
+
+onMounted(() => {
+  store.loadSchedules();
+});
 </script>

@@ -7,8 +7,8 @@
     background-size: 24px 24px;
 }
 
-/* 节点连接线动画 */
-.connection-line {
+/* 节点连接线动画, Vue Flow 使用 `animated` prop 替代 */
+.vue-flow__edge.animated .vue-flow__edge-path {
     stroke-dasharray: 4 4;
     animation: dash 1s linear infinite;
 }
@@ -67,4 +67,21 @@
     border-radius: 4px;
     font-weight: 600;
     letter-spacing: 0.5px;
+}
+
+/* Vue Flow Custom Handle Styles */
+.custom-handle {
+    width: 10px;
+    height: 10px;
+    background: #e5e7eb;
+    border: 2px solid #d1d5db;
+    border-radius: 100%;
+    transition: all 0.2s ease;
+}
+
+.custom-handle:hover,
+.vue-flow__handle:hover,
+.vue-flow__handle-connecting {
+    border-color: #3b82f6 !important;
+    background: #fff !important;
 }

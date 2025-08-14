@@ -14,7 +14,7 @@ export const useSystemSettingsStore = defineStore('system-settings', {
     state: (): SystemSettingsState => ({
         themes: [],
         activeTheme: '',
-        zoomLevel: 50,
+        zoomLevel: 100,
         language: '',
         dateFormat: '',
         notificationSettings: [],

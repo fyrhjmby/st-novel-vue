@@ -45,8 +45,7 @@ func main() {
 	rootDirs := []string{"../src/novel/editor"}
 	outputFileName := "index.txt"
 	// 定义要屏蔽（不进行递归读取）的目录名称列表。
-	// 注意：这里的 'settings' 已经被移除了，如果你需要跳过它，请加回来。
-	excludedDirs := []string{ "ui","workflow","prompt","settings","auth"}
+	excludedDirs := []string{ "ui","workflow","prompt","auth"}
 
 	// 定义要屏蔽（不读取）的特定文件名列表。
 	excludedFiles := []string{".json", "package.json", "pnpm-lock.yaml"}

@@ -10,10 +10,10 @@ import (
 )
 
 func main() {
-	rootDirs := []string{"../src"}
+	rootDirs := []string{"../src/workflow"}
 	outputFileName := "settings.txt"
 	// 定义要屏蔽（不进行递归读取）的目录名称列表。
-	excludedDirs := []string{"prompt","ui","workflow","auth","settings"}
+	excludedDirs := []string{"prompt","ui","novel","home"}
 
 
 	// 定义要屏蔽（不读取）的特定文件名列表。
@@ -65,12 +65,12 @@ func main() {
 					return nil
 				}
 			}
-// 			if strings.HasSuffix(d.Name(), ".ts")||strings.HasSuffix(d.Name(), ".vue")||strings.HasSuffix(d.Name(), ".css")  {
-// 				targetFiles = append(targetFiles, path)
-// 			}
-if strings.HasSuffix(d.Name(), ".ts") {
+			if strings.HasSuffix(d.Name(), ".ts")||strings.HasSuffix(d.Name(), ".vue")||strings.HasSuffix(d.Name(), ".css")  {
 				targetFiles = append(targetFiles, path)
 			}
+// if strings.HasSuffix(d.Name(), ".ts") {
+// 				targetFiles = append(targetFiles, path)
+// 			}
 			return nil
 		})
 

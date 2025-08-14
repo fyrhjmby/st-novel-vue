@@ -6,37 +6,28 @@
       <AITaskQueue @select-task="handleSelectTask" @apply-changes="handleApplyChanges" />
     </div>
     <div class="diff-preview-section">
-      <AIDiffPreview :preview-task="selectedTask" @apply-changes="handleApplyChanges" />
+      <AIDiffPreview :preview-task="previewTask" @apply-changes="handleApplyChanges" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import AITaskQueue from './AITaskQueue.vue';
 import AIDiffPreview from './AIDiffPreview.vue';
 import { useAITaskStore } from '@novel/editor/stores/ai/aiTaskStore.ts';
 import type { AITask } from '@/novel/editor/types';
 
-const selectedTaskId = ref<string | null>(null);
 const aiTaskStore = useAITaskStore();
 
-const selectedTask = computed((): AITask | null => {
-  if (!selectedTaskId.value) return null;
-  return aiTaskStore.tasks.find(t => t.id === selectedTaskId.value) ?? null;
-});
+const previewTask = computed(() => aiTaskStore.previewTask);
 
 const handleSelectTask = (task: AITask) => {
-  selectedTaskId.value = task.id;
+  aiTaskStore.setPreviewTask(task.id);
 };
 
 const handleApplyChanges = (taskId: string) => {
   aiTaskStore.applyChanges(taskId);
-
-  // If the applied task was the one being previewed, clear the preview.
-  if (selectedTaskId.value === taskId) {
-    selectedTaskId.value = null;
-  }
 };
 </script>
 

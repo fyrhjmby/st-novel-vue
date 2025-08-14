@@ -1,11 +1,10 @@
-/* 文件: ..\src/settings/style.css */
-
 /* src/settings/style.css */
 
 .toggle-switch {
     width: 44px;
     height: 24px;
-    background: #d1d5db;
+    background: var(--color-bg-muted);
+    border: 1px solid var(--color-border-primary);
     border-radius: 12px;
     position: relative;
     cursor: pointer;
@@ -13,12 +12,13 @@
 }
 
 .toggle-switch:focus-visible {
-    outline: 2px solid #4b5563;
+    outline: 2px solid var(--color-border-focus);
     outline-offset: 2px;
 }
 
 .toggle-switch.active {
-    background: #10b981;
+    background: var(--color-accent-green);
+    border-color: var(--color-accent-green);
 }
 
 .toggle-switch::after {
@@ -26,11 +26,12 @@
     position: absolute;
     width: 20px;
     height: 20px;
-    background: white;
+    background: var(--color-bg-primary);
     border-radius: 10px;
-    top: 2px;
+    top: 1px;
     left: 2px;
     transition: all 0.3s;
+    box-shadow: var(--shadow-sm);
 }
 
 .toggle-switch.active::after {
@@ -38,24 +39,22 @@
 }
 
 .info-card {
-    background: #fafafa;
-    border: 1px solid #e5e7eb;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
     border-radius: 12px;
-    /* padding is now handled inside the component */
     transition: all 0.2s;
 }
 
 .info-card:hover {
-    border-color: #d1d5db;
-    background: #f9fafb;
+    border-color: var(--color-border-focus);
+    background: var(--color-bg-tertiary);
 }
 
-/* NEW STYLE FOR INPUTS */
 .settings-input {
     width: 100%;
     font-size: 14px;
     font-weight: 500;
-    color: #374151;
+    color: var(--color-text-primary);
     background-color: transparent;
     border: none;
     padding: 0;
@@ -64,9 +63,13 @@
     border-radius: 4px;
 }
 .settings-input:focus {
-    outline: 2px solid #4B5563;
+    outline: 2px solid var(--color-border-focus);
     outline-offset: 2px;
 }
+.settings-input::placeholder {
+    color: var(--color-text-muted);
+}
+
 
 .plan-card-settings {
     background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
@@ -90,25 +93,36 @@
 
 .slider-track {
     height: 4px;
-    background: #e5e7eb;
+    background: var(--color-bg-muted);
     border-radius: 2px;
     position: relative;
 }
 
 .slider-fill {
     height: 100%;
-    background: #3b82f6;
+    background: var(--color-text-accent);
     border-radius: 2px;
 }
 
 .slider-thumb {
     width: 16px;
     height: 16px;
-    background: white;
-    border: 2px solid #3b82f6;
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-text-accent);
     border-radius: 50%;
     position: absolute;
     top: 50%;
     transform: translate(-50%, -50%);
     cursor: pointer;
+    box-shadow: var(--shadow-md);
+}
+
+.form-select-styled {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
 }

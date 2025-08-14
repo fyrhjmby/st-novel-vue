@@ -1,7 +1,12 @@
-// 文件: ..\src\novel\editor\stores\derivedContentStore.ts
+// 文件: src/novel/editor/stores/derivedContentStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { PlotAnalysisItem, AITaskType, EditorItem } from '@/novel/editor/types';
+
+const formatContentForEditor = (title: string, rawContent: string): string => {
+    const body = rawContent.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p}</p>`).join('');
+    return `<h1>${title}</h1>${body}`;
+};
 
 export const useDerivedContentStore = defineStore('derivedContent', () => {
     const plotItems = ref<PlotAnalysisItem[]>([]);
@@ -18,29 +23,31 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
     }
 
     /**
-     * 为指定源（章节或卷）创建一个新的派生内容项（占位符）。
+     * 根据已完成的AI任务，创建并添加一个新的、内容完整的派生内容项。
      * @param sourceNode - 源节点对象 (章节或卷)
      * @param taskType - 任务类型 ('分析' 或 '剧情生成')
+     * @param generatedContent - AI生成的原始文本内容
      * @returns 新创建的派生内容项
      */
-    function createDerivedItem(sourceNode: EditorItem, taskType: AITaskType): PlotAnalysisItem | null {
+    function createAndAddDerivedItem(sourceNode: EditorItem, taskType: AITaskType, generatedContent: string): PlotAnalysisItem | null {
         if (taskType !== '分析' && taskType !== '剧情生成') return null;
         if (sourceNode.type !== 'chapter' && sourceNode.type !== 'volume') return null;
-
 
         const now = new Date();
         const timestamp = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 
         const derivedType: PlotAnalysisItem['type'] = taskType === '分析' ? 'analysis' : 'plot';
-        const titleSuffix = taskType;
         const titlePrefix = sourceNode.type === 'volume' ? '卷' : '';
+        const finalTitle = `《${titlePrefix}${sourceNode.title}》${taskType} - ${timestamp}`;
+
+        const finalContent = formatContentForEditor(finalTitle, generatedContent);
 
         const newItem: PlotAnalysisItem = {
-            id: `${derivedType}_${now.getTime()}`, // 使用时间戳保证ID唯一
+            id: `${derivedType}_${now.getTime()}`,
             type: derivedType,
             sourceId: sourceNode.id,
-            title: `《${titlePrefix}${sourceNode.title}》${titleSuffix} - ${timestamp}`,
-            content: `<h1>《${titlePrefix}${sourceNode.title}》${titleSuffix} - ${timestamp}</h1><p>AI正在生成内容，请稍候...</p>`
+            title: finalTitle,
+            content: finalContent
         };
 
         if (derivedType === 'analysis') {
@@ -101,7 +108,7 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
         plotItems,
         analysisItems,
         fetchDerivedData,
-        createDerivedItem,
+        createAndAddDerivedItem,
         findItemById,
         updateNodeContent,
         appendNodeContent,

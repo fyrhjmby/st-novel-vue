@@ -39,14 +39,18 @@
       </div>
     </div>
 
+    <div v-if="store.isLoading" class="text-center py-10">
+      <p class="text-gray-500">正在加载工作流...</p>
+    </div>
+
     <!-- 网格视图 -->
-    <div v-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="flow in myWorkflows" :key="flow.id" class="bg-white rounded-xl p-5 border border-gray-100 hover:border-gray-200 transition-all hover:shadow-md flex flex-col group">
+    <div v-else-if="viewMode === 'grid' && !store.isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-for="flow in store.workflows" :key="flow.id" class="bg-white rounded-xl p-5 border border-gray-100 hover:border-gray-200 transition-all hover:shadow-md flex flex-col group">
         <div class="flex items-start justify-between mb-3">
           <h3 class="font-medium text-[#374151] leading-tight">{{ flow.title }}</h3>
-          <span class="flex-shrink-0 flex items-center gap-1.5 text-xs px-2 py-1 rounded-full" :class="flow.status.class">
-            <span class="w-2 h-2 rounded-full" :class="flow.status.dotClass"></span>
-            {{ flow.status.text }}
+          <span class="flex-shrink-0 flex items-center gap-1.5 text-xs px-2 py-1 rounded-full" :class="getStatusClasses(flow.status).badge">
+            <span class="w-2 h-2 rounded-full" :class="getStatusClasses(flow.status).dot"></span>
+            {{ getStatusClasses(flow.status).text }}
           </span>
         </div>
         <p class="text-sm text-[#9CA3AF] mb-4 flex-1">{{ flow.description }}</p>
@@ -72,7 +76,7 @@
     </div>
 
     <!-- 列表视图 -->
-    <div v-if="viewMode === 'list'" class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+    <div v-else-if="viewMode === 'list' && !store.isLoading" class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
       <table class="min-w-full divide-y divide-gray-100">
         <thead class="bg-gray-50">
         <tr>
@@ -84,15 +88,15 @@
         </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
-        <tr v-for="flow in myWorkflows" :key="flow.id" class="hover:bg-gray-50/50 transition-colors">
+        <tr v-for="flow in store.workflows" :key="flow.id" class="hover:bg-gray-50/50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm font-medium text-[#374151]">{{ flow.title }}</div>
             <div class="text-xs text-[#9CA3AF] mt-1">{{ flow.description }}</div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 inline-flex items-center gap-1.5 text-xs leading-5 font-semibold rounded-full" :class="flow.status.class">
-                  <span class="w-2 h-2 rounded-full" :class="flow.status.dotClass"></span>
-                  {{ flow.status.text }}
+                <span class="px-2 inline-flex items-center gap-1.5 text-xs leading-5 font-semibold rounded-full" :class="getStatusClasses(flow.status).badge">
+                  <span class="w-2 h-2 rounded-full" :class="getStatusClasses(flow.status).dot"></span>
+                  {{ getStatusClasses(flow.status).text }}
                 </span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-[#6B7280]">{{ flow.updated }}</td>
@@ -114,43 +118,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useMyWorkflowsStore } from '@/workflow/stores/myWorkflowsStore';
+import { WorkflowStatusEnum } from '@/workflow/types';
 
 const viewMode = ref('grid'); // 'grid' or 'list'
+const store = useMyWorkflowsStore();
 
-const myWorkflows = ref([
-  {
-    id: 'wf-001',
-    title: '社交媒体帖子生成器',
-    description: '自动从核心主题生成适用于多平台的帖子内容。',
-    tags: ['内容生成', '社交媒体', 'GPT-4'],
-    status: { text: '已发布', class: 'bg-green-100 text-green-800', dotClass: 'bg-green-500' },
-    updated: '2天前'
-  },
-  {
-    id: 'wf-002',
-    title: '公司周报摘要',
-    description: '上传多个文档，自动提取关键信息生成周报摘要。',
-    tags: ['文档处理', '信息提取', 'RAG'],
-    status: { text: '草稿', class: 'bg-gray-100 text-gray-800', dotClass: 'bg-gray-400' },
-    updated: '5小时前'
-  },
-  {
-    id: 'wf-003',
-    title: '市场情绪分析流程',
-    description: '监控指定关键词的社媒情绪，并每日发送报告。',
-    tags: ['数据分析', '监控', '自动化'],
-    status: { text: '已发布', class: 'bg-green-100 text-green-800', dotClass: 'bg-green-500' },
-    updated: '1周前'
-  },
-  {
-    id: 'wf-004',
-    title: '新客户欢迎邮件',
-    description: '当有新用户注册时，自动触发个性化欢迎邮件。',
-    tags: ['营销', '自动化', 'Email'],
-    status: { text: '已归档', class: 'bg-yellow-100 text-yellow-800', dotClass: 'bg-yellow-500' },
-    updated: '1个月前'
-  },
-]);
+onMounted(() => {
+  store.loadWorkflows();
+});
 
+const getStatusClasses = (status: WorkflowStatusEnum) => {
+  switch (status) {
+    case WorkflowStatusEnum.Published:
+      return { text: '已发布', badge: 'bg-green-100 text-green-800', dot: 'bg-green-500' };
+    case WorkflowStatusEnum.Draft:
+      return { text: '草稿', badge: 'bg-gray-100 text-gray-800', dot: 'bg-gray-400' };
+    case WorkflowStatusEnum.Archived:
+      return { text: '已归档', badge: 'bg-yellow-100 text-yellow-800', dot: 'bg-yellow-500' };
+    default:
+      return { text: '未知', badge: 'bg-gray-100 text-gray-800', dot: 'bg-gray-400' };
+  }
+};
 </script>

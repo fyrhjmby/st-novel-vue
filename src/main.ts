@@ -23,4 +23,22 @@ async function initializeApp() {
     app.mount('#app')
 }
 
+// 禁止页面缩放
+function disableZoom() {
+    // 阻止通过鼠标滚轮缩放
+    document.addEventListener('wheel', (e) => {
+        if (e.ctrlKey) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // 阻止通过键盘快捷键缩放
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && (e.key === '=' || e.key === '-' || e.key === '+' || e.key === '0')) {
+            e.preventDefault();
+        }
+    });
+}
+
+disableZoom();
 initializeApp();

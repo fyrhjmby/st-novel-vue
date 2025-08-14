@@ -1,100 +1,96 @@
 <!-- src/settings/views/UserSettings.vue -->
 <template>
-  <main class="flex-1 bg-white flex flex-col">
-    <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
-      <h1 class="text-lg font-medium text-[#374151]">用户设置</h1>
+  <main class="flex-1 bg-[var(--color-bg-primary)] flex flex-col transition-colors">
+    <!-- Header -->
+    <header class="h-20 px-8 flex items-center justify-between border-b border-[var(--color-border-primary)] flex-shrink-0">
+      <h1 class="text-lg font-medium text-[var(--color-text-primary)]">用户设置</h1>
       <div v-if="userStore.hasChanges" class="flex items-center gap-3">
-        <button @click="userStore.resetChanges" :disabled="userStore.isSaving" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50 disabled:opacity-50">
+        <button @click="userStore.resetChanges" :disabled="userStore.isSaving" class="px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] disabled:opacity-50">
           取消
         </button>
-        <button @click="userStore.saveSettings" :disabled="userStore.isSaving" class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        <button @click="userStore.saveSettings" :disabled="userStore.isSaving" class="px-4 py-2 bg-[var(--color-bg-accent)] text-[var(--color-text-on-accent)] rounded-lg text-sm font-medium hover:bg-[var(--color-bg-accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           {{ userStore.isSaving ? '保存中...' : '保存更改' }}
         </button>
       </div>
     </header>
-    <div v-if="userStore.isLoading" class="flex-1 flex items-center justify-center bg-[#FCFCFC]">
-      <p>加载中...</p>
+
+    <!-- Loading State -->
+    <div v-if="userStore.isLoading" class="flex-1 flex items-center justify-center bg-[var(--color-bg-app)]">
+      <p class="text-[var(--color-text-muted)]">加载中...</p>
     </div>
-    <div v-else-if="user" class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC] space-y-6">
-      <!-- Profile Card -->
-      <div class="bg-white rounded-xl p-6 border border-gray-100">
-        <div class="flex items-center gap-6">
-          <div class="relative">
+
+    <!-- Main Content -->
+    <div v-else-if="user" class="flex-1 px-8 py-6 overflow-auto bg-[var(--color-bg-app)] space-y-8">
+
+      <!-- Profile Section -->
+      <div class="bg-[var(--color-bg-primary)] rounded-xl p-6 border border-[var(--color-border-primary)]">
+        <h3 class="text-base font-medium text-[var(--color-text-primary)] mb-6">个人资料</h3>
+        <div class="flex items-start gap-8">
+          <!-- Avatar Uploader -->
+          <div class="flex-shrink-0">
             <input type="file" ref="fileInput" class="hidden" @change="onFileChange" accept="image/*">
-            <template v-if="user.avatar">
-              <img :src="user.avatar" class="w-20 h-20 rounded-full object-cover bg-gray-200" alt="User Avatar">
-            </template>
-            <template v-else>
-              <div class="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center text-2xl font-medium text-gray-700">{{ user.name.charAt(0) }}</div>
-            </template>
-            <button @click="triggerFileSelect" class="absolute bottom-0 right-0 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 shadow-sm">
-              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            </button>
-          </div>
-          <div class="flex-1">
-            <h2 class="text-xl font-medium text-[#374151]">{{ user.name }}</h2>
-            <p class="text-sm text-[#6B7280] mt-1">{{ user.email }}</p>
-            <p class="text-xs text-[#9CA3AF] mt-2">加入于 2023年5月</p>
-          </div>
-        </div>
-      </div>
-      <!-- Basic Info -->
-      <div class="bg-white rounded-xl p-6 border border-gray-100">
-        <h3 class="text-base font-medium text-[#374151] mb-6">基本信息</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Nickname -->
-          <div class="info-card p-0">
-            <label class="text-xs font-medium text-[#6B7280] uppercase tracking-wide px-5 pt-4 block">昵称</label>
-            <div class="px-5 pb-4 pt-2">
-              <input type="text" v-model="user.name" class="settings-input">
+            <div class="relative w-24 h-24">
+              <img v-if="user.avatar" :src="user.avatar" class="w-full h-full rounded-full object-cover bg-gray-200" alt="User Avatar">
+              <div v-else class="w-full h-full bg-gradient-to-br from-[var(--color-bg-muted)] to-[var(--color-border-primary)] rounded-full flex items-center justify-center text-3xl font-medium text-[var(--color-text-secondary)]">{{ user.name.charAt(0) }}</div>
+              <button @click="triggerFileSelect" class="absolute bottom-0 right-0 w-8 h-8 bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] rounded-full flex items-center justify-center hover:bg-[var(--color-bg-tertiary)] shadow-sm transition-transform hover:scale-110">
+                <svg class="w-4 h-4 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"></path></svg>
+              </button>
             </div>
+            <p class="text-xs text-center mt-2 text-[var(--color-text-muted)]">点击编辑头像</p>
           </div>
-          <!-- Email -->
-          <div class="info-card p-0">
-            <label class="text-xs font-medium text-[#6B7280] uppercase tracking-wide px-5 pt-4 block">电子邮箱</label>
-            <div class="px-5 pb-4 pt-2">
-              <p class="text-sm font-medium text-[#374151]">{{ user.email }}</p>
+
+          <!-- User Info Form -->
+          <div class="flex-1 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="form-group">
+                <label for="nickname" class="form-label">昵称</label>
+                <input type="text" id="nickname" v-model="user.name" class="form-input">
+              </div>
+              <div class="form-group">
+                <label for="email" class="form-label">电子邮箱</label>
+                <p id="email" class="text-sm font-medium text-[var(--color-text-primary)] pt-3">{{ user.email }}</p>
+              </div>
             </div>
-          </div>
-          <!-- Phone -->
-          <div class="info-card p-0">
-            <label class="text-xs font-medium text-[#6B7280] uppercase tracking-wide px-5 pt-4 block">电话号码</label>
-            <div class="px-5 pb-4 pt-2">
-              <input type="text" v-model="user.phone" class="settings-input" placeholder="未设置">
-            </div>
-          </div>
-          <!-- Region -->
-          <div class="info-card p-0">
-            <label class="text-xs font-medium text-[#6B7280] uppercase tracking-wide px-5 pt-4 block">地区</label>
-            <div class="px-5 pb-4 pt-2">
-              <p class="text-sm font-medium text-[#374151]">{{ user.region }}</p>
-            </div>
-          </div>
-          <!-- Timezone -->
-          <div class="info-card p-0">
-            <label class="text-xs font-medium text-[#6B7280] uppercase tracking-wide px-5 pt-4 block">时区</label>
-            <div class="px-5 pb-4 pt-2">
-              <p class="text-sm font-medium text-[#374151]">{{ user.timezone }}</p>
-            </div>
-          </div>
-          <!-- Bio -->
-          <div class="col-span-2 info-card p-0">
-            <label class="text-xs font-medium text-[#6B7280] uppercase tracking-wide px-5 pt-4 block">个人简介</label>
-            <div class="px-5 pb-4 pt-2">
-              <textarea v-model="user.bio" rows="3" class="settings-input leading-relaxed" placeholder="介绍一下自己..."></textarea>
+            <div class="form-group">
+              <label for="bio" class="form-label">个人简介</label>
+              <textarea id="bio" v-model="user.bio" rows="3" class="form-input leading-relaxed resize-none" placeholder="介绍一下自己..."></textarea>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Account Info Section -->
+      <div class="bg-[var(--color-bg-primary)] rounded-xl p-6 border border-[var(--color-border-primary)]">
+        <h3 class="text-base font-medium text-[var(--color-text-primary)] mb-6">账户信息</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+          <div class="form-group">
+            <label for="phone" class="form-label">电话号码</label>
+            <input type="text" id="phone" v-model="user.phone" class="form-input" placeholder="未设置">
+          </div>
+          <div class="form-group">
+            <label for="region" class="form-label">地区</label>
+            <p id="region" class="text-sm font-medium text-[var(--color-text-primary)] pt-3">{{ user.region }}</p>
+          </div>
+          <div class="form-group">
+            <label for="timezone" class="form-label">时区</label>
+            <p id="timezone" class="text-sm font-medium text-[var(--color-text-primary)] pt-3">{{ user.timezone }}</p>
+          </div>
+          <div class="form-group">
+            <label for="joinDate" class="form-label">加入时间</label>
+            <p id="joinDate" class="text-sm font-medium text-[var(--color-text-primary)] pt-3">2023年5月</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Notification Settings -->
-      <div class="bg-white rounded-xl p-6 border border-gray-100">
-        <h3 class="text-base font-medium text-[#374151] mb-6">通知设置</h3>
-        <div class="space-y-4 divide-y divide-gray-100">
-          <div v-for="notification in notifications" :key="notification.id" class="flex items-center justify-between pt-4 first:pt-0">
-            <div>
-              <h4 class="text-sm font-medium text-[#374151]">{{ notification.title }}</h4>
-              <p class="text-xs text-[#9CA3AF] mt-1">{{ notification.description }}</p>
+      <div class="bg-[var(--color-bg-primary)] rounded-xl p-6 border border-[var(--color-border-primary)]">
+        <h3 class="text-base font-medium text-[var(--color-text-primary)] mb-2">通知设置</h3>
+        <p class="text-sm text-[var(--color-text-muted)] mb-6">选择您希望收到的通知类型</p>
+        <div class="space-y-2 divide-y divide-[var(--color-border-secondary)]">
+          <div v-for="notification in notifications" :key="notification.id" class="setting-row">
+            <div class="setting-row-content">
+              <h4 class="font-medium text-[var(--color-text-primary)]">{{ notification.title }}</h4>
+              <p class="text-[var(--color-text-muted)] mt-1">{{ notification.description }}</p>
             </div>
             <button @click="userStore.updateNotification(notification.id, !notification.enabled)" class="toggle-switch" role="switch" :aria-checked="notification.enabled" :class="{active: notification.enabled}"></button>
           </div>
@@ -102,15 +98,18 @@
       </div>
 
       <!-- Security Settings -->
-      <div class="bg-white rounded-xl p-6 border border-gray-100">
-        <h3 class="text-base font-medium text-[#374151] mb-6">安全设置</h3>
-        <div class="space-y-4 divide-y divide-gray-100">
-          <div v-for="setting in securitySettings" :key="setting.title" class="flex items-center justify-between pt-4 first:pt-0">
-            <div>
-              <h4 class="text-sm font-medium text-[#374151]">{{ setting.title }}</h4>
-              <p class="text-xs mt-1" :class="setting.statusClass">{{ setting.status }}</p>
+      <div class="bg-[var(--color-bg-primary)] rounded-xl p-6 border border-[var(--color-border-primary)]">
+        <h3 class="text-base font-medium text-[var(--color-text-primary)] mb-2">安全设置</h3>
+        <p class="text-sm text-[var(--color-text-muted)] mb-6">管理您账户的安全选项</p>
+        <div class="space-y-2 divide-y divide-[var(--color-border-secondary)]">
+          <div v-for="setting in securitySettings" :key="setting.title" class="setting-row">
+            <div class="setting-row-content">
+              <h4 class="font-medium text-[var(--color-text-primary)]">{{ setting.title }}</h4>
+              <p class="mt-1" :class="setting.statusClass">{{ setting.status }}</p>
             </div>
-            <button @click="handleSecurityAction(setting.action)" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#374151] hover:bg-gray-50">{{ setting.action }}</button>
+            <button @click="handleSecurityAction(setting.action)" class="px-4 py-2 bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors">
+              {{ setting.action }}
+            </button>
           </div>
         </div>
       </div>
@@ -131,8 +130,10 @@
       </div>
 
     </div>
-    <div v-else class="flex-1 flex items-center justify-center bg-[#FCFCFC]">
-      <p class="text-gray-500">无法加载用户信息。</p>
+
+    <!-- Error State -->
+    <div v-else class="flex-1 flex items-center justify-center bg-[var(--color-bg-app)]">
+      <p class="text-[var(--color-text-muted)]">无法加载用户信息。</p>
     </div>
   </main>
 </template>
@@ -171,10 +172,15 @@ const onFileChange = (event: Event) => {
 };
 
 onMounted(() => {
-  userStore.initializeSettings();
+  // The beforeEnter guard in the router should handle this,
+  // but it's good practice to have a fallback.
+  if (!userStore.user) {
+    userStore.initializeSettings();
+  }
 });
 
 onUnmounted(() => {
+  // Reset any unsaved changes when leaving the component
   if (userStore.hasChanges) {
     userStore.resetChanges();
   }
@@ -202,4 +208,50 @@ const handleSecurityAction = (action: string) => {
 
 <style scoped>
 @import '../style.css';
+
+.form-group {
+  @apply flex flex-col gap-1;
+}
+
+.form-label {
+  @apply text-sm font-medium text-[var(--color-text-secondary)];
+}
+
+.form-input {
+  @apply w-full rounded-lg text-sm transition-all;
+  @apply bg-transparent text-[var(--color-text-primary)];
+  padding: 0.625rem 0.75rem; /* ~py-2.5 px-3 */
+  border: 1px solid transparent;
+}
+
+.form-input:hover {
+  @apply bg-[var(--color-bg-secondary)];
+  border-color: var(--color-border-secondary);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  background-color: var(--color-bg-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-border-focus) 20%, transparent);
+}
+
+.form-input::placeholder {
+  @apply text-[var(--color-text-muted)];
+}
+
+.setting-row {
+  @apply flex items-center justify-between py-4 text-sm;
+}
+.setting-row:first-of-type {
+  @apply pt-0;
+}
+.setting-row:last-of-type {
+  @apply pb-0;
+}
+
+.setting-row-content {
+  @apply flex-1 pr-8;
+}
+
 </style>

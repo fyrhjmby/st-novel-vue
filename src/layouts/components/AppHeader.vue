@@ -1,12 +1,12 @@
 <template>
-  <header class="h-20 px-8 flex items-center justify-between border-b border-gray-100 flex-shrink-0 bg-white">
+  <header class="h-20 px-8 flex items-center justify-between border-b border-[var(--color-border-primary)] flex-shrink-0 bg-[var(--color-bg-primary)] transition-colors">
     <div class="flex items-center gap-8">
-      <h1 class="text-lg font-medium text-[#374151]">{{ appStore.pageTitle }}</h1>
+      <h1 class="text-lg font-medium text-[var(--color-text-primary)]">{{ appStore.pageTitle }}</h1>
     </div>
     <div class="flex items-center gap-2">
-      <button class="p-2 hover:bg-gray-50 rounded-lg transition-colors">
+      <button class="p-2 hover:bg-[var(--color-bg-muted)] rounded-lg transition-colors">
         <svg
-            class="w-5 h-5 text-[#6B7280]"
+            class="w-5 h-5 text-[var(--color-text-secondary)]"
             fill="none"
             stroke="currentColor"
             stroke-width="2"
@@ -16,9 +16,9 @@
           <path d="M21 21L16.65 16.65" />
         </svg>
       </button>
-      <button class="p-2 hover:bg-gray-50 rounded-lg transition-colors relative">
+      <button class="p-2 hover:bg-[var(--color-bg-muted)] rounded-lg transition-colors relative">
         <svg
-            class="w-5 h-5 text-[#6B7280]"
+            class="w-5 h-5 text-[var(--color-text-secondary)]"
             fill="none"
             stroke="currentColor"
             stroke-width="2"
@@ -32,15 +32,15 @@
       <router-link
           v-if="authStore.user"
           to="/settings/user"
-          class="ml-4 flex items-center gap-3 p-1 rounded-lg hover:bg-gray-50 transition-colors"
+          class="ml-4 flex items-center gap-3 p-1 rounded-lg hover:bg-[var(--color-bg-muted)] transition-colors"
       >
-        <div class="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+        <div class="w-9 h-9 rounded-full bg-[var(--color-bg-muted)] flex items-center justify-center flex-shrink-0">
           <img v-if="authStore.user.avatar" :src="authStore.user.avatar" class="w-full h-full rounded-full object-cover" alt="User Avatar" />
-          <span v-else class="text-sm font-medium text-gray-600">{{ authStore.user.name.charAt(0) }}</span>
+          <span v-else class="text-sm font-medium text-[var(--color-text-secondary)]">{{ authStore.user.name.charAt(0) }}</span>
         </div>
         <div>
-          <p class="text-sm font-medium text-[#374151]">{{ authStore.user.name }}</p>
-          <p class="text-xs text-[#9CA3AF]">{{ authStore.user.plan }}</p>
+          <p class="text-sm font-medium text-[var(--color-text-primary)]">{{ authStore.user.name }}</p>
+          <p class="text-xs text-[var(--color-text-muted)]">{{ authStore.user.plan }}</p>
         </div>
       </router-link>
     </div>

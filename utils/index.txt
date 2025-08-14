@@ -2339,7 +2339,6 @@ export function processQueue() {
 //
 
 import { useEditorStore } from '@novel/editor/stores/editorStore';
-import { useDerivedContentStore } from '@novel/editor/stores/derivedContentStore';
 import { useAIConfigStore } from '@novel/editor/stores/ai/aiConfigStore';
 import type { AITask, AITaskType } from '@/novel/editor/types';
 
@@ -2352,7 +2351,6 @@ import type { AITask, AITaskType } from '@/novel/editor/types';
  */
 export async function createTask(taskType: AITaskType, sourceItemId: string, finalPrompt?: string): Promise<AITask | null> {
     const editorStore = useEditorStore();
-    const derivedContentStore = useDerivedContentStore();
     const aiConfigStore = useAIConfigStore();
 
     const { node: sourceItem } = editorStore.findItemById(sourceItemId);
@@ -2382,21 +2380,10 @@ export async function createTask(taskType: AITaskType, sourceItemId: string, fin
         temperature: taskConfigSettings.temperature,
     };
 
-    let targetItemId: string;
-    let taskTitle: string;
-
-    if (taskType === '分析' || taskType === '剧情生成') {
-        const newDerivedItem = derivedContentStore.createDerivedItem(sourceItem, taskType);
-        if (!newDerivedItem) {
-            console.error("AI Task Factory Error: Failed to create derived item shell.");
-            return null;
-        }
-        targetItemId = newDerivedItem.id;
-        taskTitle = newDerivedItem.title;
-    } else {
-        targetItemId = sourceItemId;
-        taskTitle = `${taskType}《${sourceItem.title}》`;
-    }
+    // 对于所有任务，目标ID最初都指向源ID。
+    // 应用时，将根据任务类型决定是修改此ID的项，还是基于此ID创建新项。
+    const targetItemId = sourceItemId;
+    const taskTitle = `${taskType}《${sourceItem.title}》`;
 
     const newTask: AITask = {
         id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -2557,6 +2544,7 @@ export function createChapter(): Chapter {
 
 export function updateNodeContent(node: Volume | Chapter, content: string) {
     node.content = content;
+    (node as any)._lastModified = Date.now(); // Update version timestamp
 
     if (node.type === 'chapter') {
         const tempDiv = document.createElement('div');
@@ -2581,6 +2569,7 @@ export function appendChapterContent(chapter: Chapter, contentToAppend: string, 
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = chapter.content;
     chapter.wordCount = tempDiv.textContent?.trim().length || 0;
+    (chapter as any)._lastModified = Date.now(); // Update version timestamp
 }
 
 export function renameNode(node: DirectoryNode, newTitle: string) {
@@ -2596,6 +2585,7 @@ export function renameNode(node: DirectoryNode, newTitle: string) {
             node.content = `<h1>${trimmedTitle}</h1>` + node.content;
         }
     }
+    (node as any)._lastModified = Date.now(); // Update version timestamp on rename
 }
 
 export function deleteNode(nodes: Volume[], nodeId: string): boolean {
@@ -3240,11 +3230,13 @@ export function renameNode(node: TreeNode, newTitle: string) {
         if ('content' in node && node.content && node.content.includes('<h1>')) {
             (node as ItemNode).content = (node as ItemNode).content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
         }
+        (node as any)._lastModified = Date.now(); // Update version timestamp
     }
 }
 
 export function updateNodeContent(node: ItemNode, content: string) {
     node.content = content;
+    (node as any)._lastModified = Date.now(); // Update version timestamp
     if (!node.isReadOnly) {
         const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
         const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
@@ -3262,6 +3254,7 @@ export function appendNodeContent(node: ItemNode, contentToAppend: string, isAut
     }
     if (!node.content) node.content = "";
     node.content += htmlToAppend;
+    (node as any)._lastModified = Date.now(); // Update version timestamp
 }
 
 // =
@@ -3648,11 +3641,6 @@ import * as AITaskFactory from '@/novel/editor/services/ai/AITaskFactory';
 import { processQueue } from '@/novel/editor/services/ai/AITaskExecutionService';
 import type { AITask, Volume, AITaskType, AITaskStatus } from '@novel/editor/types';
 
-const formatContentForEditor = (title: string, rawContent: string): string => {
-    const body = rawContent.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p}</p>`).join('');
-    return `<h1>${title}</h1>${body}`;
-};
-
 export const useAITaskStore = defineStore('aiTask', () => {
     const tasks = ref<AITask[]>([]);
     const editorStore = useEditorStore();
@@ -3690,11 +3678,6 @@ export const useAITaskStore = defineStore('aiTask', () => {
     const startTask = async (taskType: AITaskType, sourceItemId: string, finalPrompt?: string) => {
         const newTask = await AITaskFactory.createTask(taskType, sourceItemId, finalPrompt);
         if (!newTask) return;
-
-        if (newTask.type === '分析' || newTask.type === '剧情生成') {
-            await nextTick();
-            editorStore.openTab(newTask.targetItemId);
-        }
 
         tasks.value.unshift(newTask);
 
@@ -3735,15 +3718,15 @@ export const useAITaskStore = defineStore('aiTask', () => {
         const task = tasks.value.find(t => t.id === taskId);
         if (!task || (task.status !== 'completed' && task.status !== 'completed_with_conflict')) return;
 
-        const { node: targetItem } = editorStore.findItemById(task.targetItemId);
-        if (!targetItem) {
+        const { node: sourceItem } = editorStore.findItemById(task.targetItemId);
+        if (!sourceItem) {
             task.status = 'failed';
             task.error = '目标文档不存在。';
             return;
         }
 
         // --- 核心Bug修复：版本冲突检查 ---
-        const currentVersion = (targetItem as any)._lastModified || 0;
+        const currentVersion = (sourceItem as any)._lastModified || 0;
         if (task.sourceItemVersion < currentVersion) {
             task.status = 'completed_with_conflict';
             task.error = `内容已被修改，AI结果无法自动应用。请手动处理。`;
@@ -3753,11 +3736,14 @@ export const useAITaskStore = defineStore('aiTask', () => {
         // --- 核心Bug修复结束 ---
 
         if (task.type === '分析' || task.type === '剧情生成') {
-            const finalTitle = task.title.split(' - ')[0];
-            const newContent = formatContentForEditor(finalTitle, task.generatedContent);
-            editorStore.updateItemContentById(task.targetItemId, newContent, true); // Pass true to update version
-            const result = derivedContentStore.findItemById(task.targetItemId);
-            if (result) result.title = finalTitle;
+            const newItem = derivedContentStore.createAndAddDerivedItem(
+                sourceItem,
+                task.type,
+                task.generatedContent
+            );
+            if (newItem) {
+                editorStore.openTab(newItem.id);
+            }
         } else {
             editorStore.appendContentToItem(task.targetItemId, task.generatedContent, isAutoApplied);
         }
@@ -4127,10 +4113,15 @@ export const useContextSettingsStore = defineStore('contextSettings', () => {
 // 文件: ..\src\novel\editor\stores\derivedContentStore.ts
 //
 
-// 文件: ..\src\novel\editor\stores\derivedContentStore.ts
+// 文件: src/novel/editor/stores/derivedContentStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { PlotAnalysisItem, AITaskType, EditorItem } from '@/novel/editor/types';
+
+const formatContentForEditor = (title: string, rawContent: string): string => {
+    const body = rawContent.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p}</p>`).join('');
+    return `<h1>${title}</h1>${body}`;
+};
 
 export const useDerivedContentStore = defineStore('derivedContent', () => {
     const plotItems = ref<PlotAnalysisItem[]>([]);
@@ -4147,29 +4138,31 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
     }
 
     /**
-     * 为指定源（章节或卷）创建一个新的派生内容项（占位符）。
+     * 根据已完成的AI任务，创建并添加一个新的、内容完整的派生内容项。
      * @param sourceNode - 源节点对象 (章节或卷)
      * @param taskType - 任务类型 ('分析' 或 '剧情生成')
+     * @param generatedContent - AI生成的原始文本内容
      * @returns 新创建的派生内容项
      */
-    function createDerivedItem(sourceNode: EditorItem, taskType: AITaskType): PlotAnalysisItem | null {
+    function createAndAddDerivedItem(sourceNode: EditorItem, taskType: AITaskType, generatedContent: string): PlotAnalysisItem | null {
         if (taskType !== '分析' && taskType !== '剧情生成') return null;
         if (sourceNode.type !== 'chapter' && sourceNode.type !== 'volume') return null;
-
 
         const now = new Date();
         const timestamp = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 
         const derivedType: PlotAnalysisItem['type'] = taskType === '分析' ? 'analysis' : 'plot';
-        const titleSuffix = taskType;
         const titlePrefix = sourceNode.type === 'volume' ? '卷' : '';
+        const finalTitle = `《${titlePrefix}${sourceNode.title}》${taskType} - ${timestamp}`;
+
+        const finalContent = formatContentForEditor(finalTitle, generatedContent);
 
         const newItem: PlotAnalysisItem = {
-            id: `${derivedType}_${now.getTime()}`, // 使用时间戳保证ID唯一
+            id: `${derivedType}_${now.getTime()}`,
             type: derivedType,
             sourceId: sourceNode.id,
-            title: `《${titlePrefix}${sourceNode.title}》${titleSuffix} - ${timestamp}`,
-            content: `<h1>《${titlePrefix}${sourceNode.title}》${titleSuffix} - ${timestamp}</h1><p>AI正在生成内容，请稍候...</p>`
+            title: finalTitle,
+            content: finalContent
         };
 
         if (derivedType === 'analysis') {
@@ -4230,7 +4223,7 @@ export const useDerivedContentStore = defineStore('derivedContent', () => {
         plotItems,
         analysisItems,
         fetchDerivedData,
-        createDerivedItem,
+        createAndAddDerivedItem,
         findItemById,
         updateNodeContent,
         appendNodeContent,
@@ -4770,7 +4763,7 @@ import { useItemStore } from '@novel/editor/stores/editor-state/itemStore';
 import { useSystemViewStore } from '@novel/editor/stores/editor-state/systemViewStore';
 import { useMetadataStore } from '@novel/editor/stores/editor-state/metadataStore';
 import { useUIStore } from './uiStore';
-import type { TabInfo } from '@/novel/editor/types';
+import type { TabInfo, EditorItem } from '@/novel/editor/types';
 
 export { EditorPane };
 
@@ -4828,6 +4821,33 @@ export const useEditorStore = defineStore('editor-facade', () => {
         }
     };
 
+    /**
+     * 更新指定ID项目的内容，并自动更新其版本时间戳。
+     * @param id - 项目的ID
+     * @param content - 新的HTML内容
+     */
+    const updateItemContentById = (id: string, content: string) => {
+        itemStore.updateItemContentById(id, content);
+        const { node } = itemStore.findItemById(id);
+        if (node) {
+            (node as any)._lastModified = Date.now();
+        }
+    };
+
+    /**
+     * 向指定ID项目追加内容，并自动更新其版本时间戳。
+     * @param itemId - 项目的ID
+     * @param content - 要追加的HTML内容
+     * @param auto - 是否为AI自动应用
+     */
+    const appendContentToItem = (itemId: string, content: string, auto: boolean) => {
+        itemStore.appendContentToItem(itemId, content, auto);
+        const { node } = itemStore.findItemById(itemId);
+        if (node) {
+            (node as any)._lastModified = Date.now();
+        }
+    };
+
     return {
         panes,
         activePaneId,
@@ -4843,8 +4863,8 @@ export const useEditorStore = defineStore('editor-facade', () => {
         openTab: tabStore.openTab,
         closeTab: tabStore.closeTab,
         findItemById: itemStore.findItemById,
-        updateItemContentById: itemStore.updateItemContentById,
-        appendContentToItem: itemStore.appendContentToItem,
+        updateItemContentById,
+        appendContentToItem,
         toggleAIPanel: systemViewStore.toggleAIPanel,
         ensureAIPanelIsOpen: systemViewStore.ensureAIPanelIsOpen,
         toggleHistoryPanel: systemViewStore.toggleHistoryPanel,
@@ -4884,12 +4904,14 @@ export const useNotesStore = defineStore('notes', () => {
         const originalNote = notes.value[noteIndex];
         const updatedNote = noteService.updateNoteWithNewContent(originalNote, content);
         notes.value.splice(noteIndex, 1, updatedNote);
+        (notes.value[noteIndex] as any)._lastModified = Date.now(); // Update version timestamp
     };
 
     const appendNoteContent = (noteId: string, contentToAppend: string, isAutoApplied: boolean) => {
         const note = findNoteById(noteId);
         if (note) {
             note.content = noteService.appendContentToNote(note.content, contentToAppend, isAutoApplied);
+            (note as any)._lastModified = Date.now(); // Update version timestamp
         }
     };
 
@@ -4902,6 +4924,7 @@ export const useNotesStore = defineStore('notes', () => {
             const trimmedTitle = newTitle.trim();
             const updatedNote = noteService.renameNote(originalNote, trimmedTitle);
             notes.value.splice(noteIndex, 1, updatedNote);
+            (notes.value[noteIndex] as any)._lastModified = Date.now(); // Update version timestamp
         }
         uiStore.setEditingNodeId(null);
     };
@@ -5504,7 +5527,6 @@ export const useUIStore = defineStore('ui', () => {
 // 文件: ..\src\novel\editor\types\ai.ts
 //
 
-
 /**
  * AI 任务状态
  * - pending: 等待执行
@@ -5544,13 +5566,13 @@ export interface AITask {
     targetItemId: string;
     sourceItemTitle: string;
     sourceItemContent: string;
-    sourceItemVersion: number; // 新增：源文档版本快照（使用Date.now()时间戳）
+    sourceItemVersion: number;
     status: AITaskStatus;
     generatedContent: string;
     finalPrompt?: string;
     error?: string;
     createdAt: Date;
-    applyAt?: number; // 新增：用于延迟应用的时间戳
+    applyAt?: number;
     aiConfig: AIProviderConfig;
 }
 
@@ -5559,7 +5581,7 @@ export interface AITask {
  */
 export interface AITaskPreview {
     type: AITaskType;
-    targetItemId: string; // 此处targetItemId即为sourceItemId
+    targetItemId: string;
     title: string;
 }
 

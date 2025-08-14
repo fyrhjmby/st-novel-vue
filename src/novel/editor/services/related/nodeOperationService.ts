@@ -100,11 +100,13 @@ export function renameNode(node: TreeNode, newTitle: string) {
         if ('content' in node && node.content && node.content.includes('<h1>')) {
             (node as ItemNode).content = (node as ItemNode).content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
         }
+        (node as any)._lastModified = Date.now(); // Update version timestamp
     }
 }
 
 export function updateNodeContent(node: ItemNode, content: string) {
     node.content = content;
+    (node as any)._lastModified = Date.now(); // Update version timestamp
     if (!node.isReadOnly) {
         const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
         const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
@@ -122,4 +124,5 @@ export function appendNodeContent(node: ItemNode, contentToAppend: string, isAut
     }
     if (!node.content) node.content = "";
     node.content += htmlToAppend;
+    (node as any)._lastModified = Date.now(); // Update version timestamp
 }

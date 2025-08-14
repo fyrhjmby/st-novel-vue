@@ -51,22 +51,28 @@
         </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
-        <tr v-for="run in runHistory" :key="run.id" class="hover:bg-gray-50/50 transition-colors">
+        <tr v-if="store.isLoading">
+          <td colspan="7" class="text-center py-10 text-gray-500">正在加载运行历史...</td>
+        </tr>
+        <tr v-else-if="store.runHistory.length === 0">
+          <td colspan="7" class="text-center py-10 text-gray-500">没有历史记录</td>
+        </tr>
+        <tr v-else v-for="run in store.runHistory" :key="run.id" class="hover:bg-gray-50/50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap text-sm text-[#6B7280] font-mono">{{ run.id }}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#374151]">{{ run.workflowName }}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-[#6B7280]">
-                                <span class="flex items-center gap-1">
-                                    <span v-html="run.trigger.icon"></span>
-                                    {{ run.trigger.text }}
-                                </span>
+              <span class="flex items-center gap-1">
+                <span v-html="getTriggerInfo(run.trigger.type).icon"></span>
+                {{ getTriggerInfo(run.trigger.type).text }}
+              </span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-[#6B7280]">{{ run.startTime }}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-[#6B7280]">{{ run.duration }}</td>
           <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex items-center text-xs leading-5 font-semibold rounded-full" :class="run.status.class">
-                                    <span v-if="run.status.icon" v-html="run.status.icon" class="mr-1"></span>
-                                    {{ run.status.text }}
-                                </span>
+              <span class="px-2 inline-flex items-center text-xs leading-5 font-semibold rounded-full" :class="getStatusInfo(run.status).class">
+                <span v-if="getStatusInfo(run.status).icon" v-html="getStatusInfo(run.status).icon" class="mr-1"></span>
+                {{ getStatusInfo(run.status).text }}
+              </span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
             <button class="text-[#3B82F6] hover:text-blue-700 mr-3">{{ run.primaryAction }}</button>
@@ -93,55 +99,45 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted } from 'vue';
+import { useHistoryStore } from '@/workflow/stores/historyStore';
+import { RunStatusEnum, TriggerTypeEnum } from '@/workflow/types';
 
-const runHistory = ref([
-  {
-    id: '#f8a1b3',
-    workflowName: '社交媒体帖子生成器',
-    trigger: { text: '手动', icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>' },
-    startTime: '2024-05-20 10:30',
-    duration: '12.5s',
-    status: { text: '成功', class: 'bg-green-100 text-green-800' },
-    primaryAction: '查看详情',
-  },
-  {
-    id: '#e7b2c4',
-    workflowName: '公司周报摘要',
-    trigger: { text: '定时', icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' },
-    startTime: '2024-05-20 09:15',
-    duration: '45.2s',
-    status: { text: '失败', class: 'bg-red-100 text-red-800' },
-    primaryAction: '查看日志',
-    secondaryAction: '重试'
-  },
-  {
-    id: '#d6c3d5',
-    workflowName: '小说角色生成器',
-    trigger: { text: 'API', icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>' },
-    startTime: '2024-05-19 18:45',
-    duration: '8.1s',
-    status: { text: '成功', class: 'bg-green-100 text-green-800' },
-    primaryAction: '查看详情',
-  },
-  {
-    id: '#c5d4e6',
-    workflowName: '社交媒体帖子生成器',
-    trigger: { text: '手动', icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>' },
-    startTime: '2024-05-19 14:20',
-    duration: '1.2s',
-    status: { text: '已取消', class: 'bg-yellow-100 text-yellow-800' },
-    primaryAction: '查看详情',
-  },
-  {
-    id: '#b4d5f7',
-    workflowName: '数据分析报告',
-    trigger: { text: 'Webhook', icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>' },
-    startTime: '2024-05-19 11:30',
-    duration: '23.7s',
-    status: { text: '运行中', class: 'bg-blue-100 text-blue-800', icon: '<svg class="animate-spin h-3 w-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>' },
-    primaryAction: '实时监控',
-    secondaryAction: '停止'
-  },
-]);
+const store = useHistoryStore();
+
+onMounted(() => {
+  store.loadRunHistory();
+});
+
+const getTriggerInfo = (type: TriggerTypeEnum) => {
+  const commonIconClass = 'w-4 h-4 text-gray-400';
+  const iconProps = `fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"`;
+  switch (type) {
+    case TriggerTypeEnum.Manual:
+      return { text: '手动', icon: `<svg class="${commonIconClass}" ${iconProps}><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>` };
+    case TriggerTypeEnum.Scheduled:
+      return { text: '定时', icon: `<svg class="${commonIconClass}" ${iconProps}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>` };
+    case TriggerTypeEnum.API:
+      return { text: 'API', icon: `<svg class="${commonIconClass}" ${iconProps}><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>` };
+    case TriggerTypeEnum.Webhook:
+      return { text: 'Webhook', icon: `<svg class="${commonIconClass}" ${iconProps}><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>` };
+    default:
+      return { text: '未知', icon: '' };
+  }
+};
+
+const getStatusInfo = (status: RunStatusEnum) => {
+  switch (status) {
+    case RunStatusEnum.Success:
+      return { text: '成功', class: 'bg-green-100 text-green-800' };
+    case RunStatusEnum.Failure:
+      return { text: '失败', class: 'bg-red-100 text-red-800' };
+    case RunStatusEnum.Running:
+      return { text: '运行中', class: 'bg-blue-100 text-blue-800', icon: '<svg class="animate-spin h-3 w-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>' };
+    case RunStatusEnum.Cancelled:
+      return { text: '已取消', class: 'bg-yellow-100 text-yellow-800' };
+    default:
+      return { text: '未知', class: 'bg-gray-100 text-gray-800' };
+  }
+};
 </script>

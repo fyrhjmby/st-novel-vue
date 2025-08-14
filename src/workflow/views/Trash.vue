@@ -25,11 +25,21 @@
         </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
-        <tr v-for="item in deletedItems" :key="item.id" class="hover:bg-gray-50/50 transition-colors">
+        <tr v-if="store.isLoading">
+          <td colspan="5" class="text-center py-10 text-gray-500">
+            正在加载回收站项目...
+          </td>
+        </tr>
+        <tr v-else-if="store.deletedItems.length === 0">
+          <td colspan="5" class="text-center py-10 text-gray-500">
+            回收站是空的
+          </td>
+        </tr>
+        <tr v-else v-for="item in store.deletedItems" :key="item.id" class="hover:bg-gray-50/50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#374151]">{{ item.name }}</td>
           <td class="px-6 py-4 whitespace-nowrap">
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="item.type.class">
-                {{ item.type.text }}
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getTypeInfo(item.type).class">
+                {{ getTypeInfo(item.type).text }}
               </span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-[#6B7280]">{{ item.deletedDate }}</td>
@@ -39,11 +49,6 @@
             <button class="text-red-600 hover:text-red-800">永久删除</button>
           </td>
         </tr>
-        <tr v-if="deletedItems.length === 0">
-          <td colspan="5" class="text-center py-10 text-gray-500">
-            回收站是空的
-          </td>
-        </tr>
         </tbody>
       </table>
     </div>
@@ -51,29 +56,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted } from 'vue';
+import { useTrashStore } from '@/workflow/stores/trashStore';
+import { DeletedItemTypeEnum } from '@/workflow/types';
 
-const deletedItems = ref([
-  {
-    id: 'del-01',
-    name: '旧的市场分析报告流程',
-    type: { text: '工作流', class: 'bg-blue-100 text-blue-800' },
-    deletedDate: '2024-05-18 14:30',
-    daysLeft: 27,
-  },
-  {
-    id: 'del-02',
-    name: '每日灵感推送（已停用）',
-    type: { text: '调度任务', class: 'bg-purple-100 text-purple-800' },
-    deletedDate: '2024-05-20 09:00',
-    daysLeft: 29,
-  },
-  {
-    id: 'del-03',
-    name: '测试变量',
-    type: { text: '变量', class: 'bg-orange-100 text-orange-800' },
-    deletedDate: '2024-05-21 11:15',
-    daysLeft: 30,
+const store = useTrashStore();
+
+onMounted(() => {
+  store.loadDeletedItems();
+});
+
+const getTypeInfo = (type: DeletedItemTypeEnum) => {
+  switch (type) {
+    case DeletedItemTypeEnum.Workflow:
+      return { text: '工作流', class: 'bg-blue-100 text-blue-800' };
+    case DeletedItemTypeEnum.Schedule:
+      return { text: '调度任务', class: 'bg-purple-100 text-purple-800' };
+    case DeletedItemTypeEnum.Variable:
+      return { text: '变量', class: 'bg-orange-100 text-orange-800' };
+    default:
+      return { text: '未知', class: 'bg-gray-100 text-gray-800' };
   }
-]);
+};
 </script>

@@ -1,13 +1,13 @@
 <template>
-  <aside class="w-64 bg-[#FAFAFA] border-r border-gray-100 flex flex-col flex-shrink-0">
-    <div class="p-4 space-y-4 border-b border-gray-100">
+  <aside class="w-64 bg-[var(--color-bg-secondary)] border-r border-[var(--color-border-primary)] flex flex-col flex-shrink-0 transition-colors">
+    <div class="p-4 space-y-4 border-b border-[var(--color-border-primary)]">
       <router-link to="/home" class="flex items-center gap-3 px-2 group">
-        <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+        <div class="w-10 h-10 bg-[var(--color-bg-muted)] rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+          <svg class="w-6 h-6 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
         </div>
         <div>
-          <h3 class="font-medium text-[#374151] text-sm">AI Creator</h3>
-          <p class="text-xs text-[#9CA3AF]">创作平台</p>
+          <h3 class="font-medium text-[var(--color-text-primary)] text-sm">AI Creator</h3>
+          <p class="text-xs text-[var(--color-text-muted)]">创作平台</p>
         </div>
       </router-link>
     </div>
@@ -15,9 +15,9 @@
     <!-- 主导航 -->
     <nav class="flex-1 px-4 py-6">
       <div class="mb-8">
-        <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">主要功能</p>
+        <p class="text-xs font-medium text-[var(--color-text-muted)] px-3 mb-3 uppercase tracking-wider">主要功能</p>
         <div class="space-y-1">
-          <router-link v-for="item in mainNav" :key="item.name" :to="item.path" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors" active-class="bg-[#4B5563] text-white font-medium">
+          <router-link v-for="item in mainNav" :key="item.name" :to="item.path" class="nav-link" active-class="active">
             <span v-html="item.icon"></span>
             <span>{{ item.name }}</span>
           </router-link>
@@ -25,10 +25,10 @@
       </div>
 
       <div>
-        <p class="text-xs font-medium text-[#9CA3AF] px-3 mb-3 uppercase tracking-wider">工具</p>
+        <p class="text-xs font-medium text-[var(--color-text-muted)] px-3 mb-3 uppercase tracking-wider">工具</p>
         <div class="space-y-1">
           <template v-for="item in toolsNav" :key="item.name">
-            <router-link v-if="!item.disabled" :to="item.path" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors" active-class="bg-[#4B5563] text-white font-medium">
+            <router-link v-if="!item.disabled" :to="item.path" class="nav-link" active-class="active">
               <span v-html="item.icon"></span>
               <span>{{ item.name }}</span>
             </router-link>
@@ -42,8 +42,8 @@
     </nav>
 
     <!-- 底部设置 -->
-    <div class="p-4 border-t border-gray-100 mt-auto">
-      <router-link to="/settings" class="flex items-center gap-3 px-3 py-2.5 text-[#6B7280] hover:bg-gray-100 rounded-lg text-sm transition-colors">
+    <div class="p-4 border-t border-[var(--color-border-primary)] mt-auto">
+      <router-link to="/settings" class="nav-link" active-class="active">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1V6M12 18V23M4.22 4.22L7.76 7.76M16.24 16.24L19.78 19.78M1 12H6M18 12H23M4.22 19.78L7.76 16.24M16.24 7.76L19.78 4.22"/></svg>
         <span>设置</span>
       </router-link>
@@ -67,7 +67,30 @@ const toolsNav = ref([
 </script>
 
 <style scoped>
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  color: var(--color-text-secondary);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.nav-link:hover {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.nav-link.active {
+  background-color: var(--color-bg-accent);
+  color: var(--color-text-on-accent);
+  box-shadow: var(--shadow-sm);
+}
+
 .router-link-exact-active {
-  color: white !important;
+  /* This class is now handled by the .active class for more control */
 }
 </style>
