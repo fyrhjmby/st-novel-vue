@@ -73,6 +73,8 @@ export interface DashboardStat {
 
 export interface QuickStartAction {
     title: string;
+    description: string;
+    path: string;
     iconName: string;
     iconColor: string;
 }
@@ -89,7 +91,7 @@ export interface DashboardData {
     stats: DashboardStat[];
     quickStartActions: QuickStartAction[];
     recentProjects: RecentProject[];
-    allWorkflows: Workflow[];
+    allWorkflows?: Workflow[];
 }
 
 // --- History ---
@@ -203,11 +205,17 @@ export interface RunFormData {
     includeCTA: boolean;
 }
 
-export interface RunPageData {
+interface RunPageDataBase {
     presets: RunPreset[];
     recentParams: RunRecentParam[];
     initialFormData: RunFormData;
 }
+
+export interface RunPageData extends RunPageDataBase {
+    workflowId: string;
+    workflowName: string;
+}
+
 
 // --- Schedules ---
 export interface Schedule {

@@ -13,6 +13,7 @@ declare module 'vue' {
     ApiConfigModal: typeof import('./../settings/components/ApiConfigModal.vue')['default']
     ConfirmationModal: typeof import('./../prompt/components/common/ConfirmationModal.vue')['default']
     CustomNode: typeof import('./../workflow/components/CustomNode.vue')['default']
+    DashboardHeader: typeof import('./../workflow/components/dashboard/DashboardHeader.vue')['default']
     EditorAIPanel: typeof import('./../novel/components/editor/EditorAIPanel.vue')['default']
     EditorContent: typeof import('./../novel/components/editor/EditorContent.vue')['default']
     EditorSidebar: typeof import('./../novel/components/editor/EditorSidebar.vue')['default']

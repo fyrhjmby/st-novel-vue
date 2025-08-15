@@ -1,13 +1,12 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { dashboardService } from '@/workflow/services/dashboardService';
-import type { DashboardStat, QuickStartAction, RecentProject, Workflow } from '@/workflow/types';
+import type { DashboardStat, QuickStartAction, RecentProject } from '@/workflow/types';
 
 export const useDashboardStore = defineStore('dashboard', () => {
     const stats = ref<DashboardStat[]>([]);
     const quickStartActions = ref<QuickStartAction[]>([]);
     const recentProjects = ref<RecentProject[]>([]);
-    const allWorkflows = ref<Workflow[]>([]);
     const isLoading = ref(false);
 
     const loadDashboardData = async () => {
@@ -18,7 +17,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
                 stats.value = data.stats;
                 quickStartActions.value = data.quickStartActions;
                 recentProjects.value = data.recentProjects;
-                allWorkflows.value = data.allWorkflows || [];
             }
         } catch (error) {
             console.error('Error loading dashboard data in store:', error);
@@ -31,7 +29,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
         stats,
         quickStartActions,
         recentProjects,
-        allWorkflows,
         isLoading,
         loadDashboardData,
     };

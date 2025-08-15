@@ -6,111 +6,135 @@
 // 文件: ..\src\workflow\api\dashboardApi.ts
 //
 
+import type { DashboardData } from '@/workflow/types';
+import { TrendDirectionEnum } from '@/workflow/types';
+
 export const dashboardApi = {
-    fetchDashboardData: (): Promise<any> => {
-        const data = {
+    fetchDashboardData: (): Promise<DashboardData> => {
+        const data: DashboardData = {
             stats: [
                 {
                     label: '工作流总数',
                     value: '12',
-                    trend: '+8%',
-                    trendClass: 'text-[#10B981] bg-green-50',
-                    icon: `<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 3V15M9 15L5 11M9 15L13 11"/><path d="M15 21V9M15 9L19 13M15 9L11 13"/></svg>`,
-                    iconBgClass: 'bg-blue-50',
-                    chart: ['40%', '60%', '45%', '80%', '70%', '100%']
+                    trend: { direction: TrendDirectionEnum.Up, value: '+8%' },
+                    iconName: 'flow-arrows',
+                    iconColor: 'blue',
                 },
                 {
-                    label: '执行次数',
-                    value: '156 <span class="text-lg text-gray-400">/ 24h</span>',
-                    trend: `<div class="flex items-center gap-1"><div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div><span class="text-gray-500">实时</span></div>`,
-                    trendClass: '',
-                    icon: `<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6V12L16 16"/></svg>`,
-                    iconBgClass: 'bg-green-50',
-                    subtext: `<span>当前运行: 3</span><span class="mx-1">•</span><span>队列中: 7</span>`
+                    label: '执行次数 (24h)',
+                    value: '156',
+                    isRealtime: true,
+                    iconName: 'clock',
+                    iconColor: 'green',
+                    details: {
+                        label1: '当前运行',
+                        value1: 3,
+                        label2: '队列中',
+                        value2: 7
+                    }
                 },
                 {
                     label: '平均成功率',
                     value: '98.5%',
                     trend: null,
-                    icon: `<svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 20L12 10"/><path d="M18 20L18 4"/><path d="M6 20L6 16"/></svg>`,
-                    iconBgClass: 'bg-indigo-50',
+                    iconName: 'chart-bar',
+                    iconColor: 'indigo',
                     progress: 98.5
                 },
                 {
                     label: '平均执行时间',
                     value: '~12.3s',
-                    trend: '-15%',
-                    trendClass: 'text-rose-600 bg-rose-50',
-                    icon: `<svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`,
-                    iconBgClass: 'bg-rose-50',
-                    subtext: `<span>最快: 3.2s</span><span class="mx-1">•</span><span>最慢: 45.6s</span>`
+                    trend: { direction: TrendDirectionEnum.Down, value: '-15%' },
+                    iconName: 'zap',
+                    iconColor: 'rose',
+                    details: {
+                        label1: '最快',
+                        value1: '3.2s',
+                        label2: '最慢',
+                        value2: '45.6s'
+                    }
                 },
             ],
             quickStartActions: [
-                { title: '创建工作流', icon: `<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>`, bgClass: 'bg-blue-50'},
-                { title: '导入工作流', icon: `<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>`, bgClass: 'bg-green-50'},
-                { title: '复制模板', icon: `<svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`, bgClass: 'bg-indigo-50'},
-                { title: '管理变量', icon: `<svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>`, bgClass: 'bg-amber-50'}
+                { title: '创建新工作流', description: '从一个空白画布开始构建你的自动化流程。', path: '/workflow/editor/new', iconName: 'plus', iconColor: 'blue'},
+                { title: '从模板创建', description: '从市场中选择一个预构建的模板快速启动。', path: '/workflow/market', iconName: 'copy', iconColor: 'indigo'},
+                { title: '查看运行历史', description: '跟踪和调试过去所有工作流的执行情况。', path: '/workflow/history', iconName: 'history', iconColor: 'green'},
+                { title: '管理全局变量', description: '集中管理和配置您工作流中使用的变量。', path: '/workflow/variables', iconName: 'sliders', iconColor: 'amber'}
             ],
             recentProjects: [
-                { title: '社交媒体帖子', details: '执行 23 次', time: '5分钟前', icon: `<svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" st
+                { title: '社交媒体帖子', details: '执行 23 次', time: '5分钟前', iconName: 'message-circle', iconColor: 'blue' },
+                { title: '公司周报摘要', details: '执行 5 次', time: '2小时前', iconName: 'file-text', iconColor: 'green' },
+                { title: '市场情绪分析', details: '执行 102 次', time: '8小时前', iconName: 'trending-up', iconColor: 'indigo' },
+                { title: '新客户欢迎邮件', details: '执行 18 次', time: '1天前', iconName: 'mail', iconColor: 'amber' }
+            ],
+        };
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve(data);
+            }, 300);
+        });
+    }
+};
 
 // =
 // 文件: ..\src\workflow\api\historyApi.ts
 //
 
-const mockRunHistory = [
+import type { RunHistoryItem } from '@/workflow/types';
+import { RunStatusEnum, TriggerTypeEnum } from '@/workflow/types';
+
+const mockRunHistory: RunHistoryItem[] = [
     {
         id: '#f8a1b3',
         workflowName: '社交媒体帖子生成器',
-        trigger: { text: '手动', icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>' },
+        trigger: { type: TriggerTypeEnum.Manual },
         startTime: '2024-05-20 10:30',
         duration: '12.5s',
-        status: { text: '成功', class: 'bg-green-100 text-green-800' },
+        status: RunStatusEnum.Success,
         primaryAction: '查看详情',
     },
     {
         id: '#e7b2c4',
         workflowName: '公司周报摘要',
-        trigger: { text: '定时', icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' },
+        trigger: { type: TriggerTypeEnum.Scheduled },
         startTime: '2024-05-20 09:15',
         duration: '45.2s',
-        status: { text: '失败', class: 'bg-red-100 text-red-800' },
+        status: RunStatusEnum.Failure,
         primaryAction: '查看日志',
         secondaryAction: '重试'
     },
     {
         id: '#d6c3d5',
         workflowName: '小说角色生成器',
-        trigger: { text: 'API', icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>' },
+        trigger: { type: TriggerTypeEnum.API },
         startTime: '2024-05-19 18:45',
         duration: '8.1s',
-        status: { text: '成功', class: 'bg-green-100 text-green-800' },
+        status: RunStatusEnum.Success,
         primaryAction: '查看详情',
     },
     {
         id: '#c5d4e6',
         workflowName: '社交媒体帖子生成器',
-        trigger: { text: '手动', icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>' },
+        trigger: { type: TriggerTypeEnum.Manual },
         startTime: '2024-05-19 14:20',
         duration: '1.2s',
-        status: { text: '已取消', class: 'bg-yellow-100 text-yellow-800' },
+        status: RunStatusEnum.Cancelled,
         primaryAction: '查看详情',
     },
     {
         id: '#b4d5f7',
         workflowName: '数据分析报告',
-        trigger: { text: 'Webhook', icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>' },
+        trigger: { type: TriggerTypeEnum.Webhook },
         startTime: '2024-05-19 11:30',
         duration: '23.7s',
-        status: { text: '运行中', class: 'bg-blue-100 text-blue-800', icon: '<svg class="animate-spin h-3 w-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>' },
+        status: RunStatusEnum.Running,
         primaryAction: '实时监控',
         secondaryAction: '停止'
     },
 ];
 
 export const historyApi = {
-    fetchRunHistory: (): Promise<any[]> => {
+    fetchRunHistory: (): Promise<RunHistoryItem[]> => {
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve(mockRunHistory);
@@ -123,13 +147,15 @@ export const historyApi = {
 // 文件: ..\src\workflow\api\marketplaceApi.ts
 //
 
-const mockMarketplaceData = {
+import type { MarketplaceData } from '@/workflow/types';
+
+const mockMarketplaceData: MarketplaceData = {
     popularTags: [
-        { name: '内容生成', class: 'bg-blue-100 text-blue-700' },
-        { name: '数据处理', class: 'bg-green-100 text-green-700' },
-        { name: '自动化营销', class: 'bg-purple-100 text-purple-700' },
-        { name: 'API集成', class: 'bg-amber-100 text-amber-700' },
-        { name: '图像处理', class: 'bg-rose-100 text-rose-700' },
+        { name: '内容生成', color: 'blue' },
+        { name: '数据处理', color: 'green' },
+        { name: '自动化营销', color: 'purple' },
+        { name: 'API集成', color: 'amber' },
+        { name: '图像处理', color: 'rose' },
     ],
     workflowTemplates: [
         {
@@ -139,8 +165,8 @@ const mockMarketplaceData = {
             reviews: '234',
             description: '上传会议录音或文字记录，自动生成结构化、带要点的会议纪要。',
             usage: '2.1k',
-            icon: `<svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`,
-            iconBgClass: 'bg-blue-100',
+            iconName: 'file-text',
+            iconColor: 'blue',
         },
         {
             title: '市场研究分析师',
@@ -149,8 +175,8 @@ const mockMarketplaceData = {
             reviews: '189',
             description: '输入行业或产品，自动抓取网络信息，生成SWOT分析报告。',
             usage: '1.8k',
-            icon: `<svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>`,
-            iconBgClass: 'bg-green-100',
+            iconName: 'search',
+            iconColor: 'green',
         },
         {
             title: '短视频脚本创作',
@@ -159,8 +185,8 @@ const mockMarketplaceData = {
             reviews: '156',
             description: '只需一个创意点，即可自动生成包含场景、对话和动作的完整短视频脚本。',
             usage: '972',
-            icon: `<svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`,
-            iconBgClass: 'bg-rose-100',
+            iconName: 'video',
+            iconColor: 'rose',
         },
         {
             title: '客服对话优化器',
@@ -169,14 +195,14 @@ const mockMarketplaceData = {
             reviews: '512',
             description: '分析客服对话记录，提供改进建议，生成标准化回复模板。',
             usage: '3.5k',
-            icon: `<svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/></svg>`,
-            iconBgClass: 'bg-indigo-100',
+            iconName: 'message-square',
+            iconColor: 'indigo',
         },
     ],
 };
 
 export const marketplaceApi = {
-    fetchMarketplaceData: (): Promise<typeof mockMarketplaceData> => {
+    fetchMarketplaceData: (): Promise<MarketplaceData> => {
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve(mockMarketplaceData);
@@ -189,7 +215,10 @@ export const marketplaceApi = {
 // 文件: ..\src\workflow\api\monitorApi.ts
 //
 
-const mockMonitorData = {
+import type { MonitorData } from '@/workflow/types';
+import { NodeStatusEnum } from '@/workflow/types';
+
+const mockMonitorData: MonitorData = {
     runInfo: {
         id: '#RUN-f8a1b3',
         workflowName: '社交媒体帖子生成器',
@@ -197,9 +226,9 @@ const mockMonitorData = {
         progress: 45,
     },
     nodes: [
-        { id: 'start', top: 80, left: 80, status: 'completed', title: '开始', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"/></svg>`, iconBg: 'bg-green-100 text-green-600', details: '输入: "AI在创意写作中的应用"' },
-        { id: 'llm', top: 220, left: 390, status: 'running', title: '大语言模型', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>`, iconBg: 'bg-blue-100 text-blue-600', details: { label: 'Token使用', value: '342 / 850', progress: 40 } },
-        { id: 'end', top: 360, left: 690, status: 'waiting', title: '结束', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>`, iconBg: 'bg-red-100 text-red-600', details: '等待中' },
+        { id: 'start', top: 80, left: 80, status: NodeStatusEnum.Completed, title: '开始', iconName: 'play-circle', iconColor: 'green', details: '输入: "AI在创意写作中的应用"' },
+        { id: 'llm', top: 220, left: 390, status: NodeStatusEnum.Running, title: '大语言模型', iconName: 'cpu', iconColor: 'blue', details: { label: 'Token使用', value: '342 / 850', progress: 40 } },
+        { id: 'end', top: 360, left: 690, status: NodeStatusEnum.Waiting, title: '结束', iconName: 'flag', iconColor: 'red', details: '等待中' },
     ],
     performance: {
         cpu: '23%',
@@ -222,7 +251,7 @@ const mockMonitorData = {
 };
 
 export const monitorApi = {
-    fetchMonitorData: (): Promise<any> => {
+    fetchMonitorData: (): Promise<MonitorData> => {
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve(JSON.parse(JSON.stringify(mockMonitorData)));
@@ -236,6 +265,7 @@ export const monitorApi = {
 //
 
 import type { Workflow } from '@/workflow/types';
+import { WorkflowStatusEnum } from '@/workflow/types';
 
 const mockWorkflows: Workflow[] = [
     {
@@ -243,7 +273,7 @@ const mockWorkflows: Workflow[] = [
         title: '社交媒体帖子生成器',
         description: '自动从核心主题生成适用于多平台的帖子内容。',
         tags: ['内容生成', '社交媒体', 'GPT-4'],
-        status: { text: '已发布', class: 'bg-green-100 text-green-800', dotClass: 'bg-green-500' },
+        status: WorkflowStatusEnum.Published,
         updated: '2天前'
     },
     {
@@ -251,7 +281,7 @@ const mockWorkflows: Workflow[] = [
         title: '公司周报摘要',
         description: '上传多个文档，自动提取关键信息生成周报摘要。',
         tags: ['文档处理', '信息提取', 'RAG'],
-        status: { text: '草稿', class: 'bg-gray-100 text-gray-800', dotClass: 'bg-gray-400' },
+        status: WorkflowStatusEnum.Draft,
         updated: '5小时前'
     },
     {
@@ -259,7 +289,7 @@ const mockWorkflows: Workflow[] = [
         title: '市场情绪分析流程',
         description: '监控指定关键词的社媒情绪，并每日发送报告。',
         tags: ['数据分析', '监控', '自动化'],
-        status: { text: '已发布', class: 'bg-green-100 text-green-800', dotClass: 'bg-green-500' },
+        status: WorkflowStatusEnum.Published,
         updated: '1周前'
     },
     {
@@ -267,7 +297,7 @@ const mockWorkflows: Workflow[] = [
         title: '新客户欢迎邮件',
         description: '当有新用户注册时，自动触发个性化欢迎邮件。',
         tags: ['营销', '自动化', 'Email'],
-        status: { text: '已归档', class: 'bg-yellow-100 text-yellow-800', dotClass: 'bg-yellow-500' },
+        status: WorkflowStatusEnum.Archived,
         updated: '1个月前'
     },
 ];
@@ -282,28 +312,21 @@ export const myWorkflowsApi = {
     }
 };
 
-// 新增类型定义文件以支持分层
-// 文件: ..\src\workflow\types.ts
-export interface WorkflowStatus {
-    text: string;
-    class: string;
-    dotClass: string;
-}
-
-export interface Workflow {
-    id: string;
-    title: string;
-    description: string;
-    tags: string[];
-    status: WorkflowStatus;
-    updated: string;
-}
-
 // =
 // 文件: ..\src\workflow\api\runApi.ts
 //
 
-const mockRunData = {
+import type { RunPageData } from '@/workflow/types';
+
+// Mock database of workflow titles
+const workflowTitles: Record<string, string> = {
+    'wf-001': '社交媒体帖子生成器',
+    'wf-002': '公司周报摘要',
+    'wf-003': '市场情绪分析流程',
+    'wf-004': '新客户欢迎邮件',
+};
+
+const mockRunData: Omit<RunPageData, 'workflowId' | 'workflowName'> = {
     presets: [
         { id: 'p1', name: '推特营销', description: '适合产品推广', active: true },
         { id: 'p2', name: '个人分享', description: '日常动态更新', active: false },
@@ -327,10 +350,15 @@ const mockRunData = {
 };
 
 export const runApi = {
-    fetchRunPageData: (): Promise<any> => {
+    fetchRunPageData: (id: string): Promise<RunPageData> => {
         return new Promise(resolve => {
             setTimeout(() => {
-                resolve(JSON.parse(JSON.stringify(mockRunData)));
+                const response: RunPageData = {
+                    workflowId: id,
+                    workflowName: workflowTitles[id] || '未知工作流',
+                    ...JSON.parse(JSON.stringify(mockRunData))
+                };
+                resolve(response);
             }, 300); // Simulate network delay
         });
     },
@@ -340,10 +368,12 @@ export const runApi = {
 // 文件: ..\src\workflow\api\schedulesApi.ts
 //
 
-const mockSchedules = [
+import type { Schedule } from '@/workflow/types';
+
+const mockSchedules: Schedule[] = [
     {
         id: 'sched-01',
-        status: '启用中',
+        status: 'enabled',
         workflowName: '公司周报摘要',
         workflowId: 'wf-002',
         schedule: {
@@ -354,7 +384,7 @@ const mockSchedules = [
     },
     {
         id: 'sched-02',
-        status: '启用中',
+        status: 'enabled',
         workflowName: '市场情绪分析流程',
         workflowId: 'wf-003',
         schedule: {
@@ -365,7 +395,7 @@ const mockSchedules = [
     },
     {
         id: 'sched-03',
-        status: '已禁用',
+        status: 'disabled',
         workflowName: '社交媒体帖子生成器',
         workflowId: 'wf-001',
         schedule: {
@@ -376,7 +406,7 @@ const mockSchedules = [
     },
     {
         id: 'sched-04',
-        status: '启用中',
+        status: 'enabled',
         workflowName: '数据备份',
         workflowId: 'wf-005',
         schedule: {
@@ -388,7 +418,7 @@ const mockSchedules = [
 ];
 
 export const schedulesApi = {
-    fetchSchedules: (): Promise<any[]> => {
+    fetchSchedules: (): Promise<Schedule[]> => {
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve(mockSchedules);
@@ -401,32 +431,35 @@ export const schedulesApi = {
 // 文件: ..\src\workflow\api\trashApi.ts
 //
 
-const mockDeletedItems = [
+import type { DeletedItem } from '@/workflow/types';
+import { DeletedItemTypeEnum } from '@/workflow/types';
+
+const mockDeletedItems: DeletedItem[] = [
     {
         id: 'del-01',
         name: '旧的市场分析报告流程',
-        type: { text: '工作流', class: 'bg-blue-100 text-blue-800' },
+        type: DeletedItemTypeEnum.Workflow,
         deletedDate: '2024-05-18 14:30',
         daysLeft: 27,
     },
     {
         id: 'del-02',
         name: '每日灵感推送（已停用）',
-        type: { text: '调度任务', class: 'bg-purple-100 text-purple-800' },
+        type: DeletedItemTypeEnum.Schedule,
         deletedDate: '2024-05-20 09:00',
         daysLeft: 29,
     },
     {
         id: 'del-03',
         name: '测试变量',
-        type: { text: '变量', class: 'bg-orange-100 text-orange-800' },
+        type: DeletedItemTypeEnum.Variable,
         deletedDate: '2024-05-21 11:15',
         daysLeft: 30,
     }
 ];
 
 export const trashApi = {
-    fetchDeletedItems: (): Promise<any[]> => {
+    fetchDeletedItems: (): Promise<DeletedItem[]> => {
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve(mockDeletedItems);
@@ -441,24 +474,26 @@ export const trashApi = {
 
 import type { FlowExportObject } from '@vue-flow/core';
 
-const LOCAL_STORAGE_KEY = 'workflow-editor-state';
+const LOCAL_STORAGE_KEY_PREFIX = 'workflow-editor-state-';
 
 export const workflowEditorApi = {
-    saveWorkflow: (flowData: FlowExportObject): Promise<{ success: true }> => {
+    saveWorkflow: (id: string, flowData: FlowExportObject): Promise<{ success: true }> => {
         return new Promise(resolve => {
             setTimeout(() => {
-                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(flowData));
-                console.log('API: Workflow saved to localStorage.');
+                const key = `${LOCAL_STORAGE_KEY_PREFIX}${id}`;
+                localStorage.setItem(key, JSON.stringify(flowData));
+                console.log(`API: Workflow [${id}] saved to localStorage.`);
                 resolve({ success: true });
             }, 500); // Simulate network delay
         });
     },
 
-    loadWorkflow: (): Promise<FlowExportObject | null> => {
+    loadWorkflow: (id: string): Promise<FlowExportObject | null> => {
         return new Promise(resolve => {
             setTimeout(() => {
-                const data = localStorage.getItem(LOCAL_STORAGE_KEY);
-                console.log('API: Workflow loaded from localStorage.');
+                const key = `${LOCAL_STORAGE_KEY_PREFIX}${id}`;
+                const data = localStorage.getItem(key);
+                console.log(`API: Workflow [${id}] loaded from localStorage.`);
                 resolve(data ? JSON.parse(data) : null);
             }, 300); // Simulate network delay
         });
@@ -473,7 +508,7 @@ export const workflowEditorApi = {
   <div class="w-64 bg-white rounded-xl shadow-md border" :class="nodeClasses">
     <div class="p-3 border-b border-gray-100 flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <div class="p-1 rounded-md" :class="data.iconBg" v-html="data.icon"></div>
+        <div class="p-1 rounded-md" :class="iconBgClass" v-html="iconSvg"></div>
         <p class="font-medium text-sm text-[#374151]">{{ data.title }}</p>
       </div>
       <div v-if="data.status" class="flex items-center gap-2">
@@ -489,20 +524,29 @@ export const workflowEditorApi = {
       {{ data.description }}
     </div>
 
-    <Handle type="target" :position="Position.Left" class="custom-handle" />
-    <Handle type="source" :position="Position.Right" class="custom-handle" />
+    <Handle type="target" position="left" class="custom-handle" />
+    <Handle type="source" position="right" class="custom-handle" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { Handle, Position, useVueFlow } from '@vue-flow/core';
+import { Handle } from '@vue-flow/core';
 import { computed } from 'vue';
-import type { NodeProps } from '@vue-flow/core';
+import { iconRegistry, colorMap } from '@/workflow/utils/style-mappers';
+
+interface NodeProps {
+  id: string;
+  selected?: boolean;
+  data: {
+    title: string;
+    description?: string;
+    status?: 'completed' | 'running' | 'waiting';
+    iconName: string;
+    iconColor: string;
+  };
+}
 
 const props = defineProps<NodeProps>();
-
-const { findNode } = useVueFlow();
-const node = findNode(props.id);
 
 const nodeClasses = computed(() => ({
   'border-blue-500 border-2': props.selected,
@@ -510,6 +554,19 @@ const nodeClasses = computed(() => ({
   'running-node': props.data.status === 'running',
   'opacity-60': props.data.status === 'waiting',
 }));
+
+const iconBgClass = computed(() => {
+  return colorMap[props.data.iconColor]?.bg || 'bg-gray-100';
+});
+
+const iconSvg = computed(() => {
+  const name = props.data.iconName;
+  const color = props.data.iconColor;
+  const iconHtml = iconRegistry[name] || '';
+  const iconColorClass = colorMap[color]?.text || 'text-gray-600';
+  return iconHtml.replace(/class="([^"]*)"/, `class="$1 ${iconColorClass}"`);
+});
+
 </script>
 
 // =
@@ -911,9 +968,10 @@ export const workflowRoutes: Array<RouteRecordRaw> = [
 //
 
 import { dashboardApi } from '@/workflow/api/dashboardApi';
+import type { DashboardData } from '@/workflow/types';
 
 export const dashboardService = {
-    getDashboardData: async () => {
+    getDashboardData: async (): Promise<DashboardData | null> => {
         try {
             const data = await dashboardApi.fetchDashboardData();
             return data;
@@ -929,9 +987,10 @@ export const dashboardService = {
 //
 
 import { historyApi } from '@/workflow/api/historyApi';
+import type { RunHistoryItem } from '@/workflow/types';
 
 export const historyService = {
-    getRunHistory: async () => {
+    getRunHistory: async (): Promise<RunHistoryItem[]> => {
         try {
             const data = await historyApi.fetchRunHistory();
             return data;
@@ -947,9 +1006,10 @@ export const historyService = {
 //
 
 import { marketplaceApi } from '@/workflow/api/marketplaceApi';
+import type { MarketplaceData } from '@/workflow/types';
 
 export const marketplaceService = {
-    getMarketplaceData: async () => {
+    getMarketplaceData: async (): Promise<MarketplaceData | null> => {
         try {
             const data = await marketplaceApi.fetchMarketplaceData();
             return data;
@@ -1005,9 +1065,9 @@ export const myWorkflowsService = {
 import { runApi } from '@/workflow/api/runApi';
 
 export const runService = {
-    getRunPageData: async () => {
+    getRunPageData: async (id: string) => {
         try {
-            const data = await runApi.fetchRunPageData();
+            const data = await runApi.fetchRunPageData(id);
             return data;
         } catch (error) {
             console.error('Failed to get run page data:', error);
@@ -1056,17 +1116,27 @@ export const trashService = {
 // 文件: ..\src\workflow\services\workflowEditorService.ts
 //
 
-import { workflowEditorApi } from '@/workflow/api/workflowEditorApi';
 import type { FlowExportObject } from '@vue-flow/core';
+import { workflowEditorApi } from '@/workflow/api/workflowEditorApi';
 
 export const workflowEditorService = {
-    async save(flowData: FlowExportObject) {
-        // In a real app, you might add validation logic here before saving.
-        return await workflowEditorApi.saveWorkflow(flowData);
+    /**
+     * Saves the workflow data using the API.
+     * @param id - The ID of the workflow to save.
+     * @param flowData - The workflow data to save.
+     * @returns A promise that resolves to { success: true } on completion.
+     */
+    save: (id: string, flowData: FlowExportObject): Promise<{ success: true }> => {
+        return workflowEditorApi.saveWorkflow(id, flowData);
     },
 
-    async load() {
-        return await workflowEditorApi.loadWorkflow();
+    /**
+     * Loads the workflow data using the API.
+     * @param id - The ID of the workflow to load.
+     * @returns A promise that resolves with the loaded workflow data or null.
+     */
+    load: (id: string): Promise<FlowExportObject | null> => {
+        return workflowEditorApi.loadWorkflow(id);
     },
 };
 
@@ -1077,12 +1147,12 @@ export const workflowEditorService = {
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { dashboardService } from '@/workflow/services/dashboardService';
+import type { DashboardStat, QuickStartAction, RecentProject } from '@/workflow/types';
 
 export const useDashboardStore = defineStore('dashboard', () => {
-    const stats = ref([]);
-    const quickStartActions = ref([]);
-    const recentProjects = ref([]);
-    const allWorkflows = ref([]);
+    const stats = ref<DashboardStat[]>([]);
+    const quickStartActions = ref<QuickStartAction[]>([]);
+    const recentProjects = ref<RecentProject[]>([]);
     const isLoading = ref(false);
 
     const loadDashboardData = async () => {
@@ -1093,7 +1163,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
                 stats.value = data.stats;
                 quickStartActions.value = data.quickStartActions;
                 recentProjects.value = data.recentProjects;
-                allWorkflows.value = data.allWorkflows;
             }
         } catch (error) {
             console.error('Error loading dashboard data in store:', error);
@@ -1106,7 +1175,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
         stats,
         quickStartActions,
         recentProjects,
-        allWorkflows,
         isLoading,
         loadDashboardData,
     };
@@ -1119,9 +1187,10 @@ export const useDashboardStore = defineStore('dashboard', () => {
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { historyService } from '@/workflow/services/historyService';
+import type { RunHistoryItem } from '@/workflow/types';
 
 export const useHistoryStore = defineStore('history', () => {
-    const runHistory = ref<any[]>([]);
+    const runHistory = ref<RunHistoryItem[]>([]);
     const isLoading = ref(false);
 
     const loadRunHistory = async () => {
@@ -1150,10 +1219,11 @@ export const useHistoryStore = defineStore('history', () => {
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { marketplaceService } from '@/workflow/services/marketplaceService';
+import type { MarketplaceTag, WorkflowTemplate } from '@/workflow/types';
 
 export const useMarketplaceStore = defineStore('marketplace', () => {
-    const popularTags = ref<any[]>([]);
-    const workflowTemplates = ref<any[]>([]);
+    const popularTags = ref<MarketplaceTag[]>([]);
+    const workflowTemplates = ref<WorkflowTemplate[]>([]);
     const isLoading = ref(false);
 
     const loadMarketplaceData = async () => {
@@ -1184,12 +1254,13 @@ export const useMarketplaceStore = defineStore('marketplace', () => {
 //
 
 import { defineStore } from 'pinia';
-import { ref, reactive } from 'vue';
+import { ref } from 'vue';
 import { monitorService } from '@/workflow/services/monitorService';
+import type { MonitorData, MonitorLog, MonitorNode, MonitorOutputPreview, MonitorPerformance } from '@/workflow/types';
 
 let logInterval: number | undefined;
 
-const sampleLogs = [
+const sampleLogs: Omit<MonitorLog, 'time'>[] = [
     { type: 'debug', message: 'API请求详情: {"model": "gpt-4-turbo", "temperature": 0.7}', isBlock: true, blockContent: '{\n"model": "gpt-4-turbo",\n"temperature": 0.7,\n"max_tokens": 1000\n}'},
     { type: 'info', message: '正在生成内容...' },
     { type: 'info', message: '接收到流式数据块 #1' },
@@ -1202,11 +1273,11 @@ let logCounter = 0;
 
 export const useMonitorStore = defineStore('monitor', () => {
     const isLoading = ref(false);
-    const runInfo = ref<any>({});
-    const nodes = ref<any[]>([]);
-    const performance = ref<any>({});
-    const logs = ref<any[]>([]);
-    const outputPreview = ref<any>({});
+    const runInfo = ref<MonitorData['runInfo']>({ id: '', workflowName: '', status: '', progress: 0 });
+    const nodes = ref<MonitorNode[]>([]);
+    const performance = ref<Partial<MonitorPerformance>>({});
+    const logs = ref<MonitorLog[]>([]);
+    const outputPreview = ref<Partial<MonitorOutputPreview>>({});
 
     const loadInitialData = async () => {
         isLoading.value = true;
@@ -1231,7 +1302,7 @@ export const useMonitorStore = defineStore('monitor', () => {
         logInterval = window.setInterval(() => {
             if (logCounter < sampleLogs.length) {
                 const now = new Date();
-                const newLog = {
+                const newLog: MonitorLog = {
                     ...sampleLogs[logCounter],
                     time: now.toLocaleTimeString('en-GB'),
                 };
@@ -1309,12 +1380,15 @@ export const useMyWorkflowsStore = defineStore('myWorkflows', () => {
 import { defineStore } from 'pinia';
 import { ref, reactive } from 'vue';
 import { runService } from '@/workflow/services/runService';
+import type { RunPreset, RunRecentParam, RunFormData } from '@/workflow/types';
 
 export const useRunStore = defineStore('run', () => {
-    const presets = ref<any[]>([]);
-    const recentParams = ref<any[]>([]);
+    const workflowId = ref<string | null>(null);
+    const workflowName = ref<string>('');
+    const presets = ref<RunPreset[]>([]);
+    const recentParams = ref<RunRecentParam[]>([]);
     const isLoading = ref(false);
-    const formData = reactive({
+    const formData = reactive<RunFormData>({
         topic: '',
         platform: '',
         tone: '',
@@ -1323,23 +1397,28 @@ export const useRunStore = defineStore('run', () => {
         includeCTA: false,
     });
 
-    const loadRunData = async () => {
+    const loadRunData = async (id: string) => {
         isLoading.value = true;
+        workflowId.value = id;
         try {
-            const data = await runService.getRunPageData();
+            const data = await runService.getRunPageData(id);
             if (data) {
+                workflowName.value = data.workflowName;
                 presets.value = data.presets;
                 recentParams.value = data.recentParams;
                 Object.assign(formData, data.initialFormData);
             }
         } catch (error) {
             console.error('Error loading run data in store:', error);
+            workflowName.value = '加载失败';
         } finally {
             isLoading.value = false;
         }
     };
 
     return {
+        workflowId,
+        workflowName,
         presets,
         recentParams,
         formData,
@@ -1355,9 +1434,10 @@ export const useRunStore = defineStore('run', () => {
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { schedulesService } from '@/workflow/services/schedulesService';
+import type { Schedule } from '@/workflow/types';
 
 export const useSchedulesStore = defineStore('schedules', () => {
-    const schedules = ref<any[]>([]);
+    const schedules = ref<Schedule[]>([]);
     const isLoading = ref(false);
 
     const loadSchedules = async () => {
@@ -1386,9 +1466,10 @@ export const useSchedulesStore = defineStore('schedules', () => {
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { trashService } from '@/workflow/services/trashService';
+import type { DeletedItem } from '@/workflow/types';
 
 export const useTrashStore = defineStore('trash', () => {
-    const deletedItems = ref<any[]>([]);
+    const deletedItems = ref<DeletedItem[]>([]);
     const isLoading = ref(false);
 
     const loadDeletedItems = async () => {
@@ -1416,8 +1497,8 @@ export const useTrashStore = defineStore('trash', () => {
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { Connection, Edge, Elements, FlowEvents, FlowExportObject, Node, VueFlowInstance } from '@vue-flow/core';
-import { useVueFlow } from '@vue-flow/core';
+import type { Connection, Edge, FlowEvents, FlowExportObject, Node, VueFlowStore, Elements } from '@vue-flow/core';
+import { useVueFlow, MarkerType } from '@vue-flow/core';
 import { workflowEditorService } from '@/workflow/services/workflowEditorService';
 
 let id = 0;
@@ -1428,13 +1509,14 @@ export const useWorkflowEditorStore = defineStore('workflowEditor', () => {
     const selectedNode = ref<Node | null>(null);
     const isLoading = ref(false);
     const isSaving = ref(false);
+    const currentWorkflowId = ref<string | null>(null);
+    const instance = ref<VueFlowStore | null>(null);
 
     const {
         onConnect,
         addEdges,
         addNodes,
         project,
-        instance,
         onPaneReady,
         onNodesChange,
         onEdgesChange,
@@ -1442,15 +1524,17 @@ export const useWorkflowEditorStore = defineStore('workflowEditor', () => {
         findNode,
     } = useVueFlow();
 
-    onConnect((params: Connection | Edge) => {
-        params.markerEnd = { type: 'arrowclosed', color: '#D1D5DB' };
-        params.style = { stroke: '#D1D5DB', strokeWidth: 2 };
-        addEdges([params]);
+    onConnect((params: Connection) => {
+        const newEdge: Edge = {
+            ...params,
+            markerEnd: { type: MarkerType.ArrowClosed, color: '#D1D5DB' },
+            style: { stroke: '#D1D5DB', strokeWidth: 2 },
+        };
+        addEdges([newEdge]);
     });
 
-    onPaneReady((flowInstance: VueFlowInstance) => {
+    onPaneReady((flowInstance: VueFlowStore) => {
         instance.value = flowInstance;
-        loadWorkflow();
     });
 
     const onNodeClick = (event: FlowEvents['nodeClick']) => {
@@ -1459,9 +1543,9 @@ export const useWorkflowEditorStore = defineStore('workflowEditor', () => {
 
     const clearSelection = () => {
         selectedNode.value = null;
-        if(instance.value) {
-            instance.value.getNodes.forEach(node => node.selected = false);
-        }
+        // Since the component uses v-model="elements", updating this ref is the correct way
+        // to change the state of the flow, which also solves the type error.
+        elements.value = elements.value.map(el => ({ ...el, selected: false }));
     }
 
     const onDragOver = (event: DragEvent) => {
@@ -1489,9 +1573,8 @@ export const useWorkflowEditorStore = defineStore('workflowEditor', () => {
             data: {
                 title: name,
                 description: data.description,
-                icon: data.icon,
-                iconBg: data.bgClass,
-                // Default config for new nodes
+                iconName: data.iconName,
+                iconColor: data.iconColor,
                 config: {
                     model: 'GPT-4-Turbo (推荐)',
                     temperature: 0.7,
@@ -1521,11 +1604,11 @@ export const useWorkflowEditorStore = defineStore('workflowEditor', () => {
     };
 
     const saveWorkflow = async () => {
-        if (!instance.value) return;
+        if (!instance.value || !currentWorkflowId.value) return;
         isSaving.value = true;
         try {
             const flowData = instance.value.toObject();
-            await workflowEditorService.save(flowData);
+            await workflowEditorService.save(currentWorkflowId.value, flowData);
         } catch(e) {
             console.error('Save failed:', e);
         } finally {
@@ -1533,18 +1616,26 @@ export const useWorkflowEditorStore = defineStore('workflowEditor', () => {
         }
     };
 
-    const loadWorkflow = async () => {
+    const loadWorkflow = async (id: string) => {
+        currentWorkflowId.value = id;
         isLoading.value = true;
         try {
-            const flowData = await workflowEditorService.load();
-            if (flowData && instance.value) {
-                elements.value = flowData.elements;
-                instance.value.setViewport(flowData.viewport);
-            } else {
+            if (id === 'new') {
                 elements.value = [
-                    { id: '1', type: 'custom', label: '开始', position: { x: 80, y: 80 }, data: { title: '开始', description: '工作流的入口点，定义了启动流程所需的输入参数。', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"/></svg>`, iconBg: 'bg-green-100 text-green-600' } },
-                    { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: '#D1D5DB', strokeWidth: 2 }, markerEnd: { type: 'arrowclosed', color: '#D1D5DB' } },
+                    { id: '1', type: 'custom', label: '开始', position: { x: 80, y: 80 }, data: { title: '开始', description: '工作流的入口点。', iconName: 'play-circle', iconColor: 'green' } },
                 ];
+            } else {
+                const flowData = await workflowEditorService.load(id);
+                if (flowData) {
+                    elements.value = [...(flowData.nodes || []), ...(flowData.edges || [])];
+                    if (instance.value && flowData.viewport) {
+                        instance.value.setViewport(flowData.viewport);
+                    }
+                } else {
+                    elements.value = [
+                        { id: '1', type: 'custom', label: '开始', position: { x: 80, y: 80 }, data: { title: '开始', description: '工作流的入口点。', iconName: 'play-circle', iconColor: 'green' } },
+                    ];
+                }
             }
         } catch(e) {
             console.error('Load failed:', e);
@@ -1559,6 +1650,7 @@ export const useWorkflowEditorStore = defineStore('workflowEditor', () => {
         selectedNode,
         isSaving,
         isLoading,
+        currentWorkflowId,
         onNodesChange,
         onEdgesChange,
         onConnect,
@@ -1575,148 +1667,378 @@ export const useWorkflowEditorStore = defineStore('workflowEditor', () => {
 });
 
 // =
+// 文件: ..\src\workflow\types.ts
+//
+
+// Enums for semantic states, types, and directions
+export enum WorkflowStatusEnum {
+    Published = 'published',
+    Draft = 'draft',
+    Archived = 'archived',
+}
+
+export enum RunStatusEnum {
+    Success = 'success',
+    Failure = 'failure',
+    Running = 'running',
+    Cancelled = 'cancelled',
+}
+
+export enum TriggerTypeEnum {
+    Manual = 'manual',
+    Scheduled = 'scheduled',
+    API = 'api',
+    Webhook = 'webhook',
+}
+
+export enum TrendDirectionEnum {
+    Up = 'up',
+    Down = 'down',
+    None = 'none',
+}
+
+export enum NodeStatusEnum {
+    Completed = 'completed',
+    Running = 'running',
+    Waiting = 'waiting',
+}
+
+export enum DeletedItemTypeEnum {
+    Workflow = 'workflow',
+    Schedule = 'schedule',
+    Variable = 'variable',
+}
+
+// --- MyWorkflows ---
+export interface Workflow {
+    id: string;
+    title: string;
+    description: string;
+    tags: string[];
+    status: WorkflowStatusEnum;
+    updated: string;
+    usage?: string;
+    successRate?: string;
+}
+
+// --- Dashboard ---
+export interface DashboardStat {
+    label: string;
+    value: string;
+    valueSubtext?: string;
+    trend?: {
+        direction: TrendDirectionEnum;
+        value: string;
+    } | null;
+    isRealtime?: boolean;
+    iconName: string;
+    iconColor: string; // e.g., 'blue', 'green'
+    chart?: string[]; // Represents percentage heights '40%'
+    progress?: number;
+    details?: {
+        label1: string;
+        value1: string | number;
+        label2: string;
+        value2: string | number;
+    };
+}
+
+export interface QuickStartAction {
+    title: string;
+    description: string;
+    path: string;
+    iconName: string;
+    iconColor: string;
+}
+
+export interface RecentProject {
+    title: string;
+    details: string;
+    time: string;
+    iconName: string;
+    iconColor: string;
+}
+
+export interface DashboardData {
+    stats: DashboardStat[];
+    quickStartActions: QuickStartAction[];
+    recentProjects: RecentProject[];
+    allWorkflows?: Workflow[];
+}
+
+// --- History ---
+export interface RunHistoryItem {
+    id: string;
+    workflowName: string;
+    trigger: {
+        type: TriggerTypeEnum;
+    };
+    startTime: string;
+    duration: string;
+    status: RunStatusEnum;
+    primaryAction: string;
+    secondaryAction?: string;
+}
+
+// --- Marketplace ---
+export interface MarketplaceTag {
+    name: string;
+    color: string; // 'blue', 'green', etc.
+}
+
+export interface WorkflowTemplate {
+    title: string;
+    author: string;
+    rating: string;
+    reviews: string;
+    description: string;
+    usage: string;
+    iconName: string;
+    iconColor: string;
+}
+
+export interface MarketplaceData {
+    popularTags: MarketplaceTag[];
+    workflowTemplates: WorkflowTemplate[];
+}
+
+// --- Monitor ---
+export interface MonitorNode {
+    id: string;
+    top: number;
+    left: number;
+    status: NodeStatusEnum;
+    title: string;
+    iconName: string;
+    iconColor: string;
+    details: string | {
+        label: string;
+        value: string;
+        progress: number;
+    };
+}
+
+export interface MonitorPerformance {
+    cpu: string;
+    memory: string;
+    tokens: string;
+    time: string;
+}
+
+export interface MonitorLog {
+    time: string;
+    type: 'success' | 'info' | 'error' | 'debug';
+    message: string;
+    isBlock?: boolean;
+    blockContent?: string;
+}
+
+export interface MonitorOutputPreview {
+    content: string;
+    words: number;
+    limit: number;
+    status: string;
+}
+
+export interface MonitorData {
+    runInfo: {
+        id: string;
+        workflowName: string;
+        status: string;
+        progress: number;
+    };
+    nodes: MonitorNode[];
+    performance: MonitorPerformance;
+    initialLogs: MonitorLog[];
+    outputPreview: MonitorOutputPreview;
+}
+
+
+// --- Run ---
+export interface RunPreset {
+    id: string;
+    name: string;
+    description: string;
+    active: boolean;
+}
+
+export interface RunRecentParam {
+    id: string;
+    title: string;
+    details: string;
+}
+
+export interface RunFormData {
+    topic: string;
+    platform: string;
+    tone: string;
+    includeHashtags: boolean;
+    includeEmojis: boolean;
+    includeCTA: boolean;
+}
+
+interface RunPageDataBase {
+    presets: RunPreset[];
+    recentParams: RunRecentParam[];
+    initialFormData: RunFormData;
+}
+
+export interface RunPageData extends RunPageDataBase {
+    workflowId: string;
+    workflowName: string;
+}
+
+
+// --- Schedules ---
+export interface Schedule {
+    id: string;
+    status: 'enabled' | 'disabled';
+    workflowName: string;
+    workflowId: string;
+    schedule: {
+        cron: string;
+        description: string;
+    };
+    nextRun: string;
+}
+
+// --- Trash ---
+export interface DeletedItem {
+    id: string;
+    name: string;
+    type: DeletedItemTypeEnum;
+    deletedDate: string;
+    daysLeft: number;
+}
+
+// =
+// 文件: ..\src\workflow\utils\style-mappers.ts
+//
+
+export const colorMap: Record<string, { bg: string; text: string; border?: string }> = {
+    blue: { bg: 'bg-blue-100', text: 'text-blue-600', border: 'border-blue-500' },
+    green: { bg: 'bg-green-100', text: 'text-green-600', border: 'border-green-500' },
+    purple: { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-500' },
+    amber: { bg: 'bg-amber-100', text: 'text-amber-600', border: 'border-amber-500' },
+    rose: { bg: 'bg-rose-100', text: 'text-rose-600', border: 'border-rose-500' },
+    indigo: { bg: 'bg-indigo-100', text: 'text-indigo-600', border: 'border-indigo-500' },
+    red: { bg: 'bg-red-100', text: 'text-red-600', border: 'border-red-500' },
+};
+
+export const iconRegistry: Record<string, string> = {
+    // General & Dashboard
+    'plus': `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>`,
+    'upload-cloud': `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>`,
+    'copy': `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`,
+    'sliders': `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>`,
+    'message-circle': `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>`,
+    'file-text': `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>`,
+    'trending-up': `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 6l-9.5 9.5-5-5L1 18"/></svg>`,
+    'mail': `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>`,
+
+    // Dashboard Stats Icons
+    'flow-arrows': `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 3V15M9 15L5 11M9 15L13 11"/><path d="M15 21V9M15 9L19 13M15 9L11 13"/></svg>`,
+    'clock': `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6V12L16 16"/></svg>`,
+    'chart-bar': `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 20L12 10"/><path d="M18 20L18 4"/><path d="M6 20L6 16"/></svg>`,
+    'zap': `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`,
+
+    // Editor Node Icons
+    'play-circle': `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"/></svg>`,
+    'flag': `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>`,
+    'cpu': `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>`,
+    'book-open': `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zm0 0c0 1.657 1.007 3 2.25 3S21 13.657 21 12a9 9 0 10-2.636 6.364M16.5 12V8.25"/></svg>`,
+};
+
+// =
 // 文件: ..\src\workflow\views\Dashboard.vue
 //
 
 <template>
-  <div class="flex-1 px-8 py-6 overflow-auto bg-[#FCFCFC]">
-    <!-- 页面操作栏 (原Header内容) -->
-    <div class="flex items-center justify-between mb-8">
-      <div class="flex items-center gap-8">
-        <div class="flex items-center bg-[#F3F4F6] rounded-lg p-1 text-sm">
-          <button class="px-3 py-1 rounded-md text-[#6B7280]">今日</button>
-          <button class="px-3 py-1 rounded-md bg-white shadow-sm text-[#374151]">本周</button>
-          <button class="px-3 py-1 rounded-md text-[#6B7280]">本月</button>
-          <button class="px-3 py-1 rounded-md text-[#6B7280]">自定义</button>
-        </div>
-      </div>
-      <div class="flex items-center gap-2">
-        <div class="relative">
-          <input type="text" placeholder="搜索工作流..."
-                 class="w-64 pl-10 pr-4 py-2 text-sm bg-[#F3F4F6] border border-transparent rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none transition-all">
-          <svg class="w-5 h-5 text-[#6B7280] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="M21 21L16.65 16.65"/>
-          </svg>
-        </div>
-        <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-          <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
-          </svg>
-        </button>
-        <button class="px-4 py-2 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1F2937] transition-colors flex items-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path d="M12 5V19M5 12H19"/>
-          </svg>
-          创建工作流
-        </button>
-      </div>
+  <div class="flex-1 p-10 overflow-auto bg-gray-50/50">
+    <!-- 页面头部 -->
+    <div class="mb-10">
+      <h1 class="text-2xl font-semibold text-gray-800">早上好, AI Creator</h1>
+      <p class="text-gray-500 mt-1">这是您工作流今天的概览。</p>
     </div>
 
     <div v-if="store.isLoading" class="text-center py-20">
       <p class="text-gray-500">正在加载仪表盘数据...</p>
     </div>
 
-    <div v-else>
-      <!-- 增强的数据统计卡片 -->
-      <div class="grid grid-cols-4 gap-6 mb-8">
-        <div v-for="stat in store.stats" :key="stat.label" class="bg-white rounded-xl p-6 border border-gray-100">
+    <div v-else class="space-y-10">
+      <!-- 数据统计卡片 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div v-for="stat in store.stats" :key="stat.label" class="bg-white rounded-xl p-6 border border-gray-100/80 shadow-sm">
           <div class="flex items-center justify-between mb-4">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center" :class="stat.iconBgClass">
-              <span v-html="stat.icon"></span>
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center" :class="getIconBgClass(stat.iconColor)">
+              <span v-html="getIconSvg(stat.iconName, stat.iconColor)"></span>
             </div>
-            <span v-if="stat.trend" class="text-xs font-medium px-2 py-1 rounded-full" :class="stat.trendClass" v-html="stat.trend"></span>
-          </div>
-          <p class="text-2xl font-light text-[#374151]" v-html="stat.value"></p>
-          <p class="text-sm text-[#9CA3AF] mt-1">{{ stat.label }}</p>
-          <div v-if="stat.subtext" class="mt-4 text-xs text-gray-500 flex justify-between" v-html="stat.subtext"></div>
-          <div v-else-if="stat.chart" class="mt-4 flex items-end gap-1 h-8">
-            <div v-for="(bar, index) in stat.chart" :key="index" class="flex-1 chart-bar rounded-sm" :style="{ height: bar }"></div>
-          </div>
-          <div v-else-if="stat.progress" class="mt-4 space-y-1">
-            <div class="flex justify-between text-xs">
-              <span class="text-green-600">成功</span>
-              <span class="text-gray-500">{{ stat.progress }}%</span>
+            <div class="flex items-center">
+              <span v-if="stat.trend" class="text-xs font-medium px-2 py-1 rounded-full" :class="getTrendClasses(stat.trend.direction)">
+                {{ stat.trend.value }}
+              </span>
+              <div v-if="stat.isRealtime" class="flex items-center gap-1.5 ml-2">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="text-gray-500 text-xs font-medium">实时</span>
+              </div>
             </div>
-            <div class="w-full bg-gray-200 rounded-full h-1">
-              <div class="bg-green-500 h-1 rounded-full" :style="{ width: stat.progress + '%' }"></div>
+          </div>
+          <p class="text-3xl font-light text-gray-800">
+            {{ stat.value }}
+            <span v-if="stat.valueSubtext" class="text-xl text-gray-400">{{ stat.valueSubtext }}</span>
+          </p>
+          <p class="text-sm text-gray-500 mt-1">{{ stat.label }}</p>
+          <div v-if="stat.details" class="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500 flex justify-between">
+            <span>{{ stat.details.label1 }}: <span class="font-semibold text-gray-700">{{ stat.details.value1 }}</span></span>
+            <span>{{ stat.details.label2 }}: <span class="font-semibold text-gray-700">{{ stat.details.value2 }}</span></span>
+          </div>
+          <div v-if="stat.progress" class="mt-4 space-y-2">
+            <div class="flex justify-between text-xs font-medium">
+              <span class="text-green-600">成功率</span>
+              <span class="text-gray-600">{{ stat.progress }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-1.5">
+              <div class="bg-green-500 h-1.5 rounded-full" :style="{ width: stat.progress + '%' }"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 快速操作区域 -->
-      <div class="mb-8">
-        <h3 class="text-sm font-medium text-[#374151] mb-4">快速开始</h3>
-        <div class="grid grid-cols-4 gap-4">
-          <button v-for="action in store.quickStartActions" :key="action.title" class="bg-white rounded-lg p-4 border border-gray-100 hover:border-blue-300 hover:shadow-md transition-all text-center">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2" :class="action.bgClass">
-              <span v-html="action.icon"></span>
-            </div>
-            <span class="text-sm text-[#374151]">{{ action.title }}</span>
-          </button>
+      <!-- 快速操作与最近活动 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <!-- 快速开始 -->
+        <div>
+          <h3 class="text-base font-semibold text-gray-700 mb-4">快速开始</h3>
+          <div class="space-y-3">
+            <router-link v-for="action in store.quickStartActions" :key="action.title" :to="action.path" class="flex items-center gap-4 p-4 bg-white rounded-lg border border-gray-200/80 hover:border-blue-400 hover:bg-blue-50/50 transition-all group">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" :class="getIconBgClass(action.iconColor)">
+                <span v-html="getIconSvg(action.iconName, action.iconColor)"></span>
+              </div>
+              <div class="flex-1">
+                <p class="font-medium text-gray-800 group-hover:text-blue-700">{{ action.title }}</p>
+                <p class="text-sm text-gray-500">{{ action.description }}</p>
+              </div>
+              <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-transform transform group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+            </router-link>
+          </div>
         </div>
-      </div>
 
-      <!-- 最近使用的工作流 -->
-      <div class="mb-8">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-sm font-medium text-[#374151]">最近使用</h3>
-          <a href="#" class="text-sm text-[#3B82F6] hover:text-blue-700">查看全部</a>
-        </div>
-        <div class="grid grid-cols-4 gap-4">
-          <div v-for="project in store.recentProjects" :key="project.title" class="bg-white rounded-lg p-4 border border-gray-100 hover:border-gray-200 transition-all hover:shadow-md">
-            <div class="flex items-center justify-between mb-3">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="project.iconBgClass">
-                <span v-html="project.icon"></span>
+        <!-- 最近使用 -->
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-semibold text-gray-700">最近使用</h3>
+            <router-link to="/workflow/my-flows" class="text-sm font-medium text-blue-600 hover:text-blue-800">查看全部</router-link>
+          </div>
+          <div class="bg-white rounded-xl border border-gray-100/80 shadow-sm p-2">
+            <div v-for="project in store.recentProjects" :key="project.title" class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50/80">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" :class="getIconBgClass(project.iconColor)">
+                <span v-html="getIconSvg(project.iconName, project.iconColor, true)"></span>
+              </div>
+              <div class="flex-1">
+                <p class="text-sm font-medium text-gray-800">{{ project.title }}</p>
+                <p class="text-xs text-gray-500">{{ project.details }}</p>
               </div>
               <span class="text-xs text-gray-400">{{ project.time }}</span>
-            </div>
-            <p class="text-sm font-medium text-[#374151] mb-1">{{ project.title }}</p>
-            <p class="text-xs text-[#9CA3AF]">{{ project.details }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- 所有工作流列表 -->
-      <div>
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-sm font-medium text-[#374151]">所有工作流</h3>
-          <div class="flex items-center gap-2">
-            <button class="p-2 hover:bg-gray-100 rounded-lg text-gray-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 4h18M3 8h18M3 12h18M3 16h18M3 20h18"/></svg></button>
-            <button class="p-2 hover:bg-gray-100 rounded-lg text-gray-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg></button>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div v-for="flow in store.allWorkflows" :key="flow.title" class="bg-white rounded-xl p-5 border border-gray-100 hover:border-gray-200 transition-all hover:shadow-md flex flex-col">
-            <div class="flex items-start justify-between mb-3">
-              <h3 class="font-medium text-[#374151] leading-tight">{{ flow.title }}</h3>
-              <span class="flex-shrink-0 flex items-center gap-1.5 text-xs px-2 py-1 rounded-full" :class="flow.status.class">
-                <span class="w-2 h-2 rounded-full" :class="flow.status.dotClass"></span>
-                {{ flow.status.text }}
-              </span>
-            </div>
-            <p class="text-sm text-[#9CA3AF] mb-4 flex-1">{{ flow.description }}</p>
-            <div class="flex flex-wrap gap-2 mb-4">
-              <span v-for="tag in flow.tags" :key="tag" class="text-xs text-[#4B5563] bg-[#F3F4F6] px-2 py-1 rounded-md">{{ tag }}</span>
-            </div>
-            <div class="flex items-center gap-4 text-xs text-[#9CA3AF] mb-4 border-t border-gray-100 pt-3">
-              <span class="flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>{{ flow.usage }}</span>
-              <span class="flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>{{ flow.successRate }}</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-[#9CA3AF]">{{ flow.updated }}</div>
-              <div class="flex items-center gap-1">
-                <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors"><svg class="w-4 h-4 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"/></svg></button>
-                <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors"><svg class="w-4 h-4 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></button>
-                <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors">运行</button>
-              </div>
-            </div>
-          </div>
-          <div class="bg-white rounded-xl p-5 border border-dashed border-gray-300 hover:border-blue-500 hover:bg-blue-50/50 transition-all flex items-center justify-center text-center">
-            <div class="text-gray-500 hover:text-blue-600">
-              <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-              <span class="font-medium">创建新工作流</span>
             </div>
           </div>
         </div>
@@ -1728,12 +2050,36 @@ export const useWorkflowEditorStore = defineStore('workflowEditor', () => {
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useDashboardStore } from '@/workflow/stores/dashboardStore';
+import { TrendDirectionEnum } from '@/workflow/types';
+import { iconRegistry, colorMap } from '@/workflow/utils/style-mappers';
 
 const store = useDashboardStore();
 
 onMounted(() => {
   store.loadDashboardData();
 });
+
+const getTrendClasses = (direction: TrendDirectionEnum) => {
+  if (direction === TrendDirectionEnum.Up) return 'text-green-700 bg-green-100';
+  if (direction === TrendDirectionEnum.Down) return 'text-rose-700 bg-rose-100';
+  return '';
+};
+
+const getIconBgClass = (color: string) => {
+  return colorMap[color]?.bg || 'bg-gray-100';
+};
+
+const getIconSvg = (name: string, color: string, small: boolean = false) => {
+  // Add new history icon if not present in the original registry
+  if (!iconRegistry['history']) {
+    iconRegistry['history'] = `<svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M1 4v6h6m-6 0a9 9 0 115.12 8.5M23 20v-6h-6m6 0a9 9 0 10-5.12-8.5"/></svg>`;
+  }
+
+  const iconHtml = iconRegistry[name] || '';
+  const iconColorClass = colorMap[color]?.text || 'text-gray-600';
+  const sizeClass = small ? 'w-4 h-4' : 'w-5 h-5';
+  return iconHtml.replace(/class="([^"]*)"/, `class="${sizeClass} ${iconColorClass}"`);
+};
 </script>
 
 // =
@@ -1744,8 +2090,8 @@ onMounted(() => {
   <div class="flex flex-col h-full w-full bg-white" @keydown.backspace="handleDelete" @keydown.delete="handleDelete" tabindex="0">
     <div class="px-8 py-3 flex items-center justify-between border-b border-gray-100 bg-white flex-shrink-0">
       <div>
-        <p class="text-sm text-[#9CA3AF]">我的工作流 / 编辑中</p>
-        <h1 class="text-base font-medium text-[#374151] mt-1">社交媒体帖子生成器</h1>
+        <p class="text-sm text-[#9CA3AF]">我的工作流 / {{ props.id === 'new' ? '创建' : '编辑中' }}</p>
+        <h1 class="text-base font-medium text-[#374151] mt-1">{{ props.id === 'new' ? '新工作流' : '社交媒体帖子生成器' }}</h1>
       </div>
       <div class="flex items-center gap-2">
         <span class="text-xs text-gray-400 mr-2" v-if="editorStore.isSaving">保存中...</span>
@@ -1787,8 +2133,8 @@ onMounted(() => {
             </div>
             <div class="space-y-1">
               <div v-for="node in category.nodes" :key="node.name" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-grab draggable-node" :draggable="true" @dragstart="onDragStart($event, node)">
-                <div class="w-8 h-8 flex-shrink-0 rounded-md flex items-center justify-center" :class="node.bgClass">
-                  <span v-html="node.icon"></span>
+                <div class="w-8 h-8 flex-shrink-0 rounded-md flex items-center justify-center" :class="getNodeIconBgClass(node.iconColor)">
+                  <span v-html="getNodeIconSvg(node.iconName, node.iconColor)"></span>
                 </div>
                 <div class="flex-1">
                   <span class="text-sm font-medium text-gray-700">{{ node.name }}</span>
@@ -1813,13 +2159,11 @@ onMounted(() => {
             @pane-ready="editorStore.setInstance"
             @node-click="editorStore.onNodeClick"
             @pane-click="editorStore.clearSelection"
+            class="workflow-canvas-bg"
         >
           <template #node-custom="props">
             <CustomNode v-bind="props" />
           </template>
-          <Background pattern-color="#E5E7EB" gap="24" class="workflow-canvas-bg" />
-          <MiniMap />
-          <Controls />
         </VueFlow>
       </main>
 
@@ -1829,20 +2173,29 @@ onMounted(() => {
 
     <div class="h-12 border-t border-gray-100 px-8 flex items-center gap-6 bg-gray-50 flex-shrink-0">
       <span class="text-xs font-medium text-gray-500">全局变量：</span>
-      <div class="flex items-center gap-4"><span class="text-xs px-2 py-1 bg-white border border-gray-200 rounded">{{user_id}}</span><span class="text-xs px-2 py-1 bg-white border border-gray-200 rounded">{{timestamp}}</span><span class="text-xs px-2 py-1 bg-white border border-gray-200 rounded">{{api_key}}</span></div>
+      <div class="flex items-center gap-4"><span class="text-xs px-2 py-1 bg-white border border-gray-200 rounded">{<!-- -->{user_id}}</span><span class="text-xs px-2 py-1 bg-white border border-gray-200 rounded">{<!-- -->{timestamp}}</span><span class="text-xs px-2 py-1 bg-white border border-gray-200 rounded">{<!-- -->{api_key}}</span></div>
       <button class="ml-auto text-xs text-blue-600 hover:text-blue-700">管理变量</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { VueFlow, MiniMap, Controls, Background } from '@vue-flow/core';
+import { ref, onMounted } from 'vue';
+import { VueFlow } from '@vue-flow/core';
 import { useWorkflowEditorStore } from '@/workflow/stores/workflowEditorStore';
 import CustomNode from '@/workflow/components/CustomNode.vue';
 import NodeConfigPanel from '@/workflow/components/NodeConfigPanel.vue';
+import { iconRegistry, colorMap } from '@/workflow/utils/style-mappers';
+
+const props = defineProps<{
+  id: string;
+}>();
 
 const editorStore = useWorkflowEditorStore();
+
+onMounted(() => {
+  editorStore.loadWorkflow(props.id);
+});
 
 const onDragStart = (event: DragEvent, node: any) => {
   if (event.dataTransfer) {
@@ -1859,15 +2212,27 @@ const handleDelete = (event: KeyboardEvent) => {
   editorStore.removeSelectedNodes();
 };
 
+const getNodeIconBgClass = (color: string) => {
+  return colorMap[color]?.bg || 'bg-gray-100';
+}
+
+const getNodeIconSvg = (name: string, color: string) => {
+  const iconHtml = iconRegistry[name] || '';
+  const iconColorClass = colorMap[color]?.text || 'text-gray-600';
+  // Use a regex to be more robust against different class attributes
+  return iconHtml.replace(/class="([^"]*)"/, `class="$1 ${iconColorClass}"`);
+};
+
+
 const nodeCategories = ref([
   { title: '核心', nodes: [
-      { name: '开始', description: '工作流入口', icon: `<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"/></svg>`, bgClass: 'bg-green-100' },
-      { name: '结束', description: '输出结果', icon: `<svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>`, bgClass: 'bg-red-100' },
+      { name: '开始', description: '工作流入口', iconName: 'play-circle', iconColor: 'green' },
+      { name: '结束', description: '输出结果', iconName: 'flag', iconColor: 'red' },
     ],
   },
   { title: '大语言模型', isNew: true, nodes: [
-      { name: '大语言模型', description: '调用LLM生成文本', icon: `<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>`, bgClass: 'bg-blue-100' },
-      { name: '知识库检索', description: 'RAG增强', icon: `<svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zm0 0c0 1.657 1.007 3 2.25 3S21 13.657 21 12a9 9 0 10-2.636 6.364M16.5 12V8.25"/></svg>`, bgClass: 'bg-indigo-100' },
+      { name: '大语言模型', description: '调用LLM生成文本', iconName: 'cpu', iconColor: 'blue' },
+      { name: '知识库检索', description: 'RAG增强', iconName: 'book-open', iconColor: 'indigo' },
     ],
   },
   // other categories...
@@ -1942,16 +2307,16 @@ const nodeCategories = ref([
           <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#374151]">{{ run.workflowName }}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-[#6B7280]">
               <span class="flex items-center gap-1">
-                <span v-html="run.trigger.icon"></span>
-                {{ run.trigger.text }}
+                <span v-html="getTriggerInfo(run.trigger.type).icon"></span>
+                {{ getTriggerInfo(run.trigger.type).text }}
               </span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-[#6B7280]">{{ run.startTime }}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-[#6B7280]">{{ run.duration }}</td>
           <td class="px-6 py-4 whitespace-nowrap">
-              <span class="px-2 inline-flex items-center text-xs leading-5 font-semibold rounded-full" :class="run.status.class">
-                <span v-if="run.status.icon" v-html="run.status.icon" class="mr-1"></span>
-                {{ run.status.text }}
+              <span class="px-2 inline-flex items-center text-xs leading-5 font-semibold rounded-full" :class="getStatusInfo(run.status).class">
+                <span v-if="getStatusInfo(run.status).icon" v-html="getStatusInfo(run.status).icon" class="mr-1"></span>
+                {{ getStatusInfo(run.status).text }}
               </span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -1981,12 +2346,45 @@ const nodeCategories = ref([
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useHistoryStore } from '@/workflow/stores/historyStore';
+import { RunStatusEnum, TriggerTypeEnum } from '@/workflow/types';
 
 const store = useHistoryStore();
 
 onMounted(() => {
   store.loadRunHistory();
 });
+
+const getTriggerInfo = (type: TriggerTypeEnum) => {
+  const commonIconClass = 'w-4 h-4 text-gray-400';
+  const iconProps = `fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"`;
+  switch (type) {
+    case TriggerTypeEnum.Manual:
+      return { text: '手动', icon: `<svg class="${commonIconClass}" ${iconProps}><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>` };
+    case TriggerTypeEnum.Scheduled:
+      return { text: '定时', icon: `<svg class="${commonIconClass}" ${iconProps}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>` };
+    case TriggerTypeEnum.API:
+      return { text: 'API', icon: `<svg class="${commonIconClass}" ${iconProps}><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>` };
+    case TriggerTypeEnum.Webhook:
+      return { text: 'Webhook', icon: `<svg class="${commonIconClass}" ${iconProps}><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>` };
+    default:
+      return { text: '未知', icon: '' };
+  }
+};
+
+const getStatusInfo = (status: RunStatusEnum) => {
+  switch (status) {
+    case RunStatusEnum.Success:
+      return { text: '成功', class: 'bg-green-100 text-green-800' };
+    case RunStatusEnum.Failure:
+      return { text: '失败', class: 'bg-red-100 text-red-800' };
+    case RunStatusEnum.Running:
+      return { text: '运行中', class: 'bg-blue-100 text-blue-800', icon: '<svg class="animate-spin h-3 w-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>' };
+    case RunStatusEnum.Cancelled:
+      return { text: '已取消', class: 'bg-yellow-100 text-yellow-800' };
+    default:
+      return { text: '未知', class: 'bg-gray-100 text-gray-800' };
+  }
+};
 </script>
 
 // =
@@ -2061,7 +2459,7 @@ onMounted(() => {
       <div class="mb-6">
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-sm text-gray-500">热门标签：</span>
-          <button v-for="tag in store.popularTags" :key="tag.name" class="px-3 py-1 rounded-full text-sm hover:opacity-80" :class="tag.class">{{ tag.name }}</button>
+          <button v-for="tag in store.popularTags" :key="tag.name" class="px-3 py-1 rounded-full text-sm hover:opacity-80" :class="getTagClasses(tag.color)">{{ tag.name }}</button>
         </div>
       </div>
 
@@ -2069,8 +2467,8 @@ onMounted(() => {
         <div v-for="template in store.workflowTemplates" :key="template.title" class="bg-white rounded-xl border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all group flex flex-col">
           <div class="p-6 flex-1 flex flex-col">
             <div class="flex items-start gap-4 mb-4">
-              <div class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" :class="template.iconBgClass">
-                <span v-html="template.icon"></span>
+              <div class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" :class="getIconBgClass(template.iconColor)">
+                <span v-html="getIconSvg(template.iconName, template.iconColor)"></span>
               </div>
               <div class="flex-1">
                 <h3 class="font-medium text-[#374151]">{{ template.title }}</h3>
@@ -2084,7 +2482,7 @@ onMounted(() => {
             <p class="text-sm text-[#6B7280] flex-1 mb-4">{{ template.description }}</p>
             <div class="border-t border-gray-100 pt-4 mt-auto flex items-center justify-between">
               <div class="text-sm text-[#9CA3AF] flex items-center gap-1.5">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
                 <span class="font-medium">{{ template.usage }}</span> 次使用
               </div>
               <div class="flex items-center gap-2">
@@ -2125,6 +2523,36 @@ const store = useMarketplaceStore();
 onMounted(() => {
   store.loadMarketplaceData();
 });
+
+const colorMap = {
+  blue: { bg: 'bg-blue-100', text: 'text-blue-700', icon: 'text-blue-600' },
+  green: { bg: 'bg-green-100', text: 'text-green-700', icon: 'text-green-600' },
+  purple: { bg: 'bg-purple-100', text: 'text-purple-700', icon: 'text-purple-600' },
+  amber: { bg: 'bg-amber-100', text: 'text-amber-700', icon: 'text-amber-600' },
+  rose: { bg: 'bg-rose-100', text: 'text-rose-700', icon: 'text-rose-600' },
+  indigo: { bg: 'bg-indigo-100', text: 'text-indigo-700', icon: 'text-indigo-600' },
+};
+
+const getTagClasses = (color: string) => {
+  return colorMap[color] ? `${colorMap[color].bg} ${colorMap[color].text}` : 'bg-gray-100 text-gray-700';
+};
+
+const getIconBgClass = (color: string) => {
+  return colorMap[color] ? colorMap[color].bg : 'bg-gray-100';
+}
+
+const iconRegistry = {
+  'file-text': `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`,
+  'search': `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>`,
+  'video': `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`,
+  'message-square': `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/></svg>`,
+}
+
+const getIconSvg = (name: string, color: string) => {
+  const iconHtml = iconRegistry[name] || '';
+  const iconColorClass = colorMap[color] ? colorMap[color].icon : 'text-gray-600';
+  return iconHtml.replace('<svg class="w-6 h-6"', `<svg class="w-6 h-6 ${iconColorClass}"`);
+};
 </script>
 
 // =
@@ -2175,17 +2603,16 @@ onMounted(() => {
         </div>
 
         <div v-for="node in store.nodes" :key="node.id" class="absolute" :style="{top: node.top + 'px', left: node.left + 'px'}">
-          <div class="w-64 bg-white rounded-xl shadow-md border-2" :class="{'border-green-500': node.status === 'completed', 'border-blue-500 running-node': node.status === 'running', 'border-gray-200 opacity-60': node.status === 'waiting'}">
+          <div class="w-64 bg-white rounded-xl shadow-md border-2" :class="getNodeRenderInfo(node).borderClass">
             <div class="p-3 border-b border-gray-100 flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <div class="p-1 rounded-md" :class="node.iconBg" v-html="node.icon"></div>
+                <div class="p-1 rounded-md" :class="getNodeRenderInfo(node).iconBgClass" v-html="getNodeRenderInfo(node).icon"></div>
                 <p class="font-medium text-sm text-[#374151]">{{ node.title }}</p>
               </div>
-              <svg v-if="node.status === 'completed'" class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-              <svg v-if="node.status === 'running'" class="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              <span v-if="getNodeRenderInfo(node).statusIcon" v-html="getNodeRenderInfo(node).statusIcon"></span>
             </div>
             <div class="p-3 text-xs text-gray-500">
-              <span v-if="typeof node.details === 'string'" class="font-semibold" :class="{'text-green-700': node.status === 'completed', 'text-blue-700': node.status === 'running', 'text-gray-400': node.status === 'waiting'}">{{ node.details }}</span>
+              <span v-if="typeof node.details === 'string'" class="font-semibold" :class="getNodeRenderInfo(node).detailsTextColorClass">{{ node.details }}</span>
               <div v-else class="mt-2 space-y-1">
                 <div class="flex justify-between"><span>{{ node.details.label }}</span><span>{{ node.details.value }}</span></div>
                 <div class="w-full bg-gray-200 rounded-full h-1"><div class="bg-blue-600 h-1 rounded-full" :style="{width: node.details.progress + '%'}"></div></div>
@@ -2232,6 +2659,8 @@ onMounted(() => {
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
 import { useMonitorStore } from '@/workflow/stores/monitorStore';
+import type { MonitorNode } from '@/workflow/types';
+import { NodeStatusEnum } from '@/workflow/types';
 
 const store = useMonitorStore();
 
@@ -2244,6 +2673,44 @@ onMounted(async () => {
 onUnmounted(() => {
   store.stopLogUpdates();
 });
+
+const iconRegistry = {
+  'play-circle': `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"/></svg>`,
+  'cpu': `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>`,
+  'flag': `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>`,
+};
+
+const colorMap = {
+  green: { bg: 'bg-green-100', text: 'text-green-600', border: 'border-green-500', detailsText: 'text-green-700' },
+  blue: { bg: 'bg-blue-100', text: 'text-blue-600', border: 'border-blue-500', detailsText: 'text-blue-700' },
+  red: { bg: 'bg-red-100', text: 'text-red-600', border: 'border-red-500', detailsText: 'text-red-700' },
+};
+
+const statusIcons = {
+  [NodeStatusEnum.Completed]: '<svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>',
+  [NodeStatusEnum.Running]: '<svg class="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>',
+}
+
+const getNodeRenderInfo = (node: MonitorNode) => {
+  const { status, iconName, iconColor } = node;
+  const colorScheme = colorMap[iconColor] || { bg: 'bg-gray-100', text: 'text-gray-600', border: 'border-gray-200', detailsText: 'text-gray-400' };
+
+  let borderClass = colorScheme.border;
+  if (status === NodeStatusEnum.Running) borderClass += ' running-node';
+  if (status === NodeStatusEnum.Waiting) borderClass += ' opacity-60';
+
+  const iconHtml = iconRegistry[iconName] || '';
+  const icon = iconHtml.replace(/class="[^"]*"/, `class="w-5 h-5 ${colorScheme.text}"`);
+
+  return {
+    borderClass,
+    iconBgClass: colorScheme.bg,
+    icon,
+    statusIcon: statusIcons[status] || null,
+    detailsTextColorClass: colorScheme.detailsText
+  };
+};
+
 </script>
 
 // =
@@ -2282,12 +2749,12 @@ onUnmounted(() => {
           </button>
         </div>
         <!-- 创建按钮 -->
-        <button class="px-4 py-2 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1F2937] transition-colors flex items-center gap-2">
+        <router-link to="/workflow/editor/new" class="px-4 py-2 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1F2937] transition-colors flex items-center gap-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M12 5V19M5 12H19"/>
           </svg>
           创建工作流
-        </button>
+        </router-link>
       </div>
     </div>
 
@@ -2300,9 +2767,9 @@ onUnmounted(() => {
       <div v-for="flow in store.workflows" :key="flow.id" class="bg-white rounded-xl p-5 border border-gray-100 hover:border-gray-200 transition-all hover:shadow-md flex flex-col group">
         <div class="flex items-start justify-between mb-3">
           <h3 class="font-medium text-[#374151] leading-tight">{{ flow.title }}</h3>
-          <span class="flex-shrink-0 flex items-center gap-1.5 text-xs px-2 py-1 rounded-full" :class="flow.status.class">
-            <span class="w-2 h-2 rounded-full" :class="flow.status.dotClass"></span>
-            {{ flow.status.text }}
+          <span class="flex-shrink-0 flex items-center gap-1.5 text-xs px-2 py-1 rounded-full" :class="getStatusClasses(flow.status).badge">
+            <span class="w-2 h-2 rounded-full" :class="getStatusClasses(flow.status).dot"></span>
+            {{ getStatusClasses(flow.status).text }}
           </span>
         </div>
         <p class="text-sm text-[#9CA3AF] mb-4 flex-1">{{ flow.description }}</p>
@@ -2312,16 +2779,16 @@ onUnmounted(() => {
         <div class="flex items-center justify-between border-t border-gray-100 pt-4">
           <div class="text-xs text-[#9CA3AF]">修改于 {{ flow.updated }}</div>
           <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="编辑">
+            <router-link :to="`/workflow/editor/${flow.id}`" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="编辑">
               <svg class="w-4 h-4 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"/></svg>
-            </button>
+            </router-link>
             <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="复制">
               <svg class="w-4 h-4 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
             </button>
             <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="删除">
               <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </button>
-            <button class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors">运行</button>
+            <router-link :to="`/workflow/run/${flow.id}`" class="px-4 py-2 bg-[#4B5563] text-white rounded-lg text-sm font-medium hover:bg-[#374151] transition-colors">运行</router-link>
           </div>
         </div>
       </div>
@@ -2346,9 +2813,9 @@ onUnmounted(() => {
             <div class="text-xs text-[#9CA3AF] mt-1">{{ flow.description }}</div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 inline-flex items-center gap-1.5 text-xs leading-5 font-semibold rounded-full" :class="flow.status.class">
-                  <span class="w-2 h-2 rounded-full" :class="flow.status.dotClass"></span>
-                  {{ flow.status.text }}
+                <span class="px-2 inline-flex items-center gap-1.5 text-xs leading-5 font-semibold rounded-full" :class="getStatusClasses(flow.status).badge">
+                  <span class="w-2 h-2 rounded-full" :class="getStatusClasses(flow.status).dot"></span>
+                  {{ getStatusClasses(flow.status).text }}
                 </span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-[#6B7280]">{{ flow.updated }}</td>
@@ -2358,8 +2825,8 @@ onUnmounted(() => {
             </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            <button class="text-[#3B82F6] hover:text-blue-700 mr-3">运行</button>
-            <button class="text-[#3B82F6] hover:text-blue-700">编辑</button>
+            <router-link :to="`/workflow/run/${flow.id}`" class="text-[#3B82F6] hover:text-blue-700 mr-3">运行</router-link>
+            <router-link :to="`/workflow/editor/${flow.id}`" class="text-[#3B82F6] hover:text-blue-700">编辑</router-link>
           </td>
         </tr>
         </tbody>
@@ -2372,6 +2839,7 @@ onUnmounted(() => {
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useMyWorkflowsStore } from '@/workflow/stores/myWorkflowsStore';
+import { WorkflowStatusEnum } from '@/workflow/types';
 
 const viewMode = ref('grid'); // 'grid' or 'list'
 const store = useMyWorkflowsStore();
@@ -2379,6 +2847,19 @@ const store = useMyWorkflowsStore();
 onMounted(() => {
   store.loadWorkflows();
 });
+
+const getStatusClasses = (status: WorkflowStatusEnum) => {
+  switch (status) {
+    case WorkflowStatusEnum.Published:
+      return { text: '已发布', badge: 'bg-green-100 text-green-800', dot: 'bg-green-500' };
+    case WorkflowStatusEnum.Draft:
+      return { text: '草稿', badge: 'bg-gray-100 text-gray-800', dot: 'bg-gray-400' };
+    case WorkflowStatusEnum.Archived:
+      return { text: '已归档', badge: 'bg-yellow-100 text-yellow-800', dot: 'bg-yellow-500' };
+    default:
+      return { text: '未知', badge: 'bg-gray-100 text-gray-800', dot: 'bg-gray-400' };
+  }
+};
 </script>
 
 // =
@@ -2393,7 +2874,7 @@ onMounted(() => {
     <div v-else class="w-full max-w-3xl mx-auto">
       <div class="text-center mb-8">
         <h1 class="text-2xl font-light text-[#374151]">运行工作流</h1>
-        <p class="text-lg text-[#6B7280] mt-1">社交媒体帖子生成器</p>
+        <p class="text-lg text-[#6B7280] mt-1">{{ store.workflowName }}</p>
         <div class="mt-4 flex items-center justify-center gap-6 text-sm text-gray-500">
           <span class="flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -2474,10 +2955,10 @@ onMounted(() => {
           <button class="px-4 py-2 text-gray-600 hover:text-gray-800">保存为预设</button>
           <div class="flex gap-3">
             <button class="px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">测试运行</button>
-            <button class="px-8 py-3 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1F2937] transition-colors flex items-center justify-center gap-2">
+            <router-link :to="`/workflow/monitor/run-12345`" class="px-8 py-3 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1F2937] transition-colors flex items-center justify-center gap-2">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
               开始运行
-            </button>
+            </router-link>
           </div>
         </div>
       </div>
@@ -2504,10 +2985,14 @@ onMounted(() => {
 import { onMounted } from 'vue';
 import { useRunStore } from '@/workflow/stores/runStore';
 
+const props = defineProps<{
+  id: string;
+}>();
+
 const store = useRunStore();
 
 onMounted(() => {
-  store.loadRunData();
+  store.loadRunData(props.id);
 });
 </script>
 
@@ -2549,9 +3034,11 @@ onMounted(() => {
         <tr v-else v-for="schedule in store.schedules" :key="schedule.id" class="hover:bg-gray-50/50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap">
             <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" :checked="schedule.status === '启用中'" class="sr-only peer">
+              <input type="checkbox" :checked="schedule.status === 'enabled'" class="sr-only peer">
               <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              <span class="ms-3 text-sm font-medium" :class="schedule.status === '启用中' ? 'text-green-600' : 'text-gray-500'">{{ schedule.status }}</span>
+              <span class="ms-3 text-sm font-medium" :class="schedule.status === 'enabled' ? 'text-green-600' : 'text-gray-500'">
+                {{ schedule.status === 'enabled' ? '启用中' : '已禁用' }}
+              </span>
             </label>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
@@ -2632,8 +3119,8 @@ onMounted(() => {
         <tr v-else v-for="item in store.deletedItems" :key="item.id" class="hover:bg-gray-50/50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#374151]">{{ item.name }}</td>
           <td class="px-6 py-4 whitespace-nowrap">
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="item.type.class">
-                {{ item.type.text }}
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getTypeInfo(item.type).class">
+                {{ getTypeInfo(item.type).text }}
               </span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-[#6B7280]">{{ item.deletedDate }}</td>
@@ -2652,11 +3139,25 @@ onMounted(() => {
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useTrashStore } from '@/workflow/stores/trashStore';
+import { DeletedItemTypeEnum } from '@/workflow/types';
 
 const store = useTrashStore();
 
 onMounted(() => {
   store.loadDeletedItems();
 });
+
+const getTypeInfo = (type: DeletedItemTypeEnum) => {
+  switch (type) {
+    case DeletedItemTypeEnum.Workflow:
+      return { text: '工作流', class: 'bg-blue-100 text-blue-800' };
+    case DeletedItemTypeEnum.Schedule:
+      return { text: '调度任务', class: 'bg-purple-100 text-purple-800' };
+    case DeletedItemTypeEnum.Variable:
+      return { text: '变量', class: 'bg-orange-100 text-orange-800' };
+    default:
+      return { text: '未知', class: 'bg-gray-100 text-gray-800' };
+  }
+};
 </script>
 

@@ -1,6 +1,14 @@
 import type { RunPageData } from '@/workflow/types';
 
-const mockRunData: RunPageData = {
+// Mock database of workflow titles
+const workflowTitles: Record<string, string> = {
+    'wf-001': '社交媒体帖子生成器',
+    'wf-002': '公司周报摘要',
+    'wf-003': '市场情绪分析流程',
+    'wf-004': '新客户欢迎邮件',
+};
+
+const mockRunData: Omit<RunPageData, 'workflowId' | 'workflowName'> = {
     presets: [
         { id: 'p1', name: '推特营销', description: '适合产品推广', active: true },
         { id: 'p2', name: '个人分享', description: '日常动态更新', active: false },
@@ -24,10 +32,15 @@ const mockRunData: RunPageData = {
 };
 
 export const runApi = {
-    fetchRunPageData: (): Promise<RunPageData> => {
+    fetchRunPageData: (id: string): Promise<RunPageData> => {
         return new Promise(resolve => {
             setTimeout(() => {
-                resolve(JSON.parse(JSON.stringify(mockRunData)));
+                const response: RunPageData = {
+                    workflowId: id,
+                    workflowName: workflowTitles[id] || '未知工作流',
+                    ...JSON.parse(JSON.stringify(mockRunData))
+                };
+                resolve(response);
             }, 300); // Simulate network delay
         });
     },

@@ -6,7 +6,7 @@
     <div v-else class="w-full max-w-3xl mx-auto">
       <div class="text-center mb-8">
         <h1 class="text-2xl font-light text-[#374151]">运行工作流</h1>
-        <p class="text-lg text-[#6B7280] mt-1">社交媒体帖子生成器</p>
+        <p class="text-lg text-[#6B7280] mt-1">{{ store.workflowName }}</p>
         <div class="mt-4 flex items-center justify-center gap-6 text-sm text-gray-500">
           <span class="flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -87,10 +87,10 @@
           <button class="px-4 py-2 text-gray-600 hover:text-gray-800">保存为预设</button>
           <div class="flex gap-3">
             <button class="px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">测试运行</button>
-            <button class="px-8 py-3 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1F2937] transition-colors flex items-center justify-center gap-2">
+            <router-link :to="`/workflow/monitor/run-12345`" class="px-8 py-3 bg-[#374151] text-white rounded-lg text-sm font-medium hover:bg-[#1F2937] transition-colors flex items-center justify-center gap-2">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
               开始运行
-            </button>
+            </router-link>
           </div>
         </div>
       </div>
@@ -117,9 +117,13 @@
 import { onMounted } from 'vue';
 import { useRunStore } from '@/workflow/stores/runStore';
 
+const props = defineProps<{
+  id: string;
+}>();
+
 const store = useRunStore();
 
 onMounted(() => {
-  store.loadRunData();
+  store.loadRunData(props.id);
 });
 </script>
