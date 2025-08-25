@@ -60,7 +60,8 @@ const getStatusText = (status: AITaskStatus): string => {
     processing: '进行中...',
     completed: '待应用',
     failed: '失败',
-    applied: '已应用'
+    applied: '已应用',
+    completed_with_conflict: '存在冲突'
   };
   return map[status];
 };
@@ -71,13 +72,14 @@ const getStatusIcon = (status: AITaskStatus): string => {
     processing: 'fa-solid fa-spinner fa-spin',
     completed: 'fa-solid fa-check-circle',
     failed: 'fa-solid fa-times-circle',
-    applied: 'fa-solid fa-check-double'
+    applied: 'fa-solid fa-check-double',
+    completed_with_conflict: 'fa-solid fa-exclamation-triangle'
   };
   return map[status];
 }
 
 const isClickable = (status: AITaskStatus): boolean => {
-  return ['completed', 'processing', 'applied', 'failed'].includes(status);
+  return ['completed', 'processing', 'applied', 'failed', 'completed_with_conflict'].includes(status);
 };
 
 const handleTaskClick = () => {

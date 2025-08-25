@@ -1,3 +1,5 @@
+// 文件: ..\src\novel\editor\stores\editor-state\itemStore.ts
+
 import { defineStore } from 'pinia';
 import { useDirectoryStore } from '../directoryStore';
 import { useRelatedContentStore } from '../relatedContentStore';
@@ -7,6 +9,7 @@ import { usePromptTemplateStore } from '../promptTemplateStore';
 import { useReferenceStore } from '../referenceStore';
 import type { EditorItem, SystemViewInfo, TreeNode, PlotAnalysisItem } from '@/novel/editor/types';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
+import { useDerivedViewStore } from '../derivedViewStore';
 
 export const SYSTEM_VIEWS: Record<string, SystemViewInfo> = {
     'system:search': { id: 'system:search', type: 'system', component: 'SearchView', title: '搜索', icon: 'fa-solid fa-magnifying-glass' },
@@ -19,6 +22,7 @@ export const SYSTEM_VIEWS: Record<string, SystemViewInfo> = {
     'system:settings_novel': { id: 'system:settings_novel', type: 'system', component: 'NovelSettings', title: '小说设置', icon: 'fa-solid fa-swatchbook' },
     'system:settings_theme': { id: 'system:settings_theme', type: 'system', component: 'ThemeSettings', title: '主题设置', icon: 'fa-solid fa-palette' },
     'system:history': { id: 'system:history', type: 'system', component: 'HistoryPanel', title: '版本历史', icon: 'fa-solid fa-code-compare' },
+    'system:derived_view': { id: 'system:derived_view', type: 'system', component: 'DerivedContentView', title: '派生内容', icon: 'fa-solid fa-clone' },
 };
 
 export const useItemStore = defineStore('editor-item', () => {
@@ -28,15 +32,16 @@ export const useItemStore = defineStore('editor-item', () => {
     const derivedContentStore = useDerivedContentStore();
     const promptTemplateStore = usePromptTemplateStore();
     const referenceStore = useReferenceStore();
+    const derivedViewStore = useDerivedViewStore();
 
     function findItemById(id: string): { node: EditorItem | null; source: string | null } {
-        // 1. Check for System Views
         if (id.startsWith('system:')) {
             const parts = id.split(':');
-            const baseId = parts.length > 2 && (parts[1] === 'history') ? parts.slice(0, 2).join(':') : id;
+            const baseId = `system:${parts[1]}`;
             const systemView = SYSTEM_VIEWS[baseId];
             if (systemView) {
-                if (parts.length > 2 && (parts[1] === 'history')) {
+                // Handle dynamic title for history panel
+                if (baseId === 'system:history' && parts.length === 3) {
                     const targetId = parts[2];
                     const { node: targetNode } = findItemById(targetId);
                     return {
@@ -44,35 +49,32 @@ export const useItemStore = defineStore('editor-item', () => {
                         source: 'system'
                     };
                 }
-                return { node: systemView, source: 'system' };
+                // Handle dynamic title for derived view panel
+                if (baseId === 'system:derived_view') {
+                    return {
+                        node: { ...systemView, id, title: derivedViewStore.viewTitle },
+                        source: 'system'
+                    }
+                }
+                return { node: { ...systemView, id }, source: 'system' };
             }
         }
 
-        // 2. Check for AI Derived Items
         const derivedItem = derivedContentStore.findItemById(id);
-        if (derivedItem) {
-            return { node: derivedItem as PlotAnalysisItem, source: 'derived' };
-        }
+        if (derivedItem) return { node: derivedItem as PlotAnalysisItem, source: 'derived' };
 
-        // 3. Check for Prompt Templates
         const promptItem = promptTemplateStore.findPromptById(id);
-        if (promptItem) {
-            return { node: promptItem, source: 'prompt' };
-        }
+        if (promptItem) return { node: promptItem, source: 'prompt' };
 
-        // 4. Check Directory
         let dirResult = directoryStore.findNodeById(id);
         if (dirResult?.node) return { node: dirResult.node, source: 'directory' };
 
-        // 5. Check Related Content (Settings & Custom Items)
         const relatedResult = relatedContentStore.findNodeById(id);
         if(relatedResult?.node) return { node: relatedResult.node, source: 'related' };
 
-        // 6. Check Notes
         const note = notesStore.findNoteById(id);
         if (note) return { node: note, source: 'notes' };
 
-        // 7. Check Reference Books (New)
         const refResult = referenceStore.findNodeById(id);
         if (refResult?.node) return { node: refResult.node, source: 'reference' };
 

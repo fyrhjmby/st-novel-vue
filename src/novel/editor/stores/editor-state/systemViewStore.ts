@@ -1,13 +1,15 @@
+// src/novel/editor/stores/editor-state/systemViewStore.ts
 import { defineStore } from 'pinia';
 import { usePaneStore } from './paneStore';
 import { useTabStore } from './tabStore';
 import { useUIStore } from '../uiStore';
-import { useEditorStore } from '../editorStore';
+import { useItemStore } from './itemStore';
 
 export const useSystemViewStore = defineStore('editor-system-view', () => {
     const paneStore = usePaneStore();
     const tabStore = useTabStore();
     const uiStore = useUIStore();
+    const itemStore = useItemStore();
 
     function toggleAIPanel(sourcePaneId: string) {
         const aiTaskPane = paneStore.panes.find(p => p.openTabIds.includes('system:ai_tasks'));
@@ -45,8 +47,13 @@ export const useSystemViewStore = defineStore('editor-system-view', () => {
     }
 
     function openReaderView() {
-        const editorStore = useEditorStore();
-        const activeItem = editorStore.activeTab?.item;
+        const activePane = paneStore.panes.find(p => p.id === paneStore.activePaneId);
+        if (!activePane || !activePane.activeTabId) {
+            console.warn('Cannot open reader mode: no active tab.');
+            return;
+        }
+        const { node: activeItem } = itemStore.findItemById(activePane.activeTabId);
+
         if (activeItem && 'content' in activeItem) {
             uiStore.showReaderMode(activeItem);
         } else {

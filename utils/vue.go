@@ -10,10 +10,10 @@ import (
 )
 
 func main() {
-	rootDirs := []string{"../src/workflow"}
+	rootDirs := []string{"../src/novel/editor/components/sidebar"}
 	outputFileName := "settings.txt"
 	// 定义要屏蔽（不进行递归读取）的目录名称列表。
-	excludedDirs := []string{"prompt","ui","novel","home"}
+	excludedDirs := []string{"prompt","ui","home","workflow"}
 
 
 	// 定义要屏蔽（不读取）的特定文件名列表。

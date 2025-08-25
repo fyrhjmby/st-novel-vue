@@ -1,28 +1,23 @@
-import type { Conversation, ChatMessage } from '@novel/editor/types/chatTypes.ts';
 import * as chatApi from '@/novel/editor/api/chatApi';
+import type { BackendChatMessage, Conversation, StreamResponseChunk } from '@novel/editor/types/chatTypes.ts';
 
-/**
- * 从API获取所有聊天对话。
- * @returns 对话列表。
- */
+export const streamMessage = (
+    apiKeyId: number,
+    messages: BackendChatMessage[],
+    callbacks: {
+        onChunk: (chunk: StreamResponseChunk) => void;
+        onComplete: () => void;
+        onError: (error: string) => void;
+    }
+): Promise<void> => {
+    return chatApi.streamChat(apiKeyId, messages, callbacks);
+};
+
+// 模拟函数，保持UI可运行
 export async function getConversations(): Promise<Conversation[]> {
     return await chatApi.fetchConversations();
 }
 
-/**
- * 通过API创建一个新的、空的对话对象。
- * @returns 一个新的 Conversation 对象。
- */
 export async function createConversation(): Promise<Conversation> {
     return await chatApi.createConversation();
-}
-
-/**
- * 发送一条消息到API并接收AI的回复。
- * @param conversationId - 当前对话的ID
- * @param userInput - 用户输入的文本。
- * @returns 一个包含用户消息和AI回复消息的对象。
- */
-export async function sendMessage(conversationId: string, userInput: string): Promise<{ userMessage: ChatMessage; aiResponse: ChatMessage }> {
-    return await chatApi.sendMessage(conversationId, userInput);
 }

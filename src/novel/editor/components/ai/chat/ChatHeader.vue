@@ -5,12 +5,21 @@
         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 21v-1.5M15.75 3v1.5M12 4.5v15M15.75 21v-1.5" /></svg>
       </div>
       <div>
-        <h2 class="font-medium text-[#374151]">{{ activeConversation.title }}</h2>
-        <button class="text-sm text-[#6B7280] flex items-center gap-2 hover:text-[#374151] transition-colors mt-1">
-          <span class="w-2 h-2 rounded-full" :class="currentModel.status === 'online' ? 'bg-[#10B981]' : 'bg-gray-400'"></span>
-          {{ currentModel.status === 'online' ? '在线' : '离线' }} • {{ currentModel.name }}
-          <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
-        </button>
+        <h2 class="font-medium text-[#374151]">{{ activeConversation?.title || '聊天' }}</h2>
+        <div v-if="aiConfigStore.availableAIProviders.length > 0 && selectedProvider" class="mt-1">
+          <select
+              :value="aiConfigStore.selectedChatProviderId"
+              @change="aiConfigStore.selectChatProvider(Number(($event.target as HTMLSelectElement).value))"
+              class="text-sm text-[#6B7280] flex items-center gap-2 hover:text-[#374151] transition-colors bg-transparent border-none focus:ring-0 p-0"
+          >
+            <option v-for="provider in aiConfigStore.availableAIProviders" :key="provider.id" :value="provider.id">
+              {{ provider.name }} - ({{ provider.model }})
+            </option>
+          </select>
+        </div>
+        <div v-else class="text-sm text-gray-400 mt-1">
+          无可用API配置
+        </div>
       </div>
     </div>
     <div class="flex items-center gap-2">
@@ -23,18 +32,37 @@
     </div>
   </header>
 </template>
+
 <script setup lang="ts">
-import type { PropType } from 'vue';
-import type { Conversation, AIModel } from '@/novel/editor/types/chatTypes';
+import { type PropType, onMounted } from 'vue';
+import type { Conversation } from '@/novel/editor/types/chatTypes';
+import { useAIConfigStore } from '@novel/editor/stores/ai/aiConfigStore';
+import { storeToRefs } from 'pinia';
 
 defineProps({
   activeConversation: {
-    type: Object as PropType<Conversation>,
-    required: true,
-  },
-  currentModel: {
-    type: Object as PropType<AIModel>,
+    type: Object as PropType<Conversation | null>,
     required: true,
   },
 });
+
+const aiConfigStore = useAIConfigStore();
+const { selectedChatProviderConfig: selectedProvider } = storeToRefs(aiConfigStore);
+
+onMounted(() => {
+  aiConfigStore.initializeProviders();
+});
 </script>
+
+<style scoped>
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0 center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 1.5rem;
+}
+</style>

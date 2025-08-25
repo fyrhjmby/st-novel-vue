@@ -1,110 +1,59 @@
-// src/novel/editor/services/directoryService.ts
+import * as volumeApi from '@/novel/editor/api/volumeApi';
+import * as chapterApi from '@/novel/editor/api/chapterApi';
 import type { Volume, Chapter } from '@/novel/editor/types';
 
-type DirectoryNode = Volume | Chapter;
+export const getDirectoryData = async (novelId: string): Promise<Volume[]> => {
+    const [volumes, chapters] = await Promise.all([
+        volumeApi.getVolumes(novelId),
+        chapterApi.getChaptersForNovel(novelId),
+    ]);
 
-function _findNodeRecursive(nodes: DirectoryNode[], nodeId: string): { node: DirectoryNode; parent: Volume | null; siblings: DirectoryNode[] } | null {
-    for (const node of nodes) {
-        if (node.id === nodeId) {
-            return { node, parent: null, siblings: nodes };
+    const volumeMap = new Map(volumes.map(v => [v.id, { ...v, chapters: [] as Chapter[] }]));
+    chapters.forEach(chapter => {
+        const volume = volumeMap.get(chapter.volumeId);
+        if (volume) {
+            volume.chapters.push(chapter);
         }
-        if (node.type === 'volume' && node.chapters) {
-            const chapterResult = node.chapters.find(c => c.id === nodeId);
-            if (chapterResult) {
-                return { node: chapterResult, parent: node, siblings: node.chapters };
-            }
-        }
-    }
-    return null;
-}
+    });
 
-export function findNodeById(nodes: Volume[], nodeId: string) {
-    return _findNodeRecursive(nodes, nodeId);
-}
+    const sortedVolumes = Array.from(volumeMap.values()).sort((a, b) => a.order - b.order);
+    sortedVolumes.forEach(volume => {
+        volume.chapters.sort((a, b) => a.order - b.order);
+    });
 
-export function createVolume(): Volume {
-    return {
-        id: `vol-${Date.now()}`,
-        type: 'volume',
-        title: '新建卷',
-        content: `<h1>新建卷</h1>`,
-        chapters: [],
-    };
-}
+    return sortedVolumes;
+};
 
-export function createChapter(): Chapter {
-    return {
-        id: `ch-${Date.now()}`,
-        type: 'chapter',
-        title: '新建章节',
-        wordCount: 0,
-        content: '<h1>新建章节</h1>',
-        status: 'editing'
-    };
-}
+export const saveDirectoryData = async (novelId: string, volumes: Volume[]): Promise<void> => {
+    const savePromises: Promise<any>[] = [];
 
-export function updateNodeContent(node: Volume | Chapter, content: string) {
-    node.content = content;
-    (node as any)._lastModified = Date.now(); // Update version timestamp
+    const orderedVolumeIds = volumes.map((v, index) => {
+        savePromises.push(volumeApi.updateVolume(v.id, { title: v.title, content: v.content, order: index }));
+        v.chapters.forEach((c, cIndex) => {
+            savePromises.push(chapterApi.updateChapter(c.id, { title: c.title, content: c.content, status: c.status, order: cIndex }));
+        });
+        const orderedChapterIds = v.chapters.map(c => c.id);
+        savePromises.push(chapterApi.updateChapterOrder(v.id, orderedChapterIds));
+        return v.id;
+    });
 
-    if (node.type === 'chapter') {
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = content;
-        node.wordCount = tempDiv.textContent?.trim().length || 0;
-    }
+    savePromises.push(volumeApi.updateVolumeOrder(novelId, orderedVolumeIds));
 
-    const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
-    const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
-    if (newTitle && newTitle !== node.title) {
-        node.title = newTitle;
-    }
-}
+    await Promise.all(savePromises);
+};
 
-export function appendChapterContent(chapter: Chapter, contentToAppend: string, isAutoApplied: boolean) {
-    const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
-    let htmlToAppend = paragraphs;
-    if (isAutoApplied) {
-        htmlToAppend += `<p style="font-size:0.8em; color: #9ca3af; text-align:center; margin: 1.5em 0;">--- AI生成内容已应用 ---</p>`;
-    }
-    chapter.content += htmlToAppend;
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = chapter.content;
-    chapter.wordCount = tempDiv.textContent?.trim().length || 0;
-    (chapter as any)._lastModified = Date.now(); // Update version timestamp
-}
+export const createVolume = (novelId: string, volumeData: Partial<Omit<Volume, 'id' | 'chapters'>>): Promise<Volume> => {
+    return volumeApi.createVolume(novelId, volumeData);
+};
 
-export function renameNode(node: DirectoryNode, newTitle: string) {
-    if (!newTitle.trim()) {
-        return;
-    }
-    const trimmedTitle = newTitle.trim();
-    node.title = trimmedTitle;
-    if (node.content) {
-        if (node.content.includes('<h1>')) {
-            node.content = node.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${trimmedTitle}</h1>`);
-        } else {
-            node.content = `<h1>${trimmedTitle}</h1>` + node.content;
-        }
-    }
-    (node as any)._lastModified = Date.now(); // Update version timestamp on rename
-}
+export const deleteVolume = (volumeId: string): Promise<void> => {
+    return volumeApi.deleteVolume(volumeId);
+};
 
-export function deleteNode(nodes: Volume[], nodeId: string): boolean {
-    const result = findNodeById(nodes, nodeId);
-    if (!result) return false;
+export const createChapter = (volumeId: string, chapterData: Partial<Omit<Chapter, 'id'>>): Promise<Chapter> => {
+    return chapterApi.createChapter(volumeId, chapterData);
+};
 
-    if (result.parent && result.node.type === 'chapter') {
-        const index = result.parent.chapters.findIndex(c => c.id === nodeId);
-        if (index > -1) {
-            result.parent.chapters.splice(index, 1);
-            return true;
-        }
-    } else if (!result.parent && result.node.type === 'volume') {
-        const index = nodes.findIndex(v => v.id === nodeId);
-        if (index > -1) {
-            nodes.splice(index, 1);
-            return true;
-        }
-    }
-    return false;
-}
+export const deleteChapter = (chapterId: string): Promise<void> => {
+    return chapterApi.deleteChapter(chapterId);
+};

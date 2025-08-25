@@ -92,7 +92,7 @@ import { onMounted, onBeforeUnmount, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useNovelStore } from '@/novel/dashboard/stores/novelStore';
 import { useRecentStore } from '@/novel/dashboard/stores/recentStore';
-import type { Novel } from '@/novel/types';
+import type { NovelDashboardItem } from '@/novel/types';
 
 const novelStore = useNovelStore();
 const recentStore = useRecentStore();
@@ -120,13 +120,12 @@ const handleDeleteNovel = (novelId: string) => {
   }
 };
 
-const handleNovelClick = (novel: Novel) => {
+const handleNovelClick = (novel: NovelDashboardItem) => {
   recentStore.logRecentAccess(novel);
 };
 
 onMounted(() => {
-  novelStore.fetchNovels();
-  recentStore.fetchRecentItems();
+  novelStore.initializeDashboard(); // Use the dedicated initialization action
   window.addEventListener('click', (e) => {
     if (!(e.target as HTMLElement).closest('.relative')) {
       closeDropdown();

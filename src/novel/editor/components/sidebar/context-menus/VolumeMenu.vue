@@ -1,49 +1,48 @@
-// 文件: src/novel/editor/components/sidebar/context-menus/VolumeMenu.vue
 <template>
   <div>
     <p class="menu-title">目录管理</p>
-    <div @click="emit('action', 'newChapter', { nodeId: node.id })" class="context-menu-item">
+    <div @click="emit('new-chapter')" class="context-menu-item">
       <i class="fa-solid fa-plus w-4 text-center"></i>
       <span>新建章节</span>
     </div>
-    <div @click="emit('action', 'newVolume')" class="context-menu-item">
+    <div @click="emit('new-volume')" class="context-menu-item">
       <i class="fa-solid fa-folder-plus w-4 text-center"></i>
       <span>新建卷</span>
     </div>
-    <div @click="emit('action', 'rename', { nodeId: node.id })" class="context-menu-item">
+    <div @click="emit('rename')" class="context-menu-item">
       <i class="fa-solid fa-pencil w-4 text-center"></i>
       <span>重命名</span>
     </div>
     <div class="context-menu-divider"></div>
     <p class="menu-title">AI 助手</p>
-    <div @click="emit('ai-action', '分析', node)" class="context-menu-item">
+    <div @click="emit('ai-task', '分析', false)" class="context-menu-item">
       <i class="fa-solid fa-magnifying-glass-chart w-4 text-center text-[#F59E0B]"></i>
       <span>分析卷内容</span>
     </div>
-    <div @click="emit('ai-action', '剧情生成', node)" class="context-menu-item">
+    <div @click="emit('ai-task', '剧情生成', false)" class="context-menu-item">
       <i class="fa-solid fa-feather w-4 text-center text-[#EC4899]"></i>
       <span>生成卷剧情</span>
     </div>
     <div class="context-menu-divider"></div>
     <p class="menu-title">AI 批量任务</p>
-    <div @click="emit('ai-action', '分析', node, true)" class="context-menu-item">
+    <div @click="emit('ai-task', '分析', true)" class="context-menu-item">
       <i class="fa-solid fa-magnifying-glass-chart w-4 text-center text-[#F59E0B]"></i>
       <span>批量分析章节</span>
     </div>
-    <div @click="emit('ai-action', '剧情生成', node, true)" class="context-menu-item">
+    <div @click="emit('ai-task', '剧情生成', true)" class="context-menu-item">
       <i class="fa-solid fa-feather w-4 text-center text-[#EC4899]"></i>
       <span>批量生成剧情</span>
     </div>
-    <div @click="emit('ai-action', '创作', node, true)" class="context-menu-item">
+    <div @click="emit('ai-task', '创作', true)" class="context-menu-item">
       <i class="fa-solid fa-pen-to-square w-4 text-center text-[#8B5CF6]"></i>
       <span>批量创作正文</span>
     </div>
-    <div @click="emit('ai-action', '续写', node, true)" class="context-menu-item">
+    <div @click="emit('ai-task', '续写', true)" class="context-menu-item">
       <i class="fa-solid fa-wand-magic-sparkles w-4 text-center text-[#4B5563]"></i>
       <span>批量续写章节</span>
     </div>
     <div class="context-menu-divider"></div>
-    <div @click="emit('action', 'delete', { nodeId: node.id })" class="context-menu-item danger">
+    <div @click="emit('delete')" class="context-menu-item danger">
       <i class="fa-solid fa-trash-can w-4 text-center"></i>
       <span>删除卷</span>
     </div>
@@ -62,8 +61,11 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'action', actionName: string, payload?: any): void;
-  (e: 'ai-action', taskType: AITask['type'], sourceNode: TreeNode, isBatch: boolean): void;
+  (e: 'new-chapter'): void;
+  (e: 'new-volume'): void;
+  (e: 'rename'): void;
+  (e: 'delete'): void;
+  (e: 'ai-task', taskType: AITask['type'], isBatch: boolean): void;
 }>();
 </script>
 

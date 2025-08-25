@@ -1,20 +1,19 @@
-// 文件: src/novel/editor/components/sidebar/context-menus/GroupMenu.vue
 <template>
   <div>
     <p class="menu-title">设定管理</p>
-    <div @click="emit('settings-action', 'newItem', { nodeId: node.id })" class="context-menu-item">
+    <div @click="emit('new-item')" class="context-menu-item">
       <i class="fa-solid fa-plus w-4 text-center"></i>
       <span>新建条目</span>
     </div>
-    <div @click="emit('settings-action', 'newGroup', { nodeId: node.id })" class="context-menu-item">
+    <div @click="emit('new-group')" class="context-menu-item">
       <i class="fa-solid fa-folder-plus w-4 text-center"></i>
       <span>新建分组</span>
     </div>
-    <div @click="emit('settings-action', 'rename', { nodeId: node.id })" class="context-menu-item">
+    <div @click="emit('rename')" class="context-menu-item">
       <i class="fa-solid fa-pencil w-4 text-center"></i>
       <span>重命名</span>
     </div>
-    <div @click="emit('settings-action', 'delete', { nodeId: node.id })" class="context-menu-item danger">
+    <div @click="emit('delete')" class="context-menu-item danger">
       <i class="fa-solid fa-trash-can w-4 text-center"></i>
       <span>删除分组</span>
     </div>
@@ -33,7 +32,10 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'settings-action', actionName: string, payload?: any): void;
+  (e: 'new-group'): void;
+  (e: 'new-item'): void;
+  (e: 'rename'): void;
+  (e: 'delete'): void;
 }>();
 </script>
 

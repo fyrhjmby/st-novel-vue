@@ -42,7 +42,7 @@ func extractScriptContent(content string) (string, bool) {
 }
 
 func main() {
-	rootDirs := []string{"../src/novel/editor"}
+	rootDirs := []string{"../src/novel"}
 	outputFileName := "index.txt"
 	// 定义要屏蔽（不进行递归读取）的目录名称列表。
 	excludedDirs := []string{ "ui","workflow","prompt","auth"}

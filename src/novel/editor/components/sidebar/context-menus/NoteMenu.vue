@@ -1,12 +1,11 @@
-// 文件: src/novel/editor/components/sidebar/context-menus/NoteMenu.vue
 <template>
   <div>
     <p class="menu-title">笔记管理</p>
-    <div @click="emit('note-action', 'rename', { nodeId: node.id })" class="context-menu-item">
+    <div @click="emit('rename')" class="context-menu-item">
       <i class="fa-solid fa-pencil w-4 text-center"></i>
       <span>重命名</span>
     </div>
-    <div @click="emit('note-action', 'delete', { nodeId: node.id })" class="context-menu-item danger">
+    <div @click="emit('delete')" class="context-menu-item danger">
       <i class="fa-solid fa-trash-can w-4 text-center"></i>
       <span>删除笔记</span>
     </div>
@@ -25,7 +24,8 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'note-action', actionName: string, payload?: any): void;
+  (e: 'rename'): void;
+  (e: 'delete'): void;
 }>();
 </script>
 

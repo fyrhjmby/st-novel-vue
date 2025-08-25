@@ -1,5 +1,4 @@
-// 文件: src/novel/editor/utils/iconUtils.ts
-
+// 文件: ..\src/novel\editor\utils\iconUtils.ts
 const ICON_MAP: Record<string, string> = {
     // 目录树 (Directory)
     'volume': 'fa-regular fa-folder-open text-gray-500',
@@ -67,6 +66,8 @@ const ICON_MAP: Record<string, string> = {
  * @returns 完整的图标类名字符串
  */
 export function getIconByNodeType(type: string): string {
+    if (!type) return ICON_MAP['default'];
+
     // 检查是否有直接匹配
     if (ICON_MAP[type]) {
         return ICON_MAP[type];

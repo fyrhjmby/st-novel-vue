@@ -70,7 +70,7 @@ export function useContextBuilder() {
         }
         if (settings.includeVolumeAnalysis) {
             const analysis = derivedContentStore.analysisItems.find(a => a.sourceId === sourceVolume.id);
-            if (analysis) html += `<h4>卷分析: ${analysis.title}</h4>${analysis.content}`;
+            if (analysis) dynamicContextHtml += `<h4>卷分析: ${analysis.title}</h4>${analysis.content}`;
         }
 
         if (currentChapterIndex > -1) {

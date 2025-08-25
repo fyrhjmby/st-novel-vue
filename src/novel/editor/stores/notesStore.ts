@@ -1,16 +1,29 @@
+// 文件: ..\src\novel\editor\stores\notesStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { NoteItem } from '@/novel/editor/types';
-import { useEditorStore } from './editorStore';
-import { useUIStore } from './uiStore';
-import { noteService } from '@/novel/editor/services/noteService';
+import * as noteService from '@/novel/editor/services/noteService';
 
 export const useNotesStore = defineStore('notes', () => {
     const notes = ref<NoteItem[]>([]);
+    const novelId = ref<string | null>(null);
 
-    const fetchNotes = (data: NoteItem[]) => {
-        notes.value = data;
-    };
+    async function fetchNotes(id: string) {
+        novelId.value = id;
+        try {
+            notes.value = await noteService.getNotesForNovel(id);
+        } catch (error) {
+            console.error("Failed to fetch notes:", error);
+            notes.value = [];
+        }
+    }
+
+    async function saveNotes() {
+        const updatePromises = notes.value.map(note =>
+            noteService.updateNoteApi(note.id, { title: note.title, content: note.content })
+        );
+        await Promise.all(updatePromises);
+    }
 
     const findNoteById = (noteId: string): NoteItem | undefined => {
         return notes.value.find(note => note.id === noteId);
@@ -22,55 +35,64 @@ export const useNotesStore = defineStore('notes', () => {
 
         const originalNote = notes.value[noteIndex];
         const updatedNote = noteService.updateNoteWithNewContent(originalNote, content);
-        notes.value.splice(noteIndex, 1, updatedNote);
-        (notes.value[noteIndex] as any)._lastModified = Date.now(); // Update version timestamp
+        notes.value[noteIndex] = updatedNote;
     };
 
     const appendNoteContent = (noteId: string, contentToAppend: string, isAutoApplied: boolean) => {
         const note = findNoteById(noteId);
         if (note) {
             note.content = noteService.appendContentToNote(note.content, contentToAppend, isAutoApplied);
-            (note as any)._lastModified = Date.now(); // Update version timestamp
         }
     };
 
     const renameNote = (noteId: string, newTitle: string) => {
-        const uiStore = useUIStore();
         const noteIndex = notes.value.findIndex(n => n.id === noteId);
 
         if (noteIndex !== -1 && newTitle.trim()) {
             const originalNote = notes.value[noteIndex];
             const trimmedTitle = newTitle.trim();
             const updatedNote = noteService.renameNote(originalNote, trimmedTitle);
-            notes.value.splice(noteIndex, 1, updatedNote);
-            (notes.value[noteIndex] as any)._lastModified = Date.now(); // Update version timestamp
+            notes.value[noteIndex] = updatedNote;
         }
-        uiStore.setEditingNodeId(null);
     };
 
-    const addNote = (title: string, content: string = '') => {
-        const editorStore = useEditorStore();
-        const uiStore = useUIStore();
+    const addNote = async (title: string): Promise<NoteItem | null> => {
+        if (!novelId.value) return null;
 
-        const newNote = noteService.createNote(title, content);
-        notes.value.unshift(newNote);
+        const newNoteData: Partial<Omit<NoteItem, 'id'>> = {
+            title,
+            content: `<h1>${title}</h1><p></p>`,
+        };
 
-        editorStore.openTab(newNote.id);
-        uiStore.setEditingNodeId(newNote.id);
+        try {
+            const newNote = await noteService.createNoteApi(novelId.value, newNoteData);
+            notes.value.unshift(newNote);
+            return newNote;
+        } catch (error) {
+            console.error('Failed to add note:', error);
+            return null;
+        }
     };
 
-    const deleteNote = (noteId: string) => {
-        const editorStore = useEditorStore();
+    const deleteNote = async (noteId: string): Promise<boolean> => {
         const index = notes.value.findIndex(n => n.id === noteId);
         if (index !== -1) {
-            notes.value.splice(index, 1);
-            editorStore.closeTab(noteId);
+            try {
+                await noteService.deleteNoteApi(noteId);
+                notes.value.splice(index, 1);
+                return true;
+            } catch (error) {
+                console.error('Failed to delete note:', error);
+                return false;
+            }
         }
+        return false;
     };
 
     return {
         notes,
         fetchNotes,
+        saveNotes,
         findNoteById,
         updateNoteContent,
         appendNoteContent,

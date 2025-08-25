@@ -65,7 +65,7 @@ import { useRouter } from 'vue-router';
 import { useNovelStore } from '@/novel/dashboard/stores/novelStore';
 import { importNovelProject } from '@/novel/services/novelProjectService';
 import { parseNovelText } from '@/novel/importer/services/novelParser';
-import type { Novel } from '@/novel/types';
+import type { NovelDashboardItem, NovelCategory } from '@/novel/types';
 
 const router = useRouter();
 const novelStore = useNovelStore();
@@ -75,6 +75,8 @@ const fileName = ref('');
 const uploadedFileContent = ref<string | null>(null);
 const dragOver = ref(false);
 const chaptersPerVolume = ref(10);
+const selectedCategory = ref<NovelCategory>('都市');
+const availableCategories: NovelCategory[] = ['科幻', '奇幻', '悬疑', '恐怖', '都市', '言情', '历史'];
 
 const triggerFileSelect = () => {
   fileInput.value?.click();
@@ -112,43 +114,50 @@ const readFile = (file: File) => {
   reader.readAsText(file);
 };
 
-const handleImport = () => {
+const handleImport = async () => {
   if (!uploadedFileContent.value) {
     alert('没有文件内容可供导入。');
     return;
   }
+  if (!selectedCategory.value) {
+    alert('请选择小说分类。');
+    return;
+  }
 
-  const directoryData = parseNovelText(uploadedFileContent.value, {
-    chaptersPerVolume: chaptersPerVolume.value || 10,
-  });
+  try {
+    const directoryData = parseNovelText(uploadedFileContent.value, {
+      chaptersPerVolume: chaptersPerVolume.value || 10,
+    });
 
-  const novelTitle = fileName.value.replace(/\.(txt|md)$/i, '') || '导入的小说';
-  const newNovelId = `novel-imported-${Date.now()}`;
-  const newProject = importNovelProject(
-      newNovelId,
-      novelTitle,
-      '从文件导入的小说',
-      '都市',
-      directoryData
-  );
+    const novelTitle = fileName.value.replace(/\.(txt|md)$/i, '') || '导入的小说';
 
-  const newNovelForDashboard: Novel = {
-    id: newProject.metadata.id,
-    title: newProject.metadata.title,
-    description: newProject.metadata.description,
-    category: '都市',
-    cover: newProject.metadata.cover,
-    status: { text: '编辑中', class: 'bg-green-500/90' },
-    tags: newProject.metadata.tags,
-    chapters: directoryData.reduce((acc, vol) => acc + vol.chapters.length, 0),
-    lastUpdated: '刚刚'
-  };
-  novelStore.addNovel(newNovelForDashboard);
+    const newProject = await importNovelProject({
+      title: novelTitle,
+      description: '从文件导入的小说',
+      category: selectedCategory.value,
+      directoryData,
+    });
 
-  router.push(`/novel/editor?id=${newNovelId}`);
+    const newNovelForDashboard: NovelDashboardItem = {
+      id: newProject.metadata.id,
+      title: newProject.metadata.title,
+      description: newProject.metadata.description,
+      category: selectedCategory.value,
+      cover: newProject.metadata.cover,
+      status: { text: '编辑中', class: 'bg-green-500/90' },
+      tags: newProject.metadata.tags,
+      chapters: directoryData.reduce((acc, vol) => acc + vol.chapters.length, 0),
+      lastUpdated: '刚刚',
+    };
+    novelStore.addNovel(newNovelForDashboard);
+
+    router.push(`/novel/editor?id=${newProject.metadata.id}`);
+  } catch (error) {
+    console.error('Failed to import novel:', error);
+    alert('导入失败，请检查文件内容或联系管理员。');
+  }
 };
 </script>
 
 <style scoped>
-/* 保持原有样式不变 */
 </style>

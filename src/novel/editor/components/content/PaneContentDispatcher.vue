@@ -1,4 +1,4 @@
-// 文件: src/novel/editor/components/content/PaneContentDispatcher.vue
+// 文件: ..\src\novel\editor\components\content\PaneContentDispatcher.vue
 
 <template>
   <div class="pane-content-dispatcher">
@@ -45,7 +45,8 @@ import TaskSettings from '@/novel/editor/components/system/settings/TaskSettings
 import AIConfigSettings from '@/novel/editor/components/system/settings/AIConfigSettings.vue';
 import NovelSettings from '@/novel/editor/components/system/settings/NovelSettings.vue';
 import ThemeSettings from '@/novel/editor/components/system/settings/ThemeSettings.vue';
-import HistoryPanel from '@/novel/editor/components/system/HistoryPanel.vue';
+import HistoryPanel from '@novel/editor/views/HistoryPanel.vue';
+import DerivedContentView from './DerivedContentView.vue';
 
 const props = defineProps({
   activeTab: {
@@ -78,6 +79,7 @@ const systemViewMap = shallowRef({
   NovelSettings,
   ThemeSettings,
   HistoryPanel,
+  DerivedContentView,
 });
 
 const systemViewComponent = computed(() => {

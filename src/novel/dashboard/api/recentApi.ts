@@ -1,4 +1,3 @@
-// src/api/novel/recentApi.ts
 import apiClient from '@/api/client';
 import type { RecentActivityItem } from '@/novel/types';
 

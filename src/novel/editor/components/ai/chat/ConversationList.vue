@@ -1,3 +1,4 @@
+//src/novel/editor/components/ai/chat/conversations.vue
 <template>
   <aside class="w-80 bg-gray-50/50 border-r border-gray-200/80 flex flex-col flex-shrink-0">
     <div class="p-4 border-b border-gray-200/80 h-20 flex items-center">

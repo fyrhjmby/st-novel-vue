@@ -1,7 +1,7 @@
 <template>
   <div>
     <p class="menu-title">管理</p>
-    <div @click="emit('custom-others-action', 'newItem')" class="context-menu-item">
+    <div @click="emit('new-item')" class="context-menu-item">
       <i class="fa-solid fa-plus w-4 text-center"></i>
       <span>新建其他条目</span>
     </div>
@@ -20,7 +20,7 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'custom-others-action', actionName: string, payload?: any): void;
+  (e: 'new-item'): void;
 }>();
 </script>
 

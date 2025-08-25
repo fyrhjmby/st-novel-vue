@@ -1,3 +1,5 @@
+// 文件: ..\src\novel\editor\components\layout\PaneActions.vue
+
 <template>
   <div class="pane-actions-container" :class="{'is-active-pane': isActive}">
     <button @click="editorStore.toggleAIPanel(paneId)" class="toolbar-btn" title="AI 任务面板">
@@ -7,9 +9,14 @@
       <i class="fa-solid fa-code-compare"></i>
     </button>
     <div class="divider"></div>
-    <button @click="handleSplitPane" class="toolbar-btn" title="分屏">
-      <i class="fa-solid fa-columns"></i>
-    </button>
+    <template v-if="isDerivedContentAvailable">
+      <button @click="handleOpenPlot" class="toolbar-btn" title="打开剧情">
+        <i class="fa-solid fa-feather-pointed"></i>
+      </button>
+      <button @click="handleOpenAnalysis" class="toolbar-btn" title="打开分析">
+        <i class="fa-solid fa-magnifying-glass-chart"></i>
+      </button>
+    </template>
     <button v-if="editorStore.panes.length > 1" @click="editorStore.closePane(paneId)" class="toolbar-btn" title="关闭窗格">
       <i class="fa-solid fa-xmark"></i>
     </button>
@@ -18,7 +25,9 @@
     </button>
   </div>
 </template>
+
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 
 const props = defineProps<{
@@ -28,9 +37,19 @@ const props = defineProps<{
 
 const editorStore = useEditorStore();
 
-const handleSplitPane = () => {
-  editorStore.splitPane(props.paneId);
-}
+const activeItemType = computed(() => editorStore.getActiveTabForPane(props.paneId)?.item.type);
+
+const isDerivedContentAvailable = computed(() => {
+  return activeItemType.value === 'chapter' || activeItemType.value === 'volume';
+});
+
+const handleOpenPlot = () => {
+  editorStore.openPlotForActiveItem();
+};
+
+const handleOpenAnalysis = () => {
+  editorStore.openAnalysisForActiveItem();
+};
 
 const handleShowHistory = () => {
   editorStore.toggleHistoryPanel(props.paneId);
@@ -40,6 +59,7 @@ const handleShowReader = () => {
   editorStore.openReaderView();
 };
 </script>
+
 <style scoped>
 .pane-actions-container {
   display: flex;

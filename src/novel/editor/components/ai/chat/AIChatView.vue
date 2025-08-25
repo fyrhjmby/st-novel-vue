@@ -1,3 +1,4 @@
+//src/novel/editor/components/ai/chat/AIChatView.vue
 <template>
   <div class="flex-1 flex overflow-hidden">
     <ConversationList />

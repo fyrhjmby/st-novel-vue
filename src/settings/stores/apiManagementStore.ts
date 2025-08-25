@@ -21,7 +21,7 @@ export const useApiManagementStore = defineStore('api-management', {
 
     actions: {
         async initializeData() {
-            if (this.apiProviders.length > 0) return;
+            if (this.apiProviders.length > 0 && this.apiKeys.length > 0) return;
             this.isLoading = true;
             try {
                 const data = await service.loadApiManagementData();
@@ -35,7 +35,7 @@ export const useApiManagementStore = defineStore('api-management', {
             }
         },
 
-        async addKey(newKeyData: Omit<ApiKey, 'id' | 'keyFragment' | 'calls' | 'created'> & {key: string}) {
+        async addKey(newKeyData: Omit<ApiKey, 'id' | 'keyFragment' | 'calls' | 'created'> & {apiKey: string}) {
             this.isSaving = true;
             try {
                 const addedKey = await service.addNewApiKey(newKeyData);

@@ -33,13 +33,14 @@
   </div>
 </template>
 <script setup lang="ts">
+// 文件: ..\src\novel\editor\components\sidebar\DirectoryTab.vue
 import { computed } from 'vue';
 import TreeView from './TreeView.vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
-import type { TreeNode, VolumeNode, ChapterNode } from '@/novel/editor/types';
+import type { TreeNode, VolumeNode } from '@/novel/editor/types';
 
 const emit = defineEmits<{
   (e: 'show-context-menu', payload: { node: TreeNode; event: MouseEvent }): void;
@@ -87,17 +88,20 @@ const handleContextMenu = (payload: { node: TreeNode; event: MouseEvent }) => {
   emit('show-context-menu', payload);
 };
 
-const handleAddNewVolume = () => {
-  directoryStore.addNewVolume();
+const handleAddNewVolume = async () => {
+  const newVolume = await directoryStore.addNewVolume();
+  if (newVolume) {
+    uiStore.setEditingNodeId(newVolume.id);
+  }
 };
 
-const handleCommitRename = (payload: { nodeId: string; newTitle: string }) => {
+const handleCommitRename = (payload: { nodeId: string; newTitle: string; nodeType: string }) => {
   directoryStore.renameNode(payload.nodeId, payload.newTitle);
   handleCancelRename();
 };
 
 const handleCancelRename = () => {
-  editorStore.setEditingNodeId(null);
+  uiStore.setEditingNodeId(null);
 };
 </script>
 <style scoped>

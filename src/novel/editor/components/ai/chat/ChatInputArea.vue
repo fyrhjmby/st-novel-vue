@@ -1,3 +1,4 @@
+//src/novel/editor/components/ai/chat/chatinput.vue
 <template>
   <div class="p-4 border-t border-gray-100 bg-[#FAFAFA]">
     <div class="flex gap-3 items-end max-w-5xl mx-auto">

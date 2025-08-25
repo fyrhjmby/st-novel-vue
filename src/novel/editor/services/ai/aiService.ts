@@ -1,6 +1,6 @@
-import { fetchApiKeys } from '../../api/apiManagementApi.ts';
+import * as aiProviderApi from '@novel/editor/api/aiProviderApi';
 import type { AIProviderConfig, AITaskType } from '@novel/editor/types';
-import { streamAITask as streamAITaskFromApi } from '@novel/editor/api/chatApi';
+import { streamAITask as streamAITaskFromApi } from '@novel/editor/api/aiApi';
 
 interface StreamCallbacks {
     onChunk: (chunk: string) => void;
@@ -14,17 +14,7 @@ interface StreamCallbacks {
  */
 export async function fetchAvailableAIProviders(): Promise<AIProviderConfig[]> {
     try {
-        const allKeys = await fetchApiKeys();
-        const enabledKeys = allKeys.filter(key => key.status === '启用');
-
-        return enabledKeys.map(key => ({
-            id: key.id.toString(), // 将数字ID转换为字符串以匹配接口
-            name: key.name,
-            model: key.model,
-            temperature: key.temperature,
-            maxTokens: key.maxTokens,
-            description: key.description,
-        }));
+        return await aiProviderApi.fetchAIProviders();
     } catch (error) {
         console.error("Failed to fetch available AI providers from API layer:", error);
         return [];

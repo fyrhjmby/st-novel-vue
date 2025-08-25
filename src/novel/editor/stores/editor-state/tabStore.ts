@@ -1,3 +1,4 @@
+// src/novel/editor/stores/editor-state/tabStore.ts
 import { defineStore } from 'pinia';
 import { usePaneStore } from './paneStore';
 import { useUIStore } from '../uiStore';
@@ -17,11 +18,7 @@ export const useTabStore = defineStore('editor-tab', () => {
 
         const { node } = itemStore.findItemById(itemId);
         if (!node || (node.type !== 'system' && !('content' in node))) {
-            if (node?.type === 'volume' || node?.type === 'group') {
-                uiStore.toggleNodeExpansion(itemId);
-            } else if (node) {
-                uiStore.toggleRelatedNodeExpansion(itemId);
-            }
+            console.warn(`Attempted to open a non-tab item: ${itemId}. This should be handled by the calling UI component (e.g., for tree expansion).`);
             return;
         }
 

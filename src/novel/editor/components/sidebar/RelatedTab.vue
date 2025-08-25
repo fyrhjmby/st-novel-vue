@@ -37,6 +37,7 @@
   </div>
 </template>
 <script setup lang="ts">
+// 文件: ..\src\novel\editor\components\sidebar\RelatedTab.vue
 import { computed } from 'vue';
 import TreeView from './TreeView.vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
@@ -76,37 +77,56 @@ const handleContextMenu = (payload: { node: TreeNode; event: MouseEvent }) => {
   emit('show-context-menu', payload);
 };
 
-const handleCommitRename = (payload: { nodeId: string; newTitle: string }) => {
+const handleCommitRename = (payload: { nodeId: string; newTitle: string; nodeType: string }) => {
   if (payload.newTitle.trim()) {
-    if (payload.nodeId.startsWith('custom-others-')) {
-      relatedContentStore.renameCustomOthersNode(payload.nodeId, payload.newTitle);
-    } else if (payload.nodeId.startsWith('custom-')) {
-      relatedContentStore.renameCustomRelatedNode(payload.nodeId, payload.newTitle);
-    } else if (payload.nodeId.startsWith('prompt-')) {
-      // ** FIX: Call the correct store for renaming prompts **
-      promptTemplateStore.renamePrompt(payload.nodeId, payload.newTitle);
-    }
-    else {
-      relatedContentStore.renameRelatedNode(payload.nodeId, payload.newTitle);
+    switch (payload.nodeType) {
+      case 'prompt_item':
+        promptTemplateStore.renamePrompt(payload.nodeId, payload.newTitle);
+        break;
+      case 'others_item':
+        relatedContentStore.renameCustomOthersNode(payload.nodeId, payload.newTitle);
+        break;
+      case 'plot_item':
+      case 'analysis_item':
+        // Check if it's a custom one or a settings one
+        if (payload.nodeId.startsWith('custom-')) {
+          relatedContentStore.renameCustomRelatedNode(payload.nodeId, payload.newTitle);
+        } else {
+          relatedContentStore.renameRelatedNode(payload.nodeId, payload.newTitle);
+        }
+        break;
+      default:
+        // Generic rename for groups, items in settings etc.
+        relatedContentStore.renameRelatedNode(payload.nodeId, payload.newTitle);
+        break;
     }
   }
-  editorStore.setEditingNodeId(null);
+  uiStore.setEditingNodeId(null);
 };
 
 const handleCancelRename = () => {
-  editorStore.setEditingNodeId(null);
+  uiStore.setEditingNodeId(null);
 };
 
 const handleAddNewCustomPlot = () => {
-  relatedContentStore.addCustomRelatedNode('plot');
+  const newNode = relatedContentStore.addCustomRelatedNode('plot');
+  uiStore.ensureRelatedNodeIsExpanded('plot');
+  editorStore.openTab(newNode.id);
+  uiStore.setEditingNodeId(newNode.id);
 };
 
 const handleAddNewCustomAnalysis = () => {
-  relatedContentStore.addCustomRelatedNode('analysis');
+  const newNode = relatedContentStore.addCustomRelatedNode('analysis');
+  uiStore.ensureRelatedNodeIsExpanded('analysis');
+  editorStore.openTab(newNode.id);
+  uiStore.setEditingNodeId(newNode.id);
 };
 
 const handleAddNewCustomOthers = () => {
-  relatedContentStore.addCustomOthersNode();
+  const newNode = relatedContentStore.addCustomOthersNode();
+  uiStore.ensureRelatedNodeIsExpanded('others');
+  editorStore.openTab(newNode.id);
+  uiStore.setEditingNodeId(newNode.id);
 };
 </script>
 <style scoped>

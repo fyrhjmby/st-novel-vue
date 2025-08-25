@@ -1,32 +1,27 @@
+// 文件: ..\src\novel\editor\stores\relatedContentStore.ts
 import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
 import * as nodeOperationService from '@/novel/editor/services/related/nodeOperationService';
 import * as treeBuilderService from '@/novel/editor/services/related/treeBuilderService';
 import { updateAllOverviewContent } from '@/novel/editor/services/related/overviewService';
+import { relatedContentService } from '@/novel/editor/services/relatedContentService';
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useDerivedContentStore } from '@/novel/editor/stores/derivedContentStore';
 import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
-import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import { useUIStore } from '@/novel/editor/stores/uiStore';
 import type { TreeNode, ItemNode, GroupNode } from '@/novel/editor/types';
 
 export const useRelatedContentStore = defineStore('relatedContent', () => {
-    // --- State ---
     const settingsData = ref<TreeNode[]>([]);
-    const plotCustomData = ref<TreeNode[]>([]);
-    const analysisCustomData = ref<TreeNode[]>([]);
-    const othersCustomData = ref<TreeNode[]>([]);
+    const plotCustomData = ref<ItemNode[]>([]);
+    const analysisCustomData = ref<ItemNode[]>([]);
+    const othersCustomData = ref<ItemNode[]>([]);
+    const novelId = ref<string | null>(null);
 
-    // --- Dependencies ---
     const directoryStore = useDirectoryStore();
     const derivedContentStore = useDerivedContentStore();
     const promptTemplateStore = usePromptTemplateStore();
-    const editorStore = useEditorStore();
-    const uiStore = useUIStore();
 
-    // --- Computed ---
     const relatedData = computed(() => {
-        // Filter out derived items whose source has been deleted
         const allValidSourceIds = new Set(directoryStore.directoryData.flatMap(v => [v.id, ...v.chapters.map(c => c.id)]));
         const validPlotItems = derivedContentStore.plotItems.filter(i => allValidSourceIds.has(i.sourceId));
         const validAnalysisItems = derivedContentStore.analysisItems.filter(i => allValidSourceIds.has(i.sourceId));
@@ -43,29 +38,60 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
         );
     });
 
-    const allDataSources = computed(() => [
+    const allDataSourcesForFind = computed(() => [
         settingsData.value,
         plotCustomData.value,
         analysisCustomData.value,
         othersCustomData.value
     ]);
 
-    // --- Watchers ---
     watch(settingsData, (newData) => {
         updateAllOverviewContent(newData);
     }, { deep: true });
 
-    // --- Actions ---
-    function fetchRelatedData(settings: any[], plot: any[], analysis: any[], others: any[]) {
+    async function fetchRelatedContent(id: string) {
+        novelId.value = id;
         promptTemplateStore.initialize();
-        settingsData.value = settings;
-        plotCustomData.value = plot;
-        analysisCustomData.value = analysis;
-        othersCustomData.value = others;
+        try {
+            const data = await relatedContentService.getRelatedContent(id);
+            settingsData.value = data.settingsData;
+            plotCustomData.value = data.plotCustomData;
+            analysisCustomData.value = data.analysisCustomData;
+            othersCustomData.value = data.othersCustomData;
+        } catch (error) {
+            console.error(`Failed to fetch related content for novel ${id}:`, error);
+        }
+    }
+
+    async function saveRelatedContent() {
+        if (!novelId.value) return;
+        await relatedContentService.saveRelatedContent(novelId.value, {
+            settingsData: settingsData.value,
+            plotCustomData: plotCustomData.value,
+            analysisCustomData: analysisCustomData.value,
+            othersCustomData: othersCustomData.value
+        });
     }
 
     function findNodeById(nodeId: string): { node: TreeNode; parent: TreeNode | null; } | null {
-        return nodeOperationService.findNodeById(nodeId, allDataSources.value);
+        const findRecursive = (nodes: TreeNode[], parent: TreeNode | null): { node: TreeNode; parent: TreeNode | null; } | null => {
+            for (const node of nodes) {
+                if (node.id === nodeId) {
+                    return { node, parent };
+                }
+                if (node.children) {
+                    const found = findRecursive(node.children, node);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+
+        for (const source of allDataSourcesForFind.value) {
+            const result = findRecursive(source, null);
+            if (result) return result;
+        }
+        return null;
     }
 
     function updateNodeContent(nodeId: string, content: string) {
@@ -83,71 +109,73 @@ export const useRelatedContentStore = defineStore('relatedContent', () => {
     }
 
     function renameRelatedNode(nodeId: string, newTitle: string) {
+        const trimmedTitle = newTitle.trim();
+        if (!trimmedTitle) return;
         const result = findNodeById(nodeId);
         if (result?.node) {
-            nodeOperationService.renameNode(result.node, newTitle);
+            nodeOperationService.renameNode(result.node, trimmedTitle);
         }
     }
 
-    // --- Action: Add ---
-    function addRelatedNode(parentId: string, type: 'group' | 'item') {
+    function addRelatedNode(parentId: string, type: 'group' | 'item'): ItemNode | GroupNode | null {
         const result = findNodeById(parentId);
-        if (!result?.node || !result.node.children) return;
+        if (!result?.node || !result.node.children) return null;
 
         const parentNode = result.node as GroupNode;
         const newNode = nodeOperationService.createRelatedNode(parentNode, type);
         parentNode.children.push(newNode);
-
-        uiStore.ensureRelatedNodeIsExpanded(parentId);
-        uiStore.setEditingNodeId(newNode.id);
-        if (newNode.type.endsWith('_item')) {
-            editorStore.openTab(newNode.id);
-        }
+        return newNode;
     }
 
-    function addCustomRelatedNode(target: 'plot' | 'analysis') {
+    function addCustomRelatedNode(target: 'plot' | 'analysis'): ItemNode {
         const dataRef = target === 'plot' ? plotCustomData : analysisCustomData;
         const newNode = nodeOperationService.createCustomNode(target);
         dataRef.value.unshift(newNode);
-
-        uiStore.ensureRelatedNodeIsExpanded(target);
-        editorStore.openTab(newNode.id);
-        uiStore.setEditingNodeId(newNode.id);
+        return newNode;
     }
 
-    function addCustomOthersNode() {
+    function addCustomOthersNode(): ItemNode {
         const newNode = nodeOperationService.createCustomNode('others');
         othersCustomData.value.unshift(newNode);
-        uiStore.ensureRelatedNodeIsExpanded('others');
-        editorStore.openTab(newNode.id);
-        uiStore.setEditingNodeId(newNode.id);
+        return newNode;
     }
 
-    // --- Action: Delete ---
     function deleteNode(nodeId: string): boolean {
-        const wasRemoved = nodeOperationService.deleteNode(nodeId, allDataSources.value);
-        if (wasRemoved) {
-            editorStore.closeTab(nodeId);
-        }
-        return wasRemoved;
+        const findAndRemove = (nodes: TreeNode[], id: string): boolean => {
+            const index = nodes.findIndex(node => node.id === id);
+            if (index !== -1) {
+                nodes.splice(index, 1);
+                return true;
+            }
+            for (const node of nodes) {
+                if (node.children && findAndRemove(node.children, id)) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        return findAndRemove(settingsData.value, nodeId) ||
+            findAndRemove(plotCustomData.value, nodeId) ||
+            findAndRemove(analysisCustomData.value, nodeId) ||
+            findAndRemove(othersCustomData.value, nodeId);
     }
+
     const deleteRelatedNode = deleteNode;
     const deleteCustomRelatedNode = deleteNode;
     const deleteCustomOthersNode = deleteNode;
 
-    // --- Actions with specific naming for context menus ---
     const renameCustomRelatedNode = renameRelatedNode;
     const renameCustomOthersNode = renameRelatedNode;
 
     return {
-        // State & Computed
         settingsData,
         plotCustomData,
         analysisCustomData,
         othersCustomData,
         relatedData,
-        // Actions
-        fetchRelatedData,
+        fetchRelatedContent,
+        saveRelatedContent,
         findNodeById,
         updateNodeContent,
         appendNodeContent,

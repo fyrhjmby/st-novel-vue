@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { NovelDashboardItem, RecentActivityItem } from '@/novel/types';
-import * as dashboardService from '@/novel/dashboard/services/dashboardService';
+import * as recentService from '@/novel/dashboard/services/recentService';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
@@ -63,7 +63,7 @@ export const useRecentStore = defineStore('novel-dashboard-recent', () => {
     const fetchRecentItems = async () => {
         isLoading.value = true;
         try {
-            recentItems.value = await dashboardService.fetchRecentItems();
+            recentItems.value = await recentService.fetchRecentItems();
         } catch (error) {
             console.error('Failed to fetch recent items:', error);
         } finally {
@@ -80,7 +80,7 @@ export const useRecentStore = defineStore('novel-dashboard-recent', () => {
             }
 
             // 调用Service记录访问，并获取最新的活动项
-            const newActivity = await dashboardService.logRecentAccess(novel.id);
+            const newActivity = await recentService.logRecentAccess(novel.id);
 
             // 将新活动添加到列表顶部
             recentItems.value.unshift(newActivity);

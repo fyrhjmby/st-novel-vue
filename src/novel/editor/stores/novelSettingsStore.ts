@@ -1,23 +1,21 @@
+// 文件: ..\src/novel\editor\stores\novelSettingsStore.ts
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useMetadataStore } from '@novel/editor/stores/editor-state/metadataStore';
 import { novelSettingsService } from '@/novel/editor/services/novelSettingsService';
 import type { NovelProject } from '@/novel/editor/types/project';
 import type { NovelMetadata } from '@/novel/editor/types';
+import { useReferenceStore } from './referenceStore';
 
 export const useNovelSettingsStore = defineStore('novel-settings', () => {
     const metadataStore = useMetadataStore();
 
-    const novelMetadata = ref<NovelMetadata | null>(null);
+    const novelMetadata = computed<NovelMetadata | null>(() => metadataStore.novelMetadata);
     const referencedNovels = ref<NovelProject[]>([]);
     const availableReferenceNovels = ref<NovelProject[]>([]);
 
-    /**
-     * Asynchronously loads and populates all data needed for the settings view.
-     */
     async function loadSettingsData() {
         const meta = metadataStore.novelMetadata;
-        novelMetadata.value = meta;
         if (meta) {
             referencedNovels.value = await novelSettingsService.getReferencedNovels(meta.referenceNovelIds);
             availableReferenceNovels.value = await novelSettingsService.getAvailableReferenceNovels(meta);
@@ -31,11 +29,17 @@ export const useNovelSettingsStore = defineStore('novel-settings', () => {
         if (!novelId) return;
         metadataStore.addReferenceNovel(novelId);
         await loadSettingsData();
+        if(metadataStore.novelMetadata) {
+            await useReferenceStore().loadReferences(metadataStore.novelMetadata.referenceNovelIds);
+        }
     };
 
     const removeReferenceNovel = async (novelId: string) => {
         metadataStore.removeReferenceNovel(novelId);
         await loadSettingsData();
+        if(metadataStore.novelMetadata) {
+            await useReferenceStore().loadReferences(metadataStore.novelMetadata.referenceNovelIds);
+        }
     };
 
     const addTag = () => {

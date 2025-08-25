@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { NovelDashboardItem, NovelCategory } from '@/novel/types';
-import * as dashboardService from '@/novel/dashboard/services/dashboardService';
+import * as novelService from '@/novel/dashboard/services/novelService';
 
 export const useNovelStore = defineStore('novel-dashboard-novels', () => {
     const novels = ref<NovelDashboardItem[]>([]);
@@ -22,7 +22,7 @@ export const useNovelStore = defineStore('novel-dashboard-novels', () => {
     const fetchNovels = async () => {
         isLoading.value = true;
         try {
-            novels.value = await dashboardService.fetchNovels();
+            novels.value = await novelService.fetchNovels();
         } catch (error) {
             console.error('Failed to fetch novels:', error);
         } finally {
@@ -32,7 +32,7 @@ export const useNovelStore = defineStore('novel-dashboard-novels', () => {
 
     const fetchCategories = async () => {
         try {
-            availableCategories.value = await dashboardService.fetchAvailableCategories();
+            availableCategories.value = await novelService.fetchAvailableCategories();
         } catch (error) {
             console.error('Failed to fetch categories:', error);
         }
@@ -49,7 +49,7 @@ export const useNovelStore = defineStore('novel-dashboard-novels', () => {
 
     const createNovel = async (data: { title: string; synopsis: string; category: NovelCategory }) => {
         try {
-            const newNovel = await dashboardService.createNovel(data);
+            const newNovel = await novelService.createNovel(data);
             addNovel(newNovel);
         } catch (error) {
             console.error('Failed to create novel:', error);
@@ -59,7 +59,7 @@ export const useNovelStore = defineStore('novel-dashboard-novels', () => {
 
     const deleteNovel = async (novelId: string) => {
         try {
-            await dashboardService.moveToTrash(novelId);
+            await novelService.moveToTrash(novelId);
             const index = novels.value.findIndex(n => n.id === novelId);
             if (index !== -1) {
                 novels.value.splice(index, 1);

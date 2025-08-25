@@ -1,19 +1,23 @@
-import {
-    getNovelMetadata as globalGetNovelMetadata,
-    updateNovelMetadata as globalUpdateNovelMetadata,
-} from '@/api/novel/metadataApi';
+import apiClient from '@/api/client';
 import type { NovelMetadata } from '@/novel/editor/types/project';
 
 /**
- * [Proxy] 根据小说ID获取元数据
+ * 根据小说ID获取元数据
+ * @param novelId - 小说ID
+ * @returns 返回小说元数据
  */
-export const getNovelMetadata = (novelId: string): Promise<NovelMetadata> => {
-    return globalGetNovelMetadata(novelId);
+export const getNovelMetadata = async (novelId: string): Promise<NovelMetadata> => {
+    const response = await apiClient.get(`/novels/${novelId}/metadata`);
+    return response.data;
 };
 
 /**
- * [Proxy] 更新小说元数据
+ * 更新小说元数据
+ * @param novelId - 小说ID
+ * @param metadata - 更新后的元数据
+ * @returns 返回更新后的元数据
  */
-export const updateNovelMetadata = (novelId: string, metadata: Partial<NovelMetadata>): Promise<NovelMetadata> => {
-    return globalUpdateNovelMetadata(novelId, metadata);
+export const updateNovelMetadata = async (novelId: string, metadata: Partial<NovelMetadata>): Promise<NovelMetadata> => {
+    const response = await apiClient.patch(`/novels/${novelId}/metadata`, metadata);
+    return response.data;
 };

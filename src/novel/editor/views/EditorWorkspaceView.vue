@@ -103,11 +103,11 @@ const handleMenuAction = (actionId: ActionId) => {
 onMounted(() => {
   const novelId = route.query.id as string;
   if (novelId) {
-    editorStore.fetchNovelData(novelId);
+    editorStore.loadProject(novelId);
   } else {
     // Fallback or error handling
     console.warn("No novel ID provided in URL, loading default or showing error.");
-    editorStore.fetchNovelData('novel-1'); // Fallback to a default novel
+    editorStore.loadProject('novel-1'); // Fallback to a default novel
   }
 });
 

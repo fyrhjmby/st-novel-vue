@@ -1,7 +1,8 @@
-// 文件: src/novel/editor/stores/derivedContentStore.ts
+// 文件: ..\src\novel\editor\stores\derivedContentStore.ts
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { PlotAnalysisItem, AITaskType, EditorItem } from '@/novel/editor/types';
+import * as derivedContentService from '@/novel/editor/services/derivedContentService';
 
 const formatContentForEditor = (title: string, rawContent: string): string => {
     const body = rawContent.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p}</p>`).join('');
@@ -11,107 +12,159 @@ const formatContentForEditor = (title: string, rawContent: string): string => {
 export const useDerivedContentStore = defineStore('derivedContent', () => {
     const plotItems = ref<PlotAnalysisItem[]>([]);
     const analysisItems = ref<PlotAnalysisItem[]>([]);
+    const novelId = ref<string | null>(null);
 
-    /**
-     * 从项目数据中获取派生内容。
-     * @param plotData - 项目中存储的剧情数据
-     * @param analysisData - 项目中存储的分析数据
-     */
-    function fetchDerivedData(plotData: PlotAnalysisItem[], analysisData: PlotAnalysisItem[]) {
-        plotItems.value = plotData;
-        analysisItems.value = analysisData;
+    function _setDerivedData(items: PlotAnalysisItem[]) {
+        plotItems.value = items.filter(item => item.type === 'plot');
+        analysisItems.value = items.filter(item => item.type === 'analysis');
     }
 
-    /**
-     * 根据已完成的AI任务，创建并添加一个新的、内容完整的派生内容项。
-     * @param sourceNode - 源节点对象 (章节或卷)
-     * @param taskType - 任务类型 ('分析' 或 '剧情生成')
-     * @param generatedContent - AI生成的原始文本内容
-     * @returns 新创建的派生内容项
-     */
-    function createAndAddDerivedItem(sourceNode: EditorItem, taskType: AITaskType, generatedContent: string): PlotAnalysisItem | null {
-        if (taskType !== '分析' && taskType !== '剧情生成') return null;
-        if (sourceNode.type !== 'chapter' && sourceNode.type !== 'volume') return null;
+    async function fetchDerivedContent(id: string) {
+        novelId.value = id;
+        try {
+            const allItems = await derivedContentService.getDerivedItemsForNovel(id);
+            _setDerivedData(allItems);
+        } catch (error) {
+            console.error("Failed to fetch derived content:", error);
+            _setDerivedData([]);
+        }
+    }
+
+    async function saveDerivedContent() {
+        const allItems = [...plotItems.value, ...analysisItems.value];
+        const updatePromises = allItems.map(item =>
+            derivedContentService.updateDerivedItem(item.id, {
+                title: item.title,
+                content: item.content,
+                sourceId: item.sourceId
+            })
+        );
+        await Promise.all(updatePromises);
+    }
+
+    function getDerivedItemsForSource(sourceId: string, type: 'plot' | 'analysis'): PlotAnalysisItem[] {
+        const sourceArray = type === 'plot' ? plotItems.value : analysisItems.value;
+        return sourceArray.filter(item => item.sourceId === sourceId);
+    }
+
+    async function createAndAddDerivedItem(sourceNode: EditorItem, taskType: AITaskType, generatedContent: string): Promise<PlotAnalysisItem | null> {
+        if (!novelId.value || (taskType !== '分析' && taskType !== '剧情生成') || (sourceNode.type !== 'chapter' && sourceNode.type !== 'volume')) {
+            return null;
+        }
+
+        const derivedType = taskType === '分析' ? 'analysis' : 'plot';
+        const newItem = await createManualDerivedItem(sourceNode, derivedType, generatedContent, true);
+        return newItem;
+    }
+
+    async function createManualDerivedItem(sourceNode: EditorItem, derivedType: 'plot' | 'analysis', content: string = '', isFromAI: boolean = false): Promise<PlotAnalysisItem | null> {
+        if (!novelId.value || (sourceNode.type !== 'chapter' && sourceNode.type !== 'volume')) return null;
 
         const now = new Date();
         const timestamp = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-
-        const derivedType: PlotAnalysisItem['type'] = taskType === '分析' ? 'analysis' : 'plot';
+        const typeName = derivedType === 'plot' ? '剧情' : '分析';
         const titlePrefix = sourceNode.type === 'volume' ? '卷' : '';
-        const finalTitle = `《${titlePrefix}${sourceNode.title}》${taskType} - ${timestamp}`;
 
-        const finalContent = formatContentForEditor(finalTitle, generatedContent);
+        const finalTitle = isFromAI
+            ? `《${titlePrefix}${sourceNode.title}》${typeName} - ${timestamp} (AI)`
+            : `《${titlePrefix}${sourceNode.title}》${typeName} - ${timestamp}`;
 
-        const newItem: PlotAnalysisItem = {
-            id: `${derivedType}_${now.getTime()}`,
+        const finalContent = content
+            ? formatContentForEditor(finalTitle, content)
+            : `<h1>${finalTitle}</h1><p>请在这里编写${typeName}内容...</p>`;
+
+        const itemData: Omit<PlotAnalysisItem, 'id'> = {
             type: derivedType,
             sourceId: sourceNode.id,
             title: finalTitle,
             content: finalContent
         };
 
-        if (derivedType === 'analysis') {
-            analysisItems.value.unshift(newItem);
-        } else {
-            plotItems.value.unshift(newItem);
-        }
+        const newItem = await derivedContentService.createDerivedItem(itemData);
+
+        const targetArray = derivedType === 'plot' ? plotItems : analysisItems;
+        targetArray.value.unshift(newItem);
 
         return newItem;
     }
 
-    /**
-     * 根据ID从所有派生项中查找。
-     * @param nodeId - 派生内容的ID
-     */
     function findItemById(nodeId: string): PlotAnalysisItem | null {
         return [...plotItems.value, ...analysisItems.value].find(item => item.id === nodeId) || null;
     }
 
-    /**
-     * 更新派生内容。
-     * @param nodeId - 派生内容的ID
-     * @param content - 新的HTML内容
-     */
     function updateNodeContent(nodeId: string, content: string) {
-        const derivedItem = findItemById(nodeId);
-        if (derivedItem) {
-            derivedItem.content = content;
+        const item = findItemById(nodeId);
+        if (item) {
+            item.content = content;
+            const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
+            const newTitle = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
+            if (newTitle && newTitle !== item.title) {
+                item.title = newTitle;
+            }
         }
     }
 
-    /**
-     * (此函数不再用于派生内容，但为保持接口一致性而保留)
-     * 向派生内容追加内容。
-     * @param nodeId - 派生内容的ID
-     * @param contentToAppend - 要追加的原始文本
-     */
-    function appendNodeContent(nodeId: string, contentToAppend: string) {
-        const derivedItem = findItemById(nodeId);
-        if (derivedItem) {
-            const paragraphs = contentToAppend.split('\n').map(p => `<p>${p || ' '}</p>`).join('');
-            if (!derivedItem.content) derivedItem.content = "";
-            derivedItem.content += paragraphs;
+    async function deleteDerivedItem(itemId: string): Promise<boolean> {
+        try {
+            await derivedContentService.deleteDerivedItem(itemId);
+            let index = plotItems.value.findIndex(i => i.id === itemId);
+            if (index > -1) plotItems.value.splice(index, 1);
+
+            index = analysisItems.value.findIndex(i => i.id === itemId);
+            if (index > -1) analysisItems.value.splice(index, 1);
+            return true;
+        } catch (error) {
+            console.error('Failed to delete derived item:', error);
+            return false;
         }
     }
 
-    /**
-     * 删除与指定源ID关联的所有派生数据。
-     * @param sourceId - 源的ID
-     */
-    function deleteDerivedDataForSource(sourceId: string) {
-        plotItems.value = plotItems.value.filter(item => item.sourceId !== sourceId);
-        analysisItems.value = analysisItems.value.filter(item => item.sourceId !== sourceId);
+    async function deleteDerivedDataForSource(sourceId: string) {
+        const itemsToDelete = [
+            ...plotItems.value.filter(item => item.sourceId === sourceId),
+            ...analysisItems.value.filter(item => item.sourceId === sourceId)
+        ];
+
+        const deletePromises = itemsToDelete.map(item => deleteDerivedItem(item.id));
+        await Promise.all(deletePromises);
     }
 
+    function updateTitlesForSource(sourceId: string, newSourceTitle: string) {
+        const itemsToUpdate = [
+            ...plotItems.value.filter(item => item.sourceId === sourceId),
+            ...analysisItems.value.filter(item => item.sourceId === sourceId)
+        ];
+
+        itemsToUpdate.forEach(item => {
+            // Regex to find the part of the title to replace, e.g., "《...》"
+            const oldTitlePattern = /《(.*?)》/;
+            const match = item.title.match(oldTitlePattern);
+
+            if (match) {
+                const titlePrefix = item.sourceId.startsWith('vol-') ? '卷' : '';
+                const newTitlePart = `《${titlePrefix}${newSourceTitle}》`;
+                const newTitle = item.title.replace(oldTitlePattern, newTitlePart);
+
+                item.title = newTitle;
+                if (item.content.includes('<h1>')) {
+                    item.content = item.content.replace(/<h1[^>]*>.*?<\/h1>/, `<h1>${newTitle}</h1>`);
+                }
+            }
+        });
+    }
 
     return {
         plotItems,
         analysisItems,
-        fetchDerivedData,
+        fetchDerivedContent,
+        saveDerivedContent,
+        getDerivedItemsForSource,
         createAndAddDerivedItem,
+        createManualDerivedItem,
         findItemById,
         updateNodeContent,
-        appendNodeContent,
+        deleteDerivedItem,
         deleteDerivedDataForSource,
+        updateTitlesForSource,
     };
 });

@@ -1,6 +1,6 @@
 import type { TreeNode, ItemNode, PlotAnalysisItem, Volume, Chapter } from '@/novel/editor/types';
 import type { NovelProject } from '@/novel/editor/types/project';
-import { getNovelProject } from '../api/projectApi';
+import { getNovelProject } from '@/novel/editor/api/novelProjectApi.ts';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
 
 class ReferenceService {

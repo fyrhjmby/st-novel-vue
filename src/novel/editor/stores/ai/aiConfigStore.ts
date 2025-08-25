@@ -1,9 +1,8 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import type { AITaskType, AIProviderConfig } from '@novel/editor/types';
-import { fetchAvailableAIProviders } from '@novel/editor/services/ai/aiService.ts';
+import { fetchAvailableAIProviders } from '@novel/editor/services/ai/aiService';
 
-// 定义每种任务类型默认选中的提示词ID
 const defaultSelectedPromptIds: Record<AITaskType, string> = {
     '润色': 'prompt-polish-default',
     '续写': 'prompt-continue-default',
@@ -12,35 +11,39 @@ const defaultSelectedPromptIds: Record<AITaskType, string> = {
     '创作': 'prompt-create-default',
 };
 
-// 定义任务配置的接口
 interface TaskConfig {
     selectedPromptId: string;
-    selectedAIProviderId: string;
+    selectedAIProviderId: string | null;
     temperature: number;
 }
 
 export const useAIConfigStore = defineStore('aiConfig', () => {
-    // State: 外部AI配置列表
     const availableAIProviders = ref<AIProviderConfig[]>([]);
+    const selectedChatProviderId = ref<string | null>(null);
 
-    // State: 每种任务类型的具体配置，现在包含温度
     const taskConfigs = ref<Record<AITaskType, TaskConfig>>({
-        '润色': { selectedPromptId: defaultSelectedPromptIds['润色'], selectedAIProviderId: '', temperature: 0.7 },
-        '续写': { selectedPromptId: defaultSelectedPromptIds['续写'], selectedAIProviderId: '', temperature: 0.8 },
-        '分析': { selectedPromptId: defaultSelectedPromptIds['分析'], selectedAIProviderId: '', temperature: 0.5 },
-        '剧情生成': { selectedPromptId: defaultSelectedPromptIds['剧情生成'], selectedAIProviderId: '', temperature: 0.9 },
-        '创作': { selectedPromptId: defaultSelectedPromptIds['创作'], selectedAIProviderId: '', temperature: 0.7 },
+        '润色': { selectedPromptId: defaultSelectedPromptIds['润色'], selectedAIProviderId: null, temperature: 0.7 },
+        '续写': { selectedPromptId: defaultSelectedPromptIds['续写'], selectedAIProviderId: null, temperature: 0.8 },
+        '分析': { selectedPromptId: defaultSelectedPromptIds['分析'], selectedAIProviderId: null, temperature: 0.5 },
+        '剧情生成': { selectedPromptId: defaultSelectedPromptIds['剧情生成'], selectedAIProviderId: null, temperature: 0.9 },
+        '创作': { selectedPromptId: defaultSelectedPromptIds['创作'], selectedAIProviderId: null, temperature: 0.7 },
     });
 
-    /**
-     * 从系统设置中加载用户配置的 AI 提供商
-     */
+    const selectedChatProviderConfig = computed(() => {
+        return availableAIProviders.value.find(p => p.id === selectedChatProviderId.value) || null;
+    });
+
     async function initializeProviders() {
-        if(availableAIProviders.value.length > 0) return;
+        if (availableAIProviders.value.length > 0) return;
 
         availableAIProviders.value = await fetchAvailableAIProviders();
 
-        const firstAvailableProviderId = availableAIProviders.value[0]?.id || '';
+        const firstAvailableProviderId = availableAIProviders.value[0]?.id || null;
+
+        if (!selectedChatProviderId.value) {
+            selectedChatProviderId.value = firstAvailableProviderId;
+        }
+
         for (const taskType in taskConfigs.value) {
             const config = taskConfigs.value[taskType as AITaskType];
             const isCurrentProviderAvailable = availableAIProviders.value.some(p => p.id === config.selectedAIProviderId);
@@ -50,27 +53,24 @@ export const useAIConfigStore = defineStore('aiConfig', () => {
         }
     }
 
-    /**
-     * 更新指定任务类型选择的提示词ID
-     */
+    const selectChatProvider = (id: string) => {
+        if (availableAIProviders.value.some(p => p.id === id)) {
+            selectedChatProviderId.value = id;
+        }
+    }
+
     const setSelectedPromptId = (taskType: AITaskType, promptId: string) => {
         if (taskConfigs.value[taskType]) {
             taskConfigs.value[taskType].selectedPromptId = promptId;
         }
     };
 
-    /**
-     * 更新指定任务类型选择的AI Provider ID
-     */
     const setSelectedAIProviderId = (taskType: AITaskType, providerId: string) => {
         if (taskConfigs.value[taskType] && availableAIProviders.value.some(p => p.id === providerId)) {
             taskConfigs.value[taskType].selectedAIProviderId = providerId;
         }
     };
 
-    /**
-     * 更新指定任务类型的创作温度
-     */
     const setTaskTemperature = (taskType: AITaskType, temperature: number) => {
         if (taskConfigs.value[taskType]) {
             taskConfigs.value[taskType].temperature = Number(temperature.toFixed(2));
@@ -78,9 +78,12 @@ export const useAIConfigStore = defineStore('aiConfig', () => {
     }
 
     return {
-        taskConfigs,
         availableAIProviders,
+        selectedChatProviderId,
+        taskConfigs,
+        selectedChatProviderConfig,
         initializeProviders,
+        selectChatProvider,
         setSelectedPromptId,
         setSelectedAIProviderId,
         setTaskTemperature,

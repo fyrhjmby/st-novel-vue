@@ -1,3 +1,4 @@
+//src/novel/editor/components/ai/chat/chatmessage.vue
 <template>
   <div class="flex-1 p-6 overflow-y-auto" ref="chatHistoryContainer">
     <div class="max-w-5xl mx-auto space-y-6">

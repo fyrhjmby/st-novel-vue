@@ -1,14 +1,5 @@
-// src/api/novel/trashApi.ts
 import apiClient from '@/api/client';
 import type { DeletedItem, NovelDashboardItem } from '@/novel/types';
-
-/**
- * 将指定ID的小说移至回收站
- * @param novelId - 要删除的小说ID
- */
-export const moveToTrash = async (novelId: string): Promise<void> => {
-    await apiClient.delete(`/novels/${novelId}`);
-};
 
 /**
  * 获取回收站中的项目列表

@@ -1,47 +1,47 @@
-import * as projectApi from '@/api/novel/projectApi';
+import * as novelProjectApi from '@/novel/editor/api/novelProjectApi';
 import type { NovelProject } from '@/novel/editor/types/project';
 import type { Volume } from '@/novel/editor/types';
 
 /**
  * 根据ID从后端获取完整的小说项目数据
  * @param novelId - 小说ID
- * @returns 完整的小说项目对象或在出错时返回undefined
+ * @returns 完整的小说项目对象
  */
-export const getNovelProject = async (novelId: string): Promise<NovelProject | undefined> => {
-    try {
-        return await projectApi.getNovelProject(novelId);
-    } catch (error) {
-        console.error(`Failed to get novel project with ID ${novelId}:`, error);
-        return undefined;
-    }
+export const getNovelProject = (novelId: string): Promise<NovelProject> => {
+    return novelProjectApi.getNovelProject(novelId);
 };
 
 /**
- * 获取所有小说项目
- * @returns 所有小说项目的数组或在出错时返回空数组
+ * 封装导入新小说项目所需的数据
  */
-export const getAllNovelProjects = async (): Promise<NovelProject[]> => {
-    try {
-        return await projectApi.fetchAllNovelProjects();
-    } catch (error) {
-        console.error('Failed to get all novel projects:', error);
-        return [];
-    }
+type ImportData = {
+    title: string;
+    description: string;
+    category: string;
+    directoryData: Volume[];
 };
 
 /**
- * 调用后端API从解析后的数据导入一本新小说
- * @param title - 小说标题
- * @param description - 小说描述
- * @param category - 小说分类
- * @param directoryData - 卷和章节数据
- * @returns 新创建的完整小说项目
+ * 从解析后的数据导入一本新小说。
+ * @param data - 包含标题、描述、分类和章节数据等。
+ * @returns 返回新创建的完整小说项目。
  */
-export const importNovelProject = (
-    title: string,
-    description: string,
-    category: string,
-    directoryData: Volume[]
-): Promise<NovelProject> => {
-    return projectApi.importNovelProject({ title, description, category, directoryData });
+export const importNovelProject = (data: ImportData): Promise<NovelProject> => {
+    return novelProjectApi.importNovelProject(data);
+};
+
+/**
+ * 获取所有小说项目，用于参考书选择等场景。
+ * @returns 返回所有小说项目的数组。
+ */
+export const fetchAllNovelProjects = (): Promise<NovelProject[]> => {
+    return novelProjectApi.fetchAllNovelProjects();
+};
+
+/**
+ * 永久删除一个小说项目（非移入回收站）。
+ * @param novelId - 小说ID。
+ */
+export const deleteNovelProject = (novelId: string): Promise<void> => {
+    return novelProjectApi.deleteNovelProject(novelId);
 };

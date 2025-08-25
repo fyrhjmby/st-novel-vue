@@ -18,12 +18,12 @@ export const fetchApiKeys = async (): Promise<ApiKey[]> => {
     return response.data;
 };
 
-export const addApiKey = async (newKeyData: Omit<ApiKey, 'id' | 'keyFragment' | 'calls' | 'created' | 'providerShort'> & { key: string }): Promise<ApiKey> => {
+export const addApiKey = async (newKeyData: Omit<ApiKey, 'id' | 'keyFragment' | 'calls' | 'created' | 'providerShort'> & { apiKey: string }): Promise<ApiKey> => {
     const response = await apiClient.post('/api-keys', newKeyData);
     return response.data;
 };
 
-export const updateApiKey = async (keyData: Partial<ApiKey> & { id: number }): Promise<ApiKey> => {
+export const updateApiKey = async (keyData: Partial<ApiKey> & { id: number; key?: string }): Promise<ApiKey> => {
     const response = await apiClient.put(`/api-keys/${keyData.id}`, keyData);
     return response.data;
 };

@@ -140,9 +140,8 @@ const save = async () => {
   } else {
     const newKeyData = {
       provider: form.provider!.name,
-      providerShort: form.provider!.shortName,
       name: form.name,
-      key: form.key,
+      apiKey: form.key, // Corrected field name from 'key' to 'apiKey'
       baseUrl: form.baseUrl,
       model: form.model,
       status: '启用' as const
@@ -150,7 +149,7 @@ const save = async () => {
     await store.addKey(newKeyData);
   }
 
-  if (!isSaving.value) {
+  if (!store.isSaving) {
     closeModal();
   }
 };

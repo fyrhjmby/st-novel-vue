@@ -10,6 +10,7 @@ export interface Volume {
     icon?: string;
     content: string; // 卷的大纲或简介
     chapters: Chapter[];
+    order: number; // 用于排序
 }
 
 /**
@@ -18,11 +19,13 @@ export interface Volume {
 export interface Chapter {
     id:string;
     type: 'chapter';
+    volumeId: string; // 所属卷的ID
     title: string;
     icon?: string;
     wordCount: number;
     content: string; // 章节正文 (HTML)
     status: 'planned' | 'editing' | 'completed' | 'archived';
+    order: number; // 用于排序
 }
 
 /**

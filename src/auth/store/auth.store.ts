@@ -1,3 +1,4 @@
+//src/auth/store/auth.store.ts
 import { defineStore } from 'pinia';
 import type { User } from '@/types/auth';
 interface AuthState {

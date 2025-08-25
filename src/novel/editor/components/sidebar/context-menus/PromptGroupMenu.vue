@@ -1,7 +1,7 @@
 <template>
   <div>
     <p class="menu-title">模板管理</p>
-    <div @click="emit('prompt-action', 'newPrompt', { groupId: node.id })" class="context-menu-item">
+    <div @click="emit('new-prompt')" class="context-menu-item">
       <i class="fa-solid fa-plus w-4 text-center"></i>
       <span>新建提示词</span>
     </div>
@@ -20,7 +20,7 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'prompt-action', actionName: string, payload?: any): void;
+  (e: 'new-prompt'): void;
 }>();
 </script>
 

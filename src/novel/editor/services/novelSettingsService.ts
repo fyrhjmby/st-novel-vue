@@ -1,4 +1,5 @@
-import { fetchAllNovelProjects, getNovelProject } from '../api/projectApi';
+
+import * as novelProjectService from '@/novel/services/novelProjectService';
 import type { NovelProject } from '@/novel/editor/types/project';
 import type { NovelMetadata } from '@/novel/editor/types';
 
@@ -13,7 +14,7 @@ class NovelSettingsService {
         if (!novelIds || novelIds.length === 0) return [];
 
         const projects = await Promise.all(
-            novelIds.map(id => getNovelProject(id))
+            novelIds.map(id => novelProjectService.getNovelProject(id).catch(() => undefined))
         );
 
         return projects.filter((p): p is NovelProject => p !== undefined);
@@ -25,11 +26,11 @@ class NovelSettingsService {
      * @returns 可用的参考小说项目数组。
      */
     public async getAvailableReferenceNovels(novelMetadata: NovelMetadata | null): Promise<NovelProject[]> {
-        const allNovels = await fetchAllNovelProjects();
+        const allNovels = await novelProjectService.fetchAllNovelProjects();
         if (!novelMetadata) return allNovels;
 
         const currentAndReferencedIds = new Set([
-            ...novelMetadata.referenceNovelIds,
+            ...(novelMetadata.referenceNovelIds || []),
             novelMetadata.id
         ]);
 

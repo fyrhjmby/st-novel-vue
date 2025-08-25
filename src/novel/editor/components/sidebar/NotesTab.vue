@@ -49,6 +49,7 @@
   </div>
 </template>
 <script setup lang="ts">
+// 文件: ..\src\novel\editor\components\sidebar\NotesTab.vue
 import { ref, computed, watch, nextTick, onBeforeUpdate } from 'vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useNotesStore } from '@/novel/editor/stores/notesStore';
@@ -87,14 +88,22 @@ onBeforeUpdate(() => {
   renameInputs.value = [];
 });
 
+const addNewNoteAndEdit = async (title: string) => {
+  const newNote = await notesStore.addNote(title);
+  if (newNote) {
+    editorStore.openTab(newNote.id);
+    uiStore.setEditingNodeId(newNote.id);
+  }
+};
+
 const handleAddNewNote = () => {
-  notesStore.addNote('新建笔记');
+  addNewNoteAndEdit('新建笔记');
 };
 
 const handleQuickAdd = () => {
   const value = quickAddValue.value.trim();
   if (!value) return;
-  notesStore.addNote(value);
+  addNewNoteAndEdit(value);
   quickAddValue.value = '';
 };
 
