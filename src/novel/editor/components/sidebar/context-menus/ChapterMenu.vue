@@ -1,34 +1,34 @@
 <template>
   <div>
     <p class="menu-title">文件操作</p>
-    <div @click="emit('rename')" class="context-menu-item">
+    <div @click="dispatch('rename')" class="context-menu-item">
       <i class="fa-solid fa-pencil w-4 text-center"></i>
       <span>重命名</span>
     </div>
     <div class="context-menu-divider"></div>
     <p class="menu-title">AI 助手</p>
-    <div @click="emit('ai-task', '分析')" class="context-menu-item">
+    <div @click="dispatch('ai-task', { taskType: '分析' })" class="context-menu-item">
       <i class="fa-solid fa-magnifying-glass-chart w-4 text-center text-[#F59E0B]"></i>
       <span>分析内容</span>
     </div>
-    <div @click="emit('ai-task', '剧情生成')" class="context-menu-item">
+    <div @click="dispatch('ai-task', { taskType: '剧情生成' })" class="context-menu-item">
       <i class="fa-solid fa-feather w-4 text-center text-[#EC4899]"></i>
       <span>生成剧情</span>
     </div>
-    <div @click="emit('ai-task', '创作')" class="context-menu-item">
+    <div @click="dispatch('ai-task', { taskType: '创作' })" class="context-menu-item">
       <i class="fa-solid fa-pen-nib w-4 text-center text-violet-500"></i>
       <span>创作正文</span>
     </div>
-    <div @click="emit('ai-task', '续写')" class="context-menu-item">
+    <div @click="dispatch('ai-task', { taskType: '续写' })" class="context-menu-item">
       <i class="fa-solid fa-wand-magic-sparkles w-4 text-center text-[#4B5563]"></i>
       <span>续写内容</span>
     </div>
-    <div @click="emit('ai-task', '润色')" class="context-menu-item">
+    <div @click="dispatch('ai-task', { taskType: '润色' })" class="context-menu-item">
       <i class="fa-solid fa-palette w-4 text-center text-[#3B82F6]"></i>
       <span>润色内容</span>
     </div>
     <div class="context-menu-divider"></div>
-    <div @click="emit('delete')" class="context-menu-item danger">
+    <div @click="dispatch('delete')" class="context-menu-item danger">
       <i class="fa-solid fa-trash-can w-4 text-center"></i>
       <span>删除章节</span>
     </div>
@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import type { PropType } from 'vue';
-import type { AITask, TreeNode } from '@/novel/editor/types';
+import type { TreeNode } from '@/novel/editor/types';
 
 defineProps({
   node: {
@@ -47,10 +47,12 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'rename'): void;
-  (e: 'delete'): void;
-  (e: 'ai-task', taskType: AITask['type'], isBatch?: boolean): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
+
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
+};
 </script>
 
 <style scoped>

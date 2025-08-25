@@ -1,4 +1,3 @@
-
 <template>
   <div class="related-tab-container">
     <div class="header">
@@ -20,11 +19,11 @@
       <input type="text" placeholder="搜索相关内容..." class="search-input">
     </div>
     <TreeView
-        v-if="relatedTree.length > 0"
-        :nodes="relatedTree"
+        v-if="treeNodes.length > 0"
+        :nodes="treeNodes"
         :active-node-id="activeNodeId"
-        :expanded-node-ids="uiStore.uiState.expandedRelatedNodeIds"
-        :editing-node-id="editorStore.editingNodeId"
+        :expanded-node-ids="expandedNodeIds"
+        :editing-node-id="editingNodeId"
         @select-node="handleSelectNode"
         @toggle-expansion="handleToggleExpansion"
         @context-menu="handleContextMenu"
@@ -37,13 +36,11 @@
   </div>
 </template>
 <script setup lang="ts">
-// 文件: ..\src\novel\editor\components\sidebar\RelatedTab.vue
-import { computed } from 'vue';
 import TreeView from './TreeView.vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
-import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
+import { useRelatedContentTreeAdapter } from '@/novel/editor/composables/useRelatedContentTreeAdapter';
 import type { TreeNode } from '@/novel/editor/types';
 
 const emit = defineEmits<{
@@ -52,60 +49,21 @@ const emit = defineEmits<{
 
 const editorStore = useEditorStore();
 const relatedContentStore = useRelatedContentStore();
-const promptTemplateStore = usePromptTemplateStore();
 const uiStore = useUIStore();
 
-const activeNodeId = computed(() => editorStore.activeTabId);
-
-const relatedTree = computed((): TreeNode[] => {
-  return relatedContentStore.relatedData;
-});
-
-const handleSelectNode = (node: TreeNode) => {
-  if ('content' in node && node.content !== undefined) {
-    editorStore.openTab(node.id);
-  } else if(node.children && node.children.length > 0) {
-    uiStore.toggleRelatedNodeExpansion(node.id);
-  }
-};
-
-const handleToggleExpansion = (id: string) => {
-  uiStore.toggleRelatedNodeExpansion(id);
-};
+const {
+  treeNodes,
+  activeNodeId,
+  expandedNodeIds,
+  editingNodeId,
+  handleSelectNode,
+  handleToggleExpansion,
+  handleCommitRename,
+  handleCancelRename
+} = useRelatedContentTreeAdapter();
 
 const handleContextMenu = (payload: { node: TreeNode; event: MouseEvent }) => {
   emit('show-context-menu', payload);
-};
-
-const handleCommitRename = (payload: { nodeId: string; newTitle: string; nodeType: string }) => {
-  if (payload.newTitle.trim()) {
-    switch (payload.nodeType) {
-      case 'prompt_item':
-        promptTemplateStore.renamePrompt(payload.nodeId, payload.newTitle);
-        break;
-      case 'others_item':
-        relatedContentStore.renameCustomOthersNode(payload.nodeId, payload.newTitle);
-        break;
-      case 'plot_item':
-      case 'analysis_item':
-        // Check if it's a custom one or a settings one
-        if (payload.nodeId.startsWith('custom-')) {
-          relatedContentStore.renameCustomRelatedNode(payload.nodeId, payload.newTitle);
-        } else {
-          relatedContentStore.renameRelatedNode(payload.nodeId, payload.newTitle);
-        }
-        break;
-      default:
-        // Generic rename for groups, items in settings etc.
-        relatedContentStore.renameRelatedNode(payload.nodeId, payload.newTitle);
-        break;
-    }
-  }
-  uiStore.setEditingNodeId(null);
-};
-
-const handleCancelRename = () => {
-  uiStore.setEditingNodeId(null);
 };
 
 const handleAddNewCustomPlot = () => {

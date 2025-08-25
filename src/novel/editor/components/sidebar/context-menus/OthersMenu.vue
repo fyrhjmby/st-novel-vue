@@ -1,7 +1,7 @@
 <template>
   <div>
     <p class="menu-title">管理</p>
-    <div @click="emit('new-item')" class="context-menu-item">
+    <div @click="dispatch('new-item')" class="context-menu-item">
       <i class="fa-solid fa-plus w-4 text-center"></i>
       <span>新建其他条目</span>
     </div>
@@ -20,8 +20,12 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'new-item'): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
+
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
+};
 </script>
 
 <style scoped>

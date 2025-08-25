@@ -1,5 +1,4 @@
-// 文件: src\novel\editor\components\sidebar\NotesTab.vue
-
+// 文件: ..\src\novel\editor\components\sidebar\NotesTab.vue
 <template>
   <div class="notes-tab-container">
     <div class="header">
@@ -49,13 +48,11 @@
   </div>
 </template>
 <script setup lang="ts">
-// 文件: ..\src\novel\editor\components\sidebar\NotesTab.vue
 import { ref, computed, watch, nextTick, onBeforeUpdate } from 'vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useNotesStore } from '@/novel/editor/stores/notesStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
-import type { NoteItem } from '@/novel/editor/types';
-import type { TreeNode } from './TreeView.vue';
+import type { NoteItem, TreeNode } from '@/novel/editor/types';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
 
 const emit = defineEmits<{

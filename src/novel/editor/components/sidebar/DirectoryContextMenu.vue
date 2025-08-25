@@ -8,14 +8,7 @@
     <component
         :is="menuComponent"
         :node="node!"
-        @rename="handleRename"
-        @delete="handleGenericDelete"
-        @ai-task="handleAiTask"
-        @new-chapter="handleNewChapter"
-        @new-volume="handleNewVolume"
-        @new-group="handleGenericNewGroup"
-        @new-item="handleGenericNewItem"
-        @new-prompt="handleNewPrompt"
+        @dispatch-action="handleAction"
     />
   </div>
 </template>
@@ -30,7 +23,8 @@ import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStor
 import { useNotesStore } from '@/novel/editor/stores/notesStore';
 import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
-import type { AITask } from '@/novel/editor/types';
+import { useAITaskStore } from '@/novel/editor/stores/ai/aiTaskStore';
+import { useDerivedContentStore } from '@/novel/editor/stores/derivedContentStore';
 
 // --- 组件映射 ---
 const menuComponentMap = shallowRef({
@@ -52,6 +46,7 @@ const menuComponentMap = shallowRef({
 const visible = ref(false);
 const position = ref({ x: 0, y: 0 });
 const node = ref<TreeNode | null>(null);
+const menuRef = ref<HTMLElement | null>(null);
 
 // --- Stores and Composables ---
 const { executeAITask } = useAITaskExecutor();
@@ -61,6 +56,8 @@ const relatedContentStore = useRelatedContentStore();
 const notesStore = useNotesStore();
 const promptTemplateStore = usePromptTemplateStore();
 const uiStore = useUIStore();
+const aiTaskStore = useAITaskStore();
+const derivedContentStore = useDerivedContentStore();
 
 // --- Computed ---
 const menuComponent = computed(() => {
@@ -100,183 +97,119 @@ const hide = () => {
   node.value = null;
 };
 
-// --- Event Handlers (New Simplified Structure) ---
+// --- Centralized Action Handler ---
+const handleAction = async (event: { type: string; payload?: any }) => {
+  if (!node.value) return; // Guard against race conditions
 
-// Generic Dispatchers
-const handleGenericDelete = () => {
-  if (!node.value) return;
-  const { type, id } = node.value;
+  const { type, payload } = event;
+  const nodeId = node.value.id;
+  const nodeType = node.value.type;
 
-  if (type === 'volume' || type === 'chapter') {
-    handleDeleteDirectoryNode();
-  } else if (type === 'note') {
-    handleDeleteNote();
-  } else if (type === 'prompt_item') {
-    handleDeletePrompt();
-  } else if (id.startsWith('custom-others-')) {
-    handleDeleteOthersNode();
-  } else if (id.startsWith('custom-')) {
-    handleDeleteCustomRelatedNode();
-  } else {
-    handleDeleteRelatedNode();
+  hide(); // Hide menu immediately on action
+
+  switch (type) {
+    case 'rename':
+      uiStore.setEditingNodeId(nodeId);
+      break;
+
+    case 'delete':
+      if (nodeType === 'volume' || nodeType === 'chapter') {
+        if (await directoryStore.deleteNode(nodeId)) editorStore.closeTab(nodeId);
+      } else if (nodeType === 'note') {
+        if (await notesStore.deleteNote(nodeId)) editorStore.closeTab(nodeId);
+      } else if (nodeType === 'prompt_item') {
+        if (confirm('确定要删除这个提示词模板吗？')) {
+          if (promptTemplateStore.deletePrompt(nodeId)) editorStore.closeTab(nodeId);
+        }
+      } else if (nodeId.startsWith('custom-others-')) {
+        if (relatedContentStore.deleteCustomOthersNode(nodeId)) editorStore.closeTab(nodeId);
+      } else if (nodeId.startsWith('custom-')) {
+        if (relatedContentStore.deleteCustomRelatedNode(nodeId)) editorStore.closeTab(nodeId);
+      } else if (nodeType === 'plot_item' || nodeType === 'analysis_item') {
+        if (await derivedContentStore.deleteDerivedItem(nodeId)) editorStore.closeTab(nodeId);
+      } else { // Handles generic settings items (character_item, etc.)
+        if (relatedContentStore.deleteRelatedNode(nodeId)) editorStore.closeTab(nodeId);
+      }
+      break;
+
+    case 'ai-task':
+      if (payload.isBatch && nodeType === 'volume' && 'originalData' in node.value) {
+        aiTaskStore.startBatchTaskForVolume(payload.taskType, node.value.originalData);
+      } else {
+        executeAITask(payload.taskType, { id: nodeId, title: node.value.title });
+      }
+      break;
+
+    case 'new-volume':
+      const newVolume = await directoryStore.addNewVolume();
+      if (newVolume) uiStore.setEditingNodeId(newVolume.id);
+      break;
+
+    case 'new-chapter':
+      const newChapter = await directoryStore.addChapterToVolume(nodeId);
+      if (newChapter) {
+        uiStore.ensureNodeIsExpanded(nodeId);
+        editorStore.openTab(newChapter.id);
+        uiStore.setEditingNodeId(newChapter.id);
+      }
+      break;
+
+    case 'new-group':
+      const newGroup = relatedContentStore.addRelatedNode(nodeId, 'group');
+      if (newGroup) {
+        uiStore.ensureRelatedNodeIsExpanded(nodeId);
+        uiStore.setEditingNodeId(newGroup.id);
+      }
+      break;
+
+    case 'new-item':
+      if (nodeType === 'root' && (nodeId === 'plot' || nodeId === 'analysis')) {
+        const newItem = relatedContentStore.addCustomRelatedNode(payload.target);
+        uiStore.ensureRelatedNodeIsExpanded(payload.target);
+        editorStore.openTab(newItem.id);
+        uiStore.setEditingNodeId(newItem.id);
+      } else if (nodeType === 'root' && nodeId === 'others') {
+        const newItem = relatedContentStore.addCustomOthersNode();
+        uiStore.ensureRelatedNodeIsExpanded('others');
+        editorStore.openTab(newItem.id);
+        uiStore.setEditingNodeId(newItem.id);
+      } else { // Generic new item in a group
+        const newItem = relatedContentStore.addRelatedNode(nodeId, 'item');
+        if (newItem) {
+          uiStore.ensureRelatedNodeIsExpanded(nodeId);
+          editorStore.openTab(newItem.id);
+          uiStore.setEditingNodeId(newItem.id);
+        }
+      }
+      break;
+
+    case 'new-prompt':
+      const newPrompt = promptTemplateStore.addPrompt(nodeId, '新建提示词', '在这里输入你的提示词模板...');
+      if (newPrompt) {
+        uiStore.ensureRelatedNodeIsExpanded(nodeId);
+        editorStore.openTab(newPrompt.id);
+        uiStore.setEditingNodeId(newPrompt.id);
+      }
+      break;
   }
 };
 
-const handleGenericNewItem = (payload?: 'plot' | 'analysis') => {
-  if (!node.value) return;
-  const { type, id } = node.value;
-  if (type === 'root' && (id === 'plot' || id === 'analysis')) {
-    handleNewCustomItem(payload!);
-  } else if (id === 'others') {
-    handleNewOthersItem();
-  } else {
-    handleNewSettingsItem();
+// --- Lifecycle & Event Handling ---
+const handleClickOutside = (event: MouseEvent) => {
+  if (menuRef.value && !menuRef.value.contains(event.target as Node)) {
+    hide();
   }
 };
 
-const handleGenericNewGroup = () => {
-  handleNewSettingsGroup();
-};
+onMounted(() => {
+  window.addEventListener('click', handleClickOutside, true);
+  window.addEventListener('contextmenu', hide, true);
+});
 
-// AI Task
-const handleAiTask = (taskType: AITask['type'], isBatch = false) => {
-  hide();
-  if (!node.value) return;
-  if (isBatch && node.value.type === 'volume' && 'originalData' in node.value && node.value.originalData.type === 'volume') {
-    const aiTaskStore = (async () => (await import('@/novel/editor/stores/ai/aiTaskStore')).useAITaskStore())();
-    aiTaskStore.then(store => store.startBatchTaskForVolume(taskType, node.value!.originalData));
-  } else {
-    executeAITask(taskType, { id: node.value.id, title: node.value.title });
-  }
-};
-
-const handleRename = () => {
-  hide();
-  if (node.value) uiStore.setEditingNodeId(node.value.id);
-};
-
-// Directory Actions
-const handleNewChapter = async () => {
-  hide();
-  if (node.value) {
-    const newChapter = await directoryStore.addChapterToVolume(node.value.id);
-    if (newChapter) {
-      uiStore.ensureNodeIsExpanded(node.value.id);
-      editorStore.openTab(newChapter.id);
-      uiStore.setEditingNodeId(newChapter.id);
-    }
-  }
-};
-const handleNewVolume = async () => {
-  hide();
-  const newVolume = await directoryStore.addNewVolume();
-  if (newVolume) {
-    uiStore.setEditingNodeId(newVolume.id);
-  }
-};
-const handleDeleteDirectoryNode = async () => {
-  hide();
-  if (node.value) {
-    if (await directoryStore.deleteNode(node.value.id)) {
-      editorStore.closeTab(node.value.id);
-    }
-  }
-};
-
-// Settings / Related Actions
-const handleNewSettingsGroup = () => {
-  hide();
-  if (node.value) {
-    const newNode = relatedContentStore.addRelatedNode(node.value.id, 'group');
-    if (newNode) {
-      uiStore.ensureRelatedNodeIsExpanded(node.value.id);
-      uiStore.setEditingNodeId(newNode.id);
-    }
-  }
-};
-const handleNewSettingsItem = () => {
-  hide();
-  if (node.value) {
-    const newNode = relatedContentStore.addRelatedNode(node.value.id, 'item');
-    if (newNode) {
-      uiStore.ensureRelatedNodeIsExpanded(node.value.id);
-      editorStore.openTab(newNode.id);
-      uiStore.setEditingNodeId(newNode.id);
-    }
-  }
-};
-const handleDeleteRelatedNode = () => {
-  hide();
-  if (node.value && relatedContentStore.deleteRelatedNode(node.value.id)) {
-    editorStore.closeTab(node.value.id);
-  }
-};
-
-// Custom Plot/Analysis Actions
-const handleNewCustomItem = (target: 'plot' | 'analysis') => {
-  hide();
-  const newNode = relatedContentStore.addCustomRelatedNode(target);
-  uiStore.ensureRelatedNodeIsExpanded(target);
-  editorStore.openTab(newNode.id);
-  uiStore.setEditingNodeId(newNode.id);
-};
-const handleDeleteCustomRelatedNode = () => {
-  hide();
-  if (node.value && relatedContentStore.deleteCustomRelatedNode(node.value.id)) {
-    editorStore.closeTab(node.value.id);
-  }
-};
-
-// Others Actions
-const handleNewOthersItem = () => {
-  hide();
-  const newNode = relatedContentStore.addCustomOthersNode();
-  uiStore.ensureRelatedNodeIsExpanded('others');
-  editorStore.openTab(newNode.id);
-  uiStore.setEditingNodeId(newNode.id);
-};
-const handleDeleteOthersNode = () => {
-  hide();
-  if (node.value && relatedContentStore.deleteCustomOthersNode(node.value.id)) {
-    editorStore.closeTab(node.value.id);
-  }
-};
-
-// Note Actions
-const handleDeleteNote = async () => {
-  hide();
-  if (node.value) {
-    if (await notesStore.deleteNote(node.value.id)) {
-      editorStore.closeTab(node.value.id);
-    }
-  }
-};
-
-// Prompt Actions
-const handleNewPrompt = () => {
-  hide();
-  if(!node.value) return;
-  const newNode = promptTemplateStore.addPrompt(node.value.id, '新建提示词', '在这里输入你的提示词模板...');
-  if (newNode) {
-    uiStore.ensureRelatedNodeIsExpanded(node.value.id);
-    editorStore.openTab(newNode.id);
-    uiStore.setEditingNodeId(newNode.id);
-  }
-};
-
-const handleDeletePrompt = () => {
-  hide();
-  if (!node.value) return;
-  if (confirm('确定要删除这个提示词模板吗？')) {
-    if (promptTemplateStore.deletePrompt(node.value.id)) {
-      editorStore.closeTab(node.value.id);
-    }
-  }
-};
-
-// --- Lifecycle ---
-onMounted(() => { window.addEventListener('click', hide); });
-onBeforeUnmount(() => { window.removeEventListener('click', hide); });
+onBeforeUnmount(() => {
+  window.removeEventListener('click', handleClickOutside, true);
+  window.removeEventListener('contextmenu', hide, true);
+});
 
 defineExpose({ show, hide });
 </script>

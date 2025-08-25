@@ -3,6 +3,504 @@
 // == 文件内容 ==
 
 // =
+// 文件: ..\src\novel\dashboard\api\dashboardApi.ts
+//
+
+// 文件: ..\src\novel\dashboard\api\dashboardApi.ts
+
+import apiClient from '@/api/client';
+import type { NovelDashboardItem, NovelCategory } from '@/novel/types';
+
+/**
+ * 从后端获取小说仪表盘列表
+ * @returns 返回小说项目摘要列表
+ */
+export const fetchNovels = async (): Promise<NovelDashboardItem[]> => {
+    const response = await apiClient.get('/novels');
+    return response.data;
+};
+
+/**
+ * 获取所有可用的小说分类
+ * @returns 返回分类名称数组
+ */
+export const fetchAvailableCategories = async (): Promise<NovelCategory[]> => {
+    const response = await apiClient.get('/novels/categories');
+    return response.data;
+};
+
+/**
+ * 将指定ID的小说移至回收站
+ * @param novelId - 要删除的小说ID
+ */
+export const moveToTrash = async (novelId: string): Promise<void> => {
+    await apiClient.delete(`/novels/${novelId}`);
+};
+
+// =
+// 文件: ..\src\novel\dashboard\api\recentApi.ts
+//
+
+import apiClient from '@/api/client';
+import type { RecentActivityItem } from '@/novel/types';
+
+/**
+ * 获取最近活动列表
+ * @returns 返回最近活动项目列表
+ */
+export const fetchRecentItems = async (): Promise<RecentActivityItem[]> => {
+    const response = await apiClient.get('/recent-items');
+    return response.data;
+};
+
+/**
+ * 记录一次小说访问活动
+ * @param novelId - 被访问的小说ID
+ * @returns 返回新创建的活动记录
+ */
+export const logRecentAccess = async (novelId: string): Promise<RecentActivityItem> => {
+    const response = await apiClient.post('/recent-items', { novelId });
+    return response.data;
+};
+
+// =
+// 文件: ..\src\novel\dashboard\api\trashApi.ts
+//
+
+import apiClient from '@/api/client';
+import type { DeletedItem, NovelDashboardItem } from '@/novel/types';
+
+/**
+ * 获取回收站中的项目列表
+ * @returns 返回已删除项目列表
+ */
+export const fetchTrashedItems = async (): Promise<DeletedItem[]> => {
+    const response = await apiClient.get('/trash/novels');
+    return response.data;
+};
+
+/**
+ * 从回收站恢复指定的项目
+ * @param itemId - 要恢复的项目ID
+ * @returns 返回恢复后的小说摘要信息
+ */
+export const restoreItem = async (itemId: string): Promise<NovelDashboardItem> => {
+    const response = await apiClient.post(`/trash/novels/${itemId}/restore`);
+    return response.data;
+};
+
+/**
+ * 从回收站永久删除指定的项目
+ * @param itemId - 要永久删除的项目ID
+ */
+export const deleteItemPermanently = async (itemId: string): Promise<void> => {
+    await apiClient.delete(`/trash/novels/${itemId}`);
+};
+
+// =
+// 文件: ..\src\novel\dashboard\config\sidebar.config.ts
+//
+
+
+export interface NavItem {
+    name: string;
+    path: string;
+    icon: string;
+}
+
+export const mainNavItems: NavItem[] = [
+    {
+        name: '我的小说',
+        path: '/novel/dashboard',
+        icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7H15M9 11H15M9 15H13"/></svg>`
+    },
+    {
+        name: '最近编辑',
+        path: '/novel/recent',
+        icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6V12L16 16"/></svg>`
+    },
+    {
+        name: '回收站',
+        path: '/novel/trash',
+        icon: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M5 6V20a2 2 0 002 2h10a2 2 0 002-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>`
+    },
+    {
+        name: '导出小说',
+        path: '/novel/export',
+        icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>`
+    }
+];
+
+// =
+// 文件: ..\src\novel\dashboard\router.ts
+//
+
+import type { RouteRecordRaw } from 'vue-router'
+
+export const dashboardRoutes: Array<RouteRecordRaw> = [
+    {
+        path: 'dashboard',
+        name: 'NovelDashboard',
+        component: () => import('@/novel/dashboard/views/DashboardView.vue'),
+        meta: { title: '我的小说' }
+    },
+    {
+        path: 'recent',
+        name: 'NovelRecent',
+        component: () => import('@/novel/dashboard/views/RecentView.vue'),
+        meta: { title: '最近编辑' }
+    },
+    {
+        path: 'trash',
+        name: 'NovelTrash',
+        component: () => import('@/novel/dashboard/views/TrashView.vue'),
+        meta: { title: '回收站' }
+    },
+    {
+        path: 'import',
+        name: 'NovelImport',
+        component: () => import('@/novel/dashboard/views/ImportView.vue'),
+        meta: { title: '导入小说' }
+    },
+    {
+        path: 'new',
+        name: 'NovelNew',
+        component: () => import('@/novel/dashboard/views/NewNovelView.vue'),
+        meta: { title: '新建小说' }
+    },
+    {
+        path: 'export',
+        name: 'NovelExport',
+        component: () => import('@/novel/dashboard/views/ExportView.vue'),
+        meta: { title: '导出小说' }
+    },
+]
+
+// =
+// 文件: ..\src\novel\dashboard\services\novelService.ts
+//
+
+// 文件: ..\src\novel\dashboard\services\novelService.ts
+
+import * as dashboardApi from '../api/dashboardApi';
+import type { NovelCategory, NovelDashboardItem } from '@/novel/types';
+
+export const fetchNovels = (): Promise<NovelDashboardItem[]> => {
+    return dashboardApi.fetchNovels();
+};
+
+export const fetchAvailableCategories = (): Promise<NovelCategory[]> => {
+    return dashboardApi.fetchAvailableCategories();
+};
+
+export const moveToTrash = (novelId: string): Promise<void> => {
+    return dashboardApi.moveToTrash(novelId);
+};
+
+// =
+// 文件: ..\src\novel\dashboard\services\recentService.ts
+//
+
+import * as recentApi from '../api/recentApi';
+import type { RecentActivityItem } from '@/novel/types';
+
+export const fetchRecentItems = (): Promise<RecentActivityItem[]> => {
+    return recentApi.fetchRecentItems();
+};
+
+export const logRecentAccess = (novelId: string): Promise<RecentActivityItem> => {
+    return recentApi.logRecentAccess(novelId);
+};
+
+// =
+// 文件: ..\src\novel\dashboard\services\trashService.ts
+//
+
+import * as trashApi from '../api/trashApi';
+import type { DeletedItem, NovelDashboardItem } from '@/novel/types';
+
+export const fetchTrashedItems = (): Promise<DeletedItem[]> => {
+    return trashApi.fetchTrashedItems();
+};
+
+export const restoreItem = (itemId: string): Promise<NovelDashboardItem> => {
+    return trashApi.restoreItem(itemId);
+};
+
+export const deleteItemPermanently = (itemId: string): Promise<void> => {
+    return trashApi.deleteItemPermanently(itemId);
+};
+
+// =
+// 文件: ..\src\novel\dashboard\stores\novelStore.ts
+//
+
+// src/novel/dashboard/stores/novelStore.ts
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+import type { NovelDashboardItem, NovelCategory } from '@/novel/types';
+import * as novelService from '@/novel/dashboard/services/novelService';
+
+export const useNovelStore = defineStore('novel-dashboard-novels', () => {
+    const novels = ref<NovelDashboardItem[]>([]);
+    const availableCategories = ref<NovelCategory[]>([]);
+    const searchQuery = ref('');
+    const selectedCategory = ref<NovelCategory | '全部类型'>('全部类型');
+    const isLoading = ref(false);
+
+    const filteredNovels = computed(() => {
+        return novels.value.filter(novel => {
+            const matchesCategory = selectedCategory.value === '全部类型' || novel.category === selectedCategory.value;
+            const matchesSearch = novel.title.toLowerCase().includes(searchQuery.value.toLowerCase()) || novel.tags.some(tag => tag.text.toLowerCase().includes(searchQuery.value.toLowerCase()));
+            return matchesCategory && matchesSearch;
+        });
+    });
+
+    const fetchNovels = async () => {
+        isLoading.value = true;
+        try {
+            novels.value = await novelService.fetchNovels();
+        } catch (error) {
+            console.error('Failed to fetch novels:', error);
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+    const fetchCategories = async () => {
+        try {
+            availableCategories.value = await novelService.fetchAvailableCategories();
+        } catch (error) {
+            console.error('Failed to fetch categories:', error);
+        }
+    };
+
+    const initializeDashboard = () => {
+        fetchNovels();
+        fetchCategories();
+    };
+
+    const addNovel = (newNovel: NovelDashboardItem) => {
+        novels.value.unshift(newNovel);
+    };
+
+    const createNovel = async (data: { title: string; synopsis: string; category: NovelCategory }) => {
+        try {
+            const newNovel = await novelService.createNovel(data);
+            addNovel(newNovel);
+        } catch (error) {
+            console.error('Failed to create novel:', error);
+            // 这里可以添加用户反馈，例如弹窗提示
+        }
+    };
+
+    const deleteNovel = async (novelId: string) => {
+        try {
+            await novelService.moveToTrash(novelId);
+            const index = novels.value.findIndex(n => n.id === novelId);
+            if (index !== -1) {
+                novels.value.splice(index, 1);
+            }
+        } catch (error) {
+            console.error('Failed to delete novel:', error);
+        }
+    };
+
+    return {
+        novels,
+        searchQuery,
+        selectedCategory,
+        filteredNovels,
+        availableCategories,
+        isLoading,
+        initializeDashboard,
+        fetchNovels,
+        addNovel,
+        createNovel,
+        deleteNovel,
+    };
+});
+
+// =
+// 文件: ..\src\novel\dashboard\stores\recentStore.ts
+//
+
+// src/novel/dashboard/stores/recentStore.ts
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+import type { NovelDashboardItem, RecentActivityItem } from '@/novel/types';
+import * as recentService from '@/novel/dashboard/services/recentService';
+import { formatDistanceToNowStrict } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
+
+const RECENTS_QUEUE_LIMIT = 10;
+
+const formatTimeAgo = (isoString: string): string => {
+    const date = new Date(isoString);
+    const diff = new Date().getTime() - date.getTime();
+    if (diff < 60000) { // 1分钟内
+        return '刚刚';
+    }
+    return formatDistanceToNowStrict(date, { addSuffix: true, locale: zhCN });
+};
+
+export const useRecentStore = defineStore('novel-dashboard-recent', () => {
+    const recentItems = ref<RecentActivityItem[]>([]);
+    const isLoading = ref(false);
+
+    const groupedRecentItems = computed(() => {
+        const groups: { period: string; items: RecentActivityItem[] }[] = [];
+        if (recentItems.value.length === 0) return groups;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+
+        const sortedItems = [...recentItems.value].sort((a, b) => new Date(b.editedAt).getTime() - new Date(a.editedAt).getTime());
+
+        sortedItems.forEach(item => {
+            item.formattedTime = formatTimeAgo(item.editedAt);
+        });
+
+        const todayItems: RecentActivityItem[] = [];
+        const yesterdayItems: RecentActivityItem[] = [];
+        const earlierItems: RecentActivityItem[] = [];
+
+        sortedItems.forEach(item => {
+            const itemDate = new Date(item.editedAt);
+            itemDate.setHours(0, 0, 0, 0);
+
+            if (itemDate.getTime() === today.getTime()) {
+                todayItems.push(item);
+            } else if (itemDate.getTime() === yesterday.getTime()) {
+                earlierItems.push(item);
+            } else {
+                earlierItems.push(item);
+            }
+        });
+
+        if (todayItems.length > 0) groups.push({ period: '今天', items: todayItems });
+        if (yesterdayItems.length > 0) groups.push({ period: '昨天', items: yesterdayItems });
+        if (earlierItems.length > 0) groups.push({ period: '更早', items: earlierItems });
+
+        return groups;
+    });
+
+    const fetchRecentItems = async () => {
+        isLoading.value = true;
+        try {
+            recentItems.value = await recentService.fetchRecentItems();
+        } catch (error) {
+            console.error('Failed to fetch recent items:', error);
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+    const logRecentAccess = async (novel: NovelDashboardItem) => {
+        try {
+            // 先从列表中移除旧的记录（如果存在）
+            const existingIndex = recentItems.value.findIndex(item => item.novelId === novel.id);
+            if (existingIndex !== -1) {
+                recentItems.value.splice(existingIndex, 1);
+            }
+
+            // 调用Service记录访问，并获取最新的活动项
+            const newActivity = await recentService.logRecentAccess(novel.id);
+
+            // 将新活动添加到列表顶部
+            recentItems.value.unshift(newActivity);
+
+            // 保持列表长度限制
+            if (recentItems.value.length > RECENTS_QUEUE_LIMIT) {
+                recentItems.value.pop();
+            }
+        } catch (error) {
+            console.error('Failed to log recent access:', error);
+        }
+    };
+
+    return {
+        recentItems,
+        isLoading,
+        groupedRecentItems,
+        fetchRecentItems,
+        logRecentAccess,
+    };
+});
+
+// =
+// 文件: ..\src\novel\dashboard\stores\trashStore.ts
+//
+
+// src/novel/dashboard/stores/trashStore.ts
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import type { DeletedItem } from '@/novel/types';
+import * as trashService from '@/novel/dashboard/services/trashService';
+import { useNovelStore } from './novelStore';
+
+export const useTrashStore = defineStore('novel-dashboard-trash', () => {
+    const trashedItems = ref<DeletedItem[]>([]);
+    const isLoading = ref(false);
+
+    const fetchTrashedItems = async () => {
+        isLoading.value = true;
+        try {
+            trashedItems.value = await trashService.fetchTrashedItems();
+        } catch (error) {
+            console.error('Failed to fetch trashed items:', error);
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+    const restoreItem = async (itemId: string) => {
+        try {
+            const restoredNovel = await trashService.restoreItem(itemId);
+
+            // 从回收站列表中移除
+            const index = trashedItems.value.findIndex(item => item.id === itemId);
+            if (index !== -1) {
+                trashedItems.value.splice(index, 1);
+            }
+
+            // 将恢复的小说添加回主列表
+            const novelStore = useNovelStore();
+            novelStore.addNovel(restoredNovel);
+
+        } catch (error){
+            console.error('Failed to restore item:', error);
+            alert('恢复失败，请稍后重试。');
+        }
+    };
+
+    const deleteItemPermanently = async (itemId: string) => {
+        if (confirm(`您确定要永久删除这个项目吗？此操作无法撤销。`)) {
+            try {
+                await trashService.deleteItemPermanently(itemId);
+                const index = trashedItems.value.findIndex(item => item.id === itemId);
+                if (index > -1) {
+                    trashedItems.value.splice(index, 1);
+                }
+            } catch (error) {
+                console.error('Failed to permanently delete item:', error);
+                alert('永久删除失败，请稍后重试。');
+            }
+        }
+    };
+
+    return {
+        trashedItems,
+        isLoading,
+        fetchTrashedItems,
+        restoreItem,
+        deleteItemPermanently
+    };
+});
+
+// =
 // 文件: ..\src\novel\editor\api\aiApi.ts
 //
 
@@ -486,9 +984,36 @@ export const deleteNote = async (noteId: string): Promise<void> => {
 // 文件: ..\src\novel\editor\api\novelProjectApi.ts
 //
 
+// 文件: ..\src\novel\editor\api\novelProjectApi.ts
+
 import apiClient from '@/api/client';
 import type { NovelProject } from '@/novel/editor/types/project';
-import type { Volume } from '@/novel/editor/types';
+import type { Volume, TreeNode, ItemNode } from '@/novel/editor/types';
+
+/**
+ * 创建或导入小说项目时使用的负载结构。
+ */
+export interface NovelProjectPayload {
+    title: string;
+    description: string;
+    category: string;
+    directoryData: Volume[];
+    settingsData: TreeNode[];
+    plotCustomData: ItemNode[];
+    analysisCustomData: ItemNode[];
+    othersCustomData?: ItemNode[];
+}
+
+
+/**
+ * 创建一本新的、结构完整的小说项目。
+ * @param data - 包含小说所有初始数据的负载。
+ * @returns 返回新创建的完整小说项目。
+ */
+export const createNovelProject = async (data: NovelProjectPayload): Promise<NovelProject> => {
+    const response = await apiClient.post('/novels/create-full', data);
+    return response.data;
+};
 
 /**
  * 根据ID获取一个完整的小说项目。
@@ -505,12 +1030,7 @@ export const getNovelProject = async (novelId: string): Promise<NovelProject> =>
  * @param data - 包含标题、描述和章节数据等。
  * @returns 返回新创建的完整小说项目。
  */
-export const importNovelProject = async (data: {
-    title: string;
-    description: string;
-    category: string;
-    directoryData: Volume[];
-}): Promise<NovelProject> => {
+export const importNovelProject = async (data: NovelProjectPayload): Promise<NovelProject> => {
     const response = await apiClient.post('/novels/import', data);
     return response.data;
 };
@@ -1014,6 +1534,210 @@ ${mainContentText.trim() || '无'}
     };
 
     return { buildContextForTask };
+}
+
+// =
+// 文件: ..\src\novel\editor\composables\useDirectoryTreeAdapter.ts
+//
+
+// 文件: src\novel\editor\composables\useDirectoryTreeAdapter.ts
+import { computed } from 'vue';
+import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+import { useUIStore } from '@/novel/editor/stores/uiStore';
+import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
+import type { TreeNode, VolumeNode } from '@/novel/editor/types';
+
+export function useDirectoryTreeAdapter() {
+    const directoryStore = useDirectoryStore();
+    const editorStore = useEditorStore();
+    const uiStore = useUIStore();
+
+    const treeNodes = computed((): VolumeNode[] => {
+        return directoryStore.directoryData.map(volume => ({
+            id: volume.id,
+            title: volume.title,
+            icon: getIconByNodeType(volume.type),
+            type: 'volume',
+            content: volume.content,
+            originalData: volume,
+            children: volume.chapters.map(chapter => ({
+                id: chapter.id,
+                title: chapter.title,
+                icon: getIconByNodeType(chapter.type),
+                type: 'chapter',
+                status: chapter.status,
+                content: chapter.content,
+                originalData: chapter,
+            })),
+        }));
+    });
+
+    const activeNodeId = computed(() => editorStore.activeTabId);
+    const expandedNodeIds = computed(() => uiStore.uiState.expandedNodeIds);
+    const editingNodeId = computed(() => uiStore.editingNodeId);
+
+    const handleSelectNode = (node: TreeNode) => {
+        if (node.type === 'chapter' || node.type === 'volume') {
+            editorStore.openTab(node.id);
+        } else if (node.children && node.children.length > 0) {
+            uiStore.toggleNodeExpansion(node.id);
+        }
+    };
+
+    const handleToggleExpansion = (id: string) => {
+        uiStore.toggleNodeExpansion(id);
+    };
+
+    const handleCommitRename = (payload: { nodeId: string; newTitle: string; }) => {
+        directoryStore.renameNode(payload.nodeId, payload.newTitle);
+        uiStore.setEditingNodeId(null);
+    };
+
+    const handleCancelRename = () => {
+        uiStore.setEditingNodeId(null);
+    };
+
+    return {
+        treeNodes,
+        activeNodeId,
+        expandedNodeIds,
+        editingNodeId,
+        handleSelectNode,
+        handleToggleExpansion,
+        handleCommitRename,
+        handleCancelRename
+    };
+}
+
+// =
+// 文件: ..\src\novel\editor\composables\useReferenceTreeAdapter.ts
+//
+
+// 文件: src\novel\editor\composables\useReferenceTreeAdapter.ts
+import { computed } from 'vue';
+import { useReferenceStore } from '@/novel/editor/stores/referenceStore';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+import { useUIStore } from '@/novel/editor/stores/uiStore';
+import type { TreeNode } from '@/novel/editor/types';
+
+export function useReferenceTreeAdapter() {
+    const referenceStore = useReferenceStore();
+    const editorStore = useEditorStore();
+    const uiStore = useUIStore();
+
+    const treeNodes = computed((): TreeNode[] => {
+        return referenceStore.referenceData;
+    });
+
+    const activeNodeId = computed(() => editorStore.activeTabId);
+    const expandedNodeIds = computed(() => uiStore.uiState.expandedReferenceNodeIds);
+
+    const handleSelectNode = (node: TreeNode) => {
+        // 如果节点有子节点，则切换其展开状态
+        if (node.children && node.children.length > 0) {
+            uiStore.toggleReferenceNodeExpansion(node.id);
+        }
+        // 如果节点是可打开的内容项，则在编辑器中打开它
+        else if (node.hasOwnProperty('content')) {
+            editorStore.openTab(node.id);
+        }
+    };
+
+    const handleToggleExpansion = (id: string) => {
+        uiStore.toggleReferenceNodeExpansion(id);
+    };
+
+    return {
+        treeNodes,
+        activeNodeId,
+        expandedNodeIds,
+        handleSelectNode,
+        handleToggleExpansion,
+    };
+}
+
+// =
+// 文件: ..\src\novel\editor\composables\useRelatedContentTreeAdapter.ts
+//
+
+// 文件: src\novel\editor\composables\useRelatedContentTreeAdapter.ts
+import { computed } from 'vue';
+import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+import { useUIStore } from '@/novel/editor/stores/uiStore';
+import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
+import type { TreeNode } from '@/novel/editor/types';
+
+export function useRelatedContentTreeAdapter() {
+    const relatedContentStore = useRelatedContentStore();
+    const editorStore = useEditorStore();
+    const uiStore = useUIStore();
+    const promptTemplateStore = usePromptTemplateStore();
+
+    const treeNodes = computed((): TreeNode[] => {
+        return relatedContentStore.relatedData;
+    });
+
+    const activeNodeId = computed(() => editorStore.activeTabId);
+    const expandedNodeIds = computed(() => uiStore.uiState.expandedRelatedNodeIds);
+    const editingNodeId = computed(() => uiStore.editingNodeId);
+
+    const handleSelectNode = (node: TreeNode) => {
+        if ('content' in node && node.content !== undefined) {
+            editorStore.openTab(node.id);
+        } else if (node.children && node.children.length > 0) {
+            uiStore.toggleRelatedNodeExpansion(node.id);
+        }
+    };
+
+    const handleToggleExpansion = (id: string) => {
+        uiStore.toggleRelatedNodeExpansion(id);
+    };
+
+    const handleCommitRename = (payload: { nodeId: string; newTitle: string; }) => {
+        const { node } = relatedContentStore.findNodeById(payload.nodeId) || { node: null };
+        const nodeType = node?.type;
+        const newTitle = payload.newTitle.trim();
+
+        if (newTitle) {
+            switch (nodeType) {
+                case 'prompt_item':
+                    promptTemplateStore.renamePrompt(payload.nodeId, newTitle);
+                    break;
+                case 'others_item':
+                    relatedContentStore.renameCustomOthersNode(payload.nodeId, newTitle);
+                    break;
+                case 'plot_item':
+                case 'analysis_item':
+                    if (payload.nodeId.startsWith('custom-')) {
+                        relatedContentStore.renameCustomRelatedNode(payload.nodeId, newTitle);
+                    } else {
+                        relatedContentStore.renameRelatedNode(payload.nodeId, newTitle);
+                    }
+                    break;
+                default:
+                    relatedContentStore.renameRelatedNode(payload.nodeId, newTitle);
+                    break;
+            }
+        }
+        uiStore.setEditingNodeId(null);
+    };
+
+    const handleCancelRename = () => {
+        uiStore.setEditingNodeId(null);
+    };
+
+    return {
+        treeNodes,
+        activeNodeId,
+        expandedNodeIds,
+        editingNodeId,
+        handleSelectNode,
+        handleToggleExpansion,
+        handleCommitRename,
+        handleCancelRename
+    };
 }
 
 // =
@@ -1571,6 +2295,97 @@ class NovelSettingsService {
 }
 
 export const novelSettingsService = new NovelSettingsService();
+
+// =
+// 文件: ..\src\novel\editor\services\projectInitializationService.ts
+//
+
+// 文件: src\novel\editor\services\projectInitializationService.ts
+
+import type { TreeNode, ItemNode, Volume, Chapter } from '@/novel/editor/types';
+import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
+
+const createOverviewNode = (parentId: string, title: string): TreeNode => ({
+    id: `${parentId}_overview`,
+    title: `${title}总览`,
+    type: `${parentId}_overview`,
+    icon: getIconByNodeType(`${parentId}_overview`),
+    content: `<p class="overview-placeholder">此分类下暂无内容，请添加条目。</p>`,
+    isOverview: true,
+    isReadOnly: true,
+});
+
+export const createDefaultSettingsTree = (): TreeNode[] => {
+    const settingRoot: TreeNode = {
+        id: 'setting',
+        title: '设定',
+        type: 'root',
+        icon: getIconByNodeType('setting'),
+        children: [
+            {
+                id: 'characters', title: '角色', type: 'group', icon: getIconByNodeType('group'),
+                children: [createOverviewNode('characters', '角色')]
+            },
+            {
+                id: 'locations', title: '地点', type: 'group', icon: getIconByNodeType('group'),
+                children: [createOverviewNode('locations', '地点')]
+            },
+            {
+                id: 'items', title: '物品', type: 'group', icon: getIconByNodeType('group'),
+                children: [createOverviewNode('items', '物品')]
+            },
+            {
+                id: 'worldview', title: '世界观', type: 'group', icon: getIconByNodeType('group'),
+                children: [createOverviewNode('worldview', '世界观')]
+            }
+        ]
+    };
+    return [settingRoot];
+};
+
+export const createDefaultPlotItem = (): ItemNode[] => {
+    return [{
+        id: `custom-plot-${Date.now()}`,
+        title: '初始剧情节点',
+        type: 'plot_item',
+        icon: getIconByNodeType('plot_item'),
+        content: `<h1>初始剧情节点</h1><p>在这里开始构建你的故事剧情。</p>`,
+    }];
+};
+
+export const createDefaultAnalysisItem = (): ItemNode[] => {
+    return [{
+        id: `custom-analysis-${Date.now()}`,
+        title: '初始分析节点',
+        type: 'analysis_item',
+        icon: getIconByNodeType('analysis_item'),
+        content: `<h1>初始分析节点</h1><p>在这里记录你对故事的分析和思考。</p>`,
+    }];
+};
+
+export const createDefaultDirectory = (): Volume[] => {
+    const chapterId = `ch-default-${Date.now()}`;
+    const volumeId = `vol-default-${Date.now()}`;
+    const defaultChapter: Chapter = {
+        id: chapterId,
+        type: 'chapter',
+        volumeId: volumeId,
+        title: '第一章',
+        wordCount: 0,
+        content: `<h1>第一章</h1><p>故事从这里开始...</p>`,
+        status: 'editing',
+        order: 0,
+    };
+    const defaultVolume: Volume = {
+        id: volumeId,
+        type: 'volume',
+        title: '第一卷',
+        content: `<h1>第一卷</h1><p>故事的第一卷。</p>`,
+        chapters: [defaultChapter],
+        order: 0,
+    };
+    return [defaultVolume];
+};
 
 // =
 // 文件: ..\src\novel\editor\services\promptService.ts
@@ -3265,7 +4080,7 @@ export const useDirectoryStore = defineStore('directory', () => {
         if (!novelId.value) return null;
         try {
             const newVolume = await directoryService.createVolume(novelId.value, { title: '新卷', chapters: [] });
-            directoryData.value = [...directoryData.value, newVolume];
+            directoryData.value.push(newVolume);
             return newVolume;
         } catch (error) {
             console.error('Failed to add new volume:', error);
@@ -3278,7 +4093,7 @@ export const useDirectoryStore = defineStore('directory', () => {
         if (volume) {
             try {
                 const newChapter = await directoryService.createChapter(volume.id, { title: '新章节' });
-                volume.chapters = [...volume.chapters, newChapter];
+                volume.chapters.push(newChapter);
                 return newChapter;
             } catch (error) {
                 console.error('Failed to add new chapter:', error);
@@ -3289,42 +4104,47 @@ export const useDirectoryStore = defineStore('directory', () => {
     };
 
     const renameNode = (nodeId: string, newTitle: string) => {
-        const result = findNodeById(nodeId);
-        if (result?.node && newTitle.trim()) {
-            const trimmedTitle = newTitle.trim();
-            result.node.title = trimmedTitle;
+        const trimmedTitle = newTitle.trim();
+        if (!trimmedTitle) return;
 
-            // Propagate title change to derived content
+        const result = findNodeById(nodeId);
+        if (result?.node) {
+            result.node.title = trimmedTitle;
             const derivedContentStore = useDerivedContentStore();
             derivedContentStore.updateTitlesForSource(nodeId, trimmedTitle);
         }
     };
 
     const deleteNode = async (nodeId: string): Promise<boolean> => {
+        const derivedContentStore = useDerivedContentStore();
+
         const result = findNodeById(nodeId);
         if (!result) return false;
 
-        const derivedContentStore = useDerivedContentStore();
-
         try {
-            if (result.node.type === 'chapter') {
-                await directoryService.deleteChapter(nodeId);
-                if(result.parent) {
-                    result.parent.chapters = result.parent.chapters.filter(c => c.id !== nodeId);
-                }
-                await derivedContentStore.deleteDerivedDataForSource(result.node.id);
-            } else if (result.node.type === 'volume') {
+            if (result.node.type === 'volume') {
                 await directoryService.deleteVolume(nodeId);
+                // 使用 filter 替换整个数组以确保响应性
                 directoryData.value = directoryData.value.filter(v => v.id !== nodeId);
+
+                // 删除关联的派生内容
                 const chapterIds = result.node.chapters.map(c => c.id);
                 for (const chapId of chapterIds) {
                     await derivedContentStore.deleteDerivedDataForSource(chapId);
                 }
-                await derivedContentStore.deleteDerivedDataForSource(result.node.id);
+                await derivedContentStore.deleteDerivedDataForSource(nodeId);
+
+            } else if (result.node.type === 'chapter' && result.parent) {
+                await directoryService.deleteChapter(nodeId);
+                // 使用 filter 替换子数组以确保响应性
+                result.parent.chapters = result.parent.chapters.filter(c => c.id !== nodeId);
+                await derivedContentStore.deleteDerivedDataForSource(nodeId);
             }
             return true;
         } catch (error) {
-            console.error('Failed to delete node:', error);
+            console.error(`Failed to delete node ${nodeId}:`, error);
+            // 你可能需要在这里添加一些逻辑来重新获取数据以同步状态
+            if(novelId.value) await fetchDirectory(novelId.value);
             return false;
         }
     };
@@ -4439,7 +5259,6 @@ export const useReferenceStore = defineStore('reference', () => {
 // 文件: ..\src\novel\editor\stores\relatedContentStore.ts
 //
 
-// 文件: ..\src\novel\editor\stores\relatedContentStore.ts
 import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
 import * as nodeOperationService from '@/novel/editor/services/related/nodeOperationService';
@@ -5221,5 +6040,231 @@ export function getIconByNodeType(type: string): string {
     const normalizedType = type.replace(/s_item$/, '_item'); // characters_item -> character_item
 
     return ICON_MAP[normalizedType] || ICON_MAP['default'];
+}
+
+// =
+// 文件: ..\src\novel\importer\services\novelParser.ts
+//
+
+import type { Volume, Chapter } from '@/novel/editor/types';
+
+/**
+ * 将纯文本段落转换为带<p>标签的HTML字符串
+ * @param text - 输入的文本
+ * @returns HTML格式的字符串
+ */
+const textToHtmlParagraphs = (text: string): string => {
+    return text.split('\n').map(p => p.trim()).filter(p => p).map(p => `<p>${p}</p>`).join('');
+};
+
+/**
+ * 解析小说文本并根据选项进行分章和分卷
+ * @param text - 要解析的小说全文
+ * @param options - 解析选项
+ * @returns 返回一个卷数组，可直接用于创建新的小说项目
+ */
+export const parseNovelText = (
+    text: string,
+    options: { chaptersPerVolume: number }
+): Volume[] => {
+    // 1. 按空行（一个或多个换行符，中间可能包含空格）分割成章节内容块
+    const chapterContents = text.split(/\n\s*\n/).filter(content => content.trim() !== '');
+
+    // 2. 将内容块转换为章节对象
+    const allChapters: Chapter[] = chapterContents.map((content, index) => {
+        const lines = content.trim().split('\n');
+        const title = lines[0]?.trim() || `第 ${index + 1} 章`;
+        const bodyText = lines.slice(1).join('\n').trim();
+        const bodyHtml = textToHtmlParagraphs(bodyText);
+
+        return {
+            id: `ch-imported-${Date.now()}-${index}`,
+            type: 'chapter',
+            title: title,
+            wordCount: content.trim().length,
+            content: `<h1>${title}</h1>${bodyHtml}`,
+            status: 'completed'
+        };
+    });
+
+    // 3. 将章节按指定数量分组到卷中
+    const volumes: Volume[] = [];
+    const { chaptersPerVolume } = options;
+    let volumeIndex = 1;
+
+    for (let i = 0; i < allChapters.length; i += chaptersPerVolume) {
+        const chapterChunk = allChapters.slice(i, i + chaptersPerVolume);
+        const volume: Volume = {
+            id: `vol-imported-${Date.now()}-${volumeIndex}`,
+            type: 'volume',
+            title: `第 ${volumeIndex} 卷`,
+            content: `<h1>第 ${volumeIndex} 卷</h1><p>该卷由导入功能自动创建，包含 ${chapterChunk.length} 个章节。</p>`,
+            chapters: chapterChunk,
+        };
+        volumes.push(volume);
+        volumeIndex++;
+    }
+
+    // 如果没有任何内容，则创建一个默认的空卷
+    if (volumes.length === 0) {
+        volumes.push({
+            id: `vol-imported-${Date.now()}-1`,
+            type: 'volume',
+            title: '第一卷',
+            content: '<h1>第一卷</h1><p>未从文件中解析出任何章节。</p>',
+            chapters: [],
+        });
+    }
+
+    return volumes;
+};
+
+// =
+// 文件: ..\src\novel\router.ts
+//
+
+import type { RouteRecordRaw } from 'vue-router'
+import { dashboardRoutes } from './dashboard/router'
+import { editorRoutes } from './editor/router'
+
+export const novelRoutes: Array<RouteRecordRaw> = [
+    {
+        path: '/novel',
+        component: () => import('@/novel/layouts/NovelDashboardLayout.vue'),
+        redirect: '/novel/dashboard',
+        children: [
+            ...dashboardRoutes
+        ]
+    },
+    ...editorRoutes,
+]
+
+// =
+// 文件: ..\src\novel\services\novelProjectService.ts
+//
+
+// 文件: ..\src\novel\services\novelProjectService.ts
+
+import * as novelProjectApi from '@/novel/editor/api/novelProjectApi';
+import type { NovelProject } from '@/novel/editor/types/project';
+import type { NovelProjectPayload } from '@/novel/editor/api/novelProjectApi';
+
+/**
+ * 创建一本新的、结构完整的小说项目。
+ * @param data - 包含小说所有初始数据的负载。
+ * @returns 返回新创建的完整小说项目。
+ */
+export const createNovelProject = (data: NovelProjectPayload): Promise<NovelProject> => {
+    return novelProjectApi.createNovelProject(data);
+};
+
+/**
+ * 根据ID从后端获取完整的小说项目数据
+ * @param novelId - 小说ID
+ * @returns 完整的小说项目对象
+ */
+export const getNovelProject = (novelId: string): Promise<NovelProject> => {
+    return novelProjectApi.getNovelProject(novelId);
+};
+
+/**
+ * 从解析后的数据导入一本新小说。
+ * @param data - 包含标题、描述、分类和章节数据等。
+ * @returns 返回新创建的完整小说项目。
+ */
+export const importNovelProject = (data: NovelProjectPayload): Promise<NovelProject> => {
+    return novelProjectApi.importNovelProject(data);
+};
+
+/**
+ * 获取所有小说项目，用于参考书选择等场景。
+ * @returns 返回所有小说项目的数组。
+ */
+export const fetchAllNovelProjects = (): Promise<NovelProject[]> => {
+    return novelProjectApi.fetchAllNovelProjects();
+};
+
+/**
+ * 永久删除一个小说项目（非移入回收站）。
+ * @param novelId - 小说ID。
+ */
+export const deleteNovelProject = (novelId: string): Promise<void> => {
+    return novelProjectApi.deleteNovelProject(novelId);
+};
+
+// =
+// 文件: ..\src\novel\types\index.ts
+//
+
+// src/novel/types/index.ts
+// 定义小说模块对外共享的数据类型
+
+/**
+ * 小说标签定义
+ */
+export interface NovelTag {
+    text: string;
+    class: string;
+}
+
+/**
+ * 小说状态定义
+ */
+export interface NovelStatus {
+    text: '编辑中' | '待审核' | '已驳回' | '已发布';
+    class: string;
+}
+
+/**
+ * 小说分类的类型别名
+ */
+export type NovelCategory = '科幻' | '奇幻' | '悬疑' | '恐怖' | '都市' | '言情' | '历史';
+
+/**
+ * 小说在仪表盘列表中的数据结构。
+ * 这是 NovelProject 的一个摘要视图。
+ */
+export interface NovelDashboardItem {
+    id: string;
+    title: string;
+    description: string;
+    cover: string;
+    status: NovelStatus;
+    tags: NovelTag[];
+    chapters: number;
+    lastUpdated: string;
+    category: NovelCategory;
+    deletedAt?: string;
+}
+
+
+/**
+ * 定义“最近编辑”条目的数据结构。
+ * 对应于 `RecentView.vue` 中显示的数据。
+ */
+export interface RecentActivityItem {
+    id: string; // 活动自身的唯一ID
+    novelId: string; // 关联的小说ID
+    novelTitle: string; // 关联的小说标题
+    novelCover: string; // 关联的小说封面
+
+    editedItemType: 'chapter' | 'outline' | 'character'; // 被编辑的项目类型
+    editedItemName: string; // 被编辑的项目名称，例如 "第四章：跃迁点" 或 "角色设定 - 艾拉"
+    editedAt: string; // 编辑时间, ISO 8601 格式
+    formattedTime: string; // 用于UI显示的格式化时间，如 "2小时前" 或 "下午 3:45"
+}
+
+/**
+ * 定义“回收站”中条目的数据结构。
+ * 对应于 `TrashView.vue` 中显示的数据。
+ */
+export interface DeletedItem {
+    id: string; // 被删除项目的ID
+    name: string; // 被删除项目的名称
+    type: '小说' | '章节' | '角色'; // 被删除项目的类型
+    icon: string; // 用于UI显示的图标HTML字符串
+    deletedAt: string; // 删除时间, ISO 8601 格式
+    retentionDays: number; // 剩余保留天数
+    retentionPercent: number; // 剩余时间百分比，用于进度条显示
 }
 

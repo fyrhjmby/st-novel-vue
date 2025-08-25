@@ -1,7 +1,7 @@
 <template>
   <div>
     <p class="menu-title">管理</p>
-    <div @click="handleNewItem" class="context-menu-item">
+    <div @click="dispatch('new-item', { target: node.id })" class="context-menu-item">
       <i class="fa-solid fa-plus w-4 text-center"></i>
       <span>新建自定义{{ node.id === 'plot' ? '剧情' : '分析' }}</span>
     </div>
@@ -12,7 +12,7 @@
 import type { PropType } from 'vue';
 import type { TreeNode } from '@/novel/editor/types';
 
-const props = defineProps({
+defineProps({
   node: {
     type: Object as PropType<TreeNode>,
     required: true,
@@ -20,13 +20,11 @@ const props = defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'new-item', target: 'plot' | 'analysis'): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
 
-const handleNewItem = () => {
-  if (props.node.id === 'plot' || props.node.id === 'analysis') {
-    emit('new-item', props.node.id);
-  }
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
 };
 </script>
 

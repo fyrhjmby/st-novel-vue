@@ -2288,7 +2288,6 @@ const emptyStateHtml = (contextType: string) => {
 // 文件: ..\src\novel\editor\components\sidebar\DirectoryContextMenu.vue
 //
 
-// 文件: ..\src\novel\editor\components\sidebar\DirectoryContextMenu.vue
 import { ref, computed, onMounted, onBeforeUnmount, defineAsyncComponent, shallowRef } from 'vue';
 import type { TreeNode } from '@/novel/editor/types';
 import { useAITaskExecutor } from '@/novel/editor/composables/useAITaskExecutor';
@@ -2298,7 +2297,8 @@ import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStor
 import { useNotesStore } from '@/novel/editor/stores/notesStore';
 import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
-import type { AITask } from '@/novel/editor/types';
+import { useAITaskStore } from '@/novel/editor/stores/ai/aiTaskStore';
+import { useDerivedContentStore } from '@/novel/editor/stores/derivedContentStore';
 
 // --- 组件映射 ---
 const menuComponentMap = shallowRef({
@@ -2320,6 +2320,7 @@ const menuComponentMap = shallowRef({
 const visible = ref(false);
 const position = ref({ x: 0, y: 0 });
 const node = ref<TreeNode | null>(null);
+const menuRef = ref<HTMLElement | null>(null);
 
 // --- Stores and Composables ---
 const { executeAITask } = useAITaskExecutor();
@@ -2329,6 +2330,8 @@ const relatedContentStore = useRelatedContentStore();
 const notesStore = useNotesStore();
 const promptTemplateStore = usePromptTemplateStore();
 const uiStore = useUIStore();
+const aiTaskStore = useAITaskStore();
+const derivedContentStore = useDerivedContentStore();
 
 // --- Computed ---
 const menuComponent = computed(() => {
@@ -2368,145 +2371,119 @@ const hide = () => {
   node.value = null;
 };
 
-// --- Event Handlers (New Simplified Structure) ---
-const handleAiTask = (taskType: AITask['type'], isBatch = false) => {
-  hide();
-  if (!node.value) return;
-  if (isBatch && node.value.type === 'volume' && 'originalData' in node.value && node.value.originalData.type === 'volume') {
-    const aiTaskStore = (async () => (await import('@novel/editor/stores/ai/aiTaskStore.ts')).useAITaskStore())();
-    aiTaskStore.then(store => store.startBatchTaskForVolume(taskType, node.value!.originalData));
-  } else {
-    executeAITask(taskType, { id: node.value.id, title: node.value.title });
+// --- Centralized Action Handler ---
+const handleAction = async (event: { type: string; payload?: any }) => {
+  if (!node.value) return; // Guard against race conditions
+
+  const { type, payload } = event;
+  const nodeId = node.value.id;
+  const nodeType = node.value.type;
+
+  hide(); // Hide menu immediately on action
+
+  switch (type) {
+    case 'rename':
+      uiStore.setEditingNodeId(nodeId);
+      break;
+
+    case 'delete':
+      if (nodeType === 'volume' || nodeType === 'chapter') {
+        if (await directoryStore.deleteNode(nodeId)) editorStore.closeTab(nodeId);
+      } else if (nodeType === 'note') {
+        if (await notesStore.deleteNote(nodeId)) editorStore.closeTab(nodeId);
+      } else if (nodeType === 'prompt_item') {
+        if (confirm('确定要删除这个提示词模板吗？')) {
+          if (promptTemplateStore.deletePrompt(nodeId)) editorStore.closeTab(nodeId);
+        }
+      } else if (nodeId.startsWith('custom-others-')) {
+        if (relatedContentStore.deleteCustomOthersNode(nodeId)) editorStore.closeTab(nodeId);
+      } else if (nodeId.startsWith('custom-')) {
+        if (relatedContentStore.deleteCustomRelatedNode(nodeId)) editorStore.closeTab(nodeId);
+      } else if (nodeType === 'plot_item' || nodeType === 'analysis_item') {
+        if (await derivedContentStore.deleteDerivedItem(nodeId)) editorStore.closeTab(nodeId);
+      } else { // Handles generic settings items (character_item, etc.)
+        if (relatedContentStore.deleteRelatedNode(nodeId)) editorStore.closeTab(nodeId);
+      }
+      break;
+
+    case 'ai-task':
+      if (payload.isBatch && nodeType === 'volume' && 'originalData' in node.value) {
+        aiTaskStore.startBatchTaskForVolume(payload.taskType, node.value.originalData);
+      } else {
+        executeAITask(payload.taskType, { id: nodeId, title: node.value.title });
+      }
+      break;
+
+    case 'new-volume':
+      const newVolume = await directoryStore.addNewVolume();
+      if (newVolume) uiStore.setEditingNodeId(newVolume.id);
+      break;
+
+    case 'new-chapter':
+      const newChapter = await directoryStore.addChapterToVolume(nodeId);
+      if (newChapter) {
+        uiStore.ensureNodeIsExpanded(nodeId);
+        editorStore.openTab(newChapter.id);
+        uiStore.setEditingNodeId(newChapter.id);
+      }
+      break;
+
+    case 'new-group':
+      const newGroup = relatedContentStore.addRelatedNode(nodeId, 'group');
+      if (newGroup) {
+        uiStore.ensureRelatedNodeIsExpanded(nodeId);
+        uiStore.setEditingNodeId(newGroup.id);
+      }
+      break;
+
+    case 'new-item':
+      if (nodeType === 'root' && (nodeId === 'plot' || nodeId === 'analysis')) {
+        const newItem = relatedContentStore.addCustomRelatedNode(payload.target);
+        uiStore.ensureRelatedNodeIsExpanded(payload.target);
+        editorStore.openTab(newItem.id);
+        uiStore.setEditingNodeId(newItem.id);
+      } else if (nodeType === 'root' && nodeId === 'others') {
+        const newItem = relatedContentStore.addCustomOthersNode();
+        uiStore.ensureRelatedNodeIsExpanded('others');
+        editorStore.openTab(newItem.id);
+        uiStore.setEditingNodeId(newItem.id);
+      } else { // Generic new item in a group
+        const newItem = relatedContentStore.addRelatedNode(nodeId, 'item');
+        if (newItem) {
+          uiStore.ensureRelatedNodeIsExpanded(nodeId);
+          editorStore.openTab(newItem.id);
+          uiStore.setEditingNodeId(newItem.id);
+        }
+      }
+      break;
+
+    case 'new-prompt':
+      const newPrompt = promptTemplateStore.addPrompt(nodeId, '新建提示词', '在这里输入你的提示词模板...');
+      if (newPrompt) {
+        uiStore.ensureRelatedNodeIsExpanded(nodeId);
+        editorStore.openTab(newPrompt.id);
+        uiStore.setEditingNodeId(newPrompt.id);
+      }
+      break;
   }
 };
 
-const handleRename = () => {
-  hide();
-  if (node.value) uiStore.setEditingNodeId(node.value.id);
-};
-
-// Directory Actions
-const handleNewChapter = async () => {
-  hide();
-  if (node.value) {
-    const newChapter = await directoryStore.addChapterToVolume(node.value.id);
-    if (newChapter) {
-      uiStore.ensureNodeIsExpanded(node.value.id);
-      editorStore.openTab(newChapter.id);
-      uiStore.setEditingNodeId(newChapter.id);
-    }
-  }
-};
-const handleNewVolume = async () => {
-  hide();
-  const newVolume = await directoryStore.addNewVolume();
-  if (newVolume) {
-    uiStore.setEditingNodeId(newVolume.id);
-  }
-};
-const handleDeleteDirectoryNode = async () => {
-  hide();
-  if (node.value) {
-    if (await directoryStore.deleteNode(node.value.id)) {
-      editorStore.closeTab(node.value.id);
-    }
+// --- Lifecycle & Event Handling ---
+const handleClickOutside = (event: MouseEvent) => {
+  if (menuRef.value && !menuRef.value.contains(event.target as Node)) {
+    hide();
   }
 };
 
-// Settings / Related Actions
-const handleNewGroup = () => {
-  hide();
-  if (node.value) {
-    const newNode = relatedContentStore.addRelatedNode(node.value.id, 'group');
-    if (newNode) {
-      uiStore.ensureRelatedNodeIsExpanded(node.value.id);
-      uiStore.setEditingNodeId(newNode.id);
-    }
-  }
-};
-const handleNewItem = () => {
-  hide();
-  if (node.value) {
-    const newNode = relatedContentStore.addRelatedNode(node.value.id, 'item');
-    if (newNode) {
-      uiStore.ensureRelatedNodeIsExpanded(node.value.id);
-      editorStore.openTab(newNode.id);
-      uiStore.setEditingNodeId(newNode.id);
-    }
-  }
-};
-const handleDeleteRelatedNode = () => {
-  hide();
-  if (node.value && relatedContentStore.deleteRelatedNode(node.value.id)) {
-    editorStore.closeTab(node.value.id);
-  }
-};
+onMounted(() => {
+  window.addEventListener('click', handleClickOutside, true);
+  window.addEventListener('contextmenu', hide, true);
+});
 
-// Custom Plot/Analysis Actions
-const handleNewCustomItem = (target: 'plot' | 'analysis') => {
-  hide();
-  const newNode = relatedContentStore.addCustomRelatedNode(target);
-  uiStore.ensureRelatedNodeIsExpanded(target);
-  editorStore.openTab(newNode.id);
-  uiStore.setEditingNodeId(newNode.id);
-};
-const handleDeleteCustomRelatedNode = () => {
-  hide();
-  if (node.value && relatedContentStore.deleteCustomRelatedNode(node.value.id)) {
-    editorStore.closeTab(node.value.id);
-  }
-};
-
-// Others Actions
-const handleNewOthersItem = () => {
-  hide();
-  const newNode = relatedContentStore.addCustomOthersNode();
-  uiStore.ensureRelatedNodeIsExpanded('others');
-  editorStore.openTab(newNode.id);
-  uiStore.setEditingNodeId(newNode.id);
-};
-const handleDeleteOthersNode = () => {
-  hide();
-  if (node.value && relatedContentStore.deleteCustomOthersNode(node.value.id)) {
-    editorStore.closeTab(node.value.id);
-  }
-};
-
-// Note Actions
-const handleDeleteNote = async () => {
-  hide();
-  if (node.value) {
-    if (await notesStore.deleteNote(node.value.id)) {
-      editorStore.closeTab(node.value.id);
-    }
-  }
-};
-
-// Prompt Actions
-const handleNewPrompt = () => {
-  hide();
-  if(!node.value) return;
-  const newNode = promptTemplateStore.addPrompt(node.value.id, '新建提示词', '在这里输入你的提示词模板...');
-  if (newNode) {
-    uiStore.ensureRelatedNodeIsExpanded(node.value.id);
-    editorStore.openTab(newNode.id);
-    uiStore.setEditingNodeId(newNode.id);
-  }
-};
-
-const handleDeletePrompt = () => {
-  hide();
-  if (!node.value) return;
-  if (confirm('确定要删除这个提示词模板吗？')) {
-    if (promptTemplateStore.deletePrompt(node.value.id)) {
-      editorStore.closeTab(node.value.id);
-    }
-  }
-};
-
-// --- Lifecycle ---
-onMounted(() => { window.addEventListener('click', hide); });
-onBeforeUnmount(() => { window.removeEventListener('click', hide); });
+onBeforeUnmount(() => {
+  window.removeEventListener('click', handleClickOutside, true);
+  window.removeEventListener('contextmenu', hide, true);
+});
 
 defineExpose({ show, hide });
 
@@ -2514,56 +2491,29 @@ defineExpose({ show, hide });
 // 文件: ..\src\novel\editor\components\sidebar\DirectoryTab.vue
 //
 
-// 文件: ..\src\novel\editor\components\sidebar\DirectoryTab.vue
-import { computed } from 'vue';
 import TreeView from './TreeView.vue';
-import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
-import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
-import type { TreeNode, VolumeNode } from '@/novel/editor/types';
+import { useDirectoryTreeAdapter } from '@/novel/editor/composables/useDirectoryTreeAdapter';
+import type { TreeNode } from '@/novel/editor/types';
 
 const emit = defineEmits<{
   (e: 'show-context-menu', payload: { node: TreeNode; event: MouseEvent }): void;
 }>();
 
-const editorStore = useEditorStore();
 const directoryStore = useDirectoryStore();
 const uiStore = useUIStore();
 
-const activeNodeId = computed(() => editorStore.activeTabId);
-
-const directoryTree = computed((): VolumeNode[] => {
-  return directoryStore.directoryData.map(volume => ({
-    id: volume.id,
-    title: volume.title,
-    icon: getIconByNodeType(volume.type),
-    type: 'volume',
-    content: volume.content,
-    originalData: volume,
-    children: volume.chapters.map(chapter => ({
-      id: chapter.id,
-      title: chapter.title,
-      icon: getIconByNodeType(chapter.type),
-      type: 'chapter',
-      status: chapter.status,
-      content: chapter.content,
-      originalData: chapter,
-    })),
-  }));
-});
-
-const handleSelectNode = (node: TreeNode) => {
-  if (node.type === 'chapter' || node.type === 'volume') {
-    editorStore.openTab(node.id);
-  } else if(node.children && node.children.length > 0) {
-    uiStore.toggleNodeExpansion(node.id);
-  }
-};
-
-const handleToggleExpansion = (id:string) => {
-  uiStore.toggleNodeExpansion(id);
-};
+const {
+  treeNodes,
+  activeNodeId,
+  expandedNodeIds,
+  editingNodeId,
+  handleSelectNode,
+  handleToggleExpansion,
+  handleCommitRename,
+  handleCancelRename
+} = useDirectoryTreeAdapter();
 
 const handleContextMenu = (payload: { node: TreeNode; event: MouseEvent }) => {
   emit('show-context-menu', payload);
@@ -2576,26 +2526,15 @@ const handleAddNewVolume = async () => {
   }
 };
 
-const handleCommitRename = (payload: { nodeId: string; newTitle: string; nodeType: string }) => {
-  directoryStore.renameNode(payload.nodeId, payload.newTitle);
-  handleCancelRename();
-};
-
-const handleCancelRename = () => {
-  uiStore.setEditingNodeId(null);
-};
-
 // =
 // 文件: ..\src\novel\editor\components\sidebar\NotesTab.vue
 //
 
-// 文件: ..\src\novel\editor\components\sidebar\NotesTab.vue
 import { ref, computed, watch, nextTick, onBeforeUpdate } from 'vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useNotesStore } from '@/novel/editor/stores/notesStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
-import type { NoteItem } from '@/novel/editor/types';
-import type { TreeNode } from './TreeView.vue';
+import type { NoteItem, TreeNode } from '@/novel/editor/types';
 import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
 
 const emit = defineEmits<{
@@ -2675,41 +2614,21 @@ const handleCancelRename = () => {
 // 文件: ..\src\novel\editor\components\sidebar\ReferencesTab.vue
 //
 
-import { computed } from 'vue';
 import TreeView from './TreeView.vue';
-import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import { useReferenceStore } from '@/novel/editor/stores/referenceStore';
-import { useUIStore } from '@/novel/editor/stores/uiStore';
+import { useReferenceTreeAdapter } from '@/novel/editor/composables/useReferenceTreeAdapter';
 import type { TreeNode } from '@/novel/editor/types';
 
 const emit = defineEmits<{
   (e: 'show-context-menu', payload: { node: TreeNode; event: MouseEvent }): void;
 }>();
 
-const editorStore = useEditorStore();
-const referenceStore = useReferenceStore();
-const uiStore = useUIStore();
-
-const activeNodeId = computed(() => editorStore.activeTabId);
-
-const referenceTree = computed((): TreeNode[] => {
-  return referenceStore.referenceData;
-});
-
-const handleSelectNode = (node: TreeNode) => {
-  // If the node has children, it's a container node, so we toggle its expansion.
-  if (node.children && node.children.length > 0) {
-    uiStore.toggleReferenceNodeExpansion(node.id);
-  }
-  // If the node has content, it's a leaf node that can be opened.
-  else if (node.hasOwnProperty('content')) {
-    editorStore.openTab(node.id);
-  }
-};
-
-const handleToggleExpansion = (id:string) => {
-  uiStore.toggleReferenceNodeExpansion(id);
-};
+const {
+  treeNodes,
+  activeNodeId,
+  expandedNodeIds,
+  handleSelectNode,
+  handleToggleExpansion
+} = useReferenceTreeAdapter();
 
 const handleContextMenu = (payload: { node: TreeNode; event: MouseEvent }) => {
   emit('show-context-menu', payload);
@@ -2719,13 +2638,11 @@ const handleContextMenu = (payload: { node: TreeNode; event: MouseEvent }) => {
 // 文件: ..\src\novel\editor\components\sidebar\RelatedTab.vue
 //
 
-// 文件: ..\src\novel\editor\components\sidebar\RelatedTab.vue
-import { computed } from 'vue';
 import TreeView from './TreeView.vue';
 import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
-import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
+import { useRelatedContentTreeAdapter } from '@/novel/editor/composables/useRelatedContentTreeAdapter';
 import type { TreeNode } from '@/novel/editor/types';
 
 const emit = defineEmits<{
@@ -2734,60 +2651,21 @@ const emit = defineEmits<{
 
 const editorStore = useEditorStore();
 const relatedContentStore = useRelatedContentStore();
-const promptTemplateStore = usePromptTemplateStore();
 const uiStore = useUIStore();
 
-const activeNodeId = computed(() => editorStore.activeTabId);
-
-const relatedTree = computed((): TreeNode[] => {
-  return relatedContentStore.relatedData;
-});
-
-const handleSelectNode = (node: TreeNode) => {
-  if ('content' in node && node.content !== undefined) {
-    editorStore.openTab(node.id);
-  } else if(node.children && node.children.length > 0) {
-    uiStore.toggleRelatedNodeExpansion(node.id);
-  }
-};
-
-const handleToggleExpansion = (id: string) => {
-  uiStore.toggleRelatedNodeExpansion(id);
-};
+const {
+  treeNodes,
+  activeNodeId,
+  expandedNodeIds,
+  editingNodeId,
+  handleSelectNode,
+  handleToggleExpansion,
+  handleCommitRename,
+  handleCancelRename
+} = useRelatedContentTreeAdapter();
 
 const handleContextMenu = (payload: { node: TreeNode; event: MouseEvent }) => {
   emit('show-context-menu', payload);
-};
-
-const handleCommitRename = (payload: { nodeId: string; newTitle: string; nodeType: string }) => {
-  if (payload.newTitle.trim()) {
-    switch (payload.nodeType) {
-      case 'prompt_item':
-        promptTemplateStore.renamePrompt(payload.nodeId, payload.newTitle);
-        break;
-      case 'others_item':
-        relatedContentStore.renameCustomOthersNode(payload.nodeId, payload.newTitle);
-        break;
-      case 'plot_item':
-      case 'analysis_item':
-        // Check if it's a custom one or a settings one
-        if (payload.nodeId.startsWith('custom-')) {
-          relatedContentStore.renameCustomRelatedNode(payload.nodeId, payload.newTitle);
-        } else {
-          relatedContentStore.renameRelatedNode(payload.nodeId, payload.newTitle);
-        }
-        break;
-      default:
-        // Generic rename for groups, items in settings etc.
-        relatedContentStore.renameRelatedNode(payload.nodeId, payload.newTitle);
-        break;
-    }
-  }
-  uiStore.setEditingNodeId(null);
-};
-
-const handleCancelRename = () => {
-  uiStore.setEditingNodeId(null);
 };
 
 const handleAddNewCustomPlot = () => {
@@ -2817,7 +2695,7 @@ const handleAddNewCustomOthers = () => {
 
 import { ref, computed, defineAsyncComponent } from 'vue';
 import DirectoryContextMenu from './DirectoryContextMenu.vue';
-import type { TreeNode } from './TreeView.vue';
+import type { TreeNode } from '@/novel/editor/types';
 
 type TabId = 'directory' | 'related' | 'notes' | 'references';
 
@@ -2887,7 +2765,7 @@ const emit = defineEmits<{
   (e: 'select-node', node: TreeNode): void;
   (e: 'toggle-expansion', id: string): void;
   (e: 'context-menu', payload: { node: TreeNode, event: MouseEvent }): void;
-  (e: 'commit-rename', payload: { nodeId: string, newTitle: string, nodeType: string }): void;
+  (e: 'commit-rename', payload: { nodeId: string, newTitle: string }): void;
   (e: 'cancel-rename'): void;
 }>();
 
@@ -2906,14 +2784,13 @@ watch(() => props.editingNodeId, (newId, oldId) => {
 
 const handleNodeClick = (node: TreeNode) => {
   if (props.editingNodeId === node.id) return;
-  // Always emit the select-node event and let the parent decide the action.
   emit('select-node', node);
 };
 
 const handleRenameCommit = (event: Event, node: TreeNode) => {
   const input = event.target as HTMLInputElement;
   const newTitle = input.value;
-  emit('commit-rename', { nodeId: node.id, newTitle, nodeType: node.type });
+  emit('commit-rename', { nodeId: node.id, newTitle });
 };
 
 const handleRenameCancel = () => {
@@ -2925,7 +2802,7 @@ const handleRenameCancel = () => {
 //
 
 import type { PropType } from 'vue';
-import type { AITask, TreeNode } from '@/novel/editor/types';
+import type { TreeNode } from '@/novel/editor/types';
 
 defineProps({
   node: {
@@ -2935,10 +2812,12 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'rename'): void;
-  (e: 'delete'): void;
-  (e: 'ai-task', taskType: AITask['type'], isBatch?: boolean): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
+
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
+};
 
 // =
 // 文件: ..\src\novel\editor\components\sidebar\context-menus\CustomRelatedMenu.vue
@@ -2955,9 +2834,12 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'rename'): void;
-  (e: 'delete'): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
+
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
+};
 
 // =
 // 文件: ..\src\novel\editor\components\sidebar\context-menus\GroupMenu.vue
@@ -2974,11 +2856,12 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'new-group'): void;
-  (e: 'new-item'): void;
-  (e: 'rename'): void;
-  (e: 'delete'): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
+
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
+};
 
 // =
 // 文件: ..\src\novel\editor\components\sidebar\context-menus\ItemMenu.vue
@@ -2995,9 +2878,12 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'rename'): void;
-  (e: 'delete'): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
+
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
+};
 
 // =
 // 文件: ..\src\novel\editor\components\sidebar\context-menus\NoteMenu.vue
@@ -3014,9 +2900,12 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'rename'): void;
-  (e: 'delete'): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
+
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
+};
 
 // =
 // 文件: ..\src\novel\editor\components\sidebar\context-menus\OthersItemMenu.vue
@@ -3033,9 +2922,12 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'rename'): void;
-  (e: 'delete'): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
+
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
+};
 
 // =
 // 文件: ..\src\novel\editor\components\sidebar\context-menus\OthersMenu.vue
@@ -3052,8 +2944,12 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'new-item'): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
+
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
+};
 
 // =
 // 文件: ..\src\novel\editor\components\sidebar\context-menus\PromptGroupMenu.vue
@@ -3070,8 +2966,12 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'new-prompt'): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
+
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
+};
 
 // =
 // 文件: ..\src\novel\editor\components\sidebar\context-menus\PromptItemMenu.vue
@@ -3088,9 +2988,12 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'rename'): void;
-  (e: 'delete'): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
+
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
+};
 
 // =
 // 文件: ..\src\novel\editor\components\sidebar\context-menus\RootMenu.vue
@@ -3099,7 +3002,7 @@ const emit = defineEmits<{
 import type { PropType } from 'vue';
 import type { TreeNode } from '@/novel/editor/types';
 
-const props = defineProps({
+defineProps({
   node: {
     type: Object as PropType<TreeNode>,
     required: true,
@@ -3107,13 +3010,11 @@ const props = defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'new-item', target: 'plot' | 'analysis'): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
 
-const handleNewItem = () => {
-  if (props.node.id === 'plot' || props.node.id === 'analysis') {
-    emit('new-item', props.node.id);
-  }
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
 };
 
 // =
@@ -3131,8 +3032,12 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'new-group'): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
+
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
+};
 
 // =
 // 文件: ..\src\novel\editor\components\sidebar\context-menus\VolumeMenu.vue
@@ -3149,12 +3054,12 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'new-chapter'): void;
-  (e: 'new-volume'): void;
-  (e: 'rename'): void;
-  (e: 'delete'): void;
-  (e: 'ai-task', taskType: AITask['type'], isBatch: boolean): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
+
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
+};
 
 // =
 // 文件: ..\src\novel\editor\components\system\settings\AIConfigSettings.vue
@@ -3698,6 +3603,210 @@ ${mainContentText.trim() || '无'}
     };
 
     return { buildContextForTask };
+}
+
+// =
+// 文件: ..\src\novel\editor\composables\useDirectoryTreeAdapter.ts
+//
+
+// 文件: src\novel\editor\composables\useDirectoryTreeAdapter.ts
+import { computed } from 'vue';
+import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+import { useUIStore } from '@/novel/editor/stores/uiStore';
+import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
+import type { TreeNode, VolumeNode } from '@/novel/editor/types';
+
+export function useDirectoryTreeAdapter() {
+    const directoryStore = useDirectoryStore();
+    const editorStore = useEditorStore();
+    const uiStore = useUIStore();
+
+    const treeNodes = computed((): VolumeNode[] => {
+        return directoryStore.directoryData.map(volume => ({
+            id: volume.id,
+            title: volume.title,
+            icon: getIconByNodeType(volume.type),
+            type: 'volume',
+            content: volume.content,
+            originalData: volume,
+            children: volume.chapters.map(chapter => ({
+                id: chapter.id,
+                title: chapter.title,
+                icon: getIconByNodeType(chapter.type),
+                type: 'chapter',
+                status: chapter.status,
+                content: chapter.content,
+                originalData: chapter,
+            })),
+        }));
+    });
+
+    const activeNodeId = computed(() => editorStore.activeTabId);
+    const expandedNodeIds = computed(() => uiStore.uiState.expandedNodeIds);
+    const editingNodeId = computed(() => uiStore.editingNodeId);
+
+    const handleSelectNode = (node: TreeNode) => {
+        if (node.type === 'chapter' || node.type === 'volume') {
+            editorStore.openTab(node.id);
+        } else if (node.children && node.children.length > 0) {
+            uiStore.toggleNodeExpansion(node.id);
+        }
+    };
+
+    const handleToggleExpansion = (id: string) => {
+        uiStore.toggleNodeExpansion(id);
+    };
+
+    const handleCommitRename = (payload: { nodeId: string; newTitle: string; }) => {
+        directoryStore.renameNode(payload.nodeId, payload.newTitle);
+        uiStore.setEditingNodeId(null);
+    };
+
+    const handleCancelRename = () => {
+        uiStore.setEditingNodeId(null);
+    };
+
+    return {
+        treeNodes,
+        activeNodeId,
+        expandedNodeIds,
+        editingNodeId,
+        handleSelectNode,
+        handleToggleExpansion,
+        handleCommitRename,
+        handleCancelRename
+    };
+}
+
+// =
+// 文件: ..\src\novel\editor\composables\useReferenceTreeAdapter.ts
+//
+
+// 文件: src\novel\editor\composables\useReferenceTreeAdapter.ts
+import { computed } from 'vue';
+import { useReferenceStore } from '@/novel/editor/stores/referenceStore';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+import { useUIStore } from '@/novel/editor/stores/uiStore';
+import type { TreeNode } from '@/novel/editor/types';
+
+export function useReferenceTreeAdapter() {
+    const referenceStore = useReferenceStore();
+    const editorStore = useEditorStore();
+    const uiStore = useUIStore();
+
+    const treeNodes = computed((): TreeNode[] => {
+        return referenceStore.referenceData;
+    });
+
+    const activeNodeId = computed(() => editorStore.activeTabId);
+    const expandedNodeIds = computed(() => uiStore.uiState.expandedReferenceNodeIds);
+
+    const handleSelectNode = (node: TreeNode) => {
+        // 如果节点有子节点，则切换其展开状态
+        if (node.children && node.children.length > 0) {
+            uiStore.toggleReferenceNodeExpansion(node.id);
+        }
+        // 如果节点是可打开的内容项，则在编辑器中打开它
+        else if (node.hasOwnProperty('content')) {
+            editorStore.openTab(node.id);
+        }
+    };
+
+    const handleToggleExpansion = (id: string) => {
+        uiStore.toggleReferenceNodeExpansion(id);
+    };
+
+    return {
+        treeNodes,
+        activeNodeId,
+        expandedNodeIds,
+        handleSelectNode,
+        handleToggleExpansion,
+    };
+}
+
+// =
+// 文件: ..\src\novel\editor\composables\useRelatedContentTreeAdapter.ts
+//
+
+// 文件: src\novel\editor\composables\useRelatedContentTreeAdapter.ts
+import { computed } from 'vue';
+import { useRelatedContentStore } from '@/novel/editor/stores/relatedContentStore';
+import { useEditorStore } from '@/novel/editor/stores/editorStore';
+import { useUIStore } from '@/novel/editor/stores/uiStore';
+import { usePromptTemplateStore } from '@/novel/editor/stores/promptTemplateStore';
+import type { TreeNode } from '@/novel/editor/types';
+
+export function useRelatedContentTreeAdapter() {
+    const relatedContentStore = useRelatedContentStore();
+    const editorStore = useEditorStore();
+    const uiStore = useUIStore();
+    const promptTemplateStore = usePromptTemplateStore();
+
+    const treeNodes = computed((): TreeNode[] => {
+        return relatedContentStore.relatedData;
+    });
+
+    const activeNodeId = computed(() => editorStore.activeTabId);
+    const expandedNodeIds = computed(() => uiStore.uiState.expandedRelatedNodeIds);
+    const editingNodeId = computed(() => uiStore.editingNodeId);
+
+    const handleSelectNode = (node: TreeNode) => {
+        if ('content' in node && node.content !== undefined) {
+            editorStore.openTab(node.id);
+        } else if (node.children && node.children.length > 0) {
+            uiStore.toggleRelatedNodeExpansion(node.id);
+        }
+    };
+
+    const handleToggleExpansion = (id: string) => {
+        uiStore.toggleRelatedNodeExpansion(id);
+    };
+
+    const handleCommitRename = (payload: { nodeId: string; newTitle: string; }) => {
+        const { node } = relatedContentStore.findNodeById(payload.nodeId) || { node: null };
+        const nodeType = node?.type;
+        const newTitle = payload.newTitle.trim();
+
+        if (newTitle) {
+            switch (nodeType) {
+                case 'prompt_item':
+                    promptTemplateStore.renamePrompt(payload.nodeId, newTitle);
+                    break;
+                case 'others_item':
+                    relatedContentStore.renameCustomOthersNode(payload.nodeId, newTitle);
+                    break;
+                case 'plot_item':
+                case 'analysis_item':
+                    if (payload.nodeId.startsWith('custom-')) {
+                        relatedContentStore.renameCustomRelatedNode(payload.nodeId, newTitle);
+                    } else {
+                        relatedContentStore.renameRelatedNode(payload.nodeId, newTitle);
+                    }
+                    break;
+                default:
+                    relatedContentStore.renameRelatedNode(payload.nodeId, newTitle);
+                    break;
+            }
+        }
+        uiStore.setEditingNodeId(null);
+    };
+
+    const handleCancelRename = () => {
+        uiStore.setEditingNodeId(null);
+    };
+
+    return {
+        treeNodes,
+        activeNodeId,
+        expandedNodeIds,
+        editingNodeId,
+        handleSelectNode,
+        handleToggleExpansion,
+        handleCommitRename,
+        handleCancelRename
+    };
 }
 
 // =
@@ -5968,7 +6077,7 @@ export const useDirectoryStore = defineStore('directory', () => {
         if (!novelId.value) return null;
         try {
             const newVolume = await directoryService.createVolume(novelId.value, { title: '新卷', chapters: [] });
-            directoryData.value = [...directoryData.value, newVolume];
+            directoryData.value.push(newVolume);
             return newVolume;
         } catch (error) {
             console.error('Failed to add new volume:', error);
@@ -5981,7 +6090,7 @@ export const useDirectoryStore = defineStore('directory', () => {
         if (volume) {
             try {
                 const newChapter = await directoryService.createChapter(volume.id, { title: '新章节' });
-                volume.chapters = [...volume.chapters, newChapter];
+                volume.chapters.push(newChapter);
                 return newChapter;
             } catch (error) {
                 console.error('Failed to add new chapter:', error);
@@ -5992,42 +6101,47 @@ export const useDirectoryStore = defineStore('directory', () => {
     };
 
     const renameNode = (nodeId: string, newTitle: string) => {
-        const result = findNodeById(nodeId);
-        if (result?.node && newTitle.trim()) {
-            const trimmedTitle = newTitle.trim();
-            result.node.title = trimmedTitle;
+        const trimmedTitle = newTitle.trim();
+        if (!trimmedTitle) return;
 
-            // Propagate title change to derived content
+        const result = findNodeById(nodeId);
+        if (result?.node) {
+            result.node.title = trimmedTitle;
             const derivedContentStore = useDerivedContentStore();
             derivedContentStore.updateTitlesForSource(nodeId, trimmedTitle);
         }
     };
 
     const deleteNode = async (nodeId: string): Promise<boolean> => {
+        const derivedContentStore = useDerivedContentStore();
+
         const result = findNodeById(nodeId);
         if (!result) return false;
 
-        const derivedContentStore = useDerivedContentStore();
-
         try {
-            if (result.node.type === 'chapter') {
-                await directoryService.deleteChapter(nodeId);
-                if(result.parent) {
-                    result.parent.chapters = result.parent.chapters.filter(c => c.id !== nodeId);
-                }
-                await derivedContentStore.deleteDerivedDataForSource(result.node.id);
-            } else if (result.node.type === 'volume') {
+            if (result.node.type === 'volume') {
                 await directoryService.deleteVolume(nodeId);
+                // 使用 filter 替换整个数组以确保响应性
                 directoryData.value = directoryData.value.filter(v => v.id !== nodeId);
+
+                // 删除关联的派生内容
                 const chapterIds = result.node.chapters.map(c => c.id);
                 for (const chapId of chapterIds) {
                     await derivedContentStore.deleteDerivedDataForSource(chapId);
                 }
-                await derivedContentStore.deleteDerivedDataForSource(result.node.id);
+                await derivedContentStore.deleteDerivedDataForSource(nodeId);
+
+            } else if (result.node.type === 'chapter' && result.parent) {
+                await directoryService.deleteChapter(nodeId);
+                // 使用 filter 替换子数组以确保响应性
+                result.parent.chapters = result.parent.chapters.filter(c => c.id !== nodeId);
+                await derivedContentStore.deleteDerivedDataForSource(nodeId);
             }
             return true;
         } catch (error) {
-            console.error('Failed to delete node:', error);
+            console.error(`Failed to delete node ${nodeId}:`, error);
+            // 你可能需要在这里添加一些逻辑来重新获取数据以同步状态
+            if(novelId.value) await fetchDirectory(novelId.value);
             return false;
         }
     };
@@ -7142,7 +7256,6 @@ export const useReferenceStore = defineStore('reference', () => {
 // 文件: ..\src\novel\editor\stores\relatedContentStore.ts
 //
 
-// 文件: ..\src\novel\editor\stores\relatedContentStore.ts
 import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
 import * as nodeOperationService from '@/novel/editor/services/related/nodeOperationService';

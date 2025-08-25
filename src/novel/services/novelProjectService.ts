@@ -1,6 +1,17 @@
+// 文件: ..\src\novel\services\novelProjectService.ts
+
 import * as novelProjectApi from '@/novel/editor/api/novelProjectApi';
 import type { NovelProject } from '@/novel/editor/types/project';
-import type { Volume } from '@/novel/editor/types';
+import type { NovelProjectPayload } from '@/novel/editor/api/novelProjectApi';
+
+/**
+ * 创建一本新的、结构完整的小说项目。
+ * @param data - 包含小说所有初始数据的负载。
+ * @returns 返回新创建的完整小说项目。
+ */
+export const createNovelProject = (data: NovelProjectPayload): Promise<NovelProject> => {
+    return novelProjectApi.createNovelProject(data);
+};
 
 /**
  * 根据ID从后端获取完整的小说项目数据
@@ -12,21 +23,11 @@ export const getNovelProject = (novelId: string): Promise<NovelProject> => {
 };
 
 /**
- * 封装导入新小说项目所需的数据
- */
-type ImportData = {
-    title: string;
-    description: string;
-    category: string;
-    directoryData: Volume[];
-};
-
-/**
  * 从解析后的数据导入一本新小说。
  * @param data - 包含标题、描述、分类和章节数据等。
  * @returns 返回新创建的完整小说项目。
  */
-export const importNovelProject = (data: ImportData): Promise<NovelProject> => {
+export const importNovelProject = (data: NovelProjectPayload): Promise<NovelProject> => {
     return novelProjectApi.importNovelProject(data);
 };
 

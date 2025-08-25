@@ -1,5 +1,3 @@
-// src/novel/editor/components/sidebar/DirectoryTab.vue
-
 <template>
   <div class="directory-tab-container">
     <div class="header">
@@ -15,11 +13,11 @@
     </div>
     <div class="scrollable-content">
       <TreeView
-          v-if="directoryTree.length > 0"
-          :nodes="directoryTree"
+          v-if="treeNodes.length > 0"
+          :nodes="treeNodes"
           :active-node-id="activeNodeId"
-          :expanded-node-ids="uiStore.uiState.expandedNodeIds"
-          :editing-node-id="editorStore.editingNodeId"
+          :expanded-node-ids="expandedNodeIds"
+          :editing-node-id="editingNodeId"
           @select-node="handleSelectNode"
           @toggle-expansion="handleToggleExpansion"
           @context-menu="handleContextMenu"
@@ -32,57 +30,31 @@
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
-// 文件: ..\src\novel\editor\components\sidebar\DirectoryTab.vue
-import { computed } from 'vue';
 import TreeView from './TreeView.vue';
-import { useEditorStore } from '@/novel/editor/stores/editorStore';
 import { useDirectoryStore } from '@/novel/editor/stores/directoryStore';
 import { useUIStore } from '@/novel/editor/stores/uiStore';
-import { getIconByNodeType } from '@/novel/editor/utils/iconUtils';
-import type { TreeNode, VolumeNode } from '@/novel/editor/types';
+import { useDirectoryTreeAdapter } from '@/novel/editor/composables/useDirectoryTreeAdapter';
+import type { TreeNode } from '@/novel/editor/types';
 
 const emit = defineEmits<{
   (e: 'show-context-menu', payload: { node: TreeNode; event: MouseEvent }): void;
 }>();
 
-const editorStore = useEditorStore();
 const directoryStore = useDirectoryStore();
 const uiStore = useUIStore();
 
-const activeNodeId = computed(() => editorStore.activeTabId);
-
-const directoryTree = computed((): VolumeNode[] => {
-  return directoryStore.directoryData.map(volume => ({
-    id: volume.id,
-    title: volume.title,
-    icon: getIconByNodeType(volume.type),
-    type: 'volume',
-    content: volume.content,
-    originalData: volume,
-    children: volume.chapters.map(chapter => ({
-      id: chapter.id,
-      title: chapter.title,
-      icon: getIconByNodeType(chapter.type),
-      type: 'chapter',
-      status: chapter.status,
-      content: chapter.content,
-      originalData: chapter,
-    })),
-  }));
-});
-
-const handleSelectNode = (node: TreeNode) => {
-  if (node.type === 'chapter' || node.type === 'volume') {
-    editorStore.openTab(node.id);
-  } else if(node.children && node.children.length > 0) {
-    uiStore.toggleNodeExpansion(node.id);
-  }
-};
-
-const handleToggleExpansion = (id:string) => {
-  uiStore.toggleNodeExpansion(id);
-};
+const {
+  treeNodes,
+  activeNodeId,
+  expandedNodeIds,
+  editingNodeId,
+  handleSelectNode,
+  handleToggleExpansion,
+  handleCommitRename,
+  handleCancelRename
+} = useDirectoryTreeAdapter();
 
 const handleContextMenu = (payload: { node: TreeNode; event: MouseEvent }) => {
   emit('show-context-menu', payload);
@@ -94,16 +66,8 @@ const handleAddNewVolume = async () => {
     uiStore.setEditingNodeId(newVolume.id);
   }
 };
-
-const handleCommitRename = (payload: { nodeId: string; newTitle: string; nodeType: string }) => {
-  directoryStore.renameNode(payload.nodeId, payload.newTitle);
-  handleCancelRename();
-};
-
-const handleCancelRename = () => {
-  uiStore.setEditingNodeId(null);
-};
 </script>
+
 <style scoped>
 .directory-tab-container {
   display: flex;

@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import { ref, computed, defineAsyncComponent } from 'vue';
 import DirectoryContextMenu from './DirectoryContextMenu.vue';
-import type { TreeNode } from './TreeView.vue';
+import type { TreeNode } from '@/novel/editor/types';
 
 type TabId = 'directory' | 'related' | 'notes' | 'references';
 

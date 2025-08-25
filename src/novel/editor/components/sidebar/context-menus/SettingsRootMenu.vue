@@ -1,7 +1,7 @@
 <template>
   <div>
     <p class="menu-title">设定管理</p>
-    <div @click="emit('new-group')" class="context-menu-item">
+    <div @click="dispatch('new-group')" class="context-menu-item">
       <i class="fa-solid fa-folder-plus w-4 text-center"></i>
       <span>新建分组</span>
     </div>
@@ -20,8 +20,12 @@ defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'new-group'): void;
+  (e: 'dispatch-action', event: { type: string; payload?: any }): void;
 }>();
+
+const dispatch = (type: string, payload?: any) => {
+  emit('dispatch-action', { type, payload });
+};
 </script>
 
 <style scoped>

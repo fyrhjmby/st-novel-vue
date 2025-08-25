@@ -93,7 +93,7 @@ const emit = defineEmits<{
   (e: 'select-node', node: TreeNode): void;
   (e: 'toggle-expansion', id: string): void;
   (e: 'context-menu', payload: { node: TreeNode, event: MouseEvent }): void;
-  (e: 'commit-rename', payload: { nodeId: string, newTitle: string, nodeType: string }): void;
+  (e: 'commit-rename', payload: { nodeId: string, newTitle: string }): void;
   (e: 'cancel-rename'): void;
 }>();
 
@@ -112,14 +112,13 @@ watch(() => props.editingNodeId, (newId, oldId) => {
 
 const handleNodeClick = (node: TreeNode) => {
   if (props.editingNodeId === node.id) return;
-  // Always emit the select-node event and let the parent decide the action.
   emit('select-node', node);
 };
 
 const handleRenameCommit = (event: Event, node: TreeNode) => {
   const input = event.target as HTMLInputElement;
   const newTitle = input.value;
-  emit('commit-rename', { nodeId: node.id, newTitle, nodeType: node.type });
+  emit('commit-rename', { nodeId: node.id, newTitle });
 };
 
 const handleRenameCancel = () => {

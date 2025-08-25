@@ -5,12 +5,12 @@ export const fetchNovels = (): Promise<NovelDashboardItem[]> => {
     return dashboardApi.fetchNovels();
 };
 
-export const createNovel = (data: { title: string; synopsis: string; category: NovelCategory }): Promise<NovelDashboardItem> => {
-    return dashboardApi.createNovel(data);
-};
-
 export const fetchAvailableCategories = (): Promise<NovelCategory[]> => {
     return dashboardApi.fetchAvailableCategories();
+};
+
+export const createNovel = (data: { title: string; synopsis: string; category: NovelCategory }): Promise<NovelDashboardItem> => {
+    return dashboardApi.createNovel(data);
 };
 
 export const moveToTrash = (novelId: string): Promise<void> => {

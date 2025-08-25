@@ -65,7 +65,9 @@ import { useRouter } from 'vue-router';
 import { useNovelStore } from '@/novel/dashboard/stores/novelStore';
 import { importNovelProject } from '@/novel/services/novelProjectService';
 import { parseNovelText } from '@/novel/importer/services/novelParser';
+import * as projectInitializationService from '@/novel/editor/services/projectInitializationService';
 import type { NovelDashboardItem, NovelCategory } from '@/novel/types';
+import type { NovelProjectPayload } from '@/novel/editor/api/novelProjectApi';
 
 const router = useRouter();
 const novelStore = useNovelStore();
@@ -131,12 +133,17 @@ const handleImport = async () => {
 
     const novelTitle = fileName.value.replace(/\.(txt|md)$/i, '') || '导入的小说';
 
-    const newProject = await importNovelProject({
+    const payload: NovelProjectPayload = {
       title: novelTitle,
       description: '从文件导入的小说',
       category: selectedCategory.value,
       directoryData,
-    });
+      settingsData: projectInitializationService.createDefaultSettingsTree(),
+      plotCustomData: projectInitializationService.createDefaultPlotItem(),
+      analysisCustomData: projectInitializationService.createDefaultAnalysisItem(),
+    };
+
+    const newProject = await importNovelProject(payload);
 
     const newNovelForDashboard: NovelDashboardItem = {
       id: newProject.metadata.id,

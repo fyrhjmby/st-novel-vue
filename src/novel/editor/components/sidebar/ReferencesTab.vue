@@ -1,4 +1,3 @@
-// src/novel/editor/components/sidebar/ReferencesTab.vue
 <template>
   <div class="references-tab-container">
     <div class="header">
@@ -9,11 +8,11 @@
     </div>
     <div class="scrollable-content">
       <TreeView
-          v-if="referenceTree.length > 0"
-          :nodes="referenceTree"
+          v-if="treeNodes.length > 0"
+          :nodes="treeNodes"
           :active-node-id="activeNodeId"
-          :expanded-node-ids="uiStore.uiState.expandedReferenceNodeIds"
-          :editing-node-id="editorStore.editingNodeId"
+          :expanded-node-ids="expandedNodeIds"
+          :editing-node-id="null"
           @select-node="handleSelectNode"
           @toggle-expansion="handleToggleExpansion"
           @context-menu="handleContextMenu"
@@ -25,41 +24,21 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue';
 import TreeView from './TreeView.vue';
-import { useEditorStore } from '@/novel/editor/stores/editorStore';
-import { useReferenceStore } from '@/novel/editor/stores/referenceStore';
-import { useUIStore } from '@/novel/editor/stores/uiStore';
+import { useReferenceTreeAdapter } from '@/novel/editor/composables/useReferenceTreeAdapter';
 import type { TreeNode } from '@/novel/editor/types';
 
 const emit = defineEmits<{
   (e: 'show-context-menu', payload: { node: TreeNode; event: MouseEvent }): void;
 }>();
 
-const editorStore = useEditorStore();
-const referenceStore = useReferenceStore();
-const uiStore = useUIStore();
-
-const activeNodeId = computed(() => editorStore.activeTabId);
-
-const referenceTree = computed((): TreeNode[] => {
-  return referenceStore.referenceData;
-});
-
-const handleSelectNode = (node: TreeNode) => {
-  // If the node has children, it's a container node, so we toggle its expansion.
-  if (node.children && node.children.length > 0) {
-    uiStore.toggleReferenceNodeExpansion(node.id);
-  }
-  // If the node has content, it's a leaf node that can be opened.
-  else if (node.hasOwnProperty('content')) {
-    editorStore.openTab(node.id);
-  }
-};
-
-const handleToggleExpansion = (id:string) => {
-  uiStore.toggleReferenceNodeExpansion(id);
-};
+const {
+  treeNodes,
+  activeNodeId,
+  expandedNodeIds,
+  handleSelectNode,
+  handleToggleExpansion
+} = useReferenceTreeAdapter();
 
 const handleContextMenu = (payload: { node: TreeNode; event: MouseEvent }) => {
   emit('show-context-menu', payload);
